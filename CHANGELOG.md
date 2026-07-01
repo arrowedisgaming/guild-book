@@ -69,5 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Verified the full wizard end-to-end in a real browser (build an adventurer →
   save → appears in the roster), including a fix so post-save navigation reaches
   `/characters` instead of being intercepted by the deep-link guard.
+- Virtual tarot deck at `/deck` (no auth): a free-form table deck (draw / discard
+  / reshuffle / reset) that auto-reshuffles the discard when the draw pile empties
+  (with a visible cue), and a guided **test of fate** mode (pick attribute + suit,
+  draw, push fate, see the outcome). Original CSS card art — no book art. Includes
+  a JSON-serializable draw protocol (forward-compatible with the guild-draw log),
+  a client deck store wrapping the pure engine, and a persisted animate toggle.
+- Pure `drawWithReshuffle` engine helper (+ tests) so the auto-reshuffle logic is
+  covered independently of the UI.
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

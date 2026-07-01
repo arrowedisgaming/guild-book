@@ -4,9 +4,11 @@ import {
 	buildPlayerDeck,
 	buildMajorDeck,
 	shuffleDeck,
-	draw
+	draw,
+	drawWithReshuffle
 } from '$lib/engine/tarot-deck';
 import { testOfFate, classifyOutcome } from '$lib/engine/tarot-resolution';
+import { makeRng } from '$lib/engine/rng';
 import { getContentPack } from '$lib/server/content/loader';
 
 const config = getContentPack().tarot;
@@ -47,6 +49,23 @@ describe('tarot deck', () => {
 		expect(drawn).toHaveLength(3);
 		expect(rest).toHaveLength(54);
 		expect(drawn).toEqual(deck.slice(0, 3));
+	});
+
+	it('auto-reshuffles the discard when the draw pile is empty', () => {
+		const rng = makeRng('reshuffle');
+		const discard = buildPlayerDeck(config); // 57 cards to fall back on
+		const res = drawWithReshuffle([], discard, 2, rng);
+		expect(res.reshuffled).toBe(true);
+		expect(res.drawn).toHaveLength(2);
+		expect(res.drawPile).toHaveLength(55); // 57 reshuffled - 2 drawn
+		expect(res.discard).toHaveLength(0);
+	});
+
+	it('stops when both piles are exhausted (no infinite loop)', () => {
+		const rng = makeRng('empty');
+		const res = drawWithReshuffle([], [], 5, rng);
+		expect(res.drawn).toHaveLength(0);
+		expect(res.reshuffled).toBe(false);
 	});
 });
 

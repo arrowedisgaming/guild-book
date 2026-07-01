@@ -89,3 +89,35 @@ export function draw<T extends TarotCard>(pile: readonly T[], count = 1): { draw
 export function isMinor(card: TarotCard): card is MinorCard {
 	return card.kind === 'minor';
 }
+
+/**
+ * Draw `count` cards, auto-reshuffling the discard pile back into the draw pile
+ * when it runs dry (Arrowed ruling: reshuffle automatically). Cards already in
+ * hand are the caller's concern — only the draw and discard piles move here.
+ * Returns the drawn cards, the updated piles, and whether a reshuffle happened
+ * (so the UI can flash a cue). Pure.
+ */
+export function drawWithReshuffle<T extends TarotCard>(
+	drawPile: readonly T[],
+	discard: readonly T[],
+	count: number,
+	rng: Rng
+): { drawn: T[]; drawPile: T[]; discard: T[]; reshuffled: boolean } {
+	let pile = drawPile.slice();
+	let disc = discard.slice();
+	let reshuffled = false;
+	const drawn: T[] = [];
+
+	for (let i = 0; i < count; i++) {
+		if (pile.length === 0) {
+			if (disc.length === 0) break; // nothing left in either pile
+			pile = shuffle(disc, rng);
+			disc = [];
+			reshuffled = true;
+		}
+		drawn.push(pile[0]);
+		pile = pile.slice(1);
+	}
+
+	return { drawn, drawPile: pile, discard: disc, reshuffled };
+}

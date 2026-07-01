@@ -77,5 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a client deck store wrapping the pure engine, and a persisted animate toggle.
 - Pure `drawWithReshuffle` engine helper (+ tests) so the auto-reshuffle logic is
   covered independently of the UI.
+- Rules reference at `/rules` (index with live client-side search + section
+  grouping) and `/rules/[section]` (focused view), driven by the content pack's
+  `rules.json`. A minimal, HTML-escaping Markdown renderer (`utils/markdown.ts`,
+  + tests) renders the rule bodies safely.
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

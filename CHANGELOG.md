@@ -40,5 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hooks.server.ts`: db injection into locals, same-origin guard on mutations,
   per-IP write rate limiting, and security headers. Login page and session-aware
   header (sign in / sign out / My Adventurers).
+- Character persistence API: `GET/POST /api/characters`, `GET/PUT/DELETE
+  /api/characters/[id]` (optimistic-concurrency `expectedUpdatedAt`, soft
+  archive), and `POST/DELETE /api/characters/[id]/share`. Server-side
+  final-validation gate (kith/kin/path chosen, 4/3/2/1 spread with the 4 on the
+  path's suit) applied to non-draft saves.
+- Public read-only share links: `/s/[shareId]` anonymous view with a shared
+  `CharacterSheet` component, and a "My Adventurers" (`/characters`) roster with
+  archive. Migrate-on-read normaliser (`engine/character-migration.ts`) and a
+  reusable display-model builder (`server/character/view.ts`).
+- Unit tests for migration and final-validation logic.
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

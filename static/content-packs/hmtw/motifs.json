@@ -1,0 +1,26 @@
+{
+	"descriptors": [
+		"Wealthy",
+		"Disgraced",
+		"Wandering",
+		"Retired",
+		"Cursed",
+		"Famous",
+		"Secret",
+		"Devout",
+		"Reluctant",
+		"Veteran"
+	],
+	"professions": [
+		"Artificer",
+		"Soldier",
+		"Scholar",
+		"Thief",
+		"Sailor",
+		"Priest",
+		"Hunter",
+		"Merchant",
+		"Physician",
+		"Minstrel"
+	]
+}

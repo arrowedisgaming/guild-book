@@ -1,0 +1,7 @@
+[
+	{ "id": "common", "name": "Common", "description": "PLACEHOLDER — the trade tongue of the City." },
+	{ "id": "elvish", "name": "Elvish", "description": "PLACEHOLDER — the languages of the fay." },
+	{ "id": "dwarvish", "name": "Dwarvish", "description": "PLACEHOLDER — the tongue of the underfolk deeps." },
+	{ "id": "orcish", "name": "Orcish", "description": "PLACEHOLDER — the blooded dialects." },
+	{ "id": "ancient", "name": "Ancient", "description": "PLACEHOLDER — the dead language of the Underworld's builders." }
+]

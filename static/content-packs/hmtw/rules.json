@@ -1,0 +1,30 @@
+[
+	{
+		"id": "tests-of-fate",
+		"section": "basics",
+		"title": "Tests of Fate",
+		"body": "PLACEHOLDER SUMMARY. When an adventurer's action is uncertain, the GM calls for a test of fate. Draw a minor arcana card and add the relevant attribute (Swords, Pentacles, Cups, or Wands) to the card's value. A total of **14 or more** is a success; **13 or less** is a failure. Drawing the tested suit on the initial draw is a great success.",
+		"tags": ["core", "resolution", "tarot"]
+	},
+	{
+		"id": "the-four-phases",
+		"section": "basics",
+		"title": "The Four Phases",
+		"body": "PLACEHOLDER SUMMARY. Play cycles through four phases: the **Crawl Phase** (exploring the Underworld), the **Challenge Phase** (dangerous encounters), the **Camp Phase** (rest and recovery), and the **City Phase** (spending, healing, and preparing the next delve).",
+		"tags": ["core", "structure"]
+	},
+	{
+		"id": "attributes",
+		"section": "adventurer",
+		"title": "Attributes",
+		"body": "PLACEHOLDER SUMMARY. Adventurers have four attributes, rated 1–4, matching the four suits. At creation you take the spread **4, 3, 2, 1**; your **4** goes to the suit of your chosen Path.",
+		"tags": ["creation", "attributes"]
+	},
+	{
+		"id": "card-values",
+		"section": "basics",
+		"title": "Card Values",
+		"body": "PLACEHOLDER SUMMARY. Pips I–X are worth 1–10. Court cards: **Page 11, Knight 12, Queen 13, King 14**. The Fool is worth 0. Players draw from the minor arcana (plus the Fool); the GM draws from the major arcana (I–XXI).",
+		"tags": ["tarot", "resolution"]
+	}
+]

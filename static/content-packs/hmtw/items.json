@@ -1,0 +1,16 @@
+[
+	{ "id": "item-sword", "name": "Sword", "tier": "common", "category": "weapon", "description": "PLACEHOLDER — a reliable blade.", "packSpace": 1, "stats": { "damage": "1 wound" } },
+	{ "id": "item-shield", "name": "Shield", "tier": "common", "category": "armor", "description": "PLACEHOLDER — a sturdy shield.", "packSpace": 1 },
+	{ "id": "item-bow", "name": "Bow", "tier": "common", "category": "weapon", "description": "PLACEHOLDER — a hunting bow.", "packSpace": 1, "stats": { "range": "far" } },
+	{ "id": "item-lockpicks", "name": "Lockpicks", "tier": "common", "category": "tool", "description": "PLACEHOLDER — thieves' picks.", "packSpace": 1 },
+	{ "id": "item-tinkers-tools", "name": "Tinker's Tools", "tier": "common", "category": "tool", "description": "PLACEHOLDER — a gnome's kit of springs and gears.", "packSpace": 1 },
+	{ "id": "item-healers-kit", "name": "Healer's Kit", "tier": "common", "category": "tool", "description": "PLACEHOLDER — bandages, salves, and needles.", "packSpace": 1 },
+	{ "id": "item-lantern", "name": "Lantern", "tier": "common", "category": "gear", "description": "PLACEHOLDER — a shuttered lantern against the dark.", "packSpace": 1 },
+	{ "id": "item-rope", "name": "Rope", "tier": "impoverished", "category": "gear", "description": "PLACEHOLDER — fifty feet of hemp.", "packSpace": 1 },
+	{ "id": "item-rations", "name": "Rations", "tier": "impoverished", "category": "gear", "description": "PLACEHOLDER — trail food.", "packSpace": 1 },
+	{ "id": "item-torch", "name": "Torch", "tier": "impoverished", "category": "gear", "description": "PLACEHOLDER — a bundle of torches.", "packSpace": 1 },
+	{ "id": "item-chalk", "name": "Chalk", "tier": "impoverished", "category": "gear", "description": "PLACEHOLDER — for marking passages.", "packSpace": 1 },
+	{ "id": "item-fine-cloak", "name": "Fine Cloak", "tier": "luxurious", "category": "gear", "description": "PLACEHOLDER — a beautiful, non-liquid asset.", "packSpace": 1 },
+	{ "id": "item-signet-ring", "name": "Signet Ring", "tier": "luxurious", "category": "treasure", "description": "PLACEHOLDER — a mark of station.", "packSpace": 1 },
+	{ "id": "item-silver-mirror", "name": "Silver Mirror", "tier": "luxurious", "category": "treasure", "description": "PLACEHOLDER — a hand mirror of worked silver.", "packSpace": 1 }
+]

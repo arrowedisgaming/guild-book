@@ -1,0 +1,6 @@
+[
+	{ "id": "exhausted", "name": "Exhausted", "description": "PLACEHOLDER — worn down; disfavor until you rest." },
+	{ "id": "wounded", "name": "Wounded", "description": "PLACEHOLDER — a wound taken in a dangerous situation." },
+	{ "id": "afraid", "name": "Afraid", "description": "PLACEHOLDER — shaken by something terrible." },
+	{ "id": "poisoned", "name": "Poisoned", "description": "PLACEHOLDER — venom or toxin at work." }
+]

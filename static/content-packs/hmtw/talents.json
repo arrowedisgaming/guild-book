@@ -1,0 +1,36 @@
+[
+	{ "id": "kin-human-valerian", "name": "Duelist's Poise", "description": "PLACEHOLDER kin talent for House Valerian.", "source": "kin" },
+	{ "id": "kin-human-corvid", "name": "Whisper Network", "description": "PLACEHOLDER kin talent for House Corvid.", "source": "kin" },
+	{ "id": "kin-fay-high-elf", "name": "Elder Grace", "description": "PLACEHOLDER kin talent for High Elves.", "source": "kin" },
+	{ "id": "kin-fay-wood-elf", "name": "Pathless Step", "description": "PLACEHOLDER kin talent for Wood Elves.", "source": "kin" },
+	{ "id": "kin-fay-dark-elf", "name": "Twilight Sight", "description": "PLACEHOLDER kin talent for Dark Elves.", "source": "kin" },
+	{ "id": "kin-fay-gnome", "name": "Clever Contraption", "description": "PLACEHOLDER kin talent for Gnomes.", "source": "kin", "requiredItemIds": ["item-tinkers-tools"] },
+	{ "id": "kin-underfolk-dwarf", "name": "Stone Memory", "description": "PLACEHOLDER kin talent for Dwarves.", "source": "kin" },
+	{ "id": "kin-underfolk-halfling", "name": "Unlikely Luck", "description": "PLACEHOLDER kin talent for Halflings.", "source": "kin" },
+	{ "id": "kin-underfolk-troll", "name": "Thick Hide", "description": "PLACEHOLDER kin talent for Trolls.", "source": "kin" },
+	{ "id": "kin-orc-earthblooded", "name": "Rooted Stance", "description": "PLACEHOLDER kin talent for the Earthblooded.", "source": "kin" },
+	{ "id": "kin-orc-fireblooded", "name": "Burning Charge", "description": "PLACEHOLDER kin talent for the Fireblooded.", "source": "kin" },
+	{ "id": "kin-orc-seablooded", "name": "Tidal Patience", "description": "PLACEHOLDER kin talent for the Seablooded.", "source": "kin" },
+	{ "id": "kin-orc-stormblooded", "name": "Thunderclap", "description": "PLACEHOLDER kin talent for the Stormblooded.", "source": "kin" },
+
+	{ "id": "arete-human", "name": "Human Arête", "description": "PLACEHOLDER arête talent earned when all three human triggers are met.", "source": "arete" },
+	{ "id": "arete-fay", "name": "Fay Arête", "description": "PLACEHOLDER arête talent earned when all three fay triggers are met.", "source": "arete" },
+	{ "id": "arete-underfolk", "name": "Underfolk Arête", "description": "PLACEHOLDER arête talent earned when all three underfolk triggers are met.", "source": "arete" },
+	{ "id": "arete-orc", "name": "Orc Arête", "description": "PLACEHOLDER arête talent earned when all three orc triggers are met.", "source": "arete" },
+
+	{ "id": "path-swords-1", "name": "Bladework", "description": "PLACEHOLDER path talent for the Path of Swords.", "source": "path" },
+	{ "id": "path-swords-2", "name": "Shield Wall", "description": "PLACEHOLDER path talent for the Path of Swords.", "source": "path", "requiredItemIds": ["item-shield"] },
+	{ "id": "path-swords-3", "name": "Second Wind", "description": "PLACEHOLDER path talent for the Path of Swords.", "source": "path" },
+
+	{ "id": "path-pentacles-1", "name": "Lockcraft", "description": "PLACEHOLDER path talent for the Path of Pentacles.", "source": "path", "requiredItemIds": ["item-lockpicks"] },
+	{ "id": "path-pentacles-2", "name": "Shadowstep", "description": "PLACEHOLDER path talent for the Path of Pentacles.", "source": "path" },
+	{ "id": "path-pentacles-3", "name": "Backstab", "description": "PLACEHOLDER path talent for the Path of Pentacles.", "source": "path" },
+
+	{ "id": "path-cups-1", "name": "Lore-deep", "description": "PLACEHOLDER path talent for the Path of Cups.", "source": "path" },
+	{ "id": "path-cups-2", "name": "Field Medicine", "description": "PLACEHOLDER path talent for the Path of Cups.", "source": "path", "requiredItemIds": ["item-healers-kit"] },
+	{ "id": "path-cups-3", "name": "Ancient Tongues", "description": "PLACEHOLDER path talent for the Path of Cups.", "source": "path" },
+
+	{ "id": "path-wands-1", "name": "Cantrip", "description": "PLACEHOLDER path talent for the Path of Wands.", "source": "path" },
+	{ "id": "path-wands-2", "name": "Silver Tongue", "description": "PLACEHOLDER path talent for the Path of Wands.", "source": "path" },
+	{ "id": "path-wands-3", "name": "Warding Sign", "description": "PLACEHOLDER path talent for the Path of Wands.", "source": "path" }
+]

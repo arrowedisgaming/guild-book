@@ -1,0 +1,135 @@
+{
+	"id": "hmtw",
+	"name": "His Majesty the Worm (placeholder)",
+	"version": "0.1.0",
+	"description": "Placeholder content pack for Guild Book. Structure and core mechanics reflect the His Majesty the Worm rules; kith/kin, path, talent, and item entries are representative stubs to be replaced with fully transcribed rulebook data.",
+	"system": "hmtw",
+	"license": "placeholder",
+	"authors": ["PLACEHOLDER — replace with transcribed His Majesty the Worm data before release"],
+	"files": {
+		"kiths": "kiths.json",
+		"paths": "paths.json",
+		"talents": "talents.json",
+		"items": "items.json",
+		"motifs": "motifs.json",
+		"languages": "languages.json",
+		"conditions": "conditions.json",
+		"rules": "rules.json"
+	},
+	"attributes": [
+		{
+			"id": "swords",
+			"name": "Swords",
+			"suit": "swords",
+			"description": "The attribute of warriors — strength, endurance, bravery, and all facets of combat.",
+			"archetype": "warrior",
+			"min": 1,
+			"max": 4
+		},
+		{
+			"id": "pentacles",
+			"name": "Pentacles",
+			"suit": "pentacles",
+			"description": "The attribute of rogues — swiftness, slyness, quietness, manipulation, and stealth.",
+			"archetype": "rogue",
+			"min": 1,
+			"max": 4
+		},
+		{
+			"id": "cups",
+			"name": "Cups",
+			"suit": "cups",
+			"description": "The attribute of scholars — wisdom, cleverness, patience, and the use of tools.",
+			"archetype": "scholar",
+			"min": 1,
+			"max": 4
+		},
+		{
+			"id": "wands",
+			"name": "Wands",
+			"suit": "wands",
+			"description": "The attribute of sorcerers — willpower, mysticism, persuasion, and the occult.",
+			"archetype": "sorcerer",
+			"min": 1,
+			"max": 4
+		}
+	],
+	"tarot": {
+		"suits": ["swords", "pentacles", "cups", "wands"],
+		"ranks": [
+			{ "id": "i", "label": "Ace", "numeric": 1, "court": false },
+			{ "id": "ii", "label": "II", "numeric": 2, "court": false },
+			{ "id": "iii", "label": "III", "numeric": 3, "court": false },
+			{ "id": "iv", "label": "IV", "numeric": 4, "court": false },
+			{ "id": "v", "label": "V", "numeric": 5, "court": false },
+			{ "id": "vi", "label": "VI", "numeric": 6, "court": false },
+			{ "id": "vii", "label": "VII", "numeric": 7, "court": false },
+			{ "id": "viii", "label": "VIII", "numeric": 8, "court": false },
+			{ "id": "ix", "label": "IX", "numeric": 9, "court": false },
+			{ "id": "x", "label": "X", "numeric": 10, "court": false },
+			{ "id": "page", "label": "Page", "numeric": 11, "court": true },
+			{ "id": "knight", "label": "Knight", "numeric": 12, "court": true },
+			{ "id": "queen", "label": "Queen", "numeric": 13, "court": true },
+			{ "id": "king", "label": "King", "numeric": 14, "court": true }
+		],
+		"majorArcana": [
+			{ "id": "fool", "number": 0, "name": "The Fool" },
+			{ "id": "magician", "number": 1, "name": "The Magician" },
+			{ "id": "high-priestess", "number": 2, "name": "The High Priestess" },
+			{ "id": "empress", "number": 3, "name": "The Empress" },
+			{ "id": "emperor", "number": 4, "name": "The Emperor" },
+			{ "id": "hierophant", "number": 5, "name": "The Hierophant" },
+			{ "id": "lovers", "number": 6, "name": "The Lovers" },
+			{ "id": "chariot", "number": 7, "name": "The Chariot" },
+			{ "id": "strength", "number": 8, "name": "Strength" },
+			{ "id": "hermit", "number": 9, "name": "The Hermit" },
+			{ "id": "wheel-of-fortune", "number": 10, "name": "Wheel of Fortune" },
+			{ "id": "justice", "number": 11, "name": "Justice" },
+			{ "id": "hanged-man", "number": 12, "name": "The Hanged Man" },
+			{ "id": "death", "number": 13, "name": "Death" },
+			{ "id": "temperance", "number": 14, "name": "Temperance" },
+			{ "id": "devil", "number": 15, "name": "The Devil" },
+			{ "id": "tower", "number": 16, "name": "The Tower" },
+			{ "id": "star", "number": 17, "name": "The Star" },
+			{ "id": "moon", "number": 18, "name": "The Moon" },
+			{ "id": "sun", "number": 19, "name": "The Sun" },
+			{ "id": "judgement", "number": 20, "name": "Judgement" },
+			{ "id": "world", "number": 21, "name": "The World" }
+		],
+		"handSize": 1,
+		"resolution": {
+			"successThreshold": 14,
+			"greatSuccessOnMatchingSuit": true,
+			"outcomes": [
+				{
+					"id": "great-success",
+					"label": "Great success",
+					"description": "Total is 14+ and you drew the tested suit on the initial draw. You succeed spectacularly."
+				},
+				{
+					"id": "success",
+					"label": "Success",
+					"description": "Total is 14 or more. You accomplish your goal."
+				},
+				{
+					"id": "failure",
+					"label": "Failure",
+					"description": "Total is 13 or less. You do not accomplish your goal."
+				},
+				{
+					"id": "great-failure",
+					"label": "Great failure",
+					"description": "A failure with an additional complication, as adjudicated by the GM."
+				}
+			]
+		}
+	},
+	"creation": {
+		"attributeSpread": [4, 3, 2, 1],
+		"highestAttributeFromPath": true,
+		"marketAllowance": { "luxurious": 1, "common": 5, "impoverished": null },
+		"motifCount": 3,
+		"startingResolve": 4,
+		"masteredPathTalents": 1
+	}
+}

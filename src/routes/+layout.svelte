@@ -1,8 +1,10 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
+	import { signOut } from '@auth/sveltekit/client';
+	import type { LayoutData } from './$types';
 
-	let { children }: { children: Snippet } = $props();
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 </script>
 
 <div class="site">
@@ -12,6 +14,14 @@
 			<a href="/create/hmtw/identity">Create</a>
 			<a href="/rules">Rules</a>
 			<a href="/deck">Deck</a>
+			{#if data.user}
+				<a href="/characters">My Adventurers</a>
+				<button type="button" class="linkish" onclick={() => signOut({ redirectTo: '/' })}>
+					Sign out
+				</button>
+			{:else}
+				<a href="/login">Sign in</a>
+			{/if}
 		</nav>
 	</header>
 
@@ -54,8 +64,17 @@
 	}
 	.site-nav {
 		display: flex;
+		align-items: baseline;
 		gap: 1.25rem;
 		font-family: var(--font-subhead);
+	}
+	.linkish {
+		border: none;
+		background: none;
+		padding: 0;
+		color: var(--accent);
+		font: inherit;
+		cursor: pointer;
 	}
 	.site-main {
 		flex: 1;

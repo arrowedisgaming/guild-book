@@ -26,5 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   singleton-cached content loader.
 - Unit tests: schema round-trip, tarot/creation-rule invariants, and
   cross-file referential integrity for the pack.
+- `scripts/fetch-rwsa-tarot.sh`: downloads the full-resolution 1909 Pam-A
+  Rider-Waite-Smith scans from steve-p.org into `assets-src/tarot/rwsa/`
+  (gitignored source material for the virtual tarot deck; permission from the
+  site owner required before shipping the images publicly).
+- Authentication (Auth.js): Google + Discord OAuth plus a dev credentials
+  provider and an optional gitignored dev auto-login bypass, with secure
+  account-linking (verified-email merge only) and a JWT session strategy.
+- Database: dual-target Drizzle resolver (Cloudflare D1 in production,
+  better-sqlite3 locally), Auth.js tables, a `characters` table (JSON blob +
+  `shareId`), schema-only guild tables for a clean future migration, and the
+  initial migration.
+- `hooks.server.ts`: db injection into locals, same-origin guard on mutations,
+  per-IP write rate limiting, and security headers. Login page and session-aware
+  header (sign in / sign out / My Adventurers).
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

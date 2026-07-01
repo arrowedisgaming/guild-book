@@ -1,9 +1,10 @@
 import type { LayoutServerLoad } from './$types';
 
-// Phase 2 extends this to surface the signed-in session to every page.
-// Phase 0 keeps it minimal so the skeleton renders without auth wired up.
-export const load: LayoutServerLoad = async () => {
+// Surfaces the signed-in session (if any) and the app version to every page.
+export const load: LayoutServerLoad = async (event) => {
+	const session = await event.locals.auth();
 	return {
-		appVersion: __APP_VERSION__
+		appVersion: __APP_VERSION__,
+		user: session?.user ? { name: session.user.name ?? null, email: session.user.email ?? null } : null
 	};
 };

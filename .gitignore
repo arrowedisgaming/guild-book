@@ -49,6 +49,9 @@ graphify-out/
 # Dev-only auth bypass (local machines only — never committed)
 src/lib/server/dev-auto-login.ts
 
+# Source art scans (large, licence-restricted — fetched via scripts/fetch-rwsa-tarot.sh)
+assets-src/
+
 # HMTW rulebook source material (copyrighted — supplied locally, not committed)
 rulebooks/
 *.pdf

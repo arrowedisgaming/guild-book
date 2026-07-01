@@ -50,5 +50,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   archive. Migrate-on-read normaliser (`engine/character-migration.ts`) and a
   reusable display-model builder (`server/character/view.ts`).
 - Unit tests for migration and final-validation logic.
+- Pure engine layer (`src/lib/engine/`): seedable RNG + Fisher–Yates shuffle
+  (`rng.ts`); tarot deck builder (`tarot-deck.ts` — 56 minor + Fool player deck,
+  21-card GM deck, seeded shuffle, draw); test-of-fate resolution
+  (`tarot-resolution.ts` — data-driven 14+ thresholds; great success requires an
+  un-pushed initial tested-suit draw; great failure is a pushed-and-still-failed
+  test); attribute assignment (`attributes.ts` — 4/3/2/1 spread with the 4 locked
+  to the path suit, provenance-tracked); and Kith/Kin + Path grants
+  (`kindred.ts`, `calling.ts` — kin mastered talent, one mastered path talent).
+- Engine unit tests: deck integrity/shuffle determinism, resolution outcomes,
+  spread assignment, and grant assembly (36 tests total).
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

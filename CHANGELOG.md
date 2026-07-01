@@ -60,5 +60,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`kindred.ts`, `calling.ts` — kin mastered talent, one mastered path talent).
 - Engine unit tests: deck integrity/shuffle determinism, resolution outcomes,
   spread assignment, and grant assembly (36 tests total).
+- Creation wizard: an eight-step, localStorage-persisted flow (identity →
+  kith & kin → path → attributes → talents → quest & motifs → gear → review),
+  content-pack-driven and wired to the engine. Path precedes Attributes so the
+  4 locks to the chosen path's suit; the review step validates and saves via the
+  characters API. Includes `WizardShell` (step indicator, progress, start-over,
+  keyed remount), a shared step-nav, and a live-region announcer for a11y.
+- Verified the full wizard end-to-end in a real browser (build an adventurer →
+  save → appears in the roster), including a fix so post-save navigation reaches
+  `/characters` instead of being intercepted by the deep-link guard.
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

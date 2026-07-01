@@ -2,6 +2,7 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import { signOut } from '@auth/sveltekit/client';
+	import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
@@ -22,6 +23,7 @@
 			{:else}
 				<a href="/login">Sign in</a>
 			{/if}
+			<ThemeToggle />
 		</nav>
 	</header>
 
@@ -30,10 +32,10 @@
 	</main>
 
 	<footer class="site-footer">
+		<img class="adherent" src="/brand/adherent-of-the-worm.png" alt="Adherent of His Majesty the Worm" />
 		<p>
-			An <em>Adherent of His Majesty the Worm</em>. His Majesty the Worm is copyright Joshua
-			McCrowell. Guild Book is an independent production by Arrowed and is not affiliated with
-			Joshua McCrowell or Exalted Funeral.
+			His Majesty the Worm is copyright Joshua McCrowell. Guild Book is an independent production by
+			Arrowed and is not affiliated with Joshua McCrowell or Exalted Funeral.
 		</p>
 		<p><a href="/licensing">Licensing &amp; credits</a></p>
 	</footer>
@@ -88,5 +90,16 @@
 	}
 	.site-footer p {
 		margin: 0 0 0.5rem;
+	}
+	.adherent {
+		display: block;
+		width: 132px;
+		height: auto;
+		margin-bottom: 0.75rem;
+		opacity: 0.85;
+	}
+	:global([data-theme='worm-dark']) .adherent {
+		/* The mark is dark line art on transparency; invert it for the dark theme. */
+		filter: invert(0.92) hue-rotate(180deg);
 	}
 </style>

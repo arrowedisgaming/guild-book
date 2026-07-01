@@ -1,0 +1,15 @@
+/*
+ * Parchment (light) — the default theme. Warm aged-paper ground, brown-black
+ * ink, oxblood accent (the Worm's colour). oklch keeps the mixes perceptually
+ * even.
+ */
+
+:root,
+[data-theme='parchment-light'] {
+	--parchment: oklch(0.945 0.018 85);
+	--surface: oklch(0.965 0.014 85);
+	--ink: oklch(0.24 0.02 60);
+	--ink-soft: oklch(0.45 0.02 60);
+	--accent: oklch(0.43 0.13 25);
+	color-scheme: light;
+}

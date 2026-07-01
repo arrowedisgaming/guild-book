@@ -1,0 +1,70 @@
+/*
+ * Self-hosted faces from the His Majesty the Worm "Adherent of the Worm"
+ * template, converted to woff2. Role assignments follow the book's style guide:
+ *   Bilbo Display   → H1 / display        HamletOrNot → H2 / H3 headings
+ *   Caslon Antique  → H4 / subheads       IM Fell English → body (+ italic)
+ *   Dark Roast      → pull-quotes         Goudy Old Style → sidebars
+ *   Kelmscott       → sidebar headings
+ *
+ * Licence status is documented in static/fonts/LICENSES.md and surfaced on the
+ * /licensing page. IM Fell is OFL; the rest are freeware/free except Goudy Old
+ * Style (Monotype — needs a webfont licence before public launch).
+ */
+
+@font-face {
+	font-family: 'Bilbo Display';
+	src: url('/fonts/bilbo-display.woff2') format('woff2');
+	font-weight: 400 700;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'HamletOrNot';
+	src: url('/fonts/hamletornot.woff2') format('woff2');
+	font-weight: 400 700;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Caslon Antique';
+	src: url('/fonts/caslon-antique.woff2') format('woff2');
+	font-weight: 400 700;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'IM Fell English';
+	src: url('/fonts/imfell-english.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'IM Fell English';
+	src: url('/fonts/imfell-english-italic.woff2') format('woff2');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Dark Roast';
+	src: url('/fonts/dark-roast.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Goudy Old Style';
+	src: url('/fonts/goudy-old-style.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Kelmscott';
+	src: url('/fonts/kelmscott.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}

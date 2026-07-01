@@ -1,0 +1,13 @@
+/*
+ * Worm (dark) — candle-lit crypt. Near-black warm ground, parchment ink, a
+ * brighter oxblood so links and accents read against the dark.
+ */
+
+[data-theme='worm-dark'] {
+	--parchment: oklch(0.19 0.012 60);
+	--surface: oklch(0.24 0.014 60);
+	--ink: oklch(0.9 0.02 85);
+	--ink-soft: oklch(0.68 0.02 85);
+	--accent: oklch(0.64 0.15 27);
+	color-scheme: dark;
+}

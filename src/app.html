@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="parchment-light">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
@@ -9,22 +9,29 @@
 			content="Guild Book — a His Majesty the Worm adventurer creator and rules reference"
 		/>
 
-		<!--
-			OFL fallback typefaces (Phase 8 swaps in the book's own faces where web-embedding
-			rights allow). IM Fell English ≈ body/quotes; EB Garamond ≈ Caslon/Goudy; Cinzel
-			Decorative ≈ the ornamental display headings.
-		-->
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- Preload the body face (self-hosted from the Adherent of the Worm template). -->
 		<link
-			href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&display=swap"
-			rel="stylesheet"
+			rel="preload"
+			href="%sveltekit.assets%/fonts/imfell-english.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
 		/>
+
+		<!-- Apply the saved theme before first paint to avoid a light→dark flash. -->
+		<script>
+			try {
+				var t = localStorage.getItem('guildbook-theme');
+				if (t === 'worm-dark' || t === 'parchment-light') {
+					document.documentElement.setAttribute('data-theme', t);
+				}
+			} catch (e) {}
+		</script>
 
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<!-- SVG filter for the parchment grain used by the light theme -->
+		<!-- Original SVG grain filter used by the parchment theme (not book art). -->
 		<svg style="position:absolute;width:0;height:0" aria-hidden="true">
 			<filter id="paper-noise">
 				<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />

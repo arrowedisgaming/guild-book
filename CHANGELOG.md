@@ -81,5 +81,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   grouping) and `/rules/[section]` (focused view), driven by the content pack's
   `rules.json`. A minimal, HTML-escaping Markdown renderer (`utils/markdown.ts`,
   + tests) renders the rule bodies safely.
+- Book typography & theme system: self-hosted the "Adherent of the Worm" template
+  faces as woff2 (Bilbo Display H1, HamletOrNot headings, Caslon Antique subheads,
+  IM Fell English body, Dark Roast quotes, Goudy Old Style + Kelmscott sidebars),
+  wired to `--font-*` role tokens. Parchment-light and worm-dark oklch themes with
+  a persisted, no-FOUC theme toggle. Original ornamental components (DecoCorner,
+  OrnamentalBorder, CardTable), the permitted Adherent-of-the-Worm logo in the
+  footer, and a `static/fonts/LICENSES.md` status manifest (flags Goudy Old Style
+  as needing a webfont licence before public launch).
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

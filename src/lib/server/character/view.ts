@@ -6,6 +6,7 @@
  */
 
 import type { GuildBookCharacterData } from '$lib/types/character';
+import type { CharacterView } from '$lib/types/character-view';
 import { SUIT_IDS } from '$lib/types/common';
 import {
 	getContentPack,
@@ -15,24 +16,7 @@ import {
 	getItems
 } from '$lib/server/content/loader';
 
-export interface CharacterView {
-	name: string;
-	pronouns: string;
-	appearance: string;
-	quest: string;
-	notes: string;
-	kith: string | null;
-	kin: string | null;
-	path: string | null;
-	attributes: { id: string; name: string; value: number }[];
-	talents: { name: string; state: string }[];
-	motifs: string[];
-	bonds: { targetName: string; text: string }[];
-	equipment: { name: string; tier: string }[];
-	resolve: { current: number; max: number };
-	languages: string[];
-	conditions: string[];
-}
+export type { CharacterView };
 
 export function buildCharacterView(char: GuildBookCharacterData): CharacterView {
 	const pack = getContentPack();

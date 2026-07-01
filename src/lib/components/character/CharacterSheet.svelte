@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CharacterView } from '$lib/server/character/view';
+	import type { CharacterView } from '$lib/types/character-view';
 
 	let { view }: { view: CharacterView } = $props();
 </script>

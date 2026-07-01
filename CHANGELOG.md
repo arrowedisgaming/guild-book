@@ -89,5 +89,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   OrnamentalBorder, CardTable), the permitted Adherent-of-the-Worm logo in the
   footer, and a `static/fonts/LICENSES.md` status manifest (flags Goudy Old Style
   as needing a webfont licence before public launch).
+- Owner adventurer sheet at `/sheet/[id]` (the roster's link target) with export
+  and share actions. PDF export (pdfmake, original one-page layout, required
+  copyright notice, no book art) and Obsidian-flavored Markdown export — both
+  from a pure builder over the resolved `CharacterView` (moved to
+  `types/character-view.ts` so client exporters avoid server imports). Share
+  dialog to mint/copy/revoke public links. `/licensing` page with the mandated
+  notice, GPL-3.0 source, and the font-licence table. Unit tests for the PDF and
+  Markdown builders.
 
 [Unreleased]: https://github.com/arrowedisgaming/guild-book/commits/main

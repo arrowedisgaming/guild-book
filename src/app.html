@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="Guild Book — a His Majesty the Worm adventurer creator and rules reference"
+		/>
+
+		<!--
+			OFL fallback typefaces (Phase 8 swaps in the book's own faces where web-embedding
+			rights allow). IM Fell English ≈ body/quotes; EB Garamond ≈ Caslon/Goudy; Cinzel
+			Decorative ≈ the ornamental display headings.
+		-->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&display=swap"
+			rel="stylesheet"
+		/>
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<!-- SVG filter for the parchment grain used by the light theme -->
+		<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+			<filter id="paper-noise">
+				<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
+				<feColorMatrix type="saturate" values="0" />
+			</filter>
+		</svg>
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

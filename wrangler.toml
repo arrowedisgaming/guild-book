@@ -1,0 +1,10 @@
+name = "guild-book"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "guild-book-db"
+# Fill in after: wrangler d1 create guild-book-db
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "src/lib/server/db/migrations"

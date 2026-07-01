@@ -1,0 +1,75 @@
+{
+	"name": "guild-book",
+	"version": "0.1.0",
+	"private": true,
+	"description": "A His Majesty the Worm adventurer creator and rules reference. SvelteKit monolith, content-pack driven, tarot-based, Adherent of the Worm licence-compliant.",
+	"license": "GPL-3.0-or-later",
+	"author": "Arrowed",
+	"homepage": "https://github.com/arrowedisgaming/guild-book#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/arrowedisgaming/guild-book.git"
+	},
+	"bugs": {
+		"url": "https://github.com/arrowedisgaming/guild-book/issues"
+	},
+	"keywords": [
+		"his-majesty-the-worm",
+		"hmtw",
+		"tarot",
+		"character-builder",
+		"ttrpg",
+		"sveltekit",
+		"svelte",
+		"adventurer",
+		"adherent-of-the-worm"
+	],
+	"type": "module",
+	"scripts": {
+		"dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.local node_modules/vite/bin/vite.js dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:e2e": "playwright test",
+		"db:push": "drizzle-kit push",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:d1:local": "npx wrangler d1 migrations apply guild-book-db --local",
+		"db:migrate:d1:remote": "npx wrangler d1 migrations apply guild-book-db --remote"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.59.1",
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/kit": "^2.57.0",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
+		"@testing-library/svelte": "^5.3.1",
+		"@types/better-sqlite3": "^7.6.13",
+		"svelte": "^5.55.2",
+		"svelte-check": "^4.4.6",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.7",
+		"vitest": "^4.1.4"
+	},
+	"dependencies": {
+		"@auth/drizzle-adapter": "^1.11.1",
+		"@auth/sveltekit": "^1.11.1",
+		"@lucide/svelte": "^0.577.0",
+		"@sveltejs/adapter-cloudflare": "^7.2.8",
+		"@sveltejs/adapter-node": "^5.5.4",
+		"@tailwindcss/vite": "^4.2.2",
+		"better-sqlite3": "^12.9.0",
+		"bits-ui": "^2.17.3",
+		"clsx": "^2.1.1",
+		"drizzle-kit": "^0.31.10",
+		"drizzle-orm": "^0.45.2",
+		"nanoid": "^3.3.11",
+		"pdfmake": "^0.3.7",
+		"tailwind-merge": "^3.5.0",
+		"tailwind-variants": "^3.2.2",
+		"tailwindcss": "^4.2.2",
+		"zod": "^4.3.6"
+	}
+}

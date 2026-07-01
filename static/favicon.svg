@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Guild Book">
+	<rect width="64" height="64" rx="8" fill="#f3ead6" />
+	<!-- an ouroboros worm, nodding to the Adherent of the Worm mark -->
+	<path
+		d="M32 12c11 0 20 8.5 20 19 0 8.5-6.5 15-15 15-6.5 0-11-4-11-9 0-4 3-7 7-7 3 0 5 2 5 4"
+		fill="none"
+		stroke="#211b14"
+		stroke-width="4"
+		stroke-linecap="round"
+	/>
+	<circle cx="47" cy="18" r="2.5" fill="#6a1f16" />
+</svg>

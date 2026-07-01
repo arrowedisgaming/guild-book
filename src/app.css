@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+/*
+ * Guild Book base styles (Phase 0 scaffold).
+ *
+ * The full theme system — oklch palettes, parchment-light / worm-dark themes,
+ * ornamental borders, card-table styling — lands in Phase 8. For now we define
+ * the typography *role tokens* so every later swap (once the book's own faces
+ * are licence-cleared for web embedding) is a one-line change here.
+ *
+ * Current faces are OFL fallbacks loaded in app.html:
+ *   display  ≈ Bilbo Display / HamletOrNot  → Cinzel Decorative
+ *   heading  ≈ HamletOrNot                  → Cinzel
+ *   body     ≈ IM Fell English              → IM Fell English
+ *   serif    ≈ Caslon Antique / Goudy       → EB Garamond
+ */
+:root {
+	--font-display: 'Cinzel Decorative', 'IM Fell English', serif;
+	--font-heading: 'Cinzel', 'IM Fell English', serif;
+	--font-subhead: 'EB Garamond', 'IM Fell English', serif;
+	--font-body: 'IM Fell English', 'EB Garamond', Georgia, serif;
+	--font-quote: 'IM Fell English', cursive, serif;
+	--font-sidebar: 'EB Garamond', Georgia, serif;
+
+	--parchment: #f3ead6;
+	--ink: #211b14;
+	--ink-soft: #4a4034;
+	--accent: #6a1f16; /* oxblood — the Worm's colour */
+}
+
+@theme {
+	--font-body: var(--font-body);
+}
+
+html {
+	background-color: var(--parchment);
+	color: var(--ink);
+	font-family: var(--font-body);
+}
+
+body {
+	min-height: 100vh;
+	line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+h1 {
+	font-family: var(--font-display);
+}
+
+a {
+	color: var(--accent);
+	text-underline-offset: 0.15em;
+}
+
+/* Respect reduced-motion from the very first phase. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}

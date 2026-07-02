@@ -70,6 +70,13 @@ a {
 	text-underline-offset: 0.15em;
 }
 
+/* Buttons: a tight, predictable line box so text centres vertically in the
+   padding regardless of face. (Caslon Antique shipped with zero hhea metrics —
+   repaired in static/fonts — but this keeps every button honest anyway.) */
+button {
+	line-height: 1.2;
+}
+
 ::selection {
 	background: color-mix(in oklab, var(--accent) 25%, transparent);
 }

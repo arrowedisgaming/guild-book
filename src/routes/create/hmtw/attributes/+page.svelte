@@ -31,6 +31,18 @@
 		)
 	);
 
+	/**
+	 * Live filtering: a value picked for one suit disappears from the other
+	 * dropdowns. Each select always keeps its own current value in its list.
+	 */
+	function optionsFor(suit: SuitId): number[] {
+		return restValues.filter(
+			(v) =>
+				assignment[suit] === v ||
+				!otherSuits.some((s) => s !== suit && assignment[s] === v)
+		);
+	}
+
 	let usedValues = $derived(Object.values(assignment).filter((v): v is number => v !== null));
 	let isValid = $derived(
 		usedValues.length === restValues.length && new Set(usedValues).size === restValues.length
@@ -71,24 +83,20 @@
 	<div class="rows">
 		<div class="row locked">
 			<span class="suit">{SUIT_LABELS[pathSuit]}</span>
-			<span class="fixed">{highest}</span>
+			<span class="locked-value">{highest}</span>
 		</div>
 		{#each otherSuits as suit (suit)}
 			<div class="row">
 				<label class="suit" for="attr-{suit}">{SUIT_LABELS[suit]}</label>
 				<select id="attr-{suit}" bind:value={assignment[suit]}>
 					<option value={null}>—</option>
-					{#each restValues as v}
+					{#each optionsFor(suit) as v (v)}
 						<option value={v}>{v}</option>
 					{/each}
 				</select>
 			</div>
 		{/each}
 	</div>
-
-	{#if usedValues.length === restValues.length && !isValid}
-		<p class="warn">Each of {restValues.join(', ')} must be used exactly once.</p>
-	{/if}
 {/if}
 
 <WizardNav
@@ -114,7 +122,6 @@
 	.row {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		padding: 0.6rem 0.9rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
 		border-radius: 4px;
@@ -127,9 +134,14 @@
 		font-family: var(--font-heading);
 		font-size: 1.05rem;
 	}
-	.fixed {
-		font-family: var(--font-display);
-		font-size: 1.6rem;
+	/* The value/select always sits at the far right of the row. */
+	.locked-value,
+	select {
+		margin-left: auto;
+	}
+	.locked-value {
+		font-family: var(--font-heading);
+		font-size: 1.45rem;
 		line-height: 1;
 	}
 	select {

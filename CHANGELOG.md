@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Tailwind utility-class collision: local `fixed` / `table` class names were
+  picked up as Tailwind utilities (`position: fixed`, `display: table`), which
+  pulled the attributes page's locked value and the kin-talent card out of
+  document flow (overlapping text/cards). Renamed the classes.
+- Repaired Caslon Antique's zero `hhea` vertical metrics (ascent/descent were
+  0/0), which collapsed every button's line box — button text now centres
+  properly; primary action buttons also got larger text.
+- Attribute assignment dropdowns now filter live: a value chosen for one suit
+  disappears from the other suits' dropdowns.
+- Removed the "(Placeholder talents…)" aside from path-selection cards; the
+  three motif inputs now show three different example placeholders.
+
 ### Added
 
 - Project scaffold: SvelteKit 2 + Svelte 5 (runes) + TypeScript strict + Tailwind v4,

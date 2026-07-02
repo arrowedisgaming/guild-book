@@ -10,6 +10,8 @@
 
 	const motifCount = $derived(data.contentPack.creation.motifCount);
 
+	const MOTIF_EXAMPLES = ['e.g. Wealthy Artificer', 'e.g. Disgraced Soldier', 'e.g. Wandering Minstrel'];
+
 	let quest = $state($wizard.character.quest);
 	let motifs = $state<string[]>(
 		untrack(() =>
@@ -53,7 +55,7 @@
 			bind:value={motifs[i]}
 			oninput={persist}
 			list="motif-suggestions"
-			placeholder="e.g. Wealthy Artificer"
+			placeholder={MOTIF_EXAMPLES[i % MOTIF_EXAMPLES.length]}
 		/>
 	{/each}
 </div>

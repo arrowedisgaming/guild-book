@@ -198,9 +198,10 @@
 		text-decoration: none;
 	}
 	.save-row button {
-		padding: 0.55rem 1.2rem;
+		padding: 0.6rem 1.2rem;
 		border-radius: 3px;
 		font-family: var(--font-subhead);
+		font-size: 1.1rem;
 		cursor: pointer;
 	}
 	.draft {

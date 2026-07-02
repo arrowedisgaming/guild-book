@@ -40,13 +40,13 @@
 		text-decoration: none;
 	}
 	.continue {
-		padding: 0.55rem 1.4rem;
+		padding: 0.6rem 1.4rem;
 		border: 1px solid var(--accent);
 		border-radius: 3px;
 		background: var(--accent);
 		color: var(--parchment);
 		font-family: var(--font-subhead);
-		font-size: 0.95rem;
+		font-size: 1.1rem;
 		cursor: pointer;
 	}
 	.continue:disabled {

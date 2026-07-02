@@ -18,7 +18,7 @@
 	});
 </script>
 
-<div class="table">
+<div class="tarot-table">
 	<div class="piles">
 		<button
 			type="button"

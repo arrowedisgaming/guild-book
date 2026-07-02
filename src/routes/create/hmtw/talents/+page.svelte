@@ -65,9 +65,12 @@
 	{#if kinTalentId}
 		<section>
 			<h2>Kin talent (mastered)</h2>
-			<div class="talent fixed">
-				<span class="tname">{talentName(kinTalentId)}</span>
-				<span class="tdesc">{talentDesc(kinTalentId)}</span>
+			<div class="talent granted">
+				<div class="trow">
+					<span class="tname">{talentName(kinTalentId)}</span>
+					<span class="state">mastered</span>
+				</div>
+				<p class="tdesc">{talentDesc(kinTalentId)}</p>
 			</div>
 		</section>
 	{/if}
@@ -77,10 +80,12 @@
 		<div class="list">
 			{#each path.talentIds as id (id)}
 				<label class="talent" class:sel={masteredPathTalentId === id}>
-					<input type="radio" name="mastered" value={id} bind:group={masteredPathTalentId} />
-					<span class="tname">{talentName(id)}</span>
-					<span class="tdesc">{talentDesc(id)}</span>
-					<span class="state">{masteredPathTalentId === id ? 'mastered' : 'in training'}</span>
+					<div class="trow">
+						<input type="radio" name="mastered" value={id} bind:group={masteredPathTalentId} />
+						<span class="tname">{talentName(id)}</span>
+						<span class="state">{masteredPathTalentId === id ? 'mastered' : 'in training'}</span>
+					</div>
+					<p class="tdesc">{talentDesc(id)}</p>
 				</label>
 			{/each}
 		</div>
@@ -110,42 +115,42 @@
 		gap: 0.5rem;
 	}
 	.talent {
-		display: grid;
-		grid-template-columns: auto 1fr auto;
-		grid-template-areas: 'radio name state' 'radio desc desc';
-		gap: 0.15rem 0.6rem;
-		align-items: center;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
 		padding: 0.7rem 0.9rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
 		border-radius: 4px;
 		cursor: pointer;
 	}
-	.talent.fixed {
-		grid-template-columns: 1fr;
-		grid-template-areas: 'name' 'desc';
+	.talent.granted {
 		border-color: var(--accent);
 		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+		cursor: default;
 	}
 	.talent.sel {
 		border-color: var(--accent);
 	}
-	.talent input {
-		grid-area: radio;
+	.trow {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
 	}
 	.tname {
-		grid-area: name;
 		font-family: var(--font-heading);
+		font-size: 1.05rem;
 	}
 	.tdesc {
-		grid-area: desc;
+		margin: 0;
 		font-size: 0.83rem;
 		color: var(--ink-soft);
 	}
 	.state {
-		grid-area: state;
+		margin-left: auto;
 		font-size: 0.7rem;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		color: var(--ink-soft);
+		white-space: nowrap;
 	}
 </style>

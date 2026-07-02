@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Draft adventurers can now be finalized from their sheet: a "Save as final"
+  button in the draft banner promotes the draft (running the server's
+  final-validation gate — incomplete drafts get a "Still missing: …" list
+  instead of saving broken).
+
 - Tailwind utility-class collision: local `fixed` / `table` class names were
   picked up as Tailwind utilities (`position: fixed`, `display: table`), which
   pulled the attributes page's locked value and the kin-talent card out of

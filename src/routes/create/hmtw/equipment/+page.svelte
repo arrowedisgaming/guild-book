@@ -43,7 +43,15 @@
 	function next() {
 		const equipment = data.items
 			.filter((i) => selected.has(i.id))
-			.map((i) => ({ itemId: i.id, customName: null, tier: i.tier, packSpace: i.packSpace ?? 1 }));
+			.map((i) => ({
+				itemId: i.id,
+				customName: null,
+				tier: i.tier,
+				packSpace: i.slots ?? 1,
+				location: 'pack' as const,
+				quantity: 1,
+				notchesTaken: 0
+			}));
 		wizard.updateCharacter((c) => ({ ...c, equipment }));
 		wizard.completeStep(STEP);
 		goto(WIZARD_STEPS[STEP + 1].path);

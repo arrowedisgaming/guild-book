@@ -31,15 +31,19 @@ export function buildStartingTalents(params: {
 		state: 'mastered',
 		source: 'kin',
 		sourceLabel: kin.name,
-		at
+		at,
+		wounded: false,
+		xp: 0
 	};
 
 	const pathTalents: TalentAllocation[] = path.talentIds.map((talentId) => ({
 		talentId,
-		state: talentId === masteredPathTalentId ? 'mastered' : 'in-training',
-		source: 'path',
+		state: talentId === masteredPathTalentId ? 'mastered' : ('in-training' as const),
+		source: 'path' as const,
 		sourceLabel: path.name,
-		at
+		at,
+		wounded: false,
+		xp: 0
 	}));
 
 	return [kinTalent, ...pathTalents];

@@ -8,7 +8,7 @@ function finishedSwordsAdventurer(): GuildBookCharacterData {
 	const c = createBlankCharacter();
 	c.name = 'Test Knight';
 	c.kithId = 'human';
-	c.kinId = 'human-house-valerian';
+	c.kinId = 'human-noble-house';
 	c.pathId = 'path-of-swords';
 	c.attributes.swords.value = 4;
 	c.attributes.pentacles.value = 3;

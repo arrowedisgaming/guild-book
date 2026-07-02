@@ -4,27 +4,59 @@
 		"name": "Path of Swords",
 		"suit": "swords",
 		"description": "The warrior's path. Choosing it sets Swords as your highest attribute.",
-		"talentIds": ["path-swords-1", "path-swords-2", "path-swords-3"]
+		"talentIds": [
+			"aegis",
+			"doom-eye",
+			"heavy-metal-machine",
+			"monster-hunter",
+			"reaver",
+			"two-handed-focus",
+			"war-stories"
+		]
 	},
 	{
 		"id": "path-of-pentacles",
 		"name": "Path of Pentacles",
 		"suit": "pentacles",
 		"description": "The rogue's path. Choosing it sets Pentacles as your highest attribute.",
-		"talentIds": ["path-pentacles-1", "path-pentacles-2", "path-pentacles-3"]
+		"talentIds": [
+			"acrobat",
+			"ambusher",
+			"con-artist",
+			"fight-dirty",
+			"quick",
+			"sneak",
+			"up-my-sleeve"
+		]
 	},
 	{
 		"id": "path-of-cups",
 		"name": "Path of Cups",
 		"suit": "cups",
 		"description": "The scholar's path. Choosing it sets Cups as your highest attribute.",
-		"talentIds": ["path-cups-1", "path-cups-2", "path-cups-3"]
+		"talentIds": [
+			"alchemy",
+			"beast-master",
+			"bookworm",
+			"chirurgeon",
+			"counsel",
+			"high-chant",
+			"loremaster"
+		]
 	},
 	{
 		"id": "path-of-wands",
 		"name": "Path of Wands",
 		"suit": "wands",
 		"description": "The sorcerer's path. Choosing it sets Wands as your highest attribute.",
-		"talentIds": ["path-wands-1", "path-wands-2", "path-wands-3"]
+		"talentIds": [
+			"counter-spell",
+			"dwimmercraft",
+			"gramarye",
+			"magic-of-the-wastes",
+			"magic-of-the-weald",
+			"magic-of-the-weird",
+			"magic-of-the-welkin"
+		]
 	}
 ]

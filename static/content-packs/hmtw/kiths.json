@@ -2,71 +2,63 @@
 	{
 		"id": "human",
 		"name": "Humans",
-		"description": "Divided into myriad houses, humans are the most numerous and adaptable of the City's peoples.",
+		"description": "The most numerous people of the City, divided into myriad proud houses. Name your own house — its sigil and motto are yours to define.",
 		"areteTriggers": [
-			"PLACEHOLDER: Act with conviction despite the odds.",
-			"PLACEHOLDER: Show mercy where none is expected.",
-			"PLACEHOLDER: Sacrifice for a member of your guild."
+			"Get married.",
+			"Fulfil an oath.",
+			"Defeat a member of a rival house in a fair tournament or duel."
 		],
 		"kins": [
 			{
-				"id": "human-house-valerian",
-				"name": "House Valerian",
-				"description": "PLACEHOLDER house — a proud line of city merchants and duelists.",
-				"masteredTalentId": "kin-human-valerian",
-				"areteTalentId": "arete-human",
-				"sampleNames": ["Dorian", "Phynn", "Isolde", "Marcus"]
-			},
-			{
-				"id": "human-house-corvid",
-				"name": "House Corvid",
-				"description": "PLACEHOLDER house — scholars and spymasters of the lower wards.",
-				"masteredTalentId": "kin-human-corvid",
-				"areteTalentId": "arete-human",
-				"sampleNames": ["Wren", "Cassia", "Lior", "Vesper"]
+				"id": "human-noble-house",
+				"name": "A Noble House",
+				"description": "Your house — you choose its name, its sigil, and its motto. Two adventurers of the same house may even be kin by blood.",
+				"masteredTalentId": "proud-and-ancient",
+				"areteTalentId": "byname",
+				"sampleNames": ["Dorian", "Phynn", "Isolde", "Marcus", "Wren", "Cassia"]
 			}
 		]
 	},
 	{
 		"id": "fay",
 		"name": "Fay",
-		"description": "The fair folk — elves and gnomes touched by the Far Realms.",
+		"description": "The fair folk — elves and gnomes touched by the far realms, where every archetype burns brighter.",
 		"areteTriggers": [
-			"PLACEHOLDER: Honor an old bargain or oath.",
-			"PLACEHOLDER: Preserve something beautiful.",
-			"PLACEHOLDER: Outwit a foe rather than overpower them."
+			"Kill something without using a weapon.",
+			"Provide aid to a spirit.",
+			"Make someone you have kissed cry."
 		],
 		"kins": [
 			{
 				"id": "fay-high-elf",
 				"name": "High Elf",
-				"description": "Long-lived courtiers of the elder houses.",
-				"masteredTalentId": "kin-fay-high-elf",
-				"areteTalentId": "arete-fay",
+				"description": "Long-lived courtiers of the elder houses, with memories that never fade.",
+				"masteredTalentId": "read-the-past",
+				"areteTalentId": "akashic-consciousness",
 				"sampleNames": ["Aelaria", "Faelan", "Sylwen"]
 			},
 			{
 				"id": "fay-wood-elf",
 				"name": "Wood Elf",
-				"description": "Wardens of the deep forests beyond the walls.",
-				"masteredTalentId": "kin-fay-wood-elf",
-				"areteTalentId": "arete-fay",
+				"description": "Wardens of the deep forests, with the eyes of hawks and the noses of wolves.",
+				"masteredTalentId": "keen-senses",
+				"areteTalentId": "area-sense",
 				"sampleNames": ["Tanwen", "Corwin", "Briar"]
 			},
 			{
 				"id": "fay-dark-elf",
 				"name": "Dark Elf",
-				"description": "Dwellers of the twilight roads under the earth.",
-				"masteredTalentId": "kin-fay-dark-elf",
-				"areteTalentId": "arete-fay",
+				"description": "Dwellers of the twilight roads beneath the earth, gifted with prophetic hunches.",
+				"masteredTalentId": "foretell",
+				"areteTalentId": "spout-doom",
 				"sampleNames": ["Nyx", "Vael", "Umbra"]
 			},
 			{
 				"id": "fay-gnome",
 				"name": "Gnome",
-				"description": "Tinkerers and hedge-magicians of small stature and large curiosity.",
-				"masteredTalentId": "kin-fay-gnome",
-				"areteTalentId": "arete-fay",
+				"description": "Small, curious, and impossibly well-informed hedge-folk.",
+				"masteredTalentId": "weird-wise-ancient",
+				"areteTalentId": "uncanny-knowledge",
 				"sampleNames": ["Pib", "Fenwick", "Tolly"]
 			}
 		]
@@ -74,35 +66,35 @@
 	{
 		"id": "underfolk",
 		"name": "Underfolk",
-		"description": "Peoples of the hills and deeps — dwarves, halflings, and trolls.",
+		"description": "Peoples of the hills and deeps — dwarves, halflings, and trolls — makers and keepers of lasting things.",
 		"areteTriggers": [
-			"PLACEHOLDER: Uphold a tradition of your people.",
-			"PLACEHOLDER: Endure hardship without complaint.",
-			"PLACEHOLDER: Protect your kith and kin."
+			"Craft something that will last for centuries.",
+			"Recover a precious gem or work of fine art and hoard it as a grave good.",
+			"Discover something secret and forgotten."
 		],
 		"kins": [
 			{
 				"id": "underfolk-dwarf",
 				"name": "Dwarf",
-				"description": "Stout smiths and delvers with memory as long as stone.",
-				"masteredTalentId": "kin-underfolk-dwarf",
-				"areteTalentId": "arete-underfolk",
+				"description": "Stout smiths and delvers who can labor through the night.",
+				"masteredTalentId": "labor-unending",
+				"areteTalentId": "iron-beards",
 				"sampleNames": ["Bruni", "Dagna", "Thrain"]
 			},
 			{
 				"id": "underfolk-halfling",
 				"name": "Halfling",
-				"description": "Small, quick, and unreasonably lucky wanderers.",
-				"masteredTalentId": "kin-underfolk-halfling",
-				"areteTalentId": "arete-underfolk",
+				"description": "Comfort-loving gentlefolk who make excellent diplomats — and better dinners.",
+				"masteredTalentId": "hale-and-hearty",
+				"areteTalentId": "underfoot",
 				"sampleNames": ["Pip", "Marigold", "Rowan"]
 			},
 			{
 				"id": "underfolk-troll",
 				"name": "Troll",
-				"description": "Slow-spoken giants of the border country, tougher than they look.",
-				"masteredTalentId": "kin-underfolk-troll",
-				"areteTalentId": "arete-underfolk",
+				"description": "Slow-spoken giants of the border country, far stronger than anyone else in the room.",
+				"masteredTalentId": "giants-strength",
+				"areteTalentId": "colossal",
 				"sampleNames": ["Grum", "Hessa", "Bolder"]
 			}
 		]
@@ -110,43 +102,43 @@
 	{
 		"id": "orc",
 		"name": "Orcs",
-		"description": "The blooded peoples, each attuned to an element of the wild world.",
+		"description": "The blooded peoples, each kin's veins running with a different element. Their strange blood answers when they are hurt.",
 		"areteTriggers": [
-			"PLACEHOLDER: Prove your strength in the open.",
-			"PLACEHOLDER: Answer an insult to your blood.",
-			"PLACEHOLDER: Lead from the front."
+			"Hoard a skull from a class of monster your guild has never killed before.",
+			"Hoard a treasure of great worth.",
+			"Slay a monster at least twice your size."
 		],
 		"kins": [
 			{
 				"id": "orc-earthblooded",
 				"name": "Earthblooded",
-				"description": "Unmovable as the mountains they are born beneath.",
-				"masteredTalentId": "kin-orc-earthblooded",
-				"areteTalentId": "arete-orc",
+				"description": "Unmovable as the mountains — their quicksilver blood eats the weapons that cut them.",
+				"masteredTalentId": "quicksilver-blood",
+				"areteTalentId": "jarl",
 				"sampleNames": ["Karg", "Ushi", "Dromm"]
 			},
 			{
 				"id": "orc-fireblooded",
 				"name": "Fireblooded",
-				"description": "Quick to burn, quicker to act.",
-				"masteredTalentId": "kin-orc-fireblooded",
-				"areteTalentId": "arete-orc",
+				"description": "Quick to burn — wounds kindle a berserker's rage.",
+				"masteredTalentId": "berserkergang",
+				"areteTalentId": "jarl",
 				"sampleNames": ["Ash", "Vurok", "Cinder"]
 			},
 			{
 				"id": "orc-seablooded",
 				"name": "Seablooded",
-				"description": "Tidal and patient, with salt in their veins.",
-				"masteredTalentId": "kin-orc-seablooded",
-				"areteTalentId": "arete-orc",
+				"description": "Tidal and patient — their black blood poisons whatever bites them.",
+				"masteredTalentId": "poison-blood",
+				"areteTalentId": "jarl",
 				"sampleNames": ["Nerra", "Fathom", "Coral"]
 			},
 			{
 				"id": "orc-stormblooded",
 				"name": "Stormblooded",
-				"description": "Loud, sudden, and electric.",
-				"masteredTalentId": "kin-orc-stormblooded",
-				"areteTalentId": "arete-orc",
+				"description": "Loud and sudden — wounded, their blood rises as concealing mist.",
+				"masteredTalentId": "blur",
+				"areteTalentId": "jarl",
 				"sampleNames": ["Zar", "Tempest", "Gale"]
 			}
 		]

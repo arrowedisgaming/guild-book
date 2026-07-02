@@ -24,19 +24,31 @@ const talentAllocationSchema = z.object({
 	state: z.enum(['mastered', 'in-training']),
 	source: z.enum(['kin', 'path', 'arete', 'general']),
 	sourceLabel: z.string(),
-	at: z.string()
+	at: z.string(),
+	wounded: z.boolean(),
+	xp: z.number()
 });
 
 const bondSchema = z.object({
 	targetName: z.string(),
-	text: z.string()
+	text: z.string(),
+	charged: z.boolean()
 });
 
 const equipmentEntrySchema = z.object({
 	itemId: z.string().nullable(),
 	customName: z.string().nullable(),
 	tier: z.enum(ITEM_TIERS),
-	packSpace: z.number()
+	packSpace: z.number(),
+	location: z.enum(['hand', 'belt', 'pack']),
+	quantity: z.number(),
+	notchesTaken: z.number()
+});
+
+const afflictionStateSchema = z.object({
+	afflictionId: z.string().nullable(),
+	customName: z.string().nullable(),
+	stage: z.number()
 });
 
 const areteStateSchema = z.object({
@@ -64,6 +76,7 @@ export const characterDataSchema = z.object({
 	arete: areteStateSchema,
 	languages: z.array(z.string()),
 	conditions: z.array(z.string()),
+	afflictions: z.array(afflictionStateSchema),
 	lore: z.number(),
 	experience: z.number(),
 	equipment: z.array(equipmentEntrySchema),

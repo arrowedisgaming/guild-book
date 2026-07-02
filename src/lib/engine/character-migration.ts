@@ -48,12 +48,30 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 			triggersMet: normalizeTriggers(stored.arete?.triggersMet),
 			talentEarned: stored.arete?.talentEarned ?? base.arete.talentEarned
 		},
-		talents: Array.isArray(stored.talents) ? stored.talents : base.talents,
+		// v1 → v2: talents gain wounded/xp, bonds gain charged, equipment gains
+		// location/quantity/notchesTaken, afflictions appear. Defaults preserve
+		// every stored choice; unplaced gear defaults to the pack (the caller can
+		// re-run auto-placement — see engine/encumbrance.ts).
+		talents: (Array.isArray(stored.talents) ? stored.talents : base.talents).map((t) => ({
+			...t,
+			wounded: typeof t.wounded === 'boolean' ? t.wounded : false,
+			xp: typeof t.xp === 'number' ? t.xp : 0
+		})),
 		motifs: Array.isArray(stored.motifs) ? stored.motifs : base.motifs,
-		bonds: Array.isArray(stored.bonds) ? stored.bonds : base.bonds,
-		equipment: Array.isArray(stored.equipment) ? stored.equipment : base.equipment,
+		bonds: (Array.isArray(stored.bonds) ? stored.bonds : base.bonds).map((b) => ({
+			...b,
+			charged: typeof b.charged === 'boolean' ? b.charged : false
+		})),
+		equipment: (Array.isArray(stored.equipment) ? stored.equipment : base.equipment).map((e) => ({
+			...e,
+			location: e.location === 'hand' || e.location === 'belt' || e.location === 'pack' ? e.location : 'pack',
+			quantity: typeof e.quantity === 'number' && e.quantity > 0 ? e.quantity : 1,
+			notchesTaken: typeof e.notchesTaken === 'number' ? e.notchesTaken : 0
+		})),
+		afflictions: Array.isArray(stored.afflictions) ? stored.afflictions : [],
 		languages: Array.isArray(stored.languages) ? stored.languages : base.languages,
-		conditions: Array.isArray(stored.conditions) ? stored.conditions : base.conditions
+		conditions: Array.isArray(stored.conditions) ? stored.conditions : base.conditions,
+		lore: typeof stored.lore === 'number' ? stored.lore : base.lore
 	};
 }
 

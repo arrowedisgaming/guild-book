@@ -1,11 +1,11 @@
 {
 	"id": "hmtw",
-	"name": "His Majesty the Worm (placeholder)",
-	"version": "0.1.0",
-	"description": "Placeholder content pack for Guild Book. Structure and core mechanics reflect the His Majesty the Worm rules; kith/kin, path, talent, and item entries are representative stubs to be replaced with fully transcribed rulebook data.",
+	"name": "His Majesty the Worm",
+	"version": "1.0.0",
+	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the Omphalic Market, conditions, and afflictions. Game mechanics summarised in original wording under the Adherent of the Worm open licence.",
 	"system": "hmtw",
-	"license": "placeholder",
-	"authors": ["PLACEHOLDER — replace with transcribed His Majesty the Worm data before release"],
+	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license). His Majesty the Worm is copyright Joshua McCrowell; mechanics referenced with permission. Summaries and phrasing by the Guild Book project.",
+	"authors": ["Joshua McCrowell (His Majesty the Worm)", "Guild Book project (transcription & summaries)"],
 	"files": {
 		"kiths": "kiths.json",
 		"paths": "paths.json",
@@ -14,6 +14,7 @@
 		"motifs": "motifs.json",
 		"languages": "languages.json",
 		"conditions": "conditions.json",
+		"afflictions": "afflictions.json",
 		"rules": "rules.json"
 	},
 	"attributes": [
@@ -131,5 +132,10 @@
 		"motifCount": 3,
 		"startingResolve": 4,
 		"masteredPathTalents": 1
+	},
+	"encumbrance": {
+		"handSlots": 2,
+		"beltSlots": 4,
+		"packSlots": 21
 	}
 }

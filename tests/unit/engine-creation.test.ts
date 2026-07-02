@@ -55,12 +55,12 @@ describe('kith/kin & path grants', () => {
 	it('surfaces the kin mastered talent and kith arête triggers', () => {
 		const resolved = resolveKin(kiths, 'fay', 'fay-wood-elf')!;
 		const grants = kinGrants(resolved);
-		expect(grants.masteredTalentId).toBe('kin-fay-wood-elf');
+		expect(grants.masteredTalentId).toBe('keen-senses');
 		expect(grants.areteTriggers).toHaveLength(3);
 	});
 
 	it('assembles starting talents: kin mastered, one path talent mastered', () => {
-		const resolved = resolveKin(kiths, 'human', 'human-house-valerian')!;
+		const resolved = resolveKin(kiths, 'human', 'human-noble-house')!;
 		const path = resolvePath(paths, 'path-of-swords')!;
 		const talents = buildStartingTalents({
 			kin: resolved.kin,

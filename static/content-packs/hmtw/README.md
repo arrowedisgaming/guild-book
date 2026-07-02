@@ -2,37 +2,39 @@
 
 This folder is the **single source of His Majesty the Worm game data** for Guild Book.
 The app reads it through `src/lib/server/content/loader.ts`, validated by the Zod schemas
-in `src/lib/schemas/`. **No rules are hardcoded in components or routes** — everything the
-wizard and rules reference display comes from these JSON files.
+in `src/lib/schemas/`. **No rules are hardcoded in components or routes.**
 
-## Status: PLACEHOLDER
+## Status: transcribed
 
-The committed pack is a **placeholder**. Structure and core mechanics (the four suits/
-attributes, tarot ranks and values, the 4/3/2/1 attribute spread, the Omphalic Market
-tiers) reflect the real rules, but kith/kin, path, talent, item, and rules-text entries
-are representative stubs. Every stub is marked `PLACEHOLDER`. `index.json` sets
-`"license": "placeholder"`.
+Kith & kin (with arête triggers and talents), the four paths and their seven talents
+each, the Omphalic Market (all three tiers plus weapons and ammunition), conditions,
+and staged afflictions are transcribed from the His Majesty the Worm core rulebook.
+Effect text is **summarised in the project's own wording** — mechanics faithful,
+prose condensed. The `rules.json` reference entries remain summaries.
 
-## How to swap in the real rules
+Not yet included (deferred): the sorcery appendix's individual spell lists (the four
+Magic of the — talents reference the rulebook), overland travel, and City-phase
+economy tables.
 
-1. Replace the entries in each file with data transcribed from the His Majesty the Worm
-   rulebook. Keep the **JSON shapes** — they are defined by the schemas in
-   `src/lib/schemas/content-pack.schema.ts`.
-2. **Keep ids stable** where possible so saved characters keep resolving. Cross-file
-   references that must stay valid:
-   - `kins[].masteredTalentId` / `kins[].areteTalentId` → a `talents.json` id
-   - `paths[].talentIds[]` → `talents.json` ids
-   - `paths[].suit` and `attributes[].suit` → one of `swords|pentacles|cups|wands`
-   - `talents[].requiredItemIds[]` → `items.json` ids
-3. Set `index.json` `"license"` and `"authors"` to the real values and remove the
-   `PLACEHOLDER` markers.
-4. Run `npm run test` — the schema round-trip and loader tests will reject a malformed
-   pack before it ever reaches the UI.
+## Editing / extending
 
-No application code needs to change to swap real data in.
+Keep the JSON shapes — they're defined by `src/lib/schemas/content-pack.schema.ts`.
+Cross-file references that must stay valid (enforced by `tests/unit/content-pack.test.ts`):
+
+- `kins[].masteredTalentId` / `kins[].areteTalentId` → a `talents.json` id
+- `paths[].talentIds[]` (seven per path) → `talents.json` ids
+- `talents[].requiredItemIds[]` → `items.json` ids
+- `paths[].suit` and `attributes[].suit` → one of `swords|pentacles|cups|wands`
+
+Item fields that drive the encumbrance engine: `slots`, `carry` (`belt-only` for
+oversized gear, `hand` for wielded), `wornBeltSlots` (armor), `stack.per`
+(units per slot), `notches` (durability).
+
+Run `npm run test` after any edit — the schema round-trip and referential-integrity
+tests reject a malformed pack before it reaches the UI.
 
 ## Legal
 
-Only reuse His Majesty the Worm **mechanics and game text**, per the "Adherent of the
-Worm" licence. Do **not** paste large verbatim passages, art, or trade dress. Summarise
-and paraphrase rules text for the reference. See `/licensing` in the app.
+Published under the [Adherent of the Worm open licence](https://www.hismajestytheworm.games/open-license).
+His Majesty the Worm is copyright Joshua McCrowell. No book artwork, logos, or trade
+dress are reproduced; effect text is summarised, not copied. See `/licensing` in the app.

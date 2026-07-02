@@ -22,6 +22,15 @@ export interface GuildBookContentPack {
 	tarot: TarotConfig;
 	/** Creation-time constraints (spread, market allowance, counts). */
 	creation: CreationRules;
+	/** Carrying-capacity model (slots per location). */
+	encumbrance: EncumbranceConfig;
+}
+
+/** Slot capacities for the three carrying locations. */
+export interface EncumbranceConfig {
+	handSlots: number;
+	beltSlots: number;
+	packSlots: number;
 }
 
 /** Filenames (relative to the pack folder) for each content collection. */
@@ -33,6 +42,7 @@ export interface ContentPackFiles {
 	motifs?: string;
 	languages?: string;
 	conditions?: string;
+	afflictions?: string;
 	rules?: string;
 }
 
@@ -120,8 +130,22 @@ export interface ItemDefinition {
 	tier: ItemTier;
 	category: string;
 	description: string;
-	/** Pack space consumed (defaults to 1 when omitted). */
-	packSpace?: number;
+	/** Slots one unit (or one stack) consumes. Defaults to 1 when omitted. */
+	slots?: number;
+	/**
+	 * Carrying restriction: 'belt-only' for oversized gear (pole, shovel, tent),
+	 * 'hand' for things wielded (weapons/shields default here when held).
+	 * Omitted = any location.
+	 */
+	carry?: 'any' | 'belt-only' | 'hand';
+	/** Belt slots consumed when WORN (armor: light 1 / iron 2 / steel 3). */
+	wornBeltSlots?: number;
+	/** Durability — notches absorbed before Destroyed (fragile 1 / normal 2 / tempered 3). */
+	notches?: number;
+	/** Stackable items: how many units share one slot (arrows 12, lockpicks 6…). */
+	stack?: { per: number; unit?: string };
+	/** Mechanical properties (weapon rules etc.), shown as chips. */
+	properties?: string[];
 	/** Present for weapons/armour; free-form to stay data-driven. */
 	stats?: Record<string, string | number>;
 }
@@ -140,6 +164,21 @@ export interface NamedEntry {
 	id: string;
 	name: string;
 	description?: string;
+}
+
+/** A staged affliction (venoms, drugs, contagions). Stage 1 is mildest. */
+export interface AfflictionDefinition {
+	id: string;
+	name: string;
+	description?: string;
+	stages: AfflictionStage[];
+}
+
+export interface AfflictionStage {
+	stage: number;
+	effect: string;
+	/** Burned charges needed to cure this stage (null = incurable). */
+	cureCost: number | null;
 }
 
 /** A rules-reference entry (browsable/searchable in the rules section). */

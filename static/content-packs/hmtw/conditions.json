@@ -1,6 +1,22 @@
 [
-	{ "id": "exhausted", "name": "Exhausted", "description": "PLACEHOLDER — worn down; disfavor until you rest." },
-	{ "id": "wounded", "name": "Wounded", "description": "PLACEHOLDER — a wound taken in a dangerous situation." },
-	{ "id": "afraid", "name": "Afraid", "description": "PLACEHOLDER — shaken by something terrible." },
-	{ "id": "poisoned", "name": "Poisoned", "description": "PLACEHOLDER — venom or toxin at work." }
+	{
+		"id": "stressed",
+		"name": "Stressed",
+		"description": "Worn down in body or spirit. No immediate penalty, but while Stressed you cannot heal or recover anything else. Clear it first at camp by burning a charged Bond (or with certain talents/items)."
+	},
+	{
+		"id": "staggered",
+		"name": "Staggered",
+		"description": "Off balance and winded — you've absorbed a free hit. No immediate penalty. Clears automatically during camp recovery (unless you are Stressed)."
+	},
+	{
+		"id": "injured",
+		"name": "Injured",
+		"description": "Badly hurt and in mortal danger: the next Wound you take must put you at Death's Door. Burn a charged Bond at camp to clear it before healing anything else."
+	},
+	{
+		"id": "deaths-door",
+		"name": "Death's Door",
+		"description": "Unconscious and helpless. You linger for one watch — if no one heals you in time (a poultice and a Wands test, or any Heal effect), you die. Being healed wakes you, marks you Stressed, and clears this condition."
+	}
 ]

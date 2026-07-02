@@ -76,7 +76,14 @@ export const contentPackFilesSchema = z.object({
 	motifs: z.string().optional(),
 	languages: z.string().optional(),
 	conditions: z.string().optional(),
+	afflictions: z.string().optional(),
 	rules: z.string().optional()
+});
+
+export const encumbranceConfigSchema = z.object({
+	handSlots: z.number(),
+	beltSlots: z.number(),
+	packSlots: z.number()
 });
 
 /** The manifest (index.json). */
@@ -91,7 +98,8 @@ export const contentPackSchema = z.object({
 	files: contentPackFilesSchema,
 	attributes: z.array(attributeDefinitionSchema),
 	tarot: tarotConfigSchema,
-	creation: creationRulesSchema
+	creation: creationRulesSchema,
+	encumbrance: encumbranceConfigSchema
 });
 
 // --- Collection files -------------------------------------------------------
@@ -135,8 +143,26 @@ export const itemDefinitionSchema = z.object({
 	tier: tierEnum,
 	category: z.string(),
 	description: z.string(),
-	packSpace: z.number().optional(),
+	slots: z.number().optional(),
+	carry: z.enum(['any', 'belt-only', 'hand']).optional(),
+	wornBeltSlots: z.number().optional(),
+	notches: z.number().optional(),
+	stack: z.object({ per: z.number(), unit: z.string().optional() }).optional(),
+	properties: z.array(z.string()).optional(),
 	stats: z.record(z.string(), z.union([z.string(), z.number()])).optional()
+});
+
+export const afflictionStageSchema = z.object({
+	stage: z.number(),
+	effect: z.string(),
+	cureCost: z.number().nullable()
+});
+
+export const afflictionDefinitionSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	description: z.string().optional(),
+	stages: z.array(afflictionStageSchema).min(1)
 });
 
 export const motifTablesSchema = z.object({
@@ -164,6 +190,7 @@ export const talentsFileSchema = z.array(talentDefinitionSchema);
 export const itemsFileSchema = z.array(itemDefinitionSchema);
 export const languagesFileSchema = z.array(namedEntrySchema);
 export const conditionsFileSchema = z.array(namedEntrySchema);
+export const afflictionsFileSchema = z.array(afflictionDefinitionSchema);
 export const rulesFileSchema = z.array(ruleEntrySchema);
 
 /**

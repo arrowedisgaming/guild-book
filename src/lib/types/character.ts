@@ -2,7 +2,7 @@ import type { SuitId, ItemTier, TalentState } from './common';
 import { SUIT_IDS } from './common';
 
 /** Schema version for character-data migration (migrate-on-read). */
-export const CHARACTER_SCHEMA_VERSION = 1;
+export const CHARACTER_SCHEMA_VERSION = 2;
 
 /**
  * Provenance for an allocation (attribute value, talent grant, …). Mirrors the
@@ -29,20 +29,42 @@ export interface TalentAllocation {
 	source: 'kin' | 'path' | 'arete' | 'general';
 	sourceLabel: string;
 	at: string;
+	/** Wounded talents can't be used until healed. At most 2 at once. */
+	wounded: boolean;
+	/** XP invested in an in-training talent (masters at 7). */
+	xp: number;
 }
 
-/** A bond with a named guild-mate. */
+/** A bond with a named guild-mate. Charged bonds are the healing currency. */
 export interface Bond {
 	targetName: string;
 	text: string;
+	charged: boolean;
 }
+
+/** Where a carried item lives. */
+export type CarryLocation = 'hand' | 'belt' | 'pack';
 
 /** An owned item; either a content item (by id) or a free-typed one. */
 export interface EquipmentEntry {
 	itemId: string | null;
 	customName: string | null;
 	tier: ItemTier;
+	/** Slots one unit/stack takes (copied from the item def for custom items). */
 	packSpace: number;
+	/** Which carrying location holds it. */
+	location: CarryLocation;
+	/** Units held (stackables share slots per the item's stack rule). */
+	quantity: number;
+	/** Damage notches taken; at the item's durability the item is Destroyed. */
+	notchesTaken: number;
+}
+
+/** A tracked affliction and its current stage (1 = mildest). */
+export interface AfflictionState {
+	afflictionId: string | null;
+	customName: string | null;
+	stage: number;
 }
 
 /** Arête progress — the three kith triggers, and whether the talent is earned. */
@@ -87,7 +109,11 @@ export interface GuildBookCharacterData {
 	resolve: { current: number; max: number };
 	arete: AreteState;
 	languages: string[];
+	/** Active condition ids (from the content pack's conditions.json). */
 	conditions: string[];
+	/** Tracked afflictions with their current stage. */
+	afflictions: AfflictionState[];
+	/** Remaining lore bids (refills to 4 at camp). */
 	lore: number;
 	experience: number;
 
@@ -127,7 +153,8 @@ export function createBlankCharacter(contentPackId = 'hmtw'): GuildBookCharacter
 		arete: { triggersMet: [false, false, false], talentEarned: false },
 		languages: [],
 		conditions: [],
-		lore: 0,
+		afflictions: [],
+		lore: 4,
 		experience: 0,
 		equipment: [],
 		notes: '',

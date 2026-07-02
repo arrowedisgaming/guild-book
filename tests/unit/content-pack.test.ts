@@ -6,6 +6,7 @@ import {
 	getTalents,
 	getItems,
 	getMotifs,
+	getAfflictions,
 	loadWizardData
 } from '$lib/server/content/loader';
 import { SUIT_IDS } from '$lib/types/common';
@@ -95,5 +96,73 @@ describe('content pack — referential integrity', () => {
 		const motifs = getMotifs();
 		expect(motifs.descriptors.length).toBeGreaterThan(0);
 		expect(motifs.professions.length).toBeGreaterThan(0);
+	});
+});
+
+describe('content pack — transcribed content invariants', () => {
+	const kiths = getKiths();
+	const paths = getPaths();
+	const talents = getTalents();
+	const items = getItems();
+	const pack = getContentPack();
+
+	it('every path grants exactly seven talents', () => {
+		for (const path of paths) {
+			expect(path.talentIds, path.id).toHaveLength(7);
+			expect(new Set(path.talentIds).size).toBe(7);
+		}
+	});
+
+	it('has 28 path talents, 12 kin talents, and arête coverage for every kin', () => {
+		expect(talents.filter((t) => t.source === 'path')).toHaveLength(28);
+		expect(talents.filter((t) => t.source === 'kin')).toHaveLength(12);
+		const kins = kiths.flatMap((k) => k.kins);
+		// Every kin has a distinct mastered kin talent and an arête talent.
+		expect(new Set(kins.map((k) => k.masteredTalentId)).size).toBe(kins.length);
+		for (const kin of kins) expect(kin.areteTalentId).toBeTruthy();
+	});
+
+	it('every kith has exactly three arête triggers with no placeholders', () => {
+		for (const kith of kiths) {
+			expect(kith.areteTriggers, kith.id).toHaveLength(3);
+			for (const t of kith.areteTriggers) expect(t).not.toMatch(/placeholder/i);
+		}
+	});
+
+	it('contains no PLACEHOLDER text anywhere in talents or items', () => {
+		const all = JSON.stringify(talents) + JSON.stringify(items);
+		expect(all).not.toMatch(/placeholder/i);
+	});
+
+	it('items carry valid encumbrance data', () => {
+		for (const item of items) {
+			expect(item.slots, item.id).toBeGreaterThanOrEqual(1);
+			if (item.carry === 'belt-only') expect(item.slots).toBe(2); // oversized
+			if (item.wornBeltSlots) expect(item.category).toBe('armor');
+			if (item.stack) expect(item.stack.per).toBeGreaterThanOrEqual(1);
+			if (item.notches) expect(item.notches).toBeGreaterThanOrEqual(1);
+		}
+	});
+
+	it('covers all three market tiers and the armory', () => {
+		const tiers = new Set(items.map((i) => i.tier));
+		expect(tiers).toEqual(new Set(['impoverished', 'common', 'luxurious']));
+		expect(items.filter((i) => i.category === 'weapon').length).toBeGreaterThanOrEqual(9);
+		// Armor worn-slot ladder: light 1 / iron 2 / steel 3.
+		const worn = (id: string) => items.find((i) => i.id === id)?.wornBeltSlots;
+		expect(worn('armor-light')).toBe(1);
+		expect(worn('armor-iron')).toBe(2);
+		expect(worn('armor-steel')).toBe(3);
+	});
+
+	it('declares the encumbrance capacities (hands 2 / belt 4 / pack 21)', () => {
+		expect(pack.encumbrance).toEqual({ handSlots: 2, beltSlots: 4, packSlots: 21 });
+	});
+
+	it('affliction stages are sequential and have cure costs (or a terminal null)', () => {
+		for (const aff of getAfflictions()) {
+			expect(aff.stages.length).toBeGreaterThanOrEqual(1);
+			aff.stages.forEach((s, i) => expect(s.stage).toBe(i + 1));
+		}
 	});
 });

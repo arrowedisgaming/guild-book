@@ -42,8 +42,11 @@ export interface Bond {
 	charged: boolean;
 }
 
-/** Where a carried item lives. */
-export type CarryLocation = 'hand' | 'belt' | 'pack';
+/**
+ * Where a carried item lives. `worn` = on the body: worn clothes and helms take
+ * no slots; worn armor consumes its `wornBeltSlots` from the BELT's capacity.
+ */
+export type CarryLocation = 'hand' | 'belt' | 'pack' | 'worn';
 
 /** An owned item; either a content item (by id) or a free-typed one. */
 export interface EquipmentEntry {

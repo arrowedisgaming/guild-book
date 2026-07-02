@@ -64,7 +64,7 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 		})),
 		equipment: (Array.isArray(stored.equipment) ? stored.equipment : base.equipment).map((e) => ({
 			...e,
-			location: e.location === 'hand' || e.location === 'belt' || e.location === 'pack' ? e.location : 'pack',
+			location: ['hand', 'belt', 'pack', 'worn'].includes(e.location) ? e.location : 'pack',
 			quantity: typeof e.quantity === 'number' && e.quantity > 0 ? e.quantity : 1,
 			notchesTaken: typeof e.notchesTaken === 'number' ? e.notchesTaken : 0
 		})),

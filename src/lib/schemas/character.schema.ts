@@ -40,7 +40,7 @@ const equipmentEntrySchema = z.object({
 	customName: z.string().nullable(),
 	tier: z.enum(ITEM_TIERS),
 	packSpace: z.number(),
-	location: z.enum(['hand', 'belt', 'pack']),
+	location: z.enum(['hand', 'belt', 'pack', 'worn']),
 	quantity: z.number(),
 	notchesTaken: z.number()
 });

@@ -5,6 +5,5 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [[d1_databases]]
 binding = "DB"
 database_name = "guild-book-db"
-# Fill in after: wrangler d1 create guild-book-db
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "3cab8443-35f9-4a1f-864d-49249ae80fc0"
 migrations_dir = "src/lib/server/db/migrations"

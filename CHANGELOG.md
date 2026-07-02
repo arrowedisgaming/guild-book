@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (pre-deploy content & play-tracking push)
+
+- **Real content pack**: kith & kin with their arête triggers and talents, the
+  four paths with all seven talents each (49 unique talents), the full Omphalic
+  Market (all three tiers, weapons, ammunition), the four conditions, and staged
+  afflictions — mechanics summarised in original wording under the Adherent of
+  the Worm open licence. Placeholder pack retired.
+- **Encumbrance**: the book's slot model (Hands 2 / Belt 4 / Backpack 21; worn
+  armor bills belt slots 1/2/3; oversized gear is belt-only; stackables share
+  slots) as a pure engine, with live meters + auto-placement in the wizard's
+  market step and talent-required items marked impoverished-for-you.
+- **Sheet editing & play tracking**: an Edit mode (story, talents with
+  state/XP/add/remove, gear with locations, quantities, and notches) and an
+  always-visible Status panel — condition toggles with rule hints, a guided
+  "Take a Wound" menu (notch gear / wound a talent, hard-capped at two /
+  mark a condition), staged afflictions, bonds with charged pips, resolve and
+  lore trackers. Status changes autosave; edits save explicitly; both ride the
+  optimistic-concurrency PUT. Character schema v2 with transparent migration.
+- Exports and the read-only sheet now carry play state (wounded talents,
+  conditions, afflictions, gear locations/notches, load summary).
+
 ### Fixed
 
 - Draft adventurers can now be finalized from their sheet: a "Save as final"

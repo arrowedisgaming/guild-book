@@ -47,13 +47,43 @@ export function exportToMarkdown(view: CharacterView): string {
 	if (view.quest) lines.push('## Quest', '', view.quest, '');
 	if (view.motifs.length) lines.push('## Motifs', '', ...view.motifs.map((m) => `- ${m}`), '');
 	if (view.talents.length) {
-		lines.push('## Talents', '', ...view.talents.map((t) => `- ${t.name} *(${t.state})*`), '');
+		lines.push(
+			'## Talents',
+			'',
+			...view.talents.map(
+				(t) => `- ${t.name} *(${t.state})*${t.wounded ? ' **WOUNDED**' : ''}`
+			),
+			''
+		);
+	}
+	if (view.conditions.length || view.afflictions.length) {
+		lines.push('## Conditions & Afflictions', '');
+		for (const c of view.conditions) lines.push(`- **${c.name}** — ${c.description}`);
+		for (const a of view.afflictions) lines.push(`- **${a.name}** (stage ${a.stage}/${a.stageCount}) — ${a.effect}`);
+		lines.push('');
 	}
 	if (view.equipment.length) {
-		lines.push('## Gear', '', ...view.equipment.map((e) => `- ${e.name} — ${e.tier}`), '');
+		lines.push(
+			'## Gear',
+			'',
+			`*Load: hands ${view.load.hands.used}/${view.load.hands.capacity}, belt ${view.load.belt.used}/${view.load.belt.capacity}, pack ${view.load.pack.used}/${view.load.pack.capacity}*`,
+			'',
+			...view.equipment.map(
+				(e) =>
+					`- ${e.name}${e.quantity > 1 ? ` ×${e.quantity}` : ''} — ${e.location}` +
+					(e.durability ? `, ${e.notchesTaken}/${e.durability} notches` : '') +
+					(e.destroyed ? ' **(destroyed)**' : '')
+			),
+			''
+		);
 	}
 	if (view.bonds.length) {
-		lines.push('## Bonds', '', ...view.bonds.map((b) => `- **${b.targetName}:** ${b.text}`), '');
+		lines.push(
+			'## Bonds',
+			'',
+			...view.bonds.map((b) => `- ${b.charged ? '●' : '○'} **${b.targetName}:** ${b.text}`),
+			''
+		);
 	}
 	if (view.notes) lines.push('## Notes', '', view.notes, '');
 

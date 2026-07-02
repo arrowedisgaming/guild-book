@@ -15,11 +15,27 @@ export interface CharacterView {
 	kin: string | null;
 	path: string | null;
 	attributes: { id: string; name: string; value: number }[];
-	talents: { name: string; state: string }[];
+	talents: { name: string; state: string; wounded: boolean; xp: number }[];
 	motifs: string[];
-	bonds: { targetName: string; text: string }[];
-	equipment: { name: string; tier: string }[];
+	bonds: { targetName: string; text: string; charged: boolean }[];
+	equipment: {
+		name: string;
+		tier: string;
+		location: string;
+		quantity: number;
+		slots: number;
+		notchesTaken: number;
+		durability: number | null;
+		destroyed: boolean;
+	}[];
+	load: {
+		hands: { used: number; capacity: number; over: boolean };
+		belt: { used: number; capacity: number; over: boolean };
+		pack: { used: number; capacity: number; over: boolean };
+	};
+	conditions: { id: string; name: string; description: string }[];
+	afflictions: { name: string; stage: number; stageCount: number; effect: string }[];
 	resolve: { current: number; max: number };
+	lore: number;
 	languages: string[];
-	conditions: string[];
 }

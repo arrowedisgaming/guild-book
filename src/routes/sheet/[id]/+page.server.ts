@@ -5,8 +5,15 @@ import { characters } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { migrateCharacterData } from '$lib/engine/character-migration';
 import { buildCharacterView } from '$lib/server/character/view';
+import {
+	getContentPack,
+	getTalents,
+	getItems,
+	getConditions,
+	getAfflictions
+} from '$lib/server/content/loader';
 
-/** Owner-only adventurer sheet with export + share actions. */
+/** Owner-only adventurer sheet with editing, play tracking, and exports. */
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	const userId = session?.user?.id;
@@ -22,10 +29,24 @@ export const load: PageServerLoad = async (event) => {
 	if (!row) throw error(404, 'Adventurer not found');
 
 	const character = migrateCharacterData(JSON.parse(row.data));
+	const pack = getContentPack();
+
 	return {
 		id: row.id,
 		view: buildCharacterView(character),
+		character,
+		updatedAt: row.updatedAt.getTime(),
 		shareId: row.shareId,
-		isDraft: row.isDraft
+		isDraft: row.isDraft,
+		// Content the client-side editors need to render pickers and names.
+		content: {
+			talents: getTalents(),
+			items: getItems(),
+			conditions: getConditions(),
+			afflictions: getAfflictions(),
+			encumbrance: pack.encumbrance,
+			motifCount: pack.creation.motifCount,
+			resolveMax: pack.creation.startingResolve
+		}
 	};
 };

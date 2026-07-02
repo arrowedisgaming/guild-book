@@ -18,13 +18,34 @@ const view: CharacterView = {
 		{ id: 'cups', name: 'Cups', value: 1 },
 		{ id: 'wands', name: 'Wands', value: 4 }
 	],
-	talents: [{ name: 'Cantrip', state: 'mastered' }],
+	talents: [
+		{ name: 'Dwimmercraft', state: 'mastered', wounded: false, xp: 0 },
+		{ name: 'Gramarye', state: 'in-training', wounded: true, xp: 3 }
+	],
 	motifs: ['Disgraced Soldier'],
-	bonds: [],
-	equipment: [{ name: 'Sword', tier: 'common' }],
-	resolve: { current: 4, max: 4 },
-	languages: ['Common'],
-	conditions: []
+	bonds: [{ targetName: 'Pib', text: 'Owes me a rescue', charged: true }],
+	equipment: [
+		{
+			name: 'Blade',
+			tier: 'impoverished',
+			location: 'hand',
+			quantity: 1,
+			slots: 1,
+			notchesTaken: 1,
+			durability: 2,
+			destroyed: false
+		}
+	],
+	load: {
+		hands: { used: 1, capacity: 2, over: false },
+		belt: { used: 0, capacity: 4, over: false },
+		pack: { used: 0, capacity: 21, over: false }
+	},
+	conditions: [{ id: 'injured', name: 'Injured', description: 'Next wound is Death\'s Door.' }],
+	afflictions: [{ name: 'Ghost Lotus', stage: 2, stageCount: 3, effect: 'No reading or writing.' }],
+	resolve: { current: 3, max: 4 },
+	lore: 4,
+	languages: ['Common']
 };
 
 describe('buildDocDefinition (PDF)', () => {
@@ -57,5 +78,23 @@ describe('exportToMarkdown', () => {
 		expect(md).toContain('# Grimwald the Bold');
 		expect(md).toContain('## Attributes');
 		expect(md).toContain('copyright Joshua McCrowell');
+	});
+
+	it('carries play state: wounded talents, conditions, load, bond charge', () => {
+		expect(md).toContain('**WOUNDED**');
+		expect(md).toContain('**Injured**');
+		expect(md).toContain('Ghost Lotus');
+		expect(md).toMatch(/hands 1\/2/);
+		expect(md).toContain('● **Pib:**');
+	});
+});
+
+describe('PDF play-state additions', () => {
+	it('includes wounded markers, conditions, and load in the doc definition', () => {
+		const flat = JSON.stringify(buildDocDefinition(view).content);
+		expect(flat).toContain('WOUNDED');
+		expect(flat).toContain('Injured');
+		expect(flat).toContain('Lore bids 4/4');
+		expect(flat).toMatch(/hands 1\/2/);
 	});
 });

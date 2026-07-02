@@ -59,27 +59,42 @@ export function buildDocDefinition(view: CharacterView) {
 	}
 	if (view.talents.length) {
 		content.push(band('Talents'), {
-			ul: view.talents.map((t) => `${t.name} (${t.state})`),
+			ul: view.talents.map(
+				(t) => `${t.name} (${t.state}${t.wounded ? ' — WOUNDED' : ''})`
+			),
 			style: 'body'
 		});
 	}
 	if (view.equipment.length) {
 		content.push(band('Gear'), {
-			ul: view.equipment.map((e) => `${e.name} — ${e.tier}`),
+			ul: view.equipment.map(
+				(e) =>
+					`${e.name}${e.quantity > 1 ? ` ×${e.quantity}` : ''} — ${e.location}` +
+					(e.durability ? `, ${e.notchesTaken}/${e.durability} notches` : '') +
+					(e.destroyed ? ' (DESTROYED)' : '')
+			),
+			style: 'body'
+		});
+		content.push({
+			text: `Load: hands ${view.load.hands.used}/${view.load.hands.capacity} · belt ${view.load.belt.used}/${view.load.belt.capacity} · pack ${view.load.pack.used}/${view.load.pack.capacity}`,
 			style: 'body'
 		});
 	}
 	if (view.bonds.length) {
 		content.push(band('Bonds'), {
-			ul: view.bonds.map((b) => `${b.targetName}: ${b.text}`),
+			ul: view.bonds.map((b) => `${b.charged ? '● ' : '○ '}${b.targetName}: ${b.text}`),
 			style: 'body'
 		});
 	}
 
 	const footerBits = [
 		`Resolve ${view.resolve.current}/${view.resolve.max}`,
+		`Lore bids ${view.lore}/4`,
 		view.languages.length ? `Languages: ${view.languages.join(', ')}` : '',
-		view.conditions.length ? `Conditions: ${view.conditions.join(', ')}` : ''
+		view.conditions.length ? `Conditions: ${view.conditions.map((c) => c.name).join(', ')}` : '',
+		view.afflictions.length
+			? `Afflictions: ${view.afflictions.map((a) => `${a.name} (stage ${a.stage}/${a.stageCount})`).join(', ')}`
+			: ''
 	].filter(Boolean);
 	content.push(band('Status'), { text: footerBits.join('     '), style: 'body' });
 

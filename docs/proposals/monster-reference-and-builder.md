@@ -57,7 +57,7 @@ New file `denizens.json` in the hmtw content pack, three collections:
     {
       "id": "undead",
       "name": "Undead",
-      "description": "…",            // original wording, not book text
+      "description": "…",            // book text (open content, see Licensing)
       "likes": ["Some Fond Memory of Life"],
       "hates": ["The Living"],
       "notes": [ { "name": "Breathless and Undreaming", "text": "…" } ],
@@ -85,7 +85,7 @@ New file `denizens.json` in the hmtw content pack, three collections:
       "name": "Skeleton",
       "theme": "undead",
       "threat": "brute",
-      "flavor": "…",                  // paraphrased, see Licensing
+      "flavor": "…",                  // book text (open content, see Licensing)
       "attributes": { "swords": 6, "pentacles": 1, "cups": 1, "wands": 4 },
       "health": 6,
       "defense": 0,
@@ -149,20 +149,21 @@ No login required; the draft lives in the client store. Losing a draft on refres
 acceptable for v1 (localStorage persistence is a cheap follow-up if it annoys anyone).
 
 ## Licensing
-Claude suggests that we use the same policy as the rest of the pack: **mechanics summarized in original wording, no book prose reproduced and there is a summary below. 
-### Is that still the plan? 
-Josh seemed happy that the full book text was open content. I’m happy to go either way but its wasted effort to rewrite text if that has changed the plan.  
 
-** Sticking with the original “no book text we would have:
-- Stats, template structure, doom *mechanics* — fine to include (facts/mechanics, and the
-  Adherent of the Worm licence covers referencing them).
-- Flavor text for bestiary entries — rewritten from scratch, not transcribed. Same for
-  doom descriptions where the book's phrasing is distinctive.
-- Doom/ability *names* kept where they're functional ("Tough", "Fleet") — flagged for
-  review where they're clearly creative writing (the Yellow King's dooms are song
-  titles; his entry likely wants renamed dooms or a trimmed adaptation).
-- Follow the existing pack's `PLACEHOLDER SUMMARY` convention during development if we
-  want to land structure before finished prose.
+**Decided:** Josh has clarified that the full book text — not just the mechanics — is
+open content under the Adherent of the Worm licence. So `denizens.json` uses the book
+text directly: flavor prose, notes, and doom descriptions are transcribed, not
+paraphrased. No rewriting effort needed, and no `PLACEHOLDER SUMMARY` pass for this
+collection.
+
+Two follow-ons:
+
+- The `license`/`description` attribution in `index.json` (and the pack README) should
+  be updated in PR 1 to reflect that this collection reproduces book text with
+  permission, since it currently describes the pack as summaries in original wording.
+- The Yellow King's doom names are borrowed song titles (Lingua Ignota) — they're in the
+  book, so they're covered, but keeping the book's sidebar crediting the artist is the
+  polite move.
 
 ## Implementation plan
 
@@ -174,10 +175,9 @@ Sliced into small, independently reviewable PRs. Each lands green (`npm run chec
 1. Zod schemas for themes/threats/bestiary in `content-pack.schema.ts` + types in
    `content-pack.ts`.
 2. `denizens.json` with all six themes and five threats, fully written.
-3. Bestiary entries: stats/mechanics for all ~22 creatures, flavor as placeholder or
-   final prose (whichever review prefers).
+3. Bestiary entries: all ~22 creatures, stats and text from the book.
 4. Loader functions (`getDenizenThemes`, `getDenizenThreats`, `getBestiary`) + register
-   the file in `index.json`.
+   the file in `index.json`; update pack attribution per the Licensing section.
 5. Unit tests: every bestiary entry validates; every `theme`/`threat` reference resolves;
    special cases (slime, bloodybones, dungeon lords) parse.
 
@@ -209,7 +209,5 @@ until we've agreed it's wanted.**
    "dungeon denizens"; "bestiary" may be clearer to users.
 2. **Is PR 4 (saving/sharing) wanted at all?** And if so, does a saved denizen belong in
    its own table or generalize the existing `characters` storage?
-3. **Placeholder vs. final prose in PR 1** — land structure fast with placeholders (like
-   `rules.json` does today), or hold PR 1 until the rewritten flavor text is done?
-4. **Where should this live in the nav** — top-level alongside Rules and Deck, or under a
+3. **Where should this live in the nav** — top-level alongside Rules and Deck, or under a
    "GM tools" grouping (anticipating encounter tools later)?

@@ -4,6 +4,7 @@
  */
 
 import type { DenizenDefinition, DenizenAbility } from '$lib/types/content-pack';
+import { abilityLabel } from '$lib/utils/ability-label';
 
 function yamlValue(v: string): string {
 	// Quote values that could confuse a YAML parser.
@@ -12,7 +13,7 @@ function yamlValue(v: string): string {
 
 function abilitySection(title: string, list: DenizenAbility[] | undefined): string[] {
 	if (!list?.length) return [];
-	return [`### ${title}`, '', ...list.map((a) => `- **${a.name}.** ${a.text}`), ''];
+	return [`#### ${title}`, '', ...list.map((a) => `- **${abilityLabel(a.name)}** ${a.text}`), ''];
 }
 
 export function exportDenizenToMarkdown(
@@ -40,7 +41,7 @@ export function exportDenizenToMarkdown(
 	const lines: string[] = [
 		...frontmatter,
 		'',
-		`# ${denizen.name}`,
+		`## ${denizen.name}`,
 		'',
 		`_${themeName} ${threatName}_`,
 		'',
@@ -57,7 +58,7 @@ export function exportDenizenToMarkdown(
 	if (denizen.hates?.length) lines.push(`**Hates:** ${denizen.hates.join(', ')}`, '');
 
 	if (denizen.specialRules) {
-		lines.push('### Special rules', '', denizen.specialRules, '');
+		lines.push('#### Special rules', '', denizen.specialRules, '');
 	}
 
 	lines.push(
@@ -67,7 +68,7 @@ export function exportDenizenToMarkdown(
 	);
 
 	for (const pool of denizen.pools ?? []) {
-		lines.push(`## ${pool.name} — Health/Defense: ${pool.health}/${pool.defense}`, '');
+		lines.push(`### ${pool.name} — Health/Defense: ${pool.health}/${pool.defense}`, '');
 		if (pool.text) lines.push(pool.text, '');
 		lines.push(
 			...abilitySection('Notes', pool.notes),

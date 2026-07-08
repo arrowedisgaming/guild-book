@@ -8,6 +8,7 @@
 		toDenizenDefinition
 	} from '$lib/engine/denizen-builder';
 	import { renderMarkdown } from '$lib/utils/markdown';
+	import { abilityLabel } from '$lib/utils/ability-label';
 	import { announce } from '$lib/stores/announcer';
 	import type { DenizenAbility } from '$lib/types/content-pack';
 	import type { PageData } from './$types';
@@ -98,7 +99,7 @@
 						}}
 					/>
 					<span>
-						<strong>{option.name}.</strong>
+						<strong>{abilityLabel(option.name)}</strong>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 						<span class="inline-md">{@html renderMarkdown(option.text)}</span>
 					</span>
@@ -115,7 +116,7 @@
 		<ul class="current">
 			{#each draft[key] as ability, i (ability.name + i)}
 				<li>
-					<span><strong>{ability.name}.</strong> {ability.text}</span>
+					<span><strong>{abilityLabel(ability.name)}</strong> {ability.text}</span>
 					<button type="button" class="remove" onclick={() => removeAbility(key, i)}>
 						Remove
 					</button>

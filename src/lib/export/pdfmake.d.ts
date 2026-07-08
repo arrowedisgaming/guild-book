@@ -2,6 +2,9 @@ declare module 'pdfmake/build/pdfmake' {
 	const pdfMake: {
 		virtualfs: Record<string, unknown>;
 		addVirtualFileSystem(vfs: Record<string, string>): void;
+		addFonts(
+			fonts: Record<string, Record<'normal' | 'italics' | 'bold' | 'bolditalics', string>>
+		): void;
 		createPdf(docDefinition: unknown): {
 			getBuffer(): Promise<Uint8Array>;
 			getBlob(): Promise<Blob>;

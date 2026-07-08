@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { renderMarkdown } from '$lib/utils/markdown';
+	import { abilityLabel } from '$lib/utils/ability-label';
 	import type {
 		DenizenDefinition,
 		DenizenAbility,
@@ -28,7 +29,7 @@
 			<ul>
 				{#each list as ability (ability.name)}
 					<li>
-						<strong>{ability.name}.</strong>
+						<strong>{abilityLabel(ability.name)}</strong>
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 						<span class="ability-text">{@html renderMarkdown(ability.text)}</span>
 					</li>

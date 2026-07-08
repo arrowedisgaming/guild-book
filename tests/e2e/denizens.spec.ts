@@ -79,8 +79,25 @@ test.describe('denizen builder', () => {
 		await page.getByRole('checkbox', { name: /Fear\./ }).check();
 		await page.getByRole('checkbox', { name: /Deadly Attack\./ }).check();
 		await page.getByPlaceholder('Doom name').fill('Locust Cloud');
-		await page.getByPlaceholder('What it does').fill('Play a greater doom card to blind everyone in the zone.');
+		await page.getByPlaceholder('What it does').fill('Play a greater doom card to bite everyone in the zone.');
 		await page.getByRole('button', { name: 'Add as greater doom' }).click();
+
+		// "Your dooms" is split into Lesser and Greater; the custom doom lands under Greater.
+		const lesserSection = page.locator('ul.current').first();
+		await expect(page.getByRole('heading', { name: 'Lesser', level: 4 })).toBeVisible();
+		await expect(lesserSection.getByText('Fear.')).toBeVisible();
+		const greaterList = page
+			.getByRole('heading', { name: 'Greater', level: 4 })
+			.locator('~ ul.current')
+			.first();
+		await expect(greaterList.getByText('Locust Cloud.')).toBeVisible();
+
+		// Edit the custom doom in place.
+		const locustRow = greaterList.locator('li', { hasText: 'Locust Cloud' });
+		await locustRow.getByRole('button', { name: 'Edit' }).click();
+		await page.getByLabel('Ability text').fill('Play a greater doom card to blind everyone in the zone.');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await expect(greaterList.getByText(/blind everyone in the zone/)).toBeVisible();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
 		// Review
@@ -93,6 +110,31 @@ test.describe('denizen builder', () => {
 		await expect(preview.getByText('Fear.')).toBeVisible();
 		await expect(preview.getByText('Locust Cloud.')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
+	});
+
+	test('elite notes are called out as optional and can be edited or removed', async ({ page }) => {
+		await page.goto('/denizens/build');
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Elemental' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Elite' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// The elite threat flags its notes optional; the builder surfaces that.
+		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
+		await expect(page.getByText('a menu, not a package')).toBeVisible();
+
+		// Pin the elemental immunity down to a specific element via Edit.
+		const immunityRow = page.locator('ul.current li', { hasText: 'Elemental Immunity' });
+		await immunityRow.getByRole('button', { name: 'Edit' }).click();
+		await page.getByLabel('Ability text').fill('The huldra takes no damage from water. It cannot drown.');
+		await page.getByRole('button', { name: 'Save' }).click();
+		await expect(page.getByText('It cannot drown.')).toBeVisible();
+
+		// Unwanted optional notes can simply be removed.
+		const thresholdRow = page.locator('ul.current li', { hasText: 'Threshold' });
+		await thresholdRow.getByRole('button', { name: 'Remove' }).click();
+		await expect(page.locator('ul.current li', { hasText: 'Threshold' })).toHaveCount(0);
 	});
 
 	test('draft survives a reload', async ({ page }) => {

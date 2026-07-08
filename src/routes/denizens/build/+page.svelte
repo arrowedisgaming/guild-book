@@ -60,6 +60,29 @@
 		return draft[key].some((a) => a.name === name);
 	}
 
+	// Inline editing of an ability already on the draft — template-seeded notes
+	// often need pinning down (e.g. *which* element an immunity covers).
+	let editing = $state<{ key: AbilityListKey; index: number } | null>(null);
+	let editName = $state('');
+	let editText = $state('');
+
+	function startEdit(key: AbilityListKey, index: number) {
+		editing = { key, index };
+		editName = draft[key][index].name;
+		editText = draft[key][index].text;
+	}
+
+	function saveEdit() {
+		if (!editing || !editName.trim() || !editText.trim()) return;
+		const { key, index } = editing;
+		const ability = { name: editName.trim(), text: editText.trim() };
+		denizenBuilder.updateDraft((d) => ({
+			...d,
+			[key]: d[key].map((a, i) => (i === index ? ability : a))
+		}));
+		editing = null;
+	}
+
 	let customName = $state('');
 	let customText = $state('');
 
@@ -116,10 +139,22 @@
 		<ul class="current">
 			{#each draft[key] as ability, i (ability.name + i)}
 				<li>
-					<span><strong>{abilityLabel(ability.name)}</strong> {ability.text}</span>
-					<button type="button" class="remove" onclick={() => removeAbility(key, i)}>
-						Remove
-					</button>
+					{#if editing !== null && editing.key === key && editing.index === i}
+						<div class="edit-fields">
+							<input type="text" bind:value={editName} aria-label="Ability name" />
+							<textarea rows="3" bind:value={editText} aria-label="Ability text"></textarea>
+							<div class="edit-actions">
+								<button type="button" onclick={saveEdit}>Save</button>
+								<button type="button" class="remove" onclick={() => (editing = null)}>Cancel</button>
+							</div>
+						</div>
+					{:else}
+						<span><strong>{abilityLabel(ability.name)}</strong> {ability.text}</span>
+						<button type="button" class="edit" onclick={() => startEdit(key, i)}>Edit</button>
+						<button type="button" class="remove" onclick={() => removeAbility(key, i)}>
+							Remove
+						</button>
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -261,6 +296,13 @@
 
 		<h3>Notes</h3>
 		<p class="guidance">Standing abilities that don't cost a card — seeded from both templates.</p>
+		{#if threat?.notesOptional}
+			<p class="guidance optional-note">
+				The {threat.name} notes below are <strong>optional</strong> — a menu, not a package.
+				Remove the ones that don't fit, and use Edit to pin down specifics (e.g. which damage
+				source an Invulnerable ignores).
+			</p>
+		{/if}
 		{@render currentAbilities('notes', 'No notes.')}
 		<div class="add-custom">
 			<input type="text" bind:value={customName} placeholder="Note name" />
@@ -289,7 +331,9 @@
 		{/if}
 
 		<h3>Your dooms</h3>
+		<h4>Lesser</h4>
 		{@render currentAbilities('lesserDooms', 'No lesser dooms yet.')}
+		<h4>Greater</h4>
 		{@render currentAbilities('greaterDooms', 'No greater dooms yet.')}
 		<div class="add-custom">
 			<input type="text" bind:value={customName} placeholder="Doom name" />
@@ -473,6 +517,7 @@
 	.inline-md :global(ul) {
 		margin: 0.35rem 0 0;
 	}
+	.edit,
 	.remove {
 		border: none;
 		background: none;
@@ -481,6 +526,45 @@
 		cursor: pointer;
 		text-decoration: underline;
 		text-underline-offset: 2px;
+	}
+	.edit {
+		color: var(--ink-soft);
+	}
+	.edit-fields {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.25rem 0;
+	}
+	.edit-fields input,
+	.edit-fields textarea {
+		width: 100%;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 4px;
+		background: var(--parchment);
+		font: inherit;
+	}
+	.edit-actions {
+		display: flex;
+		gap: 0.75rem;
+		align-items: baseline;
+	}
+	.edit-actions button {
+		font: inherit;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		padding: 0.3rem 0.8rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 4px;
+		background: none;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.edit-actions .remove {
+		border: none;
+		padding: 0.3rem 0;
 	}
 	.add-custom {
 		display: flex;
@@ -547,5 +631,11 @@
 	}
 	h3 {
 		margin: 1.5rem 0 0.25rem;
+	}
+	h4 {
+		margin: 0.9rem 0 0;
+		font-family: var(--font-subhead);
+		font-size: 0.95rem;
+		color: var(--ink-soft);
 	}
 </style>

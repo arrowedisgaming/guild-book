@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (dungeon denizens)
+
+- **Denizen reference** (`/denizens`): the full Appendix C bestiary (27 creatures,
+  including the multi-pool dungeon lords), browsable with theme/threat filters and
+  name search, plus the six theme and five threat templates. Book text reproduced
+  directly — confirmed open content by the author.
+- **Denizen builder** (`/denizens/build`): a six-step wizard following the book's
+  "monstrous mixology" recipe — concept, theme, threat, seeded stat block,
+  template doom pick-lists plus custom dooms, and a live stat-block review. Draft
+  persists in localStorage.
+- **Denizen export**: Obsidian-flavored Markdown (copy or download) and a one-page
+  stat-block PDF, from both the reference and the builder.
+- Denizens Playwright e2e suite (`tests/e2e/denizens.spec.ts`); the e2e web server
+  now boots without a real `AUTH_SECRET`.
+
 ### Added
 
 - A Markdown-driven content pipeline for the complete current pack, including all

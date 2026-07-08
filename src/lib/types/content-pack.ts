@@ -45,6 +45,7 @@ export interface ContentPackFiles {
 	afflictions?: string;
 	rules?: string;
 	spells?: string;
+	denizens?: string;
 }
 
 /** One of the four attributes; `suit` binds it to the matching tarot suit. */
@@ -180,6 +181,130 @@ export interface AfflictionStage {
 	effect: string;
 	/** Burned charges needed to cure this stage (null = incurable). */
 	cureCost: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// Dungeon denizens (Appendix C) — themes, threats, bestiary
+// ---------------------------------------------------------------------------
+
+/**
+ * A stat that is usually a number but occasionally book-special: the slime's
+ * attributes are "X" (equal to current Health), the bloodybones' Health is
+ * "∞". Strings render verbatim; `statNote` on the owner explains them.
+ */
+export type DenizenStatValue = number | string;
+
+/** The four suit-attributes as a creature block. */
+export interface DenizenAttributes {
+	swords: DenizenStatValue;
+	pentacles: DenizenStatValue;
+	cups: DenizenStatValue;
+	wands: DenizenStatValue;
+}
+
+/** A named ability — a note, lesser doom, or greater doom. Text is Markdown. */
+export interface DenizenAbility {
+	name: string;
+	text: string;
+}
+
+/**
+ * A theme — the creature's mythological context (Beast, Undead, …). Provides
+ * likes/hates, standing notes, and default lesser dooms. The Man theme is a
+ * description only (the book says to build people as characters instead).
+ */
+export interface DenizenThemeDefinition {
+	id: string;
+	name: string;
+	description: string;
+	likes?: string[];
+	hates?: string[];
+	notes?: DenizenAbility[];
+	lesserDooms?: DenizenAbility[];
+	/** Pick guidance verbatim from the book, e.g. "Choose 1 of the following". */
+	chooseLesserDooms?: string;
+}
+
+/**
+ * A threat — the creature's strength and tactics (Minion … Dungeon Lord).
+ * Provides attributes, Health/Defense, and default greater dooms.
+ */
+export interface DenizenThreatDefinition {
+	id: string;
+	name: string;
+	description: string;
+	/** Omitted for threats without a fixed block (dungeon lord HD is special). */
+	attributes?: DenizenAttributes;
+	health?: DenizenStatValue;
+	defense?: DenizenStatValue;
+	/** Explains irregular stats, e.g. "Choose 1 attribute to increase to 6". */
+	statNote?: string;
+	notes?: DenizenAbility[];
+	/** The book marks some threat notes optional ("(Optional)"). */
+	notesOptional?: boolean;
+	greaterDooms?: DenizenAbility[];
+	/** Pick guidance verbatim from the book, e.g. "Choose 1 or 2". */
+	chooseGreaterDooms?: string;
+	/** Elites and dungeon lords prompt extra Challenge-card draws. */
+	drawsExtraChallengeCards?: boolean;
+}
+
+/**
+ * A named Health/Defense pool. Dungeon lords are fought in sections (the
+ * Sporehulk's legs/arms/torso, the Yellow King's body/crown/phylactery), each
+ * with its own HD and abilities. When a bestiary entry has pools, they replace
+ * its top-level health/defense.
+ */
+export interface DenizenPool {
+	id: string;
+	name: string;
+	health: DenizenStatValue;
+	defense: DenizenStatValue;
+	/** Markdown — what defeating (or wearing, or burning…) this pool means. */
+	text?: string;
+	notes?: DenizenAbility[];
+	lesserDooms?: DenizenAbility[];
+	greaterDooms?: DenizenAbility[];
+}
+
+/** An attached extra (the face rat's disease, vampire-slaying rumors…). */
+export interface DenizenSidebar {
+	title: string;
+	/** Markdown. */
+	body: string;
+}
+
+/** A pre-made creature from the bestiary. */
+export interface DenizenDefinition {
+	id: string;
+	name: string;
+	/** Theme id (must resolve within the themes collection). */
+	theme: string;
+	/** Threat id (must resolve within the threats collection). */
+	threat: string;
+	/** Markdown flavor text, reproduced from the book (open content). */
+	flavor: string;
+	attributes: DenizenAttributes;
+	health?: DenizenStatValue;
+	defense?: DenizenStatValue;
+	/** Explains irregular stats (slime's "X", bloodybones' "∞"). */
+	statNote?: string;
+	likes?: string[];
+	hates?: string[];
+	notes?: DenizenAbility[];
+	lesserDooms?: DenizenAbility[];
+	greaterDooms?: DenizenAbility[];
+	/** Markdown — fight-changing rules that precede the pools (dungeon lords). */
+	specialRules?: string;
+	pools?: DenizenPool[];
+	sidebars?: DenizenSidebar[];
+}
+
+/** The denizens.json collection: templates plus the pre-made bestiary. */
+export interface DenizensFile {
+	themes: DenizenThemeDefinition[];
+	threats: DenizenThreatDefinition[];
+	bestiary: DenizenDefinition[];
 }
 
 /** A rules-reference entry (browsable/searchable in the rules section). */

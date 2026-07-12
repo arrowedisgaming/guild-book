@@ -35,3 +35,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+        env:
+          AUTH_SECRET: ci-e2e-validation-only

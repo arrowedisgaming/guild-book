@@ -1,0 +1,6 @@
+[
+	{ "id": "stressed", "field": "description", "file": "02 - Chapter 2 - The Adventurer.md", "heading": "Stressed" },
+	{ "id": "staggered", "field": "description", "file": "02 - Chapter 2 - The Adventurer.md", "heading": "Staggered" },
+	{ "id": "injured", "field": "description", "file": "02 - Chapter 2 - The Adventurer.md", "heading": "Injured" },
+	{ "id": "deaths-door", "field": "description", "file": "02 - Chapter 2 - The Adventurer.md", "heading": "Death’s Door" }
+]

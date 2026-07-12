@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A Markdown-driven content pipeline for the complete current pack, including all
+  49 talents, 66 market items, 40 spells, and ten scoped Chapter 1 rules entries.
+- Drift checks and content-integrity tests for imported prose, rule boundaries,
+  malformed headings, and known source-export corruption.
+- A browser smoke test for the character wizard, attribute allocation, theme
+  control, footer, and licensing presentation; CI now runs it alongside the
+  Cloudflare production build.
+
+### Changed
+
+- Re-derived rulebook prose from the clean per-chapter Markdown vault and retired
+  the PDF extraction pipeline. Descriptions retain Markdown structure and render
+  through the shared prose component.
+- Corrected motifs to the book's 50 descriptors and 50 professions and added the
+  four complete sorcery traditions as content-pack data.
+- Simplified wizard choices into compact name-first controls with revealed,
+  structured descriptions; shortened kith introductions and compacted attribute
+  assignment into a matrix that disables values already in use.
+- Moved the Adherent of the Worm mark from the global footer to the licensing page
+  and replaced the custom theme glyph with standard moon and sun icons.
+
+### Fixed
+
+- Preserved paragraph breaks around imported Markdown headings and omitted
+  explicitly anchored incomplete or corrupt source-export fragments instead of
+  publishing damaged or invented text.
+- Corrected content extraction boundaries that could absorb neighboring entries.
+
 ### Added (pre-deploy content & play-tracking push)
 
 - **Real content pack**: kith & kin with their arête triggers and talents, the

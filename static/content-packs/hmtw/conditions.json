@@ -2,21 +2,21 @@
 	{
 		"id": "stressed",
 		"name": "Stressed",
-		"description": "Worn down in body or spirit. No immediate penalty, but while Stressed you cannot heal or recover anything else. Clear it first at camp by burning a charged Bond (or with certain talents/items)."
+		"description": "Stressed represents being physically or mentally exhausted.\n\n- Becoming Stressed is usually the result of environmental effects, such as being covered in sewage, being buried alive in a grave, or wading through an icy river.\n\n- Wounds do not cause you to be Stressed.\n\n- You cannot heal any other condition until you are no longer Stressed.\n\n- Learn more about being Stressed."
 	},
 	{
 		"id": "staggered",
 		"name": "Staggered",
-		"description": "Off balance and winded — you've absorbed a free hit. No immediate penalty. Clears automatically during camp recovery (unless you are Stressed)."
+		"description": "Staggered represents being off balance and out of breath.\n\n- This condition has no immediate negative effects.\n\n- Staggered is healed automatically during the Camp Phase as long as you’re not Stressed.\n\n- It is usually the first condition players choose when Wounded. It’s kind of a “free hit.”"
 	},
 	{
 		"id": "injured",
 		"name": "Injured",
-		"description": "Badly hurt and in mortal danger: the next Wound you take must put you at Death's Door. Burn a charged Bond at camp to clear it before healing anything else."
+		"description": "Injured represents being severely hurt.\n\n- If you are Injured, the *next* Wound must give you the Death’s Door condition.\n\n- During the Camp Phase, you must heal the Injured condition before healing Wounded talents.\n\n- Because being Injured puts you in danger of death, most players only take this condition if they have no other choice."
 	},
 	{
 		"id": "deaths-door",
 		"name": "Death's Door",
-		"description": "Unconscious and helpless. You linger for one watch — if no one heals you in time (a poultice and a Wands test, or any Heal effect), you die. Being healed wakes you, marks you Stressed, and clears this condition."
+		"description": "Death’s Door represents being (almost) dead. You are unconscious and helpless.\n\n- Because of the nature of the Underworld, if nobody moves to heal you within a watch, you will become undead."
 	}
 ]

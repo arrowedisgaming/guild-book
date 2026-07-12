@@ -2,144 +2,195 @@
 	{
 		"id": "human",
 		"name": "Humans",
-		"description": "The most numerous people of the City, divided into myriad proud houses. Name your own house — its sigil and motto are yours to define.",
+		"description": "When does pride become hubris? When does glory tarnish to vainglory? This thin line is embodied in humans, the knaves and the kings of the Wide World.\n\nHumans are not as hardy as the immortal fay, being given to sickness and age. Nor are they as crafty as the underfolk, being slow to develop the crafts of alchemy and lore of natural philosophy. Yet humanity has one gift that surpasses every other: war.\n\nHumankind is built for war. The crafts they have learned from dwarves and elves have been turned ingeniously to this purpose. They breed and mature quickly to resupply their cities with men and women, replacing those lost to hardship. They are fierce, doughty, and brave. Using their arts of war, mankind has conquered much of the Wide World. They are the conquering kings, proud and terrible.\n\nEven so, they are fractious. Humanity has never united themselves under a single banner (though various warlords have attempted the feat). Matters of philosophy, religion, or blood will divide them—as will ambition. Therefore, the power of men is spread through a handful of notable empires and hundreds of petty kingdoms.\n\nStill, humans display many praiseworthy traits. They are loyal folk, lauding fidelity as the most noble of virtues. They long remember the deeds of their fathers in song and story, and strive to emulate them. This, in turn, creates a drive to win glory and renown for their families. Their communities are strengthened by this desire for fame, as they eschew the unworthy for fear of bringing shame to their lineage. Indeed, few folk are more fiercely protective of their kith and kin than mankind. They have a great capacity for kindness, for all their ferocity.\n\n### A myth of humankind\n\nThe Monad is one. The Monad is many.\n\nLike a sky scattered with many constellations; like a building with many sides; the Monad has many faces that all reflect the greater truth of His unity.\n\nIt was the prophet Mythrys who taught us these mysteries (praise be unto him). It was Maiden Wisdom who gave him birth (blessed be her name).\n\nMythrys taught us that the many gods honored by the different great houses were all emanations of the one true god. This one true god is called the Monad.\n\nMythrys taught that the Monad has twenty-one separate emanations. And, though maidens might pray to the Lovers for aid in love, and warriors might pray to the Strong for aid in battle, all prayers and honor are ultimately going to Him. For men have limited perceptions, and see many faces where there is but one.\n\n### Human names\n\n### Male names:\n\nAddam, Alesander, Bennard, Carl, Dafyd, Edric, Fenton, Gregor, Jack, Justinius, Kevyn, Lews, Marq, Omer, Polliver, Reynard, Robin, Samwell, Sylvestris, Tybalt, Usher, Zachery\n\n### Female names:\n\nAlanys, Brenda, Catlyn, Colette, Dion, Eleanor, Imogen, Janna, Jonquil, Kaya, Lanna, Marla, Olivia, Regan, Rhonda, Saera, Sybelle, Tanselle, Ursula, Violet, Walda\n\nEvery human is a member of a kinship group called a house. Humans either introduce themselves by saying “of House X,” or by simplifying their house name into a surname. There are hundreds of houses active in the City; six examples on the following page.",
 		"areteTriggers": [
-			"Get married.",
-			"Fulfil an oath.",
-			"Defeat a member of a rival house in a fair tournament or duel."
+			"Getting married",
+			"Fulfilling an oath",
+			"Defeating a member of a rival house in fair tournament or duel"
 		],
 		"kins": [
 			{
 				"id": "human-noble-house",
 				"name": "A Noble House",
-				"description": "Your house — you choose its name, its sigil, and its motto. Two adventurers of the same house may even be kin by blood.",
+				"description": "Humans divide the world into two parts: us and them. They do this by forming great and noble houses. They bind themselves together through marriage, love, and oaths. They fly beautiful banners over their keeps and display proud coats of arms on their crafts. They are instilled with a respect of certain virtues from a young age. Even the basest born and most wretched slave children are born where some banner flies. Two humans with the same house are of the same kin. They might not be directly related, but they probably know each other.\n\nHuman characters begin the game with the following talent:",
 				"masteredTalentId": "proud-and-ancient",
 				"areteTalentId": "byname",
-				"sampleNames": ["Dorian", "Phynn", "Isolde", "Marcus", "Wren", "Cassia"]
+				"sampleNames": [
+					"Dorian",
+					"Phynn",
+					"Isolde",
+					"Marcus",
+					"Wren",
+					"Cassia"
+				]
 			}
 		]
 	},
 	{
 		"id": "fay",
 		"name": "Fay",
-		"description": "The fair folk — elves and gnomes touched by the far realms, where every archetype burns brighter.",
+		"description": "“Oh God. They’re beautiful.” “Oh God. They’re terrible.”\n\nSome spirits are content with dwelling in the far realms as entities of Platonic thought. Others yearn to be bound with weight and hunger, and so come into the plane of Flesh. We call these spirits the fay.\n\nIn the earliest ages of the world, troops of the fay came into freshly formed creation, eager to try out the pleasures and perils of wearing skin. It was to their very great surprise that it was easier to enter the realm of Flesh than it was to leave it. Those who did not go insane from this realization became known as the elves.\n\nElves consider themselves the eldest people for they existed outside the circles of the Wide World long before it was even formed. (The oldest living sentient race that actually physically dwelt in the Wide World is, of course, the orcs.)\n\nAnd “being old” is one thing the elves do very well. They are ageless, and never die from old age or infirmity. Some elves alive today are, indeed, very, very old. And when you are very, very old, you have a lot of experiences to draw upon—you can be very, very wise. Hence, elves are commonly thought to be both the eldest and the wisest folk.\n\nIt is noteworthy that elves do not breed and create clans like men do. Though their bodies have all the functionality of mortal life, immortality cannot generate life. All elven births are stillborn—with two exceptions. The first exception is if one of the elven parents lays down their life for the sake of a child: either parent can pass on their own spirit to reincarnate into their own child at the moment of birth.\n\nThe second exception is gnomes.\n\nWhen elves realized that they could not generate new life (only reincarnate), they decided to solve the problem like they solved many other problems: magic. They stole the children of mortal mothers, rationalizing that they would “save” the children from eventual old age and death. They used rites from the realm of dreams, transforming the children from mortal to immortal.\n\nThe early elves first assumed this would change the infants into elven children. They were mistaken. It transformed them into gnomes, their skin wrinkled and their forms hunched and twisted. Instead of being eternally beautiful and youthful, they became eternally bent and aged.\n\nElves and gnomes, on the whole, differ in opinion about whether or not the creation of gnomes (and the continued practice) was good and justifiable or not. But one thing almost all fay agree on is to not share this secret with the mortal races.\n\nGnomes are immortal, just like their elven “parents.” Unlike the elves, however, gnomes are hunched and wizened, not eternally youthful. Elves, as spirits, embody concepts easily. Gnomes lack this purpose and so are prone to feelings of existentialism. The largest problem that gnomes face, however, is a sense of otherness and exclusion. Gnomes don't “fit in” with elves easily and struggle to be fully integrated into the rites and rituals of the fay. Elves understand that the gnomes feel excluded from their society, but rarely know what to do about it.\n\nUnlike humankind, which has sprawled into many clans and principalities, elves and gnomes live together in Alfheim, the singular kingdom of the fay. The goddess and queen of the fay is a strange three-part spirit named the Tripartite. It is said that she (they? it?) is a single entity that coexists in three places. One of the Tripartite's three faces rules each of the three elven courts.\n\nThe Maid of Mists, who rules the Court of the Sun, is a young queen of sixteen apparent years with a gentle and courtly demeanor. For her sake, elven knights ride out on errantry to do good works throughout the Wide World. Every winter, she holds a feast for her court where their tales of bravery and chivalry are recounted.\n\nThe Witchmother is a potent huntress and warrior woman that leads the Court of the Maimed Moon. Horns spring from her head and she can assume many bestial shapes. Once a year she leads her court on a crazed hunt across the Wide World pursuing some unlikely game. This event is called the Wild Hunt.\n\nThe third face of the Tripartite is the Crone, who rules the Court of Fallen Stars. The Crone is the stuff of children's nightmares. The less said about her, her loyal hairy skulls, her detachable eye, and her chicken-legged hut, the better.\n\n### A myth of the fay\n\nThere was, o’ what there was in the oldest of days and ages and times. The Sun ruled as king in Heaven, and the Moon was his queen. Together, they kindled innumerable Stars to be their children, and arrayed them in gold and silver. The Citadel of Heaven was beautiful and its people were happy.\n\nAmong the people of the Sun’s retinue was one named Abyss, who wore a cloak that looks like the spacebetween-stars. The Sun called on Abyss and asked her to tell him of the goings-on of Earth, where water and sand were being scattered. Abyss told the Sun that the dragons had invented a thing called Death. The Sun became quite fearful.\n\nThe Sun called on his eldest child, who was named Second Sun, to serve as his personal guard. He sealed the Citadel of Heaven to ensure that Death could not enter. He quieted the celebrations of the Stars so he could ensure he could always hear Death coming. He had Abyss forge a sword named Eclipse for Second Sun to wield in his defense.\n\nAnd o’, what a sad thing happened with that sword…\n\n### Fay names\n\nFay names mean something. They are rendered in the fay tongue, Tylwyth, and followed by a translation in Vulgaris (in the style of a human surname). For the fay, it is the meaning of the name that is particularly important, not just the collection of syllables and sounds. Names are not gendered; any name can be carried by a person of any gender.\n\n### Fay names (with Vulgaris surname):\n\nAdahay Lives-in-Woods, Bidziil He-is-Strong, Cha Tima the Caller, Dadgayadoh Gambling-Men, Elsu Flying-Falcon, Fala Crow, Honiahaka Little-Wolf, Ituha Sturdy-Oak, Kizikoni Burning-Fire, Makya Eagle-Hunter, Nahiossi Three-Fingers, Onacona White-Owl, Qaleteqa Warden, Sakuruta Coming-Sun, Takoda Friend-to-Everyone, Vaive Atoish Alights-onthe-Cloud, Waban East-Wind",
 		"areteTriggers": [
-			"Kill something without using a weapon.",
-			"Provide aid to a spirit.",
-			"Make someone you have kissed cry."
+			"Killing something without using a weapon",
+			"Providing aid to a spirit",
+			"Making someone they’ve kissed cry"
 		],
 		"kins": [
 			{
 				"id": "fay-high-elf",
 				"name": "High Elf",
-				"description": "Long-lived courtiers of the elder houses, with memories that never fade.",
+				"description": "The Court of the Sun, sometimes called the high elves, have spiritual origins tied to the Welkin. The high elves dwell on mountain tops in beautifully carved castles of stone. High elves put much stock in the human notions of chivalry, courtly manners, and grace. They emulate the human traditions of knighthood and the chivalric code. Almost everybody agrees they have perfected this institution.",
 				"masteredTalentId": "read-the-past",
 				"areteTalentId": "akashic-consciousness",
-				"sampleNames": ["Aelaria", "Faelan", "Sylwen"]
+				"sampleNames": [
+					"Aelaria",
+					"Faelan",
+					"Sylwen"
+				]
 			},
 			{
 				"id": "fay-wood-elf",
 				"name": "Wood Elf",
-				"description": "Wardens of the deep forests, with the eyes of hawks and the noses of wolves.",
+				"description": "Below the high elven mountains there lies the sprawling forests of the Court of the Maimed Moon, also called the wood elves. The wood elves, who are descended from spirits of the Weald, do not make permanent shelters in the forest, but practice a nomadic lifestyle where they follow herds of game seasonally.\n\nWood elves are great weavers, and weave wood and grasses into many beautiful things—ships, bridges, shelters, and armor. Wood elves often tattoo living plants onto their skin that grow and shift into new patterns over time.",
 				"masteredTalentId": "keen-senses",
 				"areteTalentId": "area-sense",
-				"sampleNames": ["Tanwen", "Corwin", "Briar"]
+				"sampleNames": [
+					"Tanwen",
+					"Corwin",
+					"Briar"
+				]
 			},
 			{
 				"id": "fay-dark-elf",
 				"name": "Dark Elf",
-				"description": "Dwellers of the twilight roads beneath the earth, gifted with prophetic hunches.",
+				"description": "Beneath the forest, beneath great hollowed out mounds, dwell the dark elves who call themselves the Court of Fallen Stars. The dark elves are descended from spirits of the Wastes, and their appearance and demeanor echo those grim specters. If mortals consider elves with a sort of awe, this awe becomes a reverential fear when considering the dark elves. Though never dying, dark elves are obsessed with the trappings of death. They spend their lives looking into the void between stars in hopes of foreseeing their eventual demise.",
 				"masteredTalentId": "foretell",
 				"areteTalentId": "spout-doom",
-				"sampleNames": ["Nyx", "Vael", "Umbra"]
+				"sampleNames": [
+					"Nyx",
+					"Vael",
+					"Umbra"
+				]
 			},
 			{
 				"id": "fay-gnome",
 				"name": "Gnome",
-				"description": "Small, curious, and impossibly well-informed hedge-folk.",
+				"description": "And, of course, there are the gnomes, who are called the Court of Redcaps for the stout red hats that gnome men wear and the large mushrooms in which they dwell. It is true what they say about children that run away and live with the elves: they find immortality and never grow up. They do, however, grow old. The human body was never meant to live forever. These children—these gnomes— soon find themselves twisted by the elven food they eat and their own strange dreams. Still, they learn a lot over the course of their unnaturally lengthened lives.",
 				"masteredTalentId": "weird-wise-ancient",
 				"areteTalentId": "uncanny-knowledge",
-				"sampleNames": ["Pib", "Fenwick", "Tolly"]
+				"sampleNames": [
+					"Pib",
+					"Fenwick",
+					"Tolly"
+				]
 			}
 		]
 	},
 	{
 		"id": "underfolk",
 		"name": "Underfolk",
-		"description": "Peoples of the hills and deeps — dwarves, halflings, and trolls — makers and keepers of lasting things.",
+		"description": "Beneath your feet there are worlds. There are lives lived, tragedies experienced, arguments made, trysts discovered. There are wars fought, there are treasures wrought. Beneath your feet, there are the underfolk.\n\nThe term “underfolk” refers to three distinct kins—the dwarves, the halflings, and the trolls. The underfolk, however, consider themselves to be one people. Dwarves and halflings consider themselves to be the same race, and happily consider trolls to be adopted siblings. Humans have trouble getting along, finding ways to split hairs over religion and heredity. The underfolk have no such difficulties—they consider themselves one family.\n\nThe underfolk are the progenitors of civilization. True, humans really ran with the concept, but dwarves first thought of it. Writing systems, advanced math, complex forms of government, written contracts, common law—all underfolk inventions. These were all taught to humanity when humans first came to the Wide World from parts unknown. The underfolk and humans have always been allies.\n\nUnderfolk society is ruled by the Council of Liveries. This is not as much of a plutocracy as it seems at first. Everybody in underfolk society is liveried—that is, a member of a mercantile organization—so everybody ostensibly has a voice. That’s the theory anyway.\n\nThe underfolk have a practical view of religion. They acknowledge that the various deities of the men and elves might be real and potent, but also rationalize that these deities probably don’t care about the poor little underfolk hiding from their gaze under the earth. They do not believe that their spirits, on death, depart to any afterlife. Their souls are too heavy. They believe they all linger in the plane of Flesh after death as ghosts. Ghosts, of course, have needs too. That’s why the underfolk construct large tombs full of nice things to occupy themselves when they finally die.\n\nSince cities tend to get filled with tombs, underfolk are always tunneling out new homes. Whole cities have been left behind that are just necropoli now.",
 		"areteTriggers": [
-			"Craft something that will last for centuries.",
-			"Recover a precious gem or work of fine art and hoard it as a grave good.",
-			"Discover something secret and forgotten."
+			"Crafting something that will last for centuries",
+			"Recovering a precious gem or work of fine art and hoarding it as a grave good",
+			"Discovering something secret and forgotten"
 		],
 		"kins": [
 			{
 				"id": "underfolk-dwarf",
 				"name": "Dwarf",
-				"description": "Stout smiths and delvers who can labor through the night.",
+				"description": "Dwarves are the core of underfolk society. They’re hard workers. In many ways, they are industry personified.\n\nDwarves are obsessive creatures. They love to create. When they discover what craft most interests them, they dedicate themselves completely to it. Their hours are spent perfecting their craft, innovating in their craft, critiquing examples of their craft, and tearing it all down so they can start again and do it right this time. Really, drinking is the only thing that keeps a dwarf steady. It evens them out, mellows them down, lets their mind work on problems that aren’t exclusively about their craftwork.\n\nAll this obsessiveness pays off. Dwarf-craft is both practical and beautiful. It is highly sought after, which makes them rich. This is important for dwarves, who know the purpose of life: construct your tomb, because that’s where you’re going to spend the rest of eternity. Woe to the dwarf whose ghost goes to the afterlife bored.",
 				"masteredTalentId": "labor-unending",
 				"areteTalentId": "iron-beards",
-				"sampleNames": ["Bruni", "Dagna", "Thrain"]
+				"sampleNames": [
+					"Bruni",
+					"Dagna",
+					"Thrain"
+				]
 			},
 			{
 				"id": "underfolk-halfling",
 				"name": "Halfling",
-				"description": "Comfort-loving gentlefolk who make excellent diplomats — and better dinners.",
+				"description": "Halflings are a peaceable people, good-natured, and inclined to be friendly. When dwarves make stuff, it’s the halflings who turn that stuff into gold. Of course, they take a little commission for their trouble. This is generally agreed upon to be a good relationship, because dwarves and humans don’t always see eye to eye. Besides, dwarves would rather be making.\n\nHalflings fill in the gaps in domestic work. Dwarves might not notice that their workshops fill up with old scraps, empty oil cans, and soot, but the halflings certainly do. Halflings like the finer things in life. They like things to be clean, put together, and respectable. Therefore, if something needs cleaning, fixing, and putting-right, halflings often do that job themselves.\n\nIf halflings have one failing, it’s their love of creature comforts.\n\nFew people like eating as much as halflings enjoy their auntie’s mushroom pie. Few people like drinking as much as halflings enjoy the pint of bitter from the Bird and Baby Tavern. Few people like smoking as much as halflings enjoy a pipe full of Old Toby from the summer harvest of ‘45.",
 				"masteredTalentId": "hale-and-hearty",
 				"areteTalentId": "underfoot",
-				"sampleNames": ["Pip", "Marigold", "Rowan"]
+				"sampleNames": [
+					"Pip",
+					"Marigold",
+					"Rowan"
+				]
 			},
 			{
 				"id": "underfolk-troll",
 				"name": "Troll",
-				"description": "Slow-spoken giants of the border country, far stronger than anyone else in the room.",
+				"description": "Trolls were discovered, not born. Sculptors sometimes say that a statue is inside a block of marble, and you just need to scrape away everything that isn’t the statue. Dwarves found this to be true of trolls. As dwarves tunneled, they were surprised to find living beings embedded in the stone or twisted up in old tree roots. They carefully excavated these full-grown trolls, who awoke with no memories and no knowledge of the world. Dwarves carefully taught them speech and cheerfully integrated them into their society. In fact, dwarves think of trolls as little brothers who grew a little too big.\n\nTrolls are gentle giants. Well, most of the time. They do have great stature and incredible physical power, but spend much of their lives dealing with their kith who are smaller and weaker than them. All trolls learned very quickly to check their great strength. When they unleash it, however, the results are devastating—both to their foes and to themselves. Underfolk view trolls who actually unleash their strength very, very dimly. They believe these trolls to be monsters, and there are many infamous examples of cruel trolls that have contributed to this image. A troll who actually embraces his strength is not welcome in proper underfolk society.\n\nTrolls learn gendered roles from the other underfolk, but don’t really have any generative biology. That means trolls cannot reproduce. Every troll that dies means there is one less troll left in the world.",
 				"masteredTalentId": "giants-strength",
 				"areteTalentId": "colossal",
-				"sampleNames": ["Grum", "Hessa", "Bolder"]
+				"sampleNames": [
+					"Grum",
+					"Hessa",
+					"Bolder"
+				]
 			}
 		]
 	},
 	{
 		"id": "orc",
 		"name": "Orcs",
-		"description": "The blooded peoples, each kin's veins running with a different element. Their strange blood answers when they are hurt.",
+		"description": "A prayer to Rng: “O’ Rng, gracious and kind. We have all that we need. Your people are content and happy. Our lives are full, and we need nothing else. Please, visit your gifts on our enemies. Give them what they lack. Let them know your love and generosity.”\n\nAt home, orcs are much like everybody else. They have families. They have farms. They like to drink horns of mead with their friends. They make crafts to sell at their religious festivals. They worry about their sick goats. Few people see this side of the orcs, though. Most people only see the raiders.\n\nOrcs are famous raiders and traders. They travel all over the Wide World and are the most accomplished seafarers. In the summer months, when the icy straits melt between their lands and the kingdoms of men, parties of orc raiders come plundering. They take gold and royalty.\n\nIt's said that orcs have a fire in their guts that is only quenched by the presence of gold. Without gold, orcs really are crazy. Why do they take royalty? Well, nobody knows. Sometimes they ransom them to their noble houses for larger sums of gold. Sometimes they don't, though.\n\nSlavery is against the Orc-Law (an oral collection of laws and traditions), so royals that become permanent residents of orcish lands are usually integrated. Sometimes they spend the rest of their lives in the frozen north. Sometimes they're rescued by crusaders. About a hundred years ago, three major campaigns (and several minor ones) were mounted by various noble houses to win back some of these captives from the orcs. These campaigns are very much in the mind of both humans and orcs in the modern era.\n\nOrcs are mostly matrilineal. This is because some orcs don't have fathers. Orcs can reproduce asexually through parthenogenesis. This type of reproduction (curiously enough) produces both male and female orcs; each orc is a half-clone of their mother.\n\nA baby orc is called a goblin. Unlike human children, who take years to learn to walk and talk, goblins learn these skills incredibly quickly. Within a few days, a baby goblin is up on its feet, walking and talking and fighting and picking locks. Really, the little guys are remarkable.\n\nNot that they're cruel, but orcs have a somewhat blasé concern for their offspring's health. Few goblins get to grow up to be orcs. It's a rough world. It's better for an orc parent to survive long enough to make another clutch of goblin babies than it is for a single goblin (or even an entire clutch) to survive. Prioritize the elders.\n\n### A myth of the orcs\n\nWe do not worship Rng out of devotion. We worship Rng out of fear.\n\nTheir voice is the sound of the falling rain that will water your crops and flood your fields.\n\nTheir breath is the wind that carries the scent of roses and fuels the forest fire.\n\nThey once heard the cries of a starving people and sent to them a beast who would give meat eternal. The tarasque soon destroyed the town.\n\nAnother time, they heard the prayers of those who had lost their way in the woods, and guided them safely to the nearest camp. The lost were soon put to the axe by the enemy soldiers.\n\nThey are Rng, Helper and Harmer. They are Rng, the Lord of Chaos.\n\n### Orcish names\n\n### Orc male names:\n\nÆlfric, Bassa, Boris, Caedwalla, Dernhelm, Gyrth, Kiril, Harthold, Ine, Igor, Ivan, Lofwine, Mordar, Offa, Peragur, Sabor, Svein, Thorgils, Tostig, Ulf, Vlad, Wulnoth, Yuri\n\n### Orc female names:\n\nÆlflaen, Burhred, Caewen, Darya, Eahild, Gunhild, Gwillowen, Hereswith, Inga, Izolda, Lubov, Marta, Olgar, Raenburh, Svetar, Tatyana, Ulyana, Vera, Walburga, Zlata\n\nOrcs use matronyms as their surnames by appending “daughter” or “son” to the name of their mother (e.g., Ingason or Martadaughter).",
 		"areteTriggers": [
-			"Hoard a skull from a class of monster your guild has never killed before.",
-			"Hoard a treasure of great worth.",
-			"Slay a monster at least twice your size."
+			"Hoarding a skull from a class of monster your guild has never killed before",
+			"Hoarding a treasure of great worth",
+			"Slaying a monster at least twice your size"
 		],
 		"kins": [
 			{
 				"id": "orc-earthblooded",
 				"name": "Earthblooded",
-				"description": "Unmovable as the mountains — their quicksilver blood eats the weapons that cut them.",
+				"description": "Earthblooded orcs are green-skinned. They feel most calm when underground and prefer to dwell in caves instead of building traditional turf-roofed houses.\n\nThe underfolk encounter earthbloods most frequently. Whereas the other kins usually sail south to human lands, earthblooded orcs have found great success in tunneling down into the veins of underfolk habitation. They prefer tomb robbing (fewer pesky dwarves actively biting at you with axes), but are happy to relieve a halfling of his gold if the chance presents itself.",
 				"masteredTalentId": "quicksilver-blood",
 				"areteTalentId": "jarl",
-				"sampleNames": ["Karg", "Ushi", "Dromm"]
+				"sampleNames": [
+					"Karg",
+					"Ushi",
+					"Dromm"
+				]
 			},
 			{
 				"id": "orc-fireblooded",
 				"name": "Fireblooded",
-				"description": "Quick to burn — wounds kindle a berserker's rage.",
+				"description": "Fireblooded orcs bear dark red and black skin that’s warm to the touch. They are never calm.\n\nFirebloods are famously effective as shock troopers. Orc clans of other kins will sometimes bring a contingent of firebloods to be used in this way. For this reason, you might find fireblooded mercenaries attached to orcs of all stripes. When the firebloods go berserk, they can punch a hole into the shield-wall of even well-trained and veteran soldiers.",
 				"masteredTalentId": "berserkergang",
 				"areteTalentId": "jarl",
-				"sampleNames": ["Ash", "Vurok", "Cinder"]
+				"sampleNames": [
+					"Ash",
+					"Vurok",
+					"Cinder"
+				]
 			},
 			{
 				"id": "orc-seablooded",
 				"name": "Seablooded",
-				"description": "Tidal and patient — their black blood poisons whatever bites them.",
+				"description": "Black-skinned like the ocean's depths or a rain-laden cloud, seablooded orcs keenly feel the push and pull of the tides in their heart. Seablooded orcs are most calm when dwelling near shores or on the open water.\n\nThough all orcs raid human lands during the spring and summer months, this kin is especially feared on the oceans. They are famous pirates, rarely actually coming to shore for raids or skirmishes. It’s said that more than a few merfolk have taken seablooded spouses.",
 				"masteredTalentId": "poison-blood",
 				"areteTalentId": "jarl",
-				"sampleNames": ["Nerra", "Fathom", "Coral"]
+				"sampleNames": [
+					"Nerra",
+					"Fathom",
+					"Coral"
+				]
 			},
 			{
 				"id": "orc-stormblooded",
 				"name": "Stormblooded",
-				"description": "Loud and sudden — wounded, their blood rises as concealing mist.",
+				"description": "White-skinned like a cloudy sky, these orcs are tumultuously passionate. When great storms blow up off of the ocean, they can hear their own hearts singing to them. They’re most calm when the winds and rains howl.\n\nThis kin’s ancestral homeland is the most northerly of all orcish territories. The stormbloods endure the most brutal winters and severe blizzards. They claim these hardships have made them the toughest of the orc broods. Indeed, the stormbloods are nothing if not long-suffering, resourceful, and enduring.",
 				"masteredTalentId": "blur",
 				"areteTalentId": "jarl",
-				"sampleNames": ["Zar", "Tempest", "Gale"]
+				"sampleNames": [
+					"Zar",
+					"Tempest",
+					"Gale"
+				]
 			}
 		]
 	}

@@ -66,8 +66,6 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 	if (devLoginEnabled) {
 		providers.push(
 			Credentials({
-				id: 'credentials',
-				name: 'Dev Login',
 				credentials: {
 					email: { label: 'Email', type: 'email' },
 					name: { label: 'Name', type: 'text' }

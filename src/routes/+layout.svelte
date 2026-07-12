@@ -32,7 +32,6 @@
 	</main>
 
 	<footer class="site-footer">
-		<img class="adherent" src="/brand/adherent-of-the-worm.png" alt="Adherent of His Majesty the Worm" />
 		<p>
 			His Majesty the Worm is copyright Joshua McCrowell. Guild Book is an independent production by
 			Arrowed and is not affiliated with Joshua McCrowell or Exalted Funeral.
@@ -90,16 +89,5 @@
 	}
 	.site-footer p {
 		margin: 0 0 0.5rem;
-	}
-	.adherent {
-		display: block;
-		width: 132px;
-		height: auto;
-		margin-bottom: 0.75rem;
-		opacity: 0.85;
-	}
-	:global([data-theme='worm-dark']) .adherent {
-		/* The mark is dark line art on transparency; invert it for the dark theme. */
-		filter: invert(0.92) hue-rotate(180deg);
 	}
 </style>

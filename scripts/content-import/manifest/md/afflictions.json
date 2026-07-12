@@ -1,0 +1,20 @@
+[
+	{ "id": "giant-rat-venom", "field": "description", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Giant rat venom", "to": "Stage 1:" },
+	{ "id": "giant-rat-venom", "field": "stages[0].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Giant rat venom", "fromAfter": "Stage 1:", "to": "Stage 2:", "dropCureCost": true },
+	{ "id": "giant-rat-venom", "field": "stages[1].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Giant rat venom", "fromAfter": "Stage 2:", "to": "Stage 3:", "dropCureCost": true },
+	{ "id": "giant-rat-venom", "field": "stages[2].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Giant rat venom", "fromAfter": "Stage 3:", "dropCureCost": true },
+
+	{ "id": "black-honey", "field": "description", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Black honey", "to": "Stage 1:" },
+	{ "id": "black-honey", "field": "stages[0].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Black honey", "fromAfter": "Stage 1:", "to": "Stage 2:", "dropCureCost": true },
+	{ "id": "black-honey", "field": "stages[1].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Black honey", "fromAfter": "Stage 2:", "dropCureCost": true },
+
+	{ "id": "ghost-lotus", "field": "description", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Ghost lotus", "to": "Stage 1:" },
+	{ "id": "ghost-lotus", "field": "stages[0].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Ghost lotus", "fromAfter": "Stage 1:", "to": "Stage 2:", "dropCureCost": true },
+	{ "id": "ghost-lotus", "field": "stages[1].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Ghost lotus", "fromAfter": "Stage 2:", "to": "Stage 3:", "dropCureCost": true },
+	{ "id": "ghost-lotus", "field": "stages[2].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Ghost lotus", "fromAfter": "Stage 3:", "dropCureCost": true },
+
+	{ "id": "great-contagion", "field": "description", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "The great contagion", "to": "Stage 1:" },
+	{ "id": "great-contagion", "field": "stages[0].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "The great contagion", "fromAfter": "Stage 1:", "to": "Stage 2:", "dropCureCost": true },
+	{ "id": "great-contagion", "field": "stages[1].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "The great contagion", "fromAfter": "Stage 2:", "to": "Stage 3:", "dropCureCost": true },
+	{ "id": "great-contagion", "field": "stages[2].effect", "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "The great contagion", "fromAfter": "Stage 3:", "dropCureCost": true }
+]

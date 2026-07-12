@@ -44,6 +44,7 @@ export interface ContentPackFiles {
 	conditions?: string;
 	afflictions?: string;
 	rules?: string;
+	spells?: string;
 }
 
 /** One of the four attributes; `suit` binds it to the matching tarot suit. */
@@ -189,6 +190,17 @@ export interface RuleEntry {
 	/** Markdown body. */
 	body: string;
 	tags: string[];
+}
+
+/** A sorcery spell from one of the four traditions (wastes | weald | weird | welkin). */
+export interface SpellDefinition {
+	id: string;
+	name: string;
+	tradition: string;
+	/** The material component (verbatim). */
+	component: string;
+	/** Markdown effect text. */
+	description: string;
 }
 
 // ---------------------------------------------------------------------------

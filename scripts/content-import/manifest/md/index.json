@@ -1,0 +1,10 @@
+[
+	{ "id": "hmtw", "field": "attributes[swords].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Attributes", "fromAfter": "Swords:", "to": "Pentacles:" },
+	{ "id": "hmtw", "field": "attributes[pentacles].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Attributes", "fromAfter": "Pentacles:", "to": "Cups:" },
+	{ "id": "hmtw", "field": "attributes[cups].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Attributes", "fromAfter": "Cups:", "to": "Wands:" },
+	{ "id": "hmtw", "field": "attributes[wands].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Attributes", "fromAfter": "Wands:", "to": "If the player describes" },
+	{ "id": "hmtw", "field": "tarot.resolution.outcomes[success].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Success" },
+	{ "id": "hmtw", "field": "tarot.resolution.outcomes[failure].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Failure" },
+	{ "id": "hmtw", "field": "tarot.resolution.outcomes[great-success].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Great success" },
+	{ "id": "hmtw", "field": "tarot.resolution.outcomes[great-failure].description", "file": "01 - Chapter 1 - The Basics.md", "heading": "Great failure" }
+]

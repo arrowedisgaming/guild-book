@@ -77,7 +77,8 @@ export const contentPackFilesSchema = z.object({
 	languages: z.string().optional(),
 	conditions: z.string().optional(),
 	afflictions: z.string().optional(),
-	rules: z.string().optional()
+	rules: z.string().optional(),
+	spells: z.string().optional()
 });
 
 export const encumbranceConfigSchema = z.object({
@@ -184,6 +185,16 @@ export const ruleEntrySchema = z.object({
 	tags: z.array(z.string())
 });
 
+export const spellDefinitionSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	// Content-authored id (wastes | weald | weird | welkin) — kept as z.string()
+	// so the four sorcery traditions stay data, not a schema union.
+	tradition: z.string(),
+	component: z.string(),
+	description: z.string()
+});
+
 export const kithsFileSchema = z.array(kithDefinitionSchema);
 export const pathsFileSchema = z.array(pathDefinitionSchema);
 export const talentsFileSchema = z.array(talentDefinitionSchema);
@@ -192,6 +203,7 @@ export const languagesFileSchema = z.array(namedEntrySchema);
 export const conditionsFileSchema = z.array(namedEntrySchema);
 export const afflictionsFileSchema = z.array(afflictionDefinitionSchema);
 export const rulesFileSchema = z.array(ruleEntrySchema);
+export const spellsFileSchema = z.array(spellDefinitionSchema);
 
 /**
  * Parse `value` against `schema`, throwing a labelled error on failure.

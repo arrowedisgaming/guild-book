@@ -3,12 +3,17 @@
  * Pure — a DenizenDefinition in, a Markdown string out.
  */
 
-import type { DenizenDefinition, DenizenAbility } from '$lib/types/content-pack';
+import type { DenizenDefinition, DenizenAbility, DenizenStatValue } from '$lib/types/content-pack';
 import { abilityLabel } from '$lib/utils/ability-label';
 
 function yamlValue(v: string): string {
 	// Quote values that could confuse a YAML parser.
 	return /[:#\-?&*!|>'"%@`]/.test(v) || v === '' ? JSON.stringify(v) : v;
+}
+
+/** Stats may be numbers or book-special strings ("∞", "X") — encode both safely. */
+function yamlStat(v: DenizenStatValue): string {
+	return typeof v === 'number' ? String(v) : yamlValue(v);
 }
 
 function abilitySection(title: string, list: DenizenAbility[] | undefined): string[] {
@@ -27,10 +32,10 @@ export function exportDenizenToMarkdown(
 		'system: His Majesty the Worm',
 		`theme: ${yamlValue(themeName)}`,
 		`threat: ${yamlValue(threatName)}`,
-		`swords: ${denizen.attributes.swords}`,
-		`pentacles: ${denizen.attributes.pentacles}`,
-		`cups: ${denizen.attributes.cups}`,
-		`wands: ${denizen.attributes.wands}`,
+		`swords: ${yamlStat(denizen.attributes.swords)}`,
+		`pentacles: ${yamlStat(denizen.attributes.pentacles)}`,
+		`cups: ${yamlStat(denizen.attributes.cups)}`,
+		`wands: ${yamlStat(denizen.attributes.wands)}`,
 		denizen.health !== undefined && denizen.defense !== undefined
 			? `hd: ${yamlValue(`${denizen.health}/${denizen.defense}`)}`
 			: null,

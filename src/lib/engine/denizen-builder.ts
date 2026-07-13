@@ -115,6 +115,67 @@ function splitList(raw: string): string[] {
 		.filter(Boolean);
 }
 
+// --- persisted-draft sanitizing ----------------------------------------------
+
+const asString = (value: unknown, fallback: string): string =>
+	typeof value === 'string' ? value : fallback;
+
+const asAbilities = (value: unknown): DenizenAbility[] =>
+	Array.isArray(value)
+		? value.filter(
+				(a): a is DenizenAbility =>
+					typeof a === 'object' &&
+					a !== null &&
+					typeof (a as DenizenAbility).name === 'string' &&
+					typeof (a as DenizenAbility).text === 'string'
+			)
+		: [];
+
+/**
+ * Rebuild a DenizenDraft from untrusted data (localStorage can hold drafts
+ * written by older builds or edited by hand). Every field is type-checked and
+ * falls back to the blank draft's value; unknown keys are dropped.
+ */
+export function sanitizeDraft(raw: unknown): DenizenDraft {
+	const blank = createBlankDraft();
+	if (typeof raw !== 'object' || raw === null) return blank;
+	const draft = raw as Record<string, unknown>;
+	const attributes = (
+		typeof draft.attributes === 'object' && draft.attributes !== null ? draft.attributes : {}
+	) as Record<string, unknown>;
+	const seeded = draft.seededFrom as { themeId?: unknown; threatId?: unknown } | null | undefined;
+
+	return {
+		name: asString(draft.name, blank.name),
+		concept: asString(draft.concept, blank.concept),
+		exaggeration: asString(draft.exaggeration, blank.exaggeration),
+		flavor: asString(draft.flavor, blank.flavor),
+		themeId: typeof draft.themeId === 'string' ? draft.themeId : null,
+		threatId: typeof draft.threatId === 'string' ? draft.threatId : null,
+		seededFrom:
+			seeded &&
+			typeof seeded === 'object' &&
+			typeof seeded.themeId === 'string' &&
+			typeof seeded.threatId === 'string'
+				? { themeId: seeded.themeId, threatId: seeded.threatId }
+				: null,
+		attributes: {
+			swords: asString(attributes.swords, blank.attributes.swords),
+			pentacles: asString(attributes.pentacles, blank.attributes.pentacles),
+			cups: asString(attributes.cups, blank.attributes.cups),
+			wands: asString(attributes.wands, blank.attributes.wands)
+		},
+		health: asString(draft.health, blank.health),
+		defense: asString(draft.defense, blank.defense),
+		statNote: asString(draft.statNote, blank.statNote),
+		likes: asString(draft.likes, blank.likes),
+		hates: asString(draft.hates, blank.hates),
+		notes: asAbilities(draft.notes),
+		lesserDooms: asAbilities(draft.lesserDooms),
+		greaterDooms: asAbilities(draft.greaterDooms)
+	};
+}
+
 /**
  * Book invariants the stat inputs can violate: Health starts at 1+ (the
  * bloodybones' "∞" is a string, not a number), Defense may be 0 but not

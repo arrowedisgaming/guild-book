@@ -5,10 +5,19 @@
 
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import { createBlankDraft, type DenizenDraft } from '$lib/engine/denizen-builder';
+import { createBlankDraft, sanitizeDraft, type DenizenDraft } from '$lib/engine/denizen-builder';
 
 const STORAGE_KEY = 'guildbook-denizen-builder';
 const BUILDER_STATE_VERSION = 1;
+
+export const BUILDER_STEPS = [
+	{ id: 'concept', label: 'Concept' },
+	{ id: 'theme', label: 'Theme' },
+	{ id: 'threat', label: 'Threat' },
+	{ id: 'customize', label: 'Customize' },
+	{ id: 'dooms', label: 'Dooms' },
+	{ id: 'review', label: 'Review' }
+] as const;
 
 export interface DenizenBuilderState {
 	version: number;
@@ -25,13 +34,18 @@ function loadFromStorage(): DenizenBuilderState {
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return createInitialState();
-		const parsed = JSON.parse(raw) as Partial<DenizenBuilderState>;
-		if (parsed.version !== BUILDER_STATE_VERSION || !parsed.draft) return createInitialState();
-		// Backfill any fields added since the draft was stored.
+		const parsed: unknown = JSON.parse(raw);
+		if (typeof parsed !== 'object' || parsed === null) return createInitialState();
+		const state = parsed as Record<string, unknown>;
+		if (state.version !== BUILDER_STATE_VERSION) return createInitialState();
+		// Stored drafts are untrusted (older builds, manual edits) — rebuild
+		// field by field instead of spreading a cast object into the state.
+		const lastStep = BUILDER_STEPS.length - 1;
+		const step = typeof state.currentStep === 'number' ? state.currentStep : 0;
 		return {
 			version: BUILDER_STATE_VERSION,
-			currentStep: typeof parsed.currentStep === 'number' ? parsed.currentStep : 0,
-			draft: { ...createBlankDraft(), ...parsed.draft }
+			currentStep: Math.max(0, Math.min(Math.trunc(step), lastStep)),
+			draft: sanitizeDraft(state.draft)
 		};
 	} catch {
 		return createInitialState();
@@ -64,12 +78,3 @@ function createBuilderStore() {
 }
 
 export const denizenBuilder = createBuilderStore();
-
-export const BUILDER_STEPS = [
-	{ id: 'concept', label: 'Concept' },
-	{ id: 'theme', label: 'Theme' },
-	{ id: 'threat', label: 'Threat' },
-	{ id: 'customize', label: 'Customize' },
-	{ id: 'dooms', label: 'Dooms' },
-	{ id: 'review', label: 'Review' }
-] as const;

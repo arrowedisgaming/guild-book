@@ -46,6 +46,27 @@ test.describe('denizen reference', () => {
 		expect(response?.status()).toBe(404);
 	});
 
+	test('exports really produce files and clipboard content', async ({ page, context }) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await page.goto('/denizens/skeleton');
+
+		// Markdown download carries the stat block.
+		const mdDownload = page.waitForEvent('download');
+		await page.getByRole('button', { name: 'Download .md' }).click();
+		expect((await mdDownload).suggestedFilename()).toBe('skeleton.md');
+
+		// Clipboard copy puts the same Markdown on the clipboard.
+		await page.getByRole('button', { name: 'Copy Markdown' }).click();
+		await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
+		const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+		expect(clipboard).toContain('## Skeleton');
+		expect(clipboard).toContain('**Health/Defense:** 6/0');
+
+		// PDF generation fetches fonts and triggers a download.
+		const pdfDownload = page.waitForEvent('download');
+		await page.getByRole('button', { name: 'Download PDF' }).click();
+		expect((await pdfDownload).suggestedFilename()).toBe('skeleton.pdf');
+	});
 });
 
 test.describe('denizen builder', () => {

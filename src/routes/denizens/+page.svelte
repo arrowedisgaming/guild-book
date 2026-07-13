@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RulesSearch from '$lib/components/rules/RulesSearch.svelte';
 	import { renderMarkdown } from '$lib/utils/markdown';
+	import { abilityLabel } from '$lib/utils/ability-label';
 	import type { DenizenAbility } from '$lib/types/content-pack';
 	import type { PageData } from './$types';
 
@@ -30,7 +31,7 @@
 		<ul>
 			{#each list as ability (ability.name)}
 				<li>
-					<strong>{ability.name}.</strong>
+					<strong>{abilityLabel(ability.name)}</strong>
 					<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 					<span class="inline-md">{@html renderMarkdown(ability.text)}</span>
 				</li>
@@ -57,6 +58,7 @@
 					type="button"
 					class="chip"
 					class:active={themeFilter === theme.id}
+					aria-pressed={themeFilter === theme.id}
 					onclick={() => (themeFilter = themeFilter === theme.id ? null : theme.id)}
 				>
 					{theme.name}
@@ -69,6 +71,7 @@
 					type="button"
 					class="chip threat"
 					class:active={threatFilter === threat.id}
+					aria-pressed={threatFilter === threat.id}
 					onclick={() => (threatFilter = threatFilter === threat.id ? null : threat.id)}
 				>
 					{threat.name}

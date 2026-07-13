@@ -4,7 +4,8 @@ import {
 	seedFromTemplates,
 	needsReseed,
 	toDenizenDefinition,
-	draftStatWarnings
+	draftStatWarnings,
+	sanitizeDraft
 } from '$lib/engine/denizen-builder';
 import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
 
@@ -129,6 +130,48 @@ describe('denizen builder — materializing a definition', () => {
 		);
 		expect('health' in lord).toBe(false);
 		expect('defense' in lord).toBe(false);
+	});
+});
+
+describe('denizen builder — sanitizing persisted drafts', () => {
+	it('returns a blank draft for garbage input', () => {
+		expect(sanitizeDraft(null)).toEqual(createBlankDraft());
+		expect(sanitizeDraft('nonsense')).toEqual(createBlankDraft());
+		expect(sanitizeDraft(42)).toEqual(createBlankDraft());
+	});
+
+	it('keeps valid fields and repairs invalid ones individually', () => {
+		const draft = sanitizeDraft({
+			name: 'Locust Husk',
+			concept: 123, // wrong type — repaired
+			themeId: 'undead',
+			threatId: null,
+			attributes: { swords: '6', pentacles: 4 }, // 4 is not a string — repaired
+			health: '2',
+			notes: [
+				{ name: 'Tough', text: 'Ignores the first Wound.' },
+				{ name: 'Broken' }, // missing text — dropped
+				'not an ability' // dropped
+			],
+			extraneous: 'dropped'
+		});
+		expect(draft.name).toBe('Locust Husk');
+		expect(draft.concept).toBe('');
+		expect(draft.themeId).toBe('undead');
+		expect(draft.attributes.swords).toBe('6');
+		expect(draft.attributes.pentacles).toBe('0');
+		expect(draft.health).toBe('2');
+		expect(draft.notes).toEqual([{ name: 'Tough', text: 'Ignores the first Wound.' }]);
+		expect('extraneous' in draft).toBe(false);
+	});
+
+	it('round-trips a real draft unchanged', () => {
+		const seeded = seedFromTemplates(
+			{ ...createBlankDraft(), name: 'Gilded Horror' },
+			theme('undead'),
+			threat('brute')
+		);
+		expect(sanitizeDraft(JSON.parse(JSON.stringify(seeded)))).toEqual(seeded);
 	});
 });
 

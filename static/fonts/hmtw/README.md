@@ -1,16 +1,9 @@
-# HMTW export fonts
+# HMTW PDF-export fonts
 
-The type stack used by the denizen stat-block PDF export
-(`src/lib/export/denizen-pdf-export.ts`), matching the book's look:
+The type stack embedded in the denizen stat-block PDF export
+(`src/lib/export/denizen-pdf-export.ts`), matching the book's look. Fonts are
+fetched at export time in the browser and embedded in the generated PDF; they
+are not used for the web UI itself.
 
-| File | Face | Use | Licence |
-| --- | --- | --- | --- |
-| `IMFellEnglish-Regular.ttf` / `-Italic.ttf` | IM Fell English (Igino Marini) | Body text, 10.5pt | SIL OFL (Google Fonts) |
-| `HamletOrNot.ttf` | Hamlet or Not | Creature names 24pt, pool titles 18pt | Free (dafont) |
-| `CaslonAntique-Bold.ttf` | Caslon Antique Bold | Section headers & stat labels 16pt; also fills IM Fell's missing bold slot | Free |
-
-IM Fell English has no bold cut, so bold runs (ability names) intentionally
-render in Caslon Antique Bold.
-
-Fonts are fetched at export time in the browser and embedded in the generated
-PDF; they are not used for the web UI itself.
+Sources and licence status are tracked with the rest of the font inventory in
+[`../LICENSES.md`](../LICENSES.md) — update that file, not this one.

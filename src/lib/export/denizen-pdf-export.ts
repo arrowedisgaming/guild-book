@@ -177,16 +177,23 @@ function toBase64(buffer: ArrayBuffer): string {
 let fontVfsPromise: Promise<Record<string, string>> | null = null;
 
 function loadFontVfs(): Promise<Record<string, string>> {
-	fontVfsPromise ??= (async () => {
-		const entries = await Promise.all(
-			Object.entries(FONT_SOURCES).map(async ([name, url]) => {
-				const response = await fetch(url);
-				if (!response.ok) throw new Error(`Failed to load font ${url}: ${response.status}`);
-				return [name, toBase64(await response.arrayBuffer())] as const;
-			})
-		);
-		return Object.fromEntries(entries);
-	})();
+	if (!fontVfsPromise) {
+		fontVfsPromise = (async () => {
+			const entries = await Promise.all(
+				Object.entries(FONT_SOURCES).map(async ([name, url]) => {
+					const response = await fetch(url);
+					if (!response.ok) throw new Error(`Failed to load font ${url}: ${response.status}`);
+					return [name, toBase64(await response.arrayBuffer())] as const;
+				})
+			);
+			return Object.fromEntries(entries);
+		})();
+		// A transient fetch failure must not poison the cache for the rest of
+		// the page session — drop the rejected promise so a retry refetches.
+		fontVfsPromise.catch(() => {
+			fontVfsPromise = null;
+		});
+	}
 	return fontVfsPromise;
 }
 

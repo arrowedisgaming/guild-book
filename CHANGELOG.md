@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stat-block PDF, from both the reference and the builder.
 - Denizens Playwright e2e suite (`tests/e2e/denizens.spec.ts`); the e2e web server
   now boots without a real `AUTH_SECRET`.
+- Builder capability metadata in the content pack (`builderMode`/`builderNote`):
+  pool-based (Dungeon Lord) and description-only (Man) templates are
+  reference-only in the builder, with the reason shown in place.
+- Stat invariants from the book enforced in the schema and as live builder
+  warnings: Health starts at 1+ (or ∞), Defense may be 0, Health/Defense travel
+  as a pair, and blank stats are omitted from stat blocks and exports.
+- Export buttons announce clipboard/PDF failures to the screen-reader live
+  region, disable while working, and retry font loading after a failed fetch.
+  Persisted builder drafts are validated field by field on load.
 
 ### Added
 

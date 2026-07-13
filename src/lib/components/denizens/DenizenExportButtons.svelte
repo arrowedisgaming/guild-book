@@ -11,12 +11,22 @@
 	}: { denizen: DenizenDefinition; themeName: string; threatName: string } = $props();
 
 	let copied = $state(false);
+	let copying = $state(false);
+	let generatingPdf = $state(false);
 
 	async function copyMarkdown() {
-		await navigator.clipboard.writeText(exportDenizenToMarkdown(denizen, themeName, threatName));
-		copied = true;
-		announce('Markdown copied to clipboard.');
-		setTimeout(() => (copied = false), 2000);
+		if (copying) return;
+		copying = true;
+		try {
+			await navigator.clipboard.writeText(exportDenizenToMarkdown(denizen, themeName, threatName));
+			copied = true;
+			announce('Markdown copied to clipboard.');
+			setTimeout(() => (copied = false), 2000);
+		} catch {
+			announce('Could not copy — the browser blocked clipboard access. Try “Download .md” instead.');
+		} finally {
+			copying = false;
+		}
 	}
 
 	function downloadMarkdown() {
@@ -31,14 +41,26 @@
 	}
 
 	async function downloadPdf() {
-		await downloadDenizenPDF(denizen, themeName, threatName);
+		if (generatingPdf) return;
+		generatingPdf = true;
+		try {
+			await downloadDenizenPDF(denizen, themeName, threatName);
+		} catch {
+			announce('PDF generation failed — check your connection and try again.');
+		} finally {
+			generatingPdf = false;
+		}
 	}
 </script>
 
 <div class="export">
-	<button type="button" onclick={copyMarkdown}>{copied ? 'Copied!' : 'Copy Markdown'}</button>
+	<button type="button" disabled={copying} onclick={copyMarkdown}>
+		{copied ? 'Copied!' : 'Copy Markdown'}
+	</button>
 	<button type="button" onclick={downloadMarkdown}>Download .md</button>
-	<button type="button" onclick={downloadPdf}>Download PDF</button>
+	<button type="button" disabled={generatingPdf} onclick={downloadPdf}>
+		{generatingPdf ? 'Preparing PDF…' : 'Download PDF'}
+	</button>
 </div>
 
 <style>
@@ -61,5 +83,9 @@
 	}
 	button:hover {
 		border-color: var(--accent);
+	}
+	button:disabled {
+		opacity: 0.6;
+		cursor: wait;
 	}
 </style>

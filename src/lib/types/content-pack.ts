@@ -223,6 +223,14 @@ export interface DenizenThemeDefinition {
 	lesserDooms?: DenizenAbility[];
 	/** Pick guidance verbatim from the book, e.g. "Choose 1 of the following". */
 	chooseLesserDooms?: string;
+	/**
+	 * Whether the builder can use this template. Omitted = 'standard'.
+	 * 'unsupported' keeps the template in the reference but out of the builder
+	 * (the Man theme: the book says to build people as characters instead).
+	 */
+	builderMode?: 'standard' | 'unsupported';
+	/** Shown in the builder when the template is unavailable. */
+	builderNote?: string;
 }
 
 /**
@@ -245,8 +253,15 @@ export interface DenizenThreatDefinition {
 	greaterDooms?: DenizenAbility[];
 	/** Pick guidance verbatim from the book, e.g. "Choose 1 or 2". */
 	chooseGreaterDooms?: string;
-	/** Elites and dungeon lords prompt extra Challenge-card draws. */
-	drawsExtraChallengeCards?: boolean;
+	/**
+	 * Whether the builder can use this template. Omitted = 'standard'.
+	 * 'pools' marks threats fought in named Health/Defense pools (dungeon
+	 * lords); the builder disables them until it supports pool editing, while
+	 * the reference keeps showing them in full.
+	 */
+	builderMode?: 'standard' | 'pools' | 'unsupported';
+	/** Shown in the builder when the template is unavailable. */
+	builderNote?: string;
 }
 
 /**

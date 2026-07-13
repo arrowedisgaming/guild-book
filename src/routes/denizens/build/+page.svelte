@@ -5,7 +5,8 @@
 	import {
 		seedFromTemplates,
 		needsReseed,
-		toDenizenDefinition
+		toDenizenDefinition,
+		draftStatWarnings
 	} from '$lib/engine/denizen-builder';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
@@ -21,6 +22,23 @@
 	let theme = $derived(data.themes.find((t) => t.id === draft.themeId));
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
 	let templatesChosen = $derived(Boolean(theme && threat));
+	let statWarnings = $derived(draftStatWarnings(draft));
+
+	// The builder only supports standard templates; pool-based and
+	// description-only ones stay reference material (capability from data).
+	const usableInBuilder = (option: { builderMode?: string }) =>
+		(option.builderMode ?? 'standard') === 'standard';
+
+	// A persisted draft can reference a template the builder no longer offers
+	// (e.g. stored before capability metadata existed) — drop that selection.
+	$effect(() => {
+		if (theme && !usableInBuilder(theme)) {
+			denizenBuilder.updateDraft((d) => ({ ...d, themeId: null }));
+		}
+		if (threat && !usableInBuilder(threat)) {
+			denizenBuilder.updateDraft((d) => ({ ...d, threatId: null }));
+		}
+	});
 
 	// Steps past Threat need both templates; re-seed stats when the pair changes.
 	$effect(() => {
@@ -222,19 +240,28 @@
 		<p>Theme defines the creature's mythological context. How is it fantastic?</p>
 		<div class="picker">
 			{#each data.themes as option (option.id)}
-				<label class="pick-card" class:selected={draft.themeId === option.id}>
-					<input
-						type="radio"
-						name="theme"
-						value={option.id}
-						checked={draft.themeId === option.id}
-						onchange={() => setField('themeId', option.id)}
-					/>
-					<span class="pick-name">{option.name}</span>
-					<span class="pick-desc">{option.description.split('\n')[0]}</span>
-					{#if option.likes?.length}<span class="pick-meta"><strong>Likes:</strong> {option.likes.join(', ')}</span>{/if}
-					{#if option.hates?.length}<span class="pick-meta"><strong>Hates:</strong> {option.hates.join(', ')}</span>{/if}
-				</label>
+				{#if usableInBuilder(option)}
+					<label class="pick-card" class:selected={draft.themeId === option.id}>
+						<input
+							type="radio"
+							name="theme"
+							value={option.id}
+							checked={draft.themeId === option.id}
+							onchange={() => setField('themeId', option.id)}
+						/>
+						<span class="pick-name">{option.name}</span>
+						<span class="pick-desc">{option.description.split('\n')[0]}</span>
+						{#if option.likes?.length}<span class="pick-meta"><strong>Likes:</strong> {option.likes.join(', ')}</span>{/if}
+						{#if option.hates?.length}<span class="pick-meta"><strong>Hates:</strong> {option.hates.join(', ')}</span>{/if}
+					</label>
+				{:else}
+					<div class="pick-card unavailable">
+						<span class="pick-name">{option.name}</span>
+						<span class="pick-desc">Not available in the builder.</span>
+						{#if option.builderNote}<span class="pick-meta">{option.builderNote}</span>{/if}
+						<span class="pick-meta"><a href="/denizens">Read it in the reference →</a></span>
+					</div>
+				{/if}
 			{/each}
 		</div>
 	{:else if step === 2}
@@ -242,33 +269,35 @@
 		<p>Threat defines the creature's personality, tactics, and overall strength. How does it act?</p>
 		<div class="picker">
 			{#each data.threats as option (option.id)}
-				<label class="pick-card" class:selected={draft.threatId === option.id}>
-					<input
-						type="radio"
-						name="threat"
-						value={option.id}
-						checked={draft.threatId === option.id}
-						onchange={() => setField('threatId', option.id)}
-					/>
-					<span class="pick-name">{option.name}</span>
-					<span class="pick-desc">{option.description.split('\n')[0]}</span>
-					{#if option.attributes}
-						<span class="pick-meta">
-							Swords {option.attributes.swords} | Pentacles {option.attributes.pentacles} | Cups {option.attributes.cups} | Wands {option.attributes.wands}
-							{#if option.health !== undefined}&nbsp;· HD {option.health}/{option.defense}{/if}
-						</span>
-					{/if}
-					{#if option.statNote}<span class="pick-meta"><em>{option.statNote}</em></span>{/if}
-				</label>
+				{#if usableInBuilder(option)}
+					<label class="pick-card" class:selected={draft.threatId === option.id}>
+						<input
+							type="radio"
+							name="threat"
+							value={option.id}
+							checked={draft.threatId === option.id}
+							onchange={() => setField('threatId', option.id)}
+						/>
+						<span class="pick-name">{option.name}</span>
+						<span class="pick-desc">{option.description.split('\n')[0]}</span>
+						{#if option.attributes}
+							<span class="pick-meta">
+								Swords {option.attributes.swords} | Pentacles {option.attributes.pentacles} | Cups {option.attributes.cups} | Wands {option.attributes.wands}
+								{#if option.health !== undefined}&nbsp;· HD {option.health}/{option.defense}{/if}
+							</span>
+						{/if}
+						{#if option.statNote}<span class="pick-meta"><em>{option.statNote}</em></span>{/if}
+					</label>
+				{:else}
+					<div class="pick-card unavailable">
+						<span class="pick-name">{option.name}</span>
+						<span class="pick-desc">Not available in the builder.</span>
+						{#if option.builderNote}<span class="pick-meta">{option.builderNote}</span>{/if}
+						<span class="pick-meta"><a href="/denizens">Read it in the reference →</a></span>
+					</div>
+				{/if}
 			{/each}
 		</div>
-		{#if draft.threatId === 'dungeon-lord'}
-			<p class="guidance">
-				Dungeon lords are fought in several named Health/Defense pools — the builder seeds a
-				single stat block, so expect to split it into pools by hand. See the
-				<a href="/denizens">reference</a> for the Sporehulk and the Yellow King as examples.
-			</p>
-		{/if}
 	{:else if !templatesChosen}
 		<p class="empty">Choose a theme and a threat first.</p>
 	{:else if step === 3}
@@ -285,6 +314,15 @@
 			<label class="field"><span>Health</span><input type="text" value={draft.health} oninput={(e) => setField('health', e.currentTarget.value)} /></label>
 			<label class="field"><span>Defense</span><input type="text" value={draft.defense} oninput={(e) => setField('defense', e.currentTarget.value)} /></label>
 		</div>
+		{#each statWarnings as warning (warning)}
+			<p class="warning" role="alert">{warning}</p>
+		{/each}
+		{#if draft.statNote || threat?.statNote}
+			<label class="field">
+				<span>Stat note (explains irregular stats — from the {threat?.name} template)</span>
+				<input type="text" value={draft.statNote} oninput={(e) => setField('statNote', e.currentTarget.value)} />
+			</label>
+		{/if}
 		<label class="field">
 			<span>Likes (comma-separated)</span>
 			<input type="text" value={draft.likes} oninput={(e) => setField('likes', e.currentTarget.value)} />
@@ -343,6 +381,9 @@
 		</div>
 	{:else if step === 5}
 		<h2>Review</h2>
+		{#each statWarnings as warning (warning)}
+			<p class="warning" role="alert">{warning}</p>
+		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		<div class="preview">
 			<DenizenStatBlock denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
@@ -463,6 +504,17 @@
 	.pick-card.selected {
 		border-color: var(--accent);
 		background: color-mix(in oklab, var(--accent) 7%, transparent);
+	}
+	.pick-card.unavailable {
+		cursor: default;
+		opacity: 0.75;
+		border-style: dashed;
+	}
+	.warning {
+		font-size: 0.9rem;
+		color: var(--accent);
+		border-left: 3px solid var(--accent);
+		padding-left: 0.6rem;
 	}
 	.pick-card input {
 		position: absolute;

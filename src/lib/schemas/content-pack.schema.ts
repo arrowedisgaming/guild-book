@@ -181,7 +181,21 @@ export const namedEntrySchema = z.object({
 // --- Dungeon denizens (Appendix C) -------------------------------------------
 
 /** Stats are usually numbers; strings ("∞", "X") render verbatim. */
-const denizenStatValueSchema = z.union([z.number(), z.string()]);
+const denizenStatValueSchema = z.union([z.number().finite(), z.string().trim().min(1)]);
+
+/** Health starts at 1+ (the bloodybones' "∞" is a string); Defense may be 0. */
+const denizenHealthSchema = z.union([z.number().finite().min(1), z.string().trim().min(1)]);
+const denizenDefenseSchema = z.union([z.number().finite().min(0), z.string().trim().min(1)]);
+
+/** Health and Defense always travel as a pair — never a half-pair. */
+function requireHdPair(
+	value: { health?: unknown; defense?: unknown },
+	ctx: z.RefinementCtx
+): void {
+	if ((value.health === undefined) !== (value.defense === undefined)) {
+		ctx.addIssue({ code: 'custom', message: 'Health and Defense must be provided together' });
+	}
+}
 
 const denizenAttributesSchema = z.object({
 	swords: denizenStatValueSchema,
@@ -203,29 +217,34 @@ export const denizenThemeSchema = z.object({
 	hates: z.array(z.string()).optional(),
 	notes: z.array(denizenAbilitySchema).optional(),
 	lesserDooms: z.array(denizenAbilitySchema).optional(),
-	chooseLesserDooms: z.string().optional()
+	chooseLesserDooms: z.string().optional(),
+	builderMode: z.enum(['standard', 'unsupported']).optional(),
+	builderNote: z.string().optional()
 });
 
-export const denizenThreatSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	description: z.string(),
-	attributes: denizenAttributesSchema.optional(),
-	health: denizenStatValueSchema.optional(),
-	defense: denizenStatValueSchema.optional(),
-	statNote: z.string().optional(),
-	notes: z.array(denizenAbilitySchema).optional(),
-	notesOptional: z.boolean().optional(),
-	greaterDooms: z.array(denizenAbilitySchema).optional(),
-	chooseGreaterDooms: z.string().optional(),
-	drawsExtraChallengeCards: z.boolean().optional()
-});
+export const denizenThreatSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		description: z.string(),
+		attributes: denizenAttributesSchema.optional(),
+		health: denizenHealthSchema.optional(),
+		defense: denizenDefenseSchema.optional(),
+		statNote: z.string().optional(),
+		notes: z.array(denizenAbilitySchema).optional(),
+		notesOptional: z.boolean().optional(),
+		greaterDooms: z.array(denizenAbilitySchema).optional(),
+		chooseGreaterDooms: z.string().optional(),
+		builderMode: z.enum(['standard', 'pools', 'unsupported']).optional(),
+		builderNote: z.string().optional()
+	})
+	.superRefine(requireHdPair);
 
 const denizenPoolSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	health: denizenStatValueSchema,
-	defense: denizenStatValueSchema,
+	health: denizenHealthSchema,
+	defense: denizenDefenseSchema,
 	text: z.string().optional(),
 	notes: z.array(denizenAbilitySchema).optional(),
 	lesserDooms: z.array(denizenAbilitySchema).optional(),
@@ -237,25 +256,35 @@ const denizenSidebarSchema = z.object({
 	body: z.string()
 });
 
-export const denizenDefinitionSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	theme: z.string(),
-	threat: z.string(),
-	flavor: z.string(),
-	attributes: denizenAttributesSchema,
-	health: denizenStatValueSchema.optional(),
-	defense: denizenStatValueSchema.optional(),
-	statNote: z.string().optional(),
-	likes: z.array(z.string()).optional(),
-	hates: z.array(z.string()).optional(),
-	notes: z.array(denizenAbilitySchema).optional(),
-	lesserDooms: z.array(denizenAbilitySchema).optional(),
-	greaterDooms: z.array(denizenAbilitySchema).optional(),
-	specialRules: z.string().optional(),
-	pools: z.array(denizenPoolSchema).optional(),
-	sidebars: z.array(denizenSidebarSchema).optional()
-});
+export const denizenDefinitionSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		theme: z.string(),
+		threat: z.string(),
+		flavor: z.string(),
+		attributes: denizenAttributesSchema,
+		health: denizenHealthSchema.optional(),
+		defense: denizenDefenseSchema.optional(),
+		statNote: z.string().optional(),
+		likes: z.array(z.string()).optional(),
+		hates: z.array(z.string()).optional(),
+		notes: z.array(denizenAbilitySchema).optional(),
+		lesserDooms: z.array(denizenAbilitySchema).optional(),
+		greaterDooms: z.array(denizenAbilitySchema).optional(),
+		specialRules: z.string().optional(),
+		pools: z.array(denizenPoolSchema).optional(),
+		sidebars: z.array(denizenSidebarSchema).optional()
+	})
+	.superRefine((denizen, ctx) => {
+		requireHdPair(denizen, ctx);
+		if (denizen.health === undefined && (denizen.pools?.length ?? 0) === 0) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'A denizen needs either top-level Health/Defense or at least one pool'
+			});
+		}
+	});
 
 export const denizensFileSchema = z.object({
 	themes: z.array(denizenThemeSchema),

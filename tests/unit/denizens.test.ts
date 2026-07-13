@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getDenizenThemes, getDenizenThreats, getBestiary } from '$lib/server/content/loader';
+import { denizenDefinitionSchema } from '$lib/schemas/content-pack.schema';
 
 describe('denizens — collections load and validate', () => {
 	it('loads without throwing', () => {
@@ -77,6 +78,27 @@ describe('denizens — book irregularities survive the schema', () => {
 		expect(byId['bloodybones'].health).toBe('∞');
 	});
 
+	it('marks pool-based and description-only templates for the builder', () => {
+		const threats = Object.fromEntries(getDenizenThreats().map((t) => [t.id, t]));
+		expect(threats['dungeon-lord'].builderMode).toBe('pools');
+		expect(threats['dungeon-lord'].builderNote).toMatch(/pool editing/);
+		for (const id of ['minion', 'brute', 'strategist', 'elite']) {
+			expect(threats[id].builderMode, id).toBeUndefined();
+		}
+
+		const man = getDenizenThemes().find((t) => t.id === 'man')!;
+		expect(man.builderMode).toBe('unsupported');
+		expect(man.builderNote).toMatch(/making actual characters/);
+	});
+
+	it('encodes no Chapter 7 GM procedure — that belongs in the rules reference', () => {
+		// The extra Challenge-card draws for elites/dungeon lords are hand-size
+		// procedure from Chapter 7, keyed to the threat type itself; Appendix C
+		// data stays purely what the book's denizen appendix states.
+		const flat = JSON.stringify(getDenizenThreats());
+		expect(flat).not.toMatch(/challengeCard/i);
+	});
+
 	it('dungeon lords fight in named pools instead of top-level HD', () => {
 		const yellowKing = byId['lich-yellow-king'];
 		expect(yellowKing.health).toBeUndefined();
@@ -90,6 +112,47 @@ describe('denizens — book irregularities survive the schema', () => {
 	it('sidebars carry the attached extras', () => {
 		expect(byId['face-rat'].sidebars?.[0].title).toMatch(/Face Rat Disease/);
 		expect(byId['vampire'].sidebars?.map((s) => s.title)).toContain('Killing the Vampire');
+	});
+});
+
+describe('denizens — stat invariants enforced by the schema', () => {
+	const valid = {
+		id: 'test-denizen',
+		name: 'Test Denizen',
+		theme: 'undead',
+		threat: 'brute',
+		flavor: 'A test.',
+		attributes: { swords: 1, pentacles: 1, cups: 1, wands: 1 },
+		health: 2,
+		defense: 6
+	};
+
+	it('accepts a complete stat block, including ∞ Health and 0 Defense', () => {
+		expect(denizenDefinitionSchema.safeParse(valid).success).toBe(true);
+		expect(
+			denizenDefinitionSchema.safeParse({ ...valid, health: '∞', defense: 0 }).success
+		).toBe(true);
+	});
+
+	it('rejects a starting Health of 0 and blank stat strings', () => {
+		expect(denizenDefinitionSchema.safeParse({ ...valid, health: 0 }).success).toBe(false);
+		expect(denizenDefinitionSchema.safeParse({ ...valid, health: '' }).success).toBe(false);
+		expect(denizenDefinitionSchema.safeParse({ ...valid, defense: ' ' }).success).toBe(false);
+		expect(denizenDefinitionSchema.safeParse({ ...valid, defense: -1 }).success).toBe(false);
+	});
+
+	it('rejects a half-pair and a denizen with neither HD nor pools', () => {
+		const { defense: _defense, ...missingDefense } = valid;
+		expect(denizenDefinitionSchema.safeParse(missingDefense).success).toBe(false);
+
+		const { health: _health, defense: _defense2, ...noHd } = valid;
+		expect(denizenDefinitionSchema.safeParse(noHd).success).toBe(false);
+		expect(
+			denizenDefinitionSchema.safeParse({
+				...noHd,
+				pools: [{ id: 'core', name: 'Core', health: 1, defense: 0 }]
+			}).success
+		).toBe(true);
 	});
 });
 

@@ -58,7 +58,9 @@
 		{
 			"id": "man",
 			"name": "Man",
-			"description": "\"Man\" is a misnomer; the term is chosen merely because it sounds archaic. This theme includes the sentient people (humans, elves, gnomes, etc.). These are people, not Underworld creatures.\n\nThere isn't a template, really. Represent people in your game by making actual characters. If the character is strange or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms that represent their core gimmick."
+			"description": "\"Man\" is a misnomer; the term is chosen merely because it sounds archaic. This theme includes the sentient people (humans, elves, gnomes, etc.). These are people, not Underworld creatures.\n\nThere isn't a template, really. Represent people in your game by making actual characters. If the character is strange or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms that represent their core gimmick.",
+			"builderMode": "unsupported",
+			"builderNote": "There isn't a template, really. Represent people in your game by making actual characters — if the character is strange or monstrous, give them a few special greater dooms that represent their core gimmick."
 		},
 		{
 			"id": "sorcerous",
@@ -227,8 +229,7 @@
 					"name": "Shapeshifter",
 					"text": "Play a greater doom card to take a new shape. The elite gains any abilities associated with the new shape, such as flying or swimming."
 				}
-			],
-			"drawsExtraChallengeCards": true
+			]
 		},
 		{
 			"id": "dungeon-lord",
@@ -236,7 +237,8 @@
 			"description": "Each dungeon level of the Underworld is ruled by a dungeon lord. These ancient creatures possess magical powers, wealth, and monstrous minions. They understand the secret history of the Underworld.\n\nDungeon lords are the most dangerous enemies an adventuring guild can face because they are both hyperintelligent and powerful. To represent their heightened intelligence, you can use your meta-knowledge as the GM (like listening to the players' table chatter) while taking actions for a dungeon lord.\n\nEach dungeon lord is like a puzzle. Although singular creatures, dungeon lords have several pools of Health and Defense. Each pool has special rules associated with it, like lesser and greater dooms. As long as that pool of HD is undefeated, the dungeon lord has access to those abilities. Each pool can be attacked separately. The GM must make it clear what parts of a dungeon lord can be attacked.\n\nSometimes a dungeon lord can only be defeated if you destroy each pool of HD. Sometimes the dungeon lord can only be defeated if their core pool of HD is depleted.\n\nDungeon lords do not have any default greater dooms.",
 			"attributes": { "swords": 3, "pentacles": 3, "cups": 3, "wands": 3 },
 			"statNote": "Choose 1 attribute to increase to 6. HD: Special — a dungeon lord has several named pools of Health and Defense, each with its own rules and dooms.",
-			"drawsExtraChallengeCards": true
+			"builderMode": "pools",
+			"builderNote": "Dungeon lords are fought in several named pools of Health and Defense, each with its own rules and dooms. The builder does not support pool editing yet — see the Sporehulk and the Yellow King in the reference for complete examples."
 		}
 	],
 	"bestiary": [

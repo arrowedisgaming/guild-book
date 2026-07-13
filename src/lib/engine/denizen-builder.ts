@@ -32,6 +32,8 @@ export interface DenizenDraft {
 	attributes: { swords: string; pentacles: string; cups: string; wands: string };
 	health: string;
 	defense: string;
+	/** Seeded from the threat template; editable, kept through export. */
+	statNote: string;
 	likes: string;
 	hates: string;
 	notes: DenizenAbility[];
@@ -51,6 +53,7 @@ export function createBlankDraft(): DenizenDraft {
 		attributes: { swords: '0', pentacles: '0', cups: '0', wands: '0' },
 		health: '',
 		defense: '',
+		statNote: '',
 		likes: '',
 		hates: '',
 		notes: [],
@@ -83,6 +86,7 @@ export function seedFromTemplates(
 		},
 		health: threat.health !== undefined ? String(threat.health) : '',
 		defense: threat.defense !== undefined ? String(threat.defense) : '',
+		statNote: threat.statNote ?? '',
 		likes: (theme.likes ?? []).join(', '),
 		hates: (theme.hates ?? []).join(', '),
 		notes: [...(theme.notes ?? []), ...(threat.notes ?? [])],
@@ -111,6 +115,31 @@ function splitList(raw: string): string[] {
 		.filter(Boolean);
 }
 
+/**
+ * Book invariants the stat inputs can violate: Health starts at 1+ (the
+ * bloodybones' "∞" is a string, not a number), Defense may be 0 but not
+ * negative, and Health/Defense travel as a pair. Special string values
+ * ("∞", "X") pass through untouched.
+ */
+export function draftStatWarnings(draft: DenizenDraft): string[] {
+	const warnings: string[] = [];
+	const health = draft.health.trim();
+	const defense = draft.defense.trim();
+
+	if ((health === '') !== (defense === '')) {
+		warnings.push('Health and Defense are a pair — fill in both or leave both blank.');
+	}
+	const healthNumber = Number(health);
+	if (health !== '' && Number.isFinite(healthNumber) && healthNumber < 1) {
+		warnings.push('Starting Health cannot be 0 — use at least 1, or ∞ for the unkillable.');
+	}
+	const defenseNumber = Number(defense);
+	if (defense !== '' && Number.isFinite(defenseNumber) && defenseNumber < 0) {
+		warnings.push('Defense cannot be negative (0 is fine).');
+	}
+	return warnings;
+}
+
 /** Materialize a draft into a DenizenDefinition for preview and export. */
 export function toDenizenDefinition(draft: DenizenDraft): DenizenDefinition {
 	const concept = draft.concept.trim();
@@ -130,8 +159,9 @@ export function toDenizenDefinition(draft: DenizenDraft): DenizenDefinition {
 			cups: toStatValue(draft.attributes.cups),
 			wands: toStatValue(draft.attributes.wands)
 		},
-		health: toStatValue(draft.health),
-		defense: toStatValue(draft.defense),
+		...(draft.health.trim() !== '' ? { health: toStatValue(draft.health) } : {}),
+		...(draft.defense.trim() !== '' ? { defense: toStatValue(draft.defense) } : {}),
+		...(draft.statNote.trim() ? { statNote: draft.statNote.trim() } : {}),
 		likes: splitList(draft.likes),
 		hates: splitList(draft.hates),
 		notes: draft.notes,

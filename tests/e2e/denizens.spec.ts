@@ -45,6 +45,7 @@ test.describe('denizen reference', () => {
 		const response = await page.goto('/denizens/nonsense');
 		expect(response?.status()).toBe(404);
 	});
+
 });
 
 test.describe('denizen builder', () => {
@@ -135,6 +136,44 @@ test.describe('denizen builder', () => {
 		const thresholdRow = page.locator('ul.current li', { hasText: 'Threshold' });
 		await thresholdRow.getByRole('button', { name: 'Remove' }).click();
 		await expect(page.locator('ul.current li', { hasText: 'Threshold' })).toHaveCount(0);
+	});
+
+	test('pool-based and description-only templates are reference-only', async ({ page }) => {
+		await page.goto('/denizens/build');
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// The Man theme has no template — the book builds people as characters.
+		await expect(page.getByRole('heading', { name: 'Theme', level: 2 })).toBeVisible();
+		const manCard = page.locator('.pick-card.unavailable', { hasText: 'Man' });
+		await expect(manCard).toBeVisible();
+		await expect(manCard.getByRole('radio')).toHaveCount(0);
+		await expect(manCard.getByText('making actual characters')).toBeVisible();
+
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Dungeon lords need pool editing, which the builder doesn't have yet.
+		await expect(page.getByRole('heading', { name: 'Threat', level: 2 })).toBeVisible();
+		const lordCard = page.locator('.pick-card.unavailable', { hasText: 'Dungeon Lord' });
+		await expect(lordCard).toBeVisible();
+		await expect(lordCard.getByRole('radio')).toHaveCount(0);
+		await expect(lordCard.getByText('does not support pool editing yet')).toBeVisible();
+		await expect(lordCard.getByRole('link', { name: 'Read it in the reference →' })).toBeVisible();
+	});
+
+	test('stat inputs warn on a starting Health of 0', async ({ page }) => {
+		await page.goto('/denizens/build');
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Brute' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
+		await page.getByLabel('Health').fill('0');
+		await expect(page.getByText('Starting Health cannot be 0')).toBeVisible();
+		await page.getByLabel('Health').fill('4');
+		await expect(page.getByText('Starting Health cannot be 0')).toHaveCount(0);
 	});
 
 	test('draft survives a reload', async ({ page }) => {

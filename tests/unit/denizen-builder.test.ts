@@ -3,7 +3,8 @@ import {
 	createBlankDraft,
 	seedFromTemplates,
 	needsReseed,
-	toDenizenDefinition
+	toDenizenDefinition,
+	draftStatWarnings
 } from '$lib/engine/denizen-builder';
 import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
 
@@ -40,6 +41,17 @@ describe('denizen builder — template seeding', () => {
 		expect(draft.likes).toBe('');
 		expect(draft.health).toBe('');
 		expect(draft.attributes.swords).toBe('3');
+	});
+
+	it('seeds the threat stat note', () => {
+		const lordDraft = seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
+		expect(lordDraft.statNote).toMatch(/Choose 1 attribute to increase to 6/);
+	});
+
+	it('clears the stat note when reseeding to a threat without one', () => {
+		const lord = seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
+		const reseeded = seedFromTemplates(lord, theme('undead'), threat('minion'));
+		expect(reseeded.statNote).toBe('');
 	});
 
 	it('preserves identity fields across a seed', () => {
@@ -95,5 +107,61 @@ describe('denizen builder — materializing a definition', () => {
 
 	it('falls back to a placeholder name', () => {
 		expect(toDenizenDefinition(createBlankDraft()).name).toBe('Unnamed Denizen');
+	});
+
+	it('carries the stat note into the definition', () => {
+		const lord = toDenizenDefinition(
+			seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'))
+		);
+		expect(lord.statNote).toMatch(/Choose 1 attribute to increase to 6/);
+	});
+
+	it('omits the stat note when the threat has none', () => {
+		const denizen = toDenizenDefinition(
+			seedFromTemplates(createBlankDraft(), theme('undead'), threat('minion'))
+		);
+		expect('statNote' in denizen).toBe(false);
+	});
+
+	it('omits blank Health/Defense instead of materializing empty strings', () => {
+		const lord = toDenizenDefinition(
+			seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'))
+		);
+		expect('health' in lord).toBe(false);
+		expect('defense' in lord).toBe(false);
+	});
+});
+
+describe('denizen builder — stat warnings', () => {
+	const withStats = (health: string, defense: string) => ({
+		...createBlankDraft(),
+		health,
+		defense
+	});
+
+	it('accepts the book’s edge cases: ∞ Health and 0 Defense', () => {
+		expect(draftStatWarnings(withStats('∞', '0'))).toEqual([]);
+	});
+
+	it('accepts both stats blank (pool-based or unfinished drafts)', () => {
+		expect(draftStatWarnings(withStats('', ''))).toEqual([]);
+	});
+
+	it('rejects a starting Health of 0', () => {
+		expect(draftStatWarnings(withStats('0', '3'))).toEqual([
+			'Starting Health cannot be 0 — use at least 1, or ∞ for the unkillable.'
+		]);
+	});
+
+	it('rejects negative Defense', () => {
+		expect(draftStatWarnings(withStats('4', '-1'))).toEqual([
+			'Defense cannot be negative (0 is fine).'
+		]);
+	});
+
+	it('flags a half-filled Health/Defense pair', () => {
+		expect(draftStatWarnings(withStats('4', ''))).toEqual([
+			'Health and Defense are a pair — fill in both or leave both blank.'
+		]);
 	});
 });

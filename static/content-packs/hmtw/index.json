@@ -2,10 +2,13 @@
 	"id": "hmtw",
 	"name": "His Majesty the Worm",
 	"version": "1.0.0",
-	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the Omphalic Market, conditions, and afflictions. Game mechanics summarised in original wording under the Adherent of the Worm open licence.",
+	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the full Omphalic Market, conditions, afflictions, and languages. Game text reproduced verbatim from the core rulebook under the Adherent of the Worm open licence.",
 	"system": "hmtw",
-	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license). His Majesty the Worm is copyright Joshua McCrowell; mechanics referenced with permission. Summaries and phrasing by the Guild Book project.",
-	"authors": ["Joshua McCrowell (His Majesty the Worm)", "Guild Book project (transcription & summaries)"],
+	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license): \"the mechanics and game text of His Majesty the Worm may be reused freely.\" His Majesty the Worm is copyright Joshua McCrowell. Game text reproduced verbatim; no book artwork, logos, or trade dress reproduced.",
+	"authors": [
+		"Joshua McCrowell (His Majesty the Worm)",
+		"Guild Book project (verbatim transcription)"
+	],
 	"files": {
 		"kiths": "kiths.json",
 		"paths": "paths.json",
@@ -15,14 +18,15 @@
 		"languages": "languages.json",
 		"conditions": "conditions.json",
 		"afflictions": "afflictions.json",
-		"rules": "rules.json"
+		"rules": "rules.json",
+		"spells": "spells.json"
 	},
 	"attributes": [
 		{
 			"id": "swords",
 			"name": "Swords",
 			"suit": "swords",
-			"description": "The attribute of warriors — strength, endurance, bravery, and all facets of combat.",
+			"description": "Swords represents strength and skill with weapons. Test Swords to bend the bars of your cell or tip over a heavy bookshelf onto an unsuspecting goblin.",
 			"archetype": "warrior",
 			"min": 1,
 			"max": 4
@@ -31,7 +35,7 @@
 			"id": "pentacles",
 			"name": "Pentacles",
 			"suit": "pentacles",
-			"description": "The attribute of rogues — swiftness, slyness, quietness, manipulation, and stealth.",
+			"description": "Pentacles represents swiftness and slyness. Test Pentacles to sneak past a deathknight or slip the sea witch’s conch into your bag without her noticing.",
 			"archetype": "rogue",
 			"min": 1,
 			"max": 4
@@ -40,7 +44,7 @@
 			"id": "cups",
 			"name": "Cups",
 			"suit": "cups",
-			"description": "The attribute of scholars — wisdom, cleverness, patience, and the use of tools.",
+			"description": "Cups represents wisdom and training. Test Cups to activate an ancient clockwork mechanism or coax a wild winter wolf to accept a gift of meat from your hand.",
 			"archetype": "scholar",
 			"min": 1,
 			"max": 4
@@ -49,53 +53,216 @@
 			"id": "wands",
 			"name": "Wands",
 			"suit": "wands",
-			"description": "The attribute of sorcerers — willpower, mysticism, persuasion, and the occult.",
+			"description": "Wands represents willpower and charisma. Test Wands to convince an art critic that your petrified companion is actually avant-garde art or overcome the dominating gaze of a vampire.",
 			"archetype": "sorcerer",
 			"min": 1,
 			"max": 4
 		}
 	],
 	"tarot": {
-		"suits": ["swords", "pentacles", "cups", "wands"],
+		"suits": [
+			"swords",
+			"pentacles",
+			"cups",
+			"wands"
+		],
 		"ranks": [
-			{ "id": "i", "label": "Ace", "numeric": 1, "court": false },
-			{ "id": "ii", "label": "II", "numeric": 2, "court": false },
-			{ "id": "iii", "label": "III", "numeric": 3, "court": false },
-			{ "id": "iv", "label": "IV", "numeric": 4, "court": false },
-			{ "id": "v", "label": "V", "numeric": 5, "court": false },
-			{ "id": "vi", "label": "VI", "numeric": 6, "court": false },
-			{ "id": "vii", "label": "VII", "numeric": 7, "court": false },
-			{ "id": "viii", "label": "VIII", "numeric": 8, "court": false },
-			{ "id": "ix", "label": "IX", "numeric": 9, "court": false },
-			{ "id": "x", "label": "X", "numeric": 10, "court": false },
-			{ "id": "page", "label": "Page", "numeric": 11, "court": true },
-			{ "id": "knight", "label": "Knight", "numeric": 12, "court": true },
-			{ "id": "queen", "label": "Queen", "numeric": 13, "court": true },
-			{ "id": "king", "label": "King", "numeric": 14, "court": true }
+			{
+				"id": "i",
+				"label": "Ace",
+				"numeric": 1,
+				"court": false
+			},
+			{
+				"id": "ii",
+				"label": "II",
+				"numeric": 2,
+				"court": false
+			},
+			{
+				"id": "iii",
+				"label": "III",
+				"numeric": 3,
+				"court": false
+			},
+			{
+				"id": "iv",
+				"label": "IV",
+				"numeric": 4,
+				"court": false
+			},
+			{
+				"id": "v",
+				"label": "V",
+				"numeric": 5,
+				"court": false
+			},
+			{
+				"id": "vi",
+				"label": "VI",
+				"numeric": 6,
+				"court": false
+			},
+			{
+				"id": "vii",
+				"label": "VII",
+				"numeric": 7,
+				"court": false
+			},
+			{
+				"id": "viii",
+				"label": "VIII",
+				"numeric": 8,
+				"court": false
+			},
+			{
+				"id": "ix",
+				"label": "IX",
+				"numeric": 9,
+				"court": false
+			},
+			{
+				"id": "x",
+				"label": "X",
+				"numeric": 10,
+				"court": false
+			},
+			{
+				"id": "page",
+				"label": "Page",
+				"numeric": 11,
+				"court": true
+			},
+			{
+				"id": "knight",
+				"label": "Knight",
+				"numeric": 12,
+				"court": true
+			},
+			{
+				"id": "queen",
+				"label": "Queen",
+				"numeric": 13,
+				"court": true
+			},
+			{
+				"id": "king",
+				"label": "King",
+				"numeric": 14,
+				"court": true
+			}
 		],
 		"majorArcana": [
-			{ "id": "fool", "number": 0, "name": "The Fool" },
-			{ "id": "magician", "number": 1, "name": "The Magician" },
-			{ "id": "high-priestess", "number": 2, "name": "The High Priestess" },
-			{ "id": "empress", "number": 3, "name": "The Empress" },
-			{ "id": "emperor", "number": 4, "name": "The Emperor" },
-			{ "id": "hierophant", "number": 5, "name": "The Hierophant" },
-			{ "id": "lovers", "number": 6, "name": "The Lovers" },
-			{ "id": "chariot", "number": 7, "name": "The Chariot" },
-			{ "id": "strength", "number": 8, "name": "Strength" },
-			{ "id": "hermit", "number": 9, "name": "The Hermit" },
-			{ "id": "wheel-of-fortune", "number": 10, "name": "Wheel of Fortune" },
-			{ "id": "justice", "number": 11, "name": "Justice" },
-			{ "id": "hanged-man", "number": 12, "name": "The Hanged Man" },
-			{ "id": "death", "number": 13, "name": "Death" },
-			{ "id": "temperance", "number": 14, "name": "Temperance" },
-			{ "id": "devil", "number": 15, "name": "The Devil" },
-			{ "id": "tower", "number": 16, "name": "The Tower" },
-			{ "id": "star", "number": 17, "name": "The Star" },
-			{ "id": "moon", "number": 18, "name": "The Moon" },
-			{ "id": "sun", "number": 19, "name": "The Sun" },
-			{ "id": "judgement", "number": 20, "name": "Judgement" },
-			{ "id": "world", "number": 21, "name": "The World" }
+			{
+				"id": "fool",
+				"number": 0,
+				"name": "The Fool"
+			},
+			{
+				"id": "magician",
+				"number": 1,
+				"name": "The Magician"
+			},
+			{
+				"id": "high-priestess",
+				"number": 2,
+				"name": "The High Priestess"
+			},
+			{
+				"id": "empress",
+				"number": 3,
+				"name": "The Empress"
+			},
+			{
+				"id": "emperor",
+				"number": 4,
+				"name": "The Emperor"
+			},
+			{
+				"id": "hierophant",
+				"number": 5,
+				"name": "The Hierophant"
+			},
+			{
+				"id": "lovers",
+				"number": 6,
+				"name": "The Lovers"
+			},
+			{
+				"id": "chariot",
+				"number": 7,
+				"name": "The Chariot"
+			},
+			{
+				"id": "strength",
+				"number": 8,
+				"name": "Strength"
+			},
+			{
+				"id": "hermit",
+				"number": 9,
+				"name": "The Hermit"
+			},
+			{
+				"id": "wheel-of-fortune",
+				"number": 10,
+				"name": "Wheel of Fortune"
+			},
+			{
+				"id": "justice",
+				"number": 11,
+				"name": "Justice"
+			},
+			{
+				"id": "hanged-man",
+				"number": 12,
+				"name": "The Hanged Man"
+			},
+			{
+				"id": "death",
+				"number": 13,
+				"name": "Death"
+			},
+			{
+				"id": "temperance",
+				"number": 14,
+				"name": "Temperance"
+			},
+			{
+				"id": "devil",
+				"number": 15,
+				"name": "The Devil"
+			},
+			{
+				"id": "tower",
+				"number": 16,
+				"name": "The Tower"
+			},
+			{
+				"id": "star",
+				"number": 17,
+				"name": "The Star"
+			},
+			{
+				"id": "moon",
+				"number": 18,
+				"name": "The Moon"
+			},
+			{
+				"id": "sun",
+				"number": 19,
+				"name": "The Sun"
+			},
+			{
+				"id": "judgement",
+				"number": 20,
+				"name": "Judgement"
+			},
+			{
+				"id": "world",
+				"number": 21,
+				"name": "The World"
+			}
 		],
 		"handSize": 1,
 		"resolution": {
@@ -105,30 +272,39 @@
 				{
 					"id": "great-success",
 					"label": "Great success",
-					"description": "Total is 14+ and you drew the tested suit on the initial draw. You succeed spectacularly."
+					"description": "If the total value is 14+ *and* the player drew the suit being tested on the initial draw (not from pushing fate or another source), the result is a great success. Not only does the adventurer succeed, but they succeed extremely well, going above and beyond what was expected.\n\nThe GM should invite the player to embellish how *impressive*, how *effortless*, how *quick*, or how *thorough* their success was."
 				},
 				{
 					"id": "success",
 					"label": "Success",
-					"description": "Total is 14 or more. You accomplish your goal."
+					"description": "If the total value is 14+, the result is a success. The GM describes how the adventurer succeeds in their stated goal."
 				},
 				{
 					"id": "failure",
 					"label": "Failure",
-					"description": "Total is 13 or less. You do not accomplish your goal."
+					"description": "If the total value is 13 or less, the result is a failure. The GM describes how the adventurer fails and asks what they want to do next."
 				},
 				{
 					"id": "great-failure",
 					"label": "Great failure",
-					"description": "A failure with an additional complication, as adjudicated by the GM."
+					"description": "If the player pushes fate *and* the total value is still 13 or less, the test is a great failure. The GM describes a *new* significant setback, bad situation, or harmful repercussion as a result. See “Pushing Fate.”"
 				}
 			]
 		}
 	},
 	"creation": {
-		"attributeSpread": [4, 3, 2, 1],
+		"attributeSpread": [
+			4,
+			3,
+			2,
+			1
+		],
 		"highestAttributeFromPath": true,
-		"marketAllowance": { "luxurious": 1, "common": 5, "impoverished": null },
+		"marketAllowance": {
+			"luxurious": 1,
+			"common": 5,
+			"impoverished": null
+		},
 		"motifCount": 3,
 		"startingResolve": 4,
 		"masteredPathTalents": 1

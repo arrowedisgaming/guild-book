@@ -29,6 +29,21 @@
 	.body :global(p) {
 		margin: 0 0 0.6rem;
 	}
+	.body :global(h4),
+	.body :global(h5),
+	.body :global(h6) {
+		margin: 1rem 0 0.35rem;
+		font-family: var(--font-subhead);
+		font-size: 1rem;
+		color: color-mix(in oklab, var(--accent) 80%, var(--ink));
+	}
+	.body :global(ul) {
+		margin: 0 0 0.6rem;
+		padding-left: 1.2rem;
+	}
+	.body :global(li) {
+		margin: 0.15rem 0;
+	}
 	.body :global(code) {
 		background: color-mix(in oklab, var(--ink) 8%, transparent);
 		padding: 0.05rem 0.3rem;

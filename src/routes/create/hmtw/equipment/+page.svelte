@@ -5,6 +5,7 @@
 	import type { EquipmentEntry } from '$lib/types/character';
 	import { autoPlace, loadSummary, indexItems } from '$lib/engine/encumbrance';
 	import WizardNav from '$lib/components/wizard/WizardNav.svelte';
+	import Prose from '$lib/components/ui/Prose.svelte';
 	import type { PageData } from './$types';
 
 	const STEP = 6;
@@ -35,6 +36,10 @@
 	let selected = $state<Set<string>>(
 		new Set($wizard.character.equipment.map((e) => e.itemId).filter((x): x is string => !!x))
 	);
+	let detailItemId = $state<string | null>(
+		$wizard.character.equipment.find((entry) => entry.itemId)?.itemId ?? null
+	);
+	let detailItem = $derived(data.items.find((item) => item.id === detailItemId) ?? null);
 
 	function toEntries(ids: Set<string>): EquipmentEntry[] {
 		return data.items
@@ -75,10 +80,15 @@
 		return !selected.has(itemId) && countInTier(tier) >= cap;
 	}
 	function toggle(itemId: string) {
+		detailItemId = itemId;
 		const next = new Set(selected);
 		if (next.has(itemId)) next.delete(itemId);
 		else next.add(itemId);
 		selected = next;
+	}
+	function chooseItem(itemId: string, unavailable = false) {
+		detailItemId = itemId;
+		if (!unavailable) toggle(itemId);
 	}
 
 	function next() {
@@ -120,13 +130,27 @@
 		<h2>Your talents need these <span class="count">impoverished for you</span></h2>
 		<div class="grid">
 			{#each requiredItems as item (item.id)}
-				<label class="item req" class:sel={selected.has(item.id)}>
-					<input type="checkbox" checked={selected.has(item.id)} onchange={() => toggle(item.id)} />
+				<button
+					type="button"
+					class="item req"
+					class:sel={selected.has(item.id)}
+					class:focused={detailItemId === item.id}
+					role="checkbox"
+					aria-checked={selected.has(item.id)}
+					onclick={() => chooseItem(item.id)}
+				>
+					<span class="check" aria-hidden="true">{selected.has(item.id) ? '☑' : '☐'}</span>
 					<span class="iname">{item.name}</span>
-					<span class="idesc">{item.description}</span>
-				</label>
+				</button>
 			{/each}
 		</div>
+		{#if detailItem && requiredItemIds.has(detailItem.id)}
+			<div class="item-detail" aria-live="polite">
+				<h3>{detailItem.name}</h3>
+				<p class="islots">{detailItem.slots ?? 1} slot{(detailItem.slots ?? 1) === 1 ? '' : 's'}{detailItem.carry === 'belt-only' ? ' · belt only' : ''}{detailItem.stack ? ` · ${detailItem.stack.per}/slot` : ''}</p>
+				<Prose text={detailItem.description} />
+			</div>
+		{/if}
 	</section>
 {/if}
 
@@ -140,19 +164,30 @@
 		</h2>
 		<div class="grid">
 			{#each itemsByTier(tier) as item (item.id)}
-				<label class="item" class:sel={selected.has(item.id)} class:disabled={atCap(tier, item.id)}>
-					<input
-						type="checkbox"
-						checked={selected.has(item.id)}
-						disabled={atCap(tier, item.id)}
-						onchange={() => toggle(item.id)}
-					/>
+				<button
+					type="button"
+					class="item"
+					class:sel={selected.has(item.id)}
+					class:focused={detailItemId === item.id}
+					class:disabled={atCap(tier, item.id)}
+					role="checkbox"
+					aria-checked={selected.has(item.id)}
+					aria-label={`${item.name}${atCap(tier, item.id) ? ', unavailable because the tier limit is reached; show details' : ''}`}
+					onclick={() => chooseItem(item.id, atCap(tier, item.id))}
+				>
+					<span class="check" aria-hidden="true">{selected.has(item.id) ? '☑' : '☐'}</span>
 					<span class="iname">{item.name}</span>
 					<span class="islots">{item.slots ?? 1} slot{(item.slots ?? 1) === 1 ? '' : 's'}{item.carry === 'belt-only' ? ' · belt only' : ''}{item.stack ? ` · ${item.stack.per}/slot` : ''}</span>
-					<span class="idesc">{item.description}</span>
-				</label>
+				</button>
 			{/each}
 		</div>
+		{#if detailItem && detailItem.tier === tier && !requiredItemIds.has(detailItem.id)}
+			<div class="item-detail" aria-live="polite">
+				<h3>{detailItem.name}</h3>
+				<p class="islots">{detailItem.slots ?? 1} slot{(detailItem.slots ?? 1) === 1 ? '' : 's'}{detailItem.carry === 'belt-only' ? ' · belt only' : ''}{detailItem.stack ? ` · ${detailItem.stack.per}/slot` : ''}</p>
+				<Prose text={detailItem.description} />
+			</div>
+		{/if}
 	</section>
 {/each}
 
@@ -236,17 +271,24 @@
 	.item {
 		display: grid;
 		grid-template-columns: auto 1fr;
-		grid-template-areas: 'chk name' 'chk slots' 'chk desc';
+		grid-template-areas: 'chk name' 'chk slots';
 		gap: 0.1rem 0.5rem;
 		align-items: start;
 		padding: 0.55rem 0.7rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
 		border-radius: 4px;
 		cursor: pointer;
+		text-align: left;
+		background: var(--parchment);
+		color: inherit;
+		font: inherit;
 	}
 	.item.sel {
 		border-color: var(--accent);
 		background: color-mix(in oklab, var(--accent) 7%, var(--parchment));
+	}
+	.item.focused {
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
 	}
 	.item.req {
 		border-style: dashed;
@@ -255,9 +297,10 @@
 		opacity: 0.45;
 		cursor: not-allowed;
 	}
-	.item input {
+	.check {
 		grid-area: chk;
-		margin-top: 0.25rem;
+		margin-top: 0.05rem;
+		color: var(--accent);
 	}
 	.iname {
 		grid-area: name;
@@ -270,9 +313,22 @@
 		color: var(--accent);
 		font-family: var(--font-subhead);
 	}
-	.idesc {
-		grid-area: desc;
-		font-size: 0.78rem;
+	.item-detail {
+		max-width: 44rem;
+		margin-top: 0.65rem;
+		padding: 0.8rem 0.95rem;
+		border-left: 2px solid color-mix(in oklab, var(--accent) 45%, transparent);
+		background: color-mix(in oklab, var(--accent) 4%, var(--parchment));
+		font-size: 0.85rem;
 		color: var(--ink-soft);
+	}
+	.item-detail h3 {
+		margin: 0 0 0.15rem;
+		font-family: var(--font-heading);
+		font-size: 1rem;
+		color: var(--ink);
+	}
+	.item-detail .islots {
+		margin: 0 0 0.45rem;
 	}
 </style>

@@ -31,16 +31,14 @@
 		)
 	);
 
-	/**
-	 * Live filtering: a value picked for one suit disappears from the other
-	 * dropdowns. Each select always keeps its own current value in its list.
-	 */
-	function optionsFor(suit: SuitId): number[] {
-		return restValues.filter(
-			(v) =>
-				assignment[suit] === v ||
-				!otherSuits.some((s) => s !== suit && assignment[s] === v)
-		);
+	function valueUsedByOther(suit: SuitId, value: number): boolean {
+		return otherSuits.some((candidate) => candidate !== suit && assignment[candidate] === value);
+	}
+
+	/** Select a free value, or click the current value again to release it. */
+	function assignValue(suit: SuitId, value: number) {
+		if (valueUsedByOther(suit, value)) return;
+		assignment = { ...assignment, [suit]: assignment[suit] === value ? null : value };
 	}
 
 	let usedValues = $derived(Object.values(assignment).filter((v): v is number => v !== null));
@@ -80,22 +78,41 @@
 		{restValues.join(', ')} to the other three suits.
 	</p>
 
-	<div class="rows">
-		<div class="row locked">
-			<span class="suit">{SUIT_LABELS[pathSuit]}</span>
-			<span class="locked-value">{highest}</span>
+	<div class="assignment-board">
+		<div class="locked">
+			<span>
+				<span class="eyebrow">Path attribute</span>
+				<span class="suit">{SUIT_LABELS[pathSuit]}</span>
+			</span>
+			<strong class="locked-value">{highest}</strong>
 		</div>
-		{#each otherSuits as suit (suit)}
-			<div class="row">
-				<label class="suit" for="attr-{suit}">{SUIT_LABELS[suit]}</label>
-				<select id="attr-{suit}" bind:value={assignment[suit]}>
-					<option value={null}>—</option>
-					{#each optionsFor(suit) as v (v)}
-						<option value={v}>{v}</option>
-					{/each}
-				</select>
+
+		<div class="matrix">
+			<div class="matrix-head" aria-hidden="true">
+				<span></span>
+				{#each restValues as value (value)}<span>{value}</span>{/each}
 			</div>
-		{/each}
+			{#each otherSuits as suit (suit)}
+				<div class="attribute-row">
+					<span class="suit">{SUIT_LABELS[suit]}</span>
+					<div class="value-choices" role="radiogroup" aria-label="{SUIT_LABELS[suit]} value">
+						{#each restValues as value (value)}
+							<button
+								type="button"
+								class="value"
+								class:selected={assignment[suit] === value}
+								role="radio"
+								aria-checked={assignment[suit] === value}
+								disabled={valueUsedByOther(suit, value)}
+								onclick={() => assignValue(suit, value)}
+							>
+								{value}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
+		</div>
 	</div>
 {/if}
 
@@ -112,43 +129,105 @@
 	.warn {
 		color: var(--accent);
 	}
-	.rows {
+	.assignment-board {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
-		margin: 1.5rem 0;
-		max-width: 22rem;
+		gap: 0.65rem;
+		margin: 1.25rem 0;
+		max-width: 25rem;
 	}
-	.row {
+	.locked {
 		display: flex;
 		align-items: center;
-		padding: 0.6rem 0.9rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+		justify-content: space-between;
+		padding: 0.55rem 0.75rem;
+		border: 1px solid var(--accent);
 		border-radius: 4px;
-	}
-	.row.locked {
-		border-color: var(--accent);
 		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+	}
+	.eyebrow {
+		display: block;
+		margin-bottom: 0.05rem;
+		font-family: var(--font-subhead);
+		font-size: 0.65rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--accent);
 	}
 	.suit {
 		font-family: var(--font-heading);
-		font-size: 1.05rem;
+		font-size: 1rem;
 	}
-	/* The value/select always sits at the far right of the row. */
-	.locked-value,
-	select {
-		margin-left: auto;
+	.matrix {
+		padding: 0.25rem 0.4rem 0.4rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border-radius: 4px;
+	}
+	.matrix-head,
+	.attribute-row {
+		display: grid;
+		grid-template-columns: minmax(7.5rem, 1fr) repeat(3, 2.5rem);
+		align-items: center;
+		column-gap: 0.35rem;
+	}
+	.matrix-head {
+		padding: 0.1rem 0 0.25rem;
+		font-family: var(--font-subhead);
+		font-size: 0.7rem;
+		color: var(--ink-soft);
+		text-align: center;
+	}
+	.attribute-row {
+		padding: 0.3rem 0;
+		border-top: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+	}
+	.value-choices {
+		display: contents;
+	}
+	.value {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.25rem;
+		padding: 0;
+		border: 1px solid color-mix(in oklab, var(--ink) 22%, transparent);
+		border-radius: 3px;
+		background: var(--parchment);
+		font-family: var(--font-heading);
+		font-size: 1.05rem;
+		line-height: 1;
+		cursor: pointer;
+	}
+	.value:hover {
+		border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+	}
+	.value.selected {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--parchment);
+	}
+	.value:disabled {
+		opacity: 0.32;
+		cursor: not-allowed;
+	}
+	.value:disabled::after {
+		content: '';
+		position: absolute;
+		left: 0.35rem;
+		right: 0.35rem;
+		top: 50%;
+		height: 1px;
+		background: currentColor;
+		transform: rotate(-35deg);
+		transform-origin: center;
 	}
 	.locked-value {
 		font-family: var(--font-heading);
-		font-size: 1.45rem;
+		font-size: 1.8rem;
+		font-weight: 400;
 		line-height: 1;
-	}
-	select {
-		padding: 0.35rem 0.5rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
-		border-radius: 3px;
-		background: var(--parchment);
-		font: inherit;
+		color: var(--accent);
 	}
 </style>

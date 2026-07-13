@@ -15,7 +15,8 @@ import type {
 	MotifTables,
 	NamedEntry,
 	AfflictionDefinition,
-	RuleEntry
+	RuleEntry,
+	SpellDefinition
 } from '$lib/types/content-pack';
 import {
 	contentPackSchema,
@@ -28,6 +29,7 @@ import {
 	conditionsFileSchema,
 	afflictionsFileSchema,
 	rulesFileSchema,
+	spellsFileSchema,
 	parseOrThrow
 } from '$lib/schemas/content-pack.schema';
 
@@ -41,6 +43,7 @@ import languagesJson from '../../../../static/content-packs/hmtw/languages.json'
 import conditionsJson from '../../../../static/content-packs/hmtw/conditions.json';
 import afflictionsJson from '../../../../static/content-packs/hmtw/afflictions.json';
 import rulesJson from '../../../../static/content-packs/hmtw/rules.json';
+import spellsJson from '../../../../static/content-packs/hmtw/spells.json';
 
 // Singleton caches.
 let cachedPack: GuildBookContentPack | null = null;
@@ -53,6 +56,7 @@ let cachedLanguages: NamedEntry[] | null = null;
 let cachedConditions: NamedEntry[] | null = null;
 let cachedAfflictions: AfflictionDefinition[] | null = null;
 let cachedRules: RuleEntry[] | null = null;
+let cachedSpells: SpellDefinition[] | null = null;
 
 export function getContentPack(): GuildBookContentPack {
 	if (!cachedPack) cachedPack = parseOrThrow(contentPackSchema, indexJson, 'index.json');
@@ -102,6 +106,11 @@ export function getAfflictions(): AfflictionDefinition[] {
 export function getRules(): RuleEntry[] {
 	if (!cachedRules) cachedRules = parseOrThrow(rulesFileSchema, rulesJson, 'rules.json');
 	return cachedRules;
+}
+
+export function getSpells(): SpellDefinition[] {
+	if (!cachedSpells) cachedSpells = parseOrThrow(spellsFileSchema, spellsJson, 'spells.json');
+	return cachedSpells;
 }
 
 /** Everything the creation wizard needs, in one validated bundle. */

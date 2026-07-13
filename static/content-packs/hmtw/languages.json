@@ -1,7 +1,27 @@
 [
-	{ "id": "common", "name": "Common", "description": "PLACEHOLDER — the trade tongue of the City." },
-	{ "id": "elvish", "name": "Elvish", "description": "PLACEHOLDER — the languages of the fay." },
-	{ "id": "dwarvish", "name": "Dwarvish", "description": "PLACEHOLDER — the tongue of the underfolk deeps." },
-	{ "id": "orcish", "name": "Orcish", "description": "PLACEHOLDER — the blooded dialects." },
-	{ "id": "ancient", "name": "Ancient", "description": "PLACEHOLDER — the dead language of the Underworld's builders." }
+	{
+		"id": "vulgaris",
+		"name": "Vulgaris",
+		"description": "Vulgaris, the common tongue, is a creole language, developed from a pidgin mash of Ancient Mannish, Vetus, and Tylwyth. Despite a few decades of official censure by the Cult of Mythrys and the City’s rulership as a “base” tongue, Vulgaris is by far the most common language spoken throughout the Wide World by humans, underfolk, and orcs. Most inhabitants of the City speak it decently well."
+	},
+	{
+		"id": "cant",
+		"name": "Cant",
+		"description": "Cant is the language of the lowborn. It is especially famous as the language of thieves, scoundrels, rogues, and ne’er-do-wells. The language is lilting and filled with rhyming couplets, so that it is quite musical when spoken. It is also filled with seeming banalities, so those who speak the Cant seem to be speaking about nothing at all. For example, two thieves might be discussing a planned heist, but seemingly referring to famous actors, the weather, and breeds of puppies.\n\nCant is derived from Vulgaris and shares much of its grammar and vocabulary. However, those without proficiency in this language can absolutely not understand a single sentence of it."
+	},
+	{
+		"id": "chivalric",
+		"name": "Chivalric",
+		"description": "Chivalric is the language of the nobility. All legal and courtly proceedings are conducted in this tongue. If a poor commoner is caught in the justice system without knowledge of this language, the case continues with or without their comprehension.\n\nChivalric shares much of its grammar and vocabulary with Vulgaris, but is couched in romantic, philosophical, and pseudo-religious argot so that it is absolutely impenetrable by those unlearned in its application."
+	},
+	{
+		"id": "tylwyth",
+		"name": "Tylwyth",
+		"description": "Tylwyth is the ancestral language of the fay and other spirits. Since the fay have dwelt within the bounds of the Wide World for much longer than Mankind, many of the spirits and minor divinities that live there speak Tylwyth almost exclusively.\n\nThe fay, as a whole, are known for their love of languages and Tylwyth enjoys a certain fame among scholars and linguists as being a logical, subtle, and beautiful tongue. Careful cultivation by immortal linguists has developed Tylwyth into a purposeful and useful language, like a carefully pruned tree."
+	},
+	{
+		"id": "vetus",
+		"name": "Vetus",
+		"description": "Vetus has enjoyed over five-hundred years of consistent use and is the official language of the Cult of Mythrys. As the Cult is the center of academia, almost every written text or scholarly book is written in this language. Scholars would be wise to master it.\n\nMythrys made the language sacred by declaring that, in order to more deeply understand the Mysteries that he revealed, all adherents of the faith must learn Vetus, and so avoid the pitfalls and stumbling blocks that come with clumsy translation. Those adherents who do not speak it merely go through the motions during religious festivals.\n\nVetus is written in a flowing cursive script from right to left. It is usually written in an abjad form. The Vetus script is the only language written in the City. Sometimes its script system is (crudely) borrowed for other languages, but books, scrolls, documents, proclamations, and other important texts are only rendered in Vetus."
+	}
 ]

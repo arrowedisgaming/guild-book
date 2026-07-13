@@ -1,30 +1,118 @@
 [
 	{
-		"id": "tests-of-fate",
-		"section": "basics",
-		"title": "Tests of Fate",
-		"body": "PLACEHOLDER SUMMARY. When an adventurer's action is uncertain, the GM calls for a test of fate. Draw a minor arcana card and add the relevant attribute (Swords, Pentacles, Cups, or Wands) to the card's value. A total of **14 or more** is a success; **13 or less** is a failure. Drawing the tested suit on the initial draw is a great success.",
-		"tags": ["core", "resolution", "tarot"]
-	},
-	{
 		"id": "the-four-phases",
 		"section": "basics",
 		"title": "The Four Phases",
-		"body": "PLACEHOLDER SUMMARY. Play cycles through four phases: the **Crawl Phase** (exploring the Underworld), the **Challenge Phase** (dangerous encounters), the **Camp Phase** (rest and recovery), and the **City Phase** (spending, healing, and preparing the next delve).",
-		"tags": ["core", "structure"]
+		"body": "Each adventurer has a personal quest that compels them into the lightless depths. Once their quest is fulfilled, they can finally retire and rest. Until then, it is a cycle of descending into the Underworld and returning to the City to restock and rest.\n\nThe flow of the game consists of four distinct phases, each with its own style of play and rules.\n\n### The Crawl Phase\n\nDuring the Crawl Phase, the guild explores an interconnected network of dungeons called the Underworld. During this phase, adventurers test their wits and skills against inhospitable forces in order to fulfill their quests. During the Crawl, players charge their Bonds with their guild-mates. The Crawl is where you’ll spend most of your time.\n\n### The Challenge Phase\n\nA Challenge Phase occurs when you need to focus on the beat-by-beat action. This phase is when choices and consequences bear the hideous, overripe fruit of rotting bodies and terminated possibilities! During a Challenge, play moves from a freeform style to a tactical system. Play is split up into rounds and turns, during which people perform various specific actions.\n\n### The Camp Phase\n\nAs the adventurers get worn down by journeys and battles, they’ll pause and use the Camp Phase. The focus of the Camp Phase is interpersonal roleplaying, drama, and connections between members of the guild. During this phase, players burn charged Bonds to rest and recover.\n\n### The City Phase\n\nEach delve is punctuated by the City Phase. The City Phase resolves the entire sequence and gives the guild a chance to spend their hard-earned loot, advance their long-term agendas, and reflect on their progress.",
+		"tags": [
+			"core",
+			"structure",
+			"crawl",
+			"challenge",
+			"camp",
+			"city"
+		]
 	},
 	{
-		"id": "attributes",
-		"section": "adventurer",
-		"title": "Attributes",
-		"body": "PLACEHOLDER SUMMARY. Adventurers have four attributes, rated 1–4, matching the four suits. At creation you take the spread **4, 3, 2, 1**; your **4** goes to the suit of your chosen Path.",
-		"tags": ["creation", "attributes"]
-	},
-	{
-		"id": "card-values",
+		"id": "the-flow-of-play",
 		"section": "basics",
-		"title": "Card Values",
-		"body": "PLACEHOLDER SUMMARY. Pips I–X are worth 1–10. Court cards: **Page 11, Knight 12, Queen 13, King 14**. The Fool is worth 0. Players draw from the minor arcana (plus the Fool); the GM draws from the major arcana (I–XXI).",
-		"tags": ["tarot", "resolution"]
+		"title": "The Flow of the Play",
+		"body": "Games usually take place at a regularly scheduled time and place. Finding time to play games with other busy people can be challenging. Consistent play is crucial to keeping a game alive. Most sessions have a basic flow:\n\n### Before play\n\nAt the start of a game session, a few important pieces of bookkeeping are taken care of:\n\n### Recap\n\nOne player—with help from others at the table, and with corrections from the GM as needed—recaps what happened during the last session. This gets everybody back into the game and refreshes their memory about where they were and what they’re doing.\n\nIf this player does an exceptionally good job, the GM may give them a point of Resolve. They may keep this Resolve or give it to another player who needs it.\n\n### Returning players\n\nIf anyone misses a session during the Crawl Phase, their adventurer is assumed to be about one room away, trailing behind the main guild. They have been slowed down performing a Camp Action. When the player returns, they tell the table what activity they performed, receive the benefit from it, and rejoin the main group. Some actions (e.g., Fellowship, Train) logically require another adventurer to be “absent” with the returning player; only choose activities that make sense for the circumstances.\n\n### During play\n\nA typical game session flows between the different phases. Over the course of many game sessions, play will follow this sequence:\n\n- Decide to pursue one adventurer’s quest.\n- Adventure through the Underworld (Crawl Phase).\n- Struggle against the strange denizens of the Underworld (Challenge Phase).\n- Rest as well as possible in the lightless depths (Camp Phase).\n- Return to the City, broken and bleeding (City Phase).\n- Spend accumulated wealth to heal, stock up on equipment, and pursue long-term projects in the City.\n- Pick up a contract to finance the next crawl.\n- Descend back into the Underworld in continued pursuit of the current quest while working on their contract (Crawl Phase).\n- Repeat.\n\n### End of play\n\nPlay can end after any phase or simply at a specified time. It’s best for the GM to close play when there’s a good stopping point—when one scene has just ended, or just after introducing a new scene (so the players have something to look forward to next week).\n\nThe GM can take time at the end of play to get feedback about what the players want to do or where they want to go next. Reminders about when they’ll play next, who might be absent, etc., can be dealt with at this time.",
+		"tags": [
+			"session",
+			"structure"
+		]
+	},
+	{
+		"id": "adjudicating-the-game",
+		"section": "basics",
+		"title": "Adjudicating the Game: GM Responses",
+		"body": "An RPG is a conversation between the GM and the players. The GM describes a scene and the players describe their actions inside the scene. The GM and the players ask questions of each other to further define their shared textual reality.\n\nThe GM adjudicates how the adventurers’ actions impact the world. To this end, GMs are armed with the following four stock phrases:\n\n- “Yes, you can do that.”\n- “Say more about what you’re doing.”\n- “Draw to see if you can do that.”\n- “No, you can’t do that.”\n\nThese phrases (and their variants) are the four basic responses that a GM has for answering a player when they ask, “Can my character do…?”\n\n### “Yes, you can do that”\n\nThe player describes their adventurer’s actions and the GM simply describes what happens. If there’s nothing preventing the adventurer from succeeding, they simply succeed.\n\n- “It doesn’t seem that the door is locked. You open the door slowly and carefully.”\n- “Sure, you can climb the tree. There're plenty of handholds.”\n- “You know that it will take a few minutes of hard work and it'll make a shit ton of noise, but of course you can use your felling axe to hack down the wooden door.”\n\nPlayers portray members of the unfortunate caste called “adventurers.” As such, they have the skills and abilities that you’d assume adventurers would have by default.\n\nIn practice, this means you ignore all the uninteresting parts of adventuring. You never test fate to see if an adventurer knows how to kindle a bonfire—they’re competent travelers. Don’t worry about what weapons an adventurer is proficient in—they’re competent fighters.\n\nEven difficult tasks can be resolved without a test of fate as long as: 1. there’s no interesting risk; 2. the adventurer has plenty of time; 3. they have the appropriate tools.\n\nIf one of these factors is missing, it’s time to move to one of the other responses.\n\nIf an adventurer's actions would incur some sort of penalty, the GM should make that clear and give them a choice.\n\n- If an adventurer’s actions would take a long time to complete, the GM should make this clear. If the player elects to spend the time, the GM draws on the Meatgrinder table to represent time passing; similar to the Moving carefully rules. Draw from the major arcana—torches gutter on a result of I-V.\n- If an adventurer's actions would create a lot of noise, the GM should give that info. If the player elects to risk the noise, the GM draws on the Meatgrinder table to represent an interested predator investigating the disturbance; similar to the Loud noises rules. The GM draws from the major arcana—a random encounter occurs on a result of XV-XX.\n\n### “Say more about what you’re doing”\n\nSometimes it’s not exactly clear what actions the players are describing or what their intentions are. In these cases, the GM should ask for clarification.\n\n- “How exactly are you searching for traps?”\n\n“OK, because of the Linguist talent, you definitely speak the myconid language, but you know that their language is expressed entirely in the medium of spore bursts. How do you intend to communicate with the fungoid?”\n\n- “How can you read the text if you don't have any light?”\n\nSometimes there is a miscommunication in what the GM has described—the GM might be picturing one thing but the players have understood something very differently. Sometimes there's ambiguity in what the player is trying to do. Asking for clarification keeps the shared hallucination of the game consistent by syncing information between the GM and the player.\n\nThe GM can also ask clarifying questions about the tactics that the character would be employing. A player’s statement that they want to “Perform a coup de grace on the vampire” might be more successful depending on the precise methods employed—the GM may want to know what weapons are used, what exactly is done, etc.\n\nOnce the GM has achieved clarity with “Say more,” they can then shift to one of the other three basic responses.\n\n### “Draw to see if you can do that”\n\nWhen an action is fraught with danger or its outcome is uncertain, it’s time to test fate. For an overview of tests of fate.\n\nTests of fate should be relatively rare and relatively tense. Don’t call for tests of fate for inconsequential actions— only when something of importance hangs in the balance.\n\n- “The door is locked. If you have lockpicks, you can test Pentacles to try and pick the lock.”\n\n### “No, you can’t do that”\n\nSometimes, actions are not possible or will automatically fail based on the logic of the narrative world.\n\n- “No, you can't really try and tame a dangerous wild beast with a single test of fate. Something like that would need to be done by breaking it over the course of several weeks. You can try and capture it, though, if you want...”\n- “No, if you don't have any tools, you don't have any way to pick the lock. There's not any, like, bits of wire just lying around your jail cell.”",
+		"tags": [
+			"gm",
+			"adjudication"
+		]
+	},
+	{
+		"id": "the-major-and-minor-arcana",
+		"section": "basics",
+		"title": "The Major and Minor Arcana",
+		"body": "A single **tarot** deck is used in *His Majesty the Worm* to create random results. A tarot deck in its entirety consists of seventy-eight cards of two types: **major arcana** and **minor arcana**. **The GM uses the major arcana cards *except* the Fool.** The major arcarna are numbered and have evocative names like Magician [I] and Wheel of Fortune [X]. Therefore, the GM’s deck has 21 cards, numbered I–XXI.\n\n**Players use the minor arcana cards *plus* the Fool,** which is borrowed from the major arcana deck. There are fifty-six minor arcana cards—reminiscent of a more traditional deck of poker cards—with four suits of fourteen cards. The four suits are Swords, Pentacles, Cups, and Wands. The minor arcana are numbered I–X, and each suit has four face cards.\n\nEach card in the minor arcana has a value. A card’s value equals the number shown on the card. The Fool has the value of 0. Aces have a value of 1. The face cards have the following numeric values:\n\n- Page - 11\n- Knight - 12\n- Queen - 13\n- King - 14\n\nAt the beginning of each session, separate the minor and major arcana into the two separate decks and shuffle each. Place the major arcana deck near the GM. Place the minor arcana deck (with the Fool shuffled into it) in a central location where all the players can reach it.\n\nThere are two discard piles—one for minor arcana and one for major arcana. As cards are played, place them into the appropriate discard pile. (Occasionally, certain rules will call for you to look at the top card of a discard pile, so it can be important to note this.)\n\n### Whenever the Fool is drawn, both decks are reshuffled at the end of the round.",
+		"tags": [
+			"tarot",
+			"deck",
+			"card-values"
+		]
+	},
+	{
+		"id": "tests-of-fate",
+		"section": "basics",
+		"title": "Tests of Fate",
+		"body": "When an adventurer’s action within the game's narrative is uncertain, the GM calls for a **test of fate**.\n\nAdventurers have four **attributes**, rated 1-4. Each represents an “approach” towards problem solving, and says a lot about *how* an adventurer achieves their goal.\n\nThe GM determines which attribute is most relevant to the test’s outcome. To do this, they ask questions of the player to find out how, exactly, they are attempting the action. The player's description will inform which attribute is being tested.\n\n### Attributes\n\nSwords: Swords represents strength and skill with weapons. Test Swords to bend the bars of your cell or tip over a heavy bookshelf onto an unsuspecting goblin.\n\nPentacles: Pentacles represents swiftness and slyness. Test Pentacles to sneak past a deathknight or slip the sea witch’s conch into your bag without her noticing.\n\nCups: Cups represents wisdom and training. Test Cups to activate an ancient clockwork mechanism or coax a wild winter wolf to accept a gift of meat from your hand.\n\nWands: Wands represents willpower and charisma. Test Wands to convince an art critic that your petrified companion is actually avant-garde art or overcome the dominating gaze of a vampire.\n\nIf the player describes being sneaky or quick, the GM will call for a test of Pentacles; if the player describes being mystical or eloquent, the GM will call for a test of Wands—and so forth.\n\nTo test fate, the player draws a minor arcana card and adds the associated attribute to the value of the card.\n\n### Success\n\nIf the total value is 14+, the result is a success. The GM describes how the adventurer succeeds in their stated goal.\n\n### Failure\n\nIf the total value is 13 or less, the result is a failure. The GM describes how the adventurer fails and asks what they want to do next.\n\n### Great success\n\nIf the total value is 14+ *and* the player drew the suit being tested on the initial draw (not from pushing fate or another source), the result is a great success. Not only does the adventurer succeed, but they succeed extremely well, going above and beyond what was expected.\n\nThe GM should invite the player to embellish how *impressive*, how *effortless*, how *quick*, or how *thorough* their success was.\n\n### Great failure\n\nIf the player pushes fate *and* the total value is still 13 or less, the test is a great failure. The GM describes a *new* significant setback, bad situation, or harmful repercussion as a result. See “Pushing Fate.”",
+		"tags": [
+			"core",
+			"resolution",
+			"tarot",
+			"attributes",
+			"outcomes"
+		]
+	},
+	{
+		"id": "pushing-fate",
+		"section": "basics",
+		"title": "Pushing Fate",
+		"body": "If the result of the test is a failure, the player may opt to **push fate**. Pull an additional card and add its value to the original total. If the total result of the two cards plus the attribute is 14+, the test succeeds as normal. You can never achieve a great success if you push fate. If the total result is 13 or less, the test becomes a great failure.\n\nWhen you push fate and achieve a great failure, you not only fail to achieve what you set out to do, you make things even worse.\n\nNarratively, a great failure creates new obstacles to overcome or severely hampers the adventurers’ path forward. For example, if a thief achieves a great failure while picking a lock, the sound of the broken lockpick jammed in the door alerts a passing guard, who catches the thief red-handed. Or, if a templar suffers a great failure when attempting to intimidate the ogre, the ogre flies into a rage and sucker-punches the templar in a surprise attack.\n\nAdditionally, a great failure inflicts a mechanical penalty on the adventurer who failed. If the situation is a dangerous situation, the GM can inflict a Wound on the adventurer. If the situation isn’t life threatening to begin with, an effect—representing frustration, sorrow, madness, exertion, or some other emotional state—might be more appropriate. For example, the GM might say that until the adventurer’s next encampment they become Exhausted (suffering the Exhaust effect) because they have overexerted themselves.\n\n### Pushing fate with the Fool\n\nThe Fool has a value of 0.\n\n- If you pull the Fool initially during a test of fate, you can push fate as normal. This could turn the test from a failure to a success or to a great failure.\n- If you pull the Fool when pushing fate, your result automatically becomes a great failure.\n\nWhen the Fool is drawn, remember to shuffle both the minor and major arcana decks.",
+		"tags": [
+			"core",
+			"resolution",
+			"great-failure",
+			"the-fool"
+		]
+	},
+	{
+		"id": "favor-and-disfavor",
+		"section": "basics",
+		"title": "Favor and Disfavor",
+		"body": "Sometimes circumstances can influence a test of fate positively or negatively.\n\nWhen beneficial factors would aid an adventurer, they are said to have **favor**. Favor grants +3 to the total value in a test of fate.\n\nWhen negative factors would hinder an adventurer, they have **disfavor**. Disfavor subtracts –3 from the total value in a test of fate.\n\nFavor and disfavor are not cumulative. You do not apply additional adjustments for having multiple helpful or hindering factors. For example, if you have several favorable factors, just note that you have favor and add +3.\n\nFavor and disfavor cancel each other out. If there are both helpful and hindering factors, you simply make the test of fate as normal. Because favor and disfavor are not cumulative, you do not consider how many factors weigh on either side; multiple favorable factors may be canceled out by one disfavor factor.\n\n### Relevant motifs\n\nIf one of your motifs is meaningfully related to the test of fate, you gain favor on the test of fate.\n\n### Resolve\n\nResolve represents an adventurer’s fortitude as they pursue their quests—fortitude that dwindles as you go deeper and deeper into the Underworld. You may elect to spend a point of Resolve *prior* to a test of fate in order to gain favor on that test.\n\n### Aiding others\n\nIt is usually assumed that adventurers fill various niches and take on different roles during the Crawl. One is the scout and always does the reconnaissance, another is typically the watchman for the group, and another always forages for herbs. In these cases, the adventurer most suited for the task simply makes the test of fate. Sometimes, however, players will have the opportunity to work together on a test of fate.\n\nIf two players can collaborate meaningfully, the acting player gets favor (+3) on the test of fate.\n\nAdding more people to the mix isn’t necessarily helpful. It’s usually best to let the best-suited adventurer take point and have aid provided by the person most interested in helping.\n\nThe caveat about aiding another is that both participating adventurers are affected by the consequences of the test. If the test of fate is successful, both succeed. If the test fails, both adventurers fail. However, it’s important to note that the player who takes the lead and actually draws gets to determine whether or not they push fate. In the case of great failures, both adventurers are affected equally.",
+		"tags": [
+			"core",
+			"resolution",
+			"motifs",
+			"resolve",
+			"aiding"
+		]
+	},
+	{
+		"id": "bound-by-fate",
+		"section": "basics",
+		"title": "Bound by Fate",
+		"body": "Whether you succeed or fail, your results are bound by fate. You cannot retry the same test unless the circumstances significantly change. If you fail to pick a lock, that lock is beyond your adventurer’s abilities. If you fail to climb a wall, that wall is unclimbable.\n\nBut maybe the warrior in the company can bash down the door. And maybe the sorcerer has a magical cloak that allows you to fly over the wall. You’ll have to find another way past an obstacle if you fail in the test.\n\nYou can also attempt a test again if the circumstances significantly change. Significant change usually means new ideas, new tools, or a new twist on an old situation.\n\nBecause *His Majesty the Worm* is a fundamentally collaborative game, fellow guild members are also bound by fate. If one person attempts something and fails, it’s established that it cannot feasibly be done at present. No fair having each guild member try successively until somebody succeeds. However, additional guild members can attempt alternate methods to bypass the obstacle.\n\nIt’s important to note the GM is also bound by fate. The GM may not call for multiple frivolous tests to see if an adventurer can accomplish a single task. The more times a successful test is reattempted, the more chances the player has to fail. The GM may only call for repeated tests when the situation meaningfully changes.",
+		"tags": [
+			"core",
+			"resolution",
+			"retries"
+		]
+	},
+	{
+		"id": "group-tests",
+		"section": "basics",
+		"title": "Group Tests",
+		"body": "In the face of discrete challenges, it’s best to have one adventurer be bold and test fate. There are times, however, when the entire guild must test their fates together. For example, the entire guild must sneak into the Tower Gnostic to steal an artifact or must perform the Operetta d’Serpentis perfectly for the master of the Broken Smiles Opera House. In such cases, the GM calls for a group test.\n\nGroup tests are accomplished by having two adventurers test fate: the one most qualified and the one least qualified. If there are apparent ties, talk it out to determine who should make the tests.\n\n- If one of the adventurers succeeds in a test of fate, they give **1 hit** to the group test. If they get a great success, they give **2 hits**.\n- If one of the adventurers fails in a test of fate, they give **no hits** to the group test. If they suffer a great failure, they subtract **-1 hit**.\n\nThe GM totals the amount of hits to determine the success of the group test.\n\n- **2 hits:** Success for the entire group.\n- **1 hit:** The group comes short of succeeding and are put in a tight spot.\n- **0 hits:** Failure for the entire group.\n- **<0 hits:** Disaster for the entire group.\n\nLike other tests of fate, group tests are bound by fate.",
+		"tags": [
+			"core",
+			"resolution",
+			"group"
+		]
+	},
+	{
+		"id": "effects",
+		"section": "basics",
+		"title": "Effects",
+		"body": "Terms that describe consequences that happen to characters or objects things like Blind, Destroy, and Heal are called Effects. Each effect has its own rules and implications, explained in the list below.\n\n### Blind\n\nBlinded creatures cannot see or gain any visual information.\n\n- Blinded creatures make all tests and Challenge Actions with disfavor.\n- Blinded creatures can’t make missile attacks at all.\n- All harmful actions against Blind creatures have favor.\n\n### Control\n\nControlled creatures obey the order given to them. As soon as the order is completed, or if it cannot be completed, the effect ends.\n\n- During Challenges, Controlled creatures immediately perform the commanded action. The total value for the Controlled action is equal to the value of the action used to Control it.\n\n### Curse\n\nCurse is a generic term for “bad thing” as determined by the GM. Turned to stone by a medusa? Fused with a party member? Changed into a baby? These are all Curses. The GM will tell you what it means.\n\n### Deafen\n\nDeafened creatures cannot hear or gain any auditory information. Speak Incantation is made with disfavor.\n\n### Destroy\n\nDestroyed objects are broken and unusable.\n\n### Disarm\n\nDisarmed creatures drop one held item of their choice.\n\n- A dropped item requires a Recover action to retrieve during Challenges.\n- If an adventurer is carrying neither a melee weapon or shield, all attacks against them gain favor.\n\n### Displace\n\nDisplaced creatures are moved to another zone, as determined by the initiating creature or effect.\n\n### Exhaust\n\nExhausted creatures make all tests and Challenge Actions with disfavor.\n\n### Heal\n\nHealed creatures instantly remove one Wound from a condition.\n\n### Inspire\n\nInspired creatures must immediately role-play one of the seven Dispositions to the best of their ability, following the basic guidelines. The Dispositions are: anger, distaste, sadness, joy, surprise, trust, fear.\n\n### Grow/Shrink\n\nGrown creatures and objects double their original height. Shrunk creatures and objects half their original height.\n\nGain favor when this would be advantageous (squeezing into holes, sneaking around) and disfavor when it would be disadvantageous (contests of strength).\n\n### Knockout\n\nKnocked-out creatures are unconscious and incapacitated. They cannot take any actions.\n\n### Notch\n\nWhen an item suffers an attack that compromises its durability, it is Notched. After suffering a certain number of Notches, the item is Destroyed.\n\n- Fragile items are Destroyed after one Notch.\n- Items intended for durability are Destroyed after two Notches.\n- Items made of tempered steel are Destroyed after three Notches.\n- Notched items can be repaired with a tinker's kit or in the City.\n\n### Root\n\nRooted creatures cannot move from the spot on which they are standing.\n\n- They cannot Avoid, Dash, Dodge, or Move.\n- Anybody engaged with a Rooted creature immediately disengages.\n\n### Shroud\n\nShrouded creatures are invisible. Shrouded creatures are impossible to see without the aid of magic or special senses.\n\n- Typically, if a Shrouded creature stands still and stays quiet, they cannot be deliberately targeted by creatures who can’t see them.\n- However, if the Shrouded creature is moving and interacting with their environment, they can be targeted, though all such attempts are made with disfavor.\n- Shrouded creatures make harmful actions with favor against creatures who can’t see them.\n\n### Silence\n\nSilenced creatures cannot make any vocal sounds. As such, they cannot cast spells because they cannot Speak Incantations.\n\n### Stun\n\nWhen Stunned, immediately choose and discard a Challenge card from your hand.\n\nYou do not need to Recover from being Stunned. It is an instantaneous effect.\n\n### Trip\n\nTripped creatures fall prone.\n\n- Prone creatures cannot Avoid, Move, or Dash.\n- Melee attacks against prone targets have favor.\n- Missile attacks against prone targets have disfavor.\n- Anybody engaged with a Tripped creature immediately disengages.",
+		"tags": [
+			"core",
+			"effects",
+			"conditions"
+		]
 	}
 ]

@@ -1,0 +1,409 @@
+[
+	{
+		"id": "animal-feed",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Animal feed"
+	},
+	{
+		"id": "bedroll",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Bedroll"
+	},
+	{
+		"id": "candles",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Candle"
+	},
+	{
+		"id": "chalk",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Chalk"
+	},
+	{
+		"id": "clothes-rags",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Clothes",
+		"from": "Rags preserve",
+		"to": "Common clothes"
+	},
+	{
+		"id": "firewood",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Firewood"
+	},
+	{
+		"id": "flint-and-tinder",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Flint and tinder"
+	},
+	{
+		"id": "iron-spikes",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Iron spike"
+	},
+	{
+		"id": "lard",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Lard"
+	},
+	{
+		"id": "leeches",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Leeches"
+	},
+	{
+		"id": "pipe-and-pipeweed",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Pipe and pipeweed"
+	},
+	{
+		"id": "pole-10ft",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Pole, 10’"
+	},
+	{
+		"id": "poultice",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Poultice"
+	},
+	{
+		"id": "rations",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Ration"
+	},
+	{
+		"id": "religious-paraphernalia",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Religious paraphernalia"
+	},
+	{
+		"id": "rope",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Rope"
+	},
+	{
+		"id": "weapon-axe",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Axe"
+	},
+	{
+		"id": "weapon-blade",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Blade"
+	},
+	{
+		"id": "weapon-bow",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Bow"
+	},
+	{
+		"id": "weapon-crossbow",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Crossbow"
+	},
+	{
+		"id": "weapon-dagger",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Dagger"
+	},
+	{
+		"id": "weapon-flail",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Flail"
+	},
+	{
+		"id": "weapon-hammer",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Hammer or mace"
+	},
+	{
+		"id": "weapon-polearm",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Polearm"
+	},
+	{
+		"id": "arrows",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Arrows and bolts"
+	},
+	{
+		"id": "bolts",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Arrows and bolts"
+	},
+	{
+		"id": "armor-light",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Armor",
+		"from": "Light armor is designed",
+		"to": "Iron armor consists"
+	},
+	{
+		"id": "caltrops",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Caltrops"
+	},
+	{
+		"id": "chain",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Chain"
+	},
+	{
+		"id": "clothes-common",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Clothes",
+		"from": "Common clothes",
+		"to": "Finery sets"
+	},
+	{
+		"id": "cooking-gear",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Cooking gear"
+	},
+	{
+		"id": "crowbar",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Crowbar"
+	},
+	{
+		"id": "fishing-gear",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Fishing gear"
+	},
+	{
+		"id": "garlic",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Garlic"
+	},
+	{
+		"id": "grappling-hook",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Grappling hook"
+	},
+	{
+		"id": "hammer-tool",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Hammer"
+	},
+	{
+		"id": "hatchet",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Hatchet"
+	},
+	{
+		"id": "helm",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Helm"
+	},
+	{
+		"id": "hermetic-bottle",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Hermetic bottle"
+	},
+	{
+		"id": "lockpicks",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Lockpick"
+	},
+	{
+		"id": "mirror",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Mirror"
+	},
+	{
+		"id": "musical-instrument",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Musical instrument"
+	},
+	{
+		"id": "pick",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Pick"
+	},
+	{
+		"id": "quill-and-ink",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Quill and ink"
+	},
+	{
+		"id": "shield-light",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Shield"
+	},
+	{
+		"id": "shovel",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Shovel"
+	},
+	{
+		"id": "tinkers-kit",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Tinker’s kit"
+	},
+	{
+		"id": "torch",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Torch"
+	},
+	{
+		"id": "wolfsbane",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Wolfsbane"
+	},
+	{
+		"id": "alchemy-kit",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Alchemy kit"
+	},
+	{
+		"id": "armor-iron",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Armor",
+		"from": "Iron armor consists",
+		"to": "Steel armor is a full set"
+	},
+	{
+		"id": "armor-steel",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Armor",
+		"from": "Steel armor is a full set"
+	},
+	{
+		"id": "bezoar",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Bezoar"
+	},
+	{
+		"id": "blank-book",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Blank book"
+	},
+	{
+		"id": "booze-fancy",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Booze"
+	},
+	{
+		"id": "clothes-finery",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Clothes",
+		"from": "Finery sets",
+		"to": "The clothes that you"
+	},
+	{
+		"id": "falconry-gear",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Falconry gear"
+	},
+	{
+		"id": "hourglass",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Hourglass"
+	},
+	{
+		"id": "lantern",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Lantern"
+	},
+	{
+		"id": "manacles",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Manacles"
+	},
+	{
+		"id": "oil-flask",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Oil"
+	},
+	{
+		"id": "shield-heavy",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Shield"
+	},
+	{
+		"id": "spyglass",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Spyglass"
+	},
+	{
+		"id": "tent",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Tent"
+	},
+	{
+		"id": "archwood-wand",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Wand of archwood"
+	},
+	{
+		"id": "weapon-silver",
+		"field": "description",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Weaponry"
+	}
+]

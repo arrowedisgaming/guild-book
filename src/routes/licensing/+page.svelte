@@ -39,7 +39,12 @@
 			It uses the permitted <em>Adherent of the Worm</em> logo. It does <strong>not</strong> use
 			the official His Majesty the Worm logo, artwork, or trade dress.
 		</li>
-		<li>Rules text shown here is summarised and paraphrased, not reproduced verbatim.</li>
+		<li>
+			Game text — talent, condition, affliction, kith, path, language, and equipment descriptions —
+			is reproduced verbatim from the core rulebook, per the licence's own terms: “the mechanics and
+			game text of His Majesty the Worm may be reused freely.” No book artwork, logos, or trade dress
+			are reproduced.
+		</li>
 		<li>This is not an official product and is not endorsed by or affiliated with the publisher.</li>
 	</ul>
 

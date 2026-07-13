@@ -1,0 +1,296 @@
+[
+	{
+		"id": "proud-and-ancient",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Kin talent: Proud and Ancient"
+	},
+	{
+		"id": "read-the-past",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "High elf talent: Read the Past"
+	},
+	{
+		"id": "keen-senses",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Wood elf talent: Keen Senses"
+	},
+	{
+		"id": "foretell",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Dark elf talent: Foretell"
+	},
+	{
+		"id": "weird-wise-ancient",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Gnome talent: Weird, Wise, Ancient"
+	},
+	{
+		"id": "labor-unending",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Dwarf talent: Labor Unending"
+	},
+	{
+		"id": "hale-and-hearty",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Halfling talent: Hale and Hearty"
+	},
+	{
+		"id": "giants-strength",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Troll talent: Giant’s Strength"
+	},
+	{
+		"id": "quicksilver-blood",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Earthblooded orc talent: Quicksilver Blood"
+	},
+	{
+		"id": "berserkergang",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Fireblooded orc talent: Berserkergang"
+	},
+	{
+		"id": "poison-blood",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Seablooded orc talent: Poison Blood"
+	},
+	{
+		"id": "blur",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Stormblooded orc talent: Blur"
+	},
+	{
+		"id": "byname",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Human arête talent: Byname"
+	},
+	{
+		"id": "akashic-consciousness",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "High elf arête talent: Akashic Consciousness"
+	},
+	{
+		"id": "area-sense",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Wood elf arête talent: Area Sense"
+	},
+	{
+		"id": "spout-doom",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Dark elf arête talent: Spout Doom"
+	},
+	{
+		"id": "uncanny-knowledge",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Gnome arête talent: Uncanny Knowledge"
+	},
+	{
+		"id": "iron-beards",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Dwarf arête talent: Iron Beards"
+	},
+	{
+		"id": "underfoot",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Halfling arête talent: Underfoot"
+	},
+	{
+		"id": "colossal",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Troll arête talent: Colossal"
+	},
+	{
+		"id": "jarl",
+		"field": "description",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Orc arête talent: Jarl"
+	},
+	{
+		"id": "aegis",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Aegis"
+	},
+	{
+		"id": "doom-eye",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Doom Eye"
+	},
+	{
+		"id": "heavy-metal-machine",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Heavy Metal Machine"
+	},
+	{
+		"id": "monster-hunter",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Monster Hunter"
+	},
+	{
+		"id": "reaver",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Reaver"
+	},
+	{
+		"id": "two-handed-focus",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Two-handed Focus"
+	},
+	{
+		"id": "war-stories",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "War Stories"
+	},
+	{
+		"id": "acrobat",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Acrobat"
+	},
+	{
+		"id": "ambusher",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Ambusher"
+	},
+	{
+		"id": "con-artist",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Con Artist"
+	},
+	{
+		"id": "fight-dirty",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Fight Dirty"
+	},
+	{
+		"id": "quick",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Quick!"
+	},
+	{
+		"id": "sneak",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Sneak"
+	},
+	{
+		"id": "up-my-sleeve",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Up My Sleeve"
+	},
+	{
+		"id": "alchemy",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Alchemy"
+	},
+	{
+		"id": "beast-master",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Beast Master"
+	},
+	{
+		"id": "bookworm",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Bookworm"
+	},
+	{
+		"id": "chirurgeon",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Chirurgeon"
+	},
+	{
+		"id": "counsel",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Counsel"
+	},
+	{
+		"id": "high-chant",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "High Chant"
+	},
+	{
+		"id": "loremaster",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Loremaster"
+	},
+	{
+		"id": "counter-spell",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Counter-spell"
+	},
+	{
+		"id": "dwimmercraft",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Dwimmercraft"
+	},
+	{
+		"id": "gramarye",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Gramarye"
+	},
+	{
+		"id": "magic-of-the-wastes",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Magic of the Wastes"
+	},
+	{
+		"id": "magic-of-the-weald",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Magic of the Weald"
+	},
+	{
+		"id": "magic-of-the-weird",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Magic of the Weird"
+	},
+	{
+		"id": "magic-of-the-welkin",
+		"field": "description",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Magic of the Welkin"
+	}
+]

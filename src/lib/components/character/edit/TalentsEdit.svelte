@@ -2,6 +2,7 @@
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { TalentDefinition } from '$lib/types/content-pack';
 	import { canWoundTalent } from '$lib/engine/wounds';
+	import Prose from '$lib/components/ui/Prose.svelte';
 
 	interface Props {
 		char: GuildBookCharacterData;
@@ -95,7 +96,7 @@
 				{/if}
 				<button type="button" class="remove" onclick={() => remove(i)} aria-label="Remove talent">✕</button>
 			</div>
-			<p class="tdesc">{byId.get(t.talentId)?.description ?? ''}</p>
+			<Prose class="tdesc" text={byId.get(t.talentId)?.description ?? ''} />
 		</div>
 	{/each}
 
@@ -184,7 +185,7 @@
 		color: var(--ink-soft);
 		cursor: pointer;
 	}
-	.tdesc {
+	.row :global(.tdesc) {
 		margin: 0.25rem 0 0;
 		font-size: 0.8rem;
 		color: var(--ink-soft);

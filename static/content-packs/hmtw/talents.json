@@ -1,56 +1,315 @@
 [
-	{ "id": "proud-and-ancient", "name": "Proud and Ancient", "source": "kin", "description": "Define your house's sigil and motto. When either is dramatically relevant to what you're attempting, test fate with favor. In a Challenge, you may spend a Resolve and Speak Incantations to cry your motto — you and any house members who hear it gain favor on their next action." },
-	{ "id": "read-the-past", "name": "Read the Past", "source": "kin", "description": "High elves have perfect recall. Bid lore to accurately remember anything you have ever seen or heard, no matter how long ago or how small the detail." },
-	{ "id": "keen-senses", "name": "Keen Senses", "source": "kin", "description": "Bid lore to sharpen one sense beyond mortal limits for a moment and ask the GM a question it could answer (read lips at distance, taste for poison, track by scent, hear the invisible). If the GM has nothing new to tell you, the bid isn't spent." },
-	{ "id": "foretell", "name": "Foretell", "source": "kin", "description": "Bid lore to ask the GM \"If I do X, will Y happen?\" You receive a truthful yes-or-no as a prophetic hunch." },
-	{ "id": "weird-wise-ancient", "name": "Weird, Wise, Ancient", "source": "kin", "description": "Whenever you bid lore, you may ask one follow-up question about the answer for free." },
-	{ "id": "labor-unending", "name": "Labor Unending", "source": "kin", "description": "Mark the Stressed condition to work through the night: you perform two Camp Actions this camp instead of one." },
-	{ "id": "hale-and-hearty", "name": "Hale and Hearty", "source": "kin", "description": "If you eat two rations instead of one when the guild breaks bread at camp, you may charge one of your uncharged Bonds." },
-	{ "id": "giants-strength", "name": "Giant's Strength", "source": "kin", "description": "You automatically win contests of raw strength — arm wrestling, lifting, shoving — against anyone who isn't also a troll." },
-	{ "id": "quicksilver-blood", "name": "Quicksilver Blood", "source": "kin", "description": "Your blood runs like quicksilver and eats metal. When this talent is Wounded by a metal weapon, that weapon is Destroyed." },
-	{ "id": "berserkergang", "name": "Berserkergang", "source": "kin", "description": "Your blood boils. When this talent is Wounded you may enter a rage: you cannot Avoid, Dodge, Speak Incantations, Banter, or Aid Another, but every Attack you make has favor. The rage ends when no enemy stands (allies who hurt you count as enemies) — or spend a Resolve to end it early." },
-	{ "id": "poison-blood", "name": "Poison Blood", "source": "kin", "description": "Your black blood is lethal venom. When this talent is Wounded by a bite, the creature that bit you suffers Critical damage." },
-	{ "id": "blur", "name": "Blur", "source": "kin", "description": "Your blood rises as thick mist. When this talent is Wounded you become Shrouded — long enough to take one action, or indefinitely while you stay still." },
-
-	{ "id": "byname", "name": "Byname", "source": "arete", "description": "You earn a byname — \"the Tall\", \"the Blackhearted\", \"the Patron Saint of Pilgrims\". When it's relevant to a test of fate, treat it like a motif and test with favor." },
-	{ "id": "akashic-consciousness", "name": "Akashic Consciousness", "source": "arete", "description": "Cast your memory down your bloodline. Spend a Resolve to ask the GM any question about a past event — if any ancestor or past incarnation could plausibly have known it, the GM answers." },
-	{ "id": "area-sense", "name": "Area Sense", "source": "arete", "description": "Spend 2 Resolve and meditate for a watch. Draw a card: the GM describes that many sensory impressions of your surroundings — dice clattering, a goblin's stink, the tension of a hidden trap — working outward from where you sit." },
-	{ "id": "spout-doom", "name": "Spout Doom", "source": "arete", "description": "Spend a Resolve to ask the GM \"If I do X, what will happen?\" The answer pours from your mouth unbidden, as prophecy." },
-	{ "id": "uncanny-knowledge", "name": "Uncanny Knowledge", "source": "arete", "description": "If nobody at the table has a motif that fits the subject at hand, you may bid lore about it anyway — whatever others don't know, you do." },
-	{ "id": "iron-beards", "name": "Iron Beards", "source": "arete", "description": "Spend a Resolve to automatically succeed on a test of fate that turns on strength, endurance, or sheer stubbornness." },
-	{ "id": "underfoot", "name": "Underfoot", "source": "arete", "description": "Spend a Resolve to automatically succeed on a test of fate that turns on quietness or subtlety." },
-	{ "id": "colossal", "name": "Colossal", "source": "arete", "description": "Spend a Resolve to perform a feat of impossible strength that reshapes the scene — tear up a portcullis, smash through a wall, topple a column. It can't deal damage directly, but it can change a battlefield." },
-	{ "id": "jarl", "name": "Jarl", "source": "arete", "description": "Gather a goblin horde (a City Action): spend any amount of XP to attract 2 + X goblins, up to 8. The horde counts as one animal companion, obeys one-word commands in Challenges, feeds and equips itself (badly), and carries one slot of gear per goblin. Each Wound the horde takes kills one goblin." },
-
-	{ "id": "aegis", "name": "Aegis", "source": "path", "requiredItemIds": ["shield-light"], "description": "While you carry an intact shield, whenever a physical source (an attack, a trap) would inflict an effect on you, you may Notch your shield instead of suffering it." },
-	{ "id": "doom-eye", "name": "Doom Eye", "source": "path", "requiredItemIds": ["weapon-bow"], "description": "With a missile weapon in a Challenge, you may spend a Swords card on your turn to make a perfect shot: the Attack hits automatically, regardless of the target's Initiative." },
-	{ "id": "heavy-metal-machine", "name": "Heavy Metal Machine", "source": "path", "requiredItemIds": ["armor-iron"], "description": "In iron or steel armor, once per round you may discard any card as a miscellaneous action to add your Swords to your Initiative as an interrupt against a single action." },
-	{ "id": "monster-hunter", "name": "Monster Hunter", "source": "path", "description": "Choose a hated foe and a specialization (beast, elemental, man, spirit, undead, or witch — and a specific kind of it). You gain a \"[Foe] Hunter\" motif for lore and tests, and your Attacks against your specialization have favor. You may change your quarry as a City Action." },
-	{ "id": "reaver", "name": "Reaver", "source": "path", "description": "When you Attack during a Challenge, you may also move one zone as part of the charge." },
-	{ "id": "two-handed-focus", "name": "Two-handed Focus", "source": "path", "description": "Wielding a melee weapon in both hands during a Challenge, you may Attack as a minor action with either a Pentacles or a Swords card." },
-	{ "id": "war-stories", "name": "War Stories", "source": "path", "description": "As a Camp Action, recount one of your past adventures. You and everyone who listens and plays along choose one: charge an uncharged Bond, or gain an extra point of Resolve (this may raise Resolve to 5)." },
-
-	{ "id": "acrobat", "name": "Acrobat", "source": "path", "description": "You climb sheer surfaces and cross narrow ledges without testing fate, as easily as walking — in Challenges this movement is a miscellaneous action. Treat prepared falls as 20 feet shorter; spend a Resolve to do the same when caught off guard." },
-	{ "id": "ambusher", "name": "Ambusher", "source": "path", "description": "In the first round of a Challenge, whenever you would deal damage you deal 2 Wounds instead of 1. Spend a Resolve to shake off an ambush against you and raise the alarm for your guild." },
-	{ "id": "con-artist", "name": "Con Artist", "source": "path", "description": "After a few minutes observing or talking with someone, you may bid lore to have the GM reveal one of their likes or dislikes — your choice." },
-	{ "id": "fight-dirty", "name": "Fight Dirty", "source": "path", "description": "You may Roughhouse as a minor action with either a Pentacles or a Swords card, and you gain extra Roughhouse options: Exhaust, Notch, and Silence." },
-	{ "id": "quick", "name": "Quick!", "source": "path", "description": "While wearing light or no armor, you may treat your Pentacles actions in Challenges as interrupts." },
-	{ "id": "sneak", "name": "Sneak", "source": "path", "description": "Declare that you slip away and go dramatically off-stage. Later, spend a Resolve to appear anywhere you could plausibly have snuck — if a Challenge hasn't started, your arrival counts as an ambush. You also gain the Infiltrate Camp Action: scout a known location, then bid lore to ask yes/no questions about it." },
-	{ "id": "up-my-sleeve", "name": "Up My Sleeve", "source": "path", "description": "Twice per crawl (once per sleeve), spend a Resolve to declare you had a common one-slot item with you the whole time — a lockpick, a dagger, a vial, a length of wire, anything the GM finds plausible." },
-
-	{ "id": "alchemy", "name": "Alchemy", "source": "path", "requiredItemIds": ["alchemy-kit", "hermetic-bottle"], "description": "You gain the Brew Alchemy Camp Action: with an alchemy kit, convert reagents harvested from Underworld monsters into potions, oils, and bombs, stored in hermetic bottles." },
-	{ "id": "beast-master", "name": "Beast Master", "source": "path", "description": "Train and command animal companions. As a Camp Action, teach one animal a command (Sic 'Em, Hunt, Guard, Fetch, Track…); trained animals know up to three. One animal becomes your familiar: it learns five commands, and when a Wound would kill it you may spend a Resolve to leave it at Death's Door instead." },
-	{ "id": "bookworm", "name": "Bookworm", "source": "path", "description": "You remember everything you read. After using the Read a Book Camp Action, you may thereafter bid lore about that text's subject. Books you've read work like motifs for lore bids (but not for tests of fate)." },
-	{ "id": "chirurgeon", "name": "Chirurgeon", "source": "path", "requiredItemIds": ["poultice"], "description": "Expend a poultice to Heal someone (this cannot clear Stressed). You also gain the Chirurgery Camp Action: treat a non-Stressed guild-mate who is resting and Heal all of their Wounds." },
-	{ "id": "counsel", "name": "Counsel", "source": "path", "description": "Once per round in a Challenge, shout advice to another adventurer and hand them a card from your hand. The suit must match the action you counsel; they may play it only to follow your advice. Spend a Resolve and they may play it as an interrupt." },
-	{ "id": "high-chant", "name": "High Chant", "source": "path", "description": "You gain the Perform the High Chant Camp Action: declaim epic verse, then pull cards from the discard pile equal to your Cups and hand them out (keep at most one). Each is an inspiration card — playable as a Challenge action or in place of a draw on a test of fate. One per player; they expire at session's end." },
-	{ "id": "loremaster", "name": "Loremaster", "source": "path", "description": "You are fluent in passing measure with every spoken tongue you meet, you can translate ancient scripts (short passages in a watch or two; whole books as a City Action), and you may spend a Resolve in place of a lore bid." },
-
-	{ "id": "counter-spell", "name": "Counter-spell", "source": "path", "description": "When you perceive a sorcerer casting, spend a Resolve to Speak Incantations as an interrupt: beat their total and the spell fizzles; tie or lose and it still fizzles but you draw on the maleficence table. You may also spend a Resolve to end an ongoing spell." },
-	{ "id": "dwimmercraft", "name": "Dwimmercraft", "source": "path", "description": "Work small magics: levitate a hand-sized object in your zone, conjure showy harmless illusions, or fake a handheld object that fools the eye until touched. Spend a Resolve to gain second sight for a watch — see the invisible and Shrouded, pierce illusions, sense enchantment and fellow sorcerers. In Challenges these are miscellaneous actions." },
-	{ "id": "gramarye", "name": "Gramarye", "source": "path", "requiredItemIds": ["archwood-wand"], "description": "Channel the far realms through an archwood wand: blast a target up to a zone away as a weapon (Attacks with the wand count as Wands actions). You also gain the Make a Pact Camp Action: bind yourself to ascetic pacts (forego armor, forego weapons, silence, verity…) to charge spell components that substitute for Resolve when casting. Breaking a pact means drawing on the maleficence table." },
-	{ "id": "magic-of-the-wastes", "name": "Magic of the Wastes", "source": "path", "description": "You may cast spells of the Wastes — the grim realm of death and decay. Its spells traffic in undeath, fear, and harm. (Individual spells are listed in the rulebook's sorcery appendix.)" },
-	{ "id": "magic-of-the-weald", "name": "Magic of the Weald", "source": "path", "description": "You may cast spells of the Weald — the verdant, wild realm. Its spells command the elements and beasts and reshape the living world. (Individual spells are listed in the rulebook's sorcery appendix.)" },
-	{ "id": "magic-of-the-weird", "name": "Magic of the Weird", "source": "path", "description": "You may cast spells of the Weird — the dreaming realm untouched by sanity. Its spells bend minds, weave illusion, and warp reality. (Individual spells are listed in the rulebook's sorcery appendix.)" },
-	{ "id": "magic-of-the-welkin", "name": "Magic of the Welkin", "source": "path", "description": "You may cast spells of the Welkin — the bright and holy realm. Its spells call on angels, heal, protect, and inspire awe. (Individual spells are listed in the rulebook's sorcery appendix.)" }
+	{
+		"id": "proud-and-ancient",
+		"name": "Proud and Ancient",
+		"source": "kin",
+		"description": "Describe or draw the sigil of your house. Write the motto of your house.\n\nWhen your house sigil or motto is dramatically appropriate for an action being attempted, you test fate with favor.\n\nAdditionally, during Challenges, you may spend a Resolve and use the Speak Incantation action to cry your motto aloud. You—and all members of your house that hear your war cry—gain favor on their next action."
+	},
+	{
+		"id": "read-the-past",
+		"name": "Read the Past",
+		"source": "kin",
+		"description": "All high elves have eidetic memories. Bid lore to accurately recall anything you have ever seen or heard. You can go back and count the beads of sweat on your mother's forehead on the day of your birth, if you wish."
+	},
+	{
+		"id": "keen-senses",
+		"name": "Keen Senses",
+		"source": "kin",
+		"description": "Wood elves have the eyes of a hawk and the nose of a wolf. A wood elf’s senses can grow so acute that they can hear the chatter of living stone, the gossip of growing roots, or the rumors of passing insects. Bid lore to temporarily sharpen one of your senses beyond normal limits and ask the GM a question based on these heightened senses. Example questions might include:\n\n- “If I focus my sight, can I read their lips from here?”\n\n- “If I listen very closely, can I tell if anybody is invisible here? Like, do I hear anybody breathing or any heartbeats or anything?”\n\n- “I take a tiny taste and spit it back out. Can I tell if it’s poisoned?”\n\n- “Based on their scent, can I tell which path the thief went down?”\n\nThis ability only lasts a moment. As normal, if the GM does not give you any new information, you do not expend a lore bid."
+	},
+	{
+		"id": "foretell",
+		"name": "Foretell",
+		"source": "kin",
+		"description": "Bid lore to ask the GM: “If I do X, will Y happen?” You receive a “yes” or “no” answer in the form of a prophetic hunch."
+	},
+	{
+		"id": "weird-wise-ancient",
+		"name": "Weird, Wise, Ancient",
+		"source": "kin",
+		"description": "When you bid lore, you can ask a follow-up question to the answer for free."
+	},
+	{
+		"id": "labor-unending",
+		"name": "Labor Unending",
+		"source": "kin",
+		"description": "You may mark the Stressed condition to stay awake all night and perform two Camp Actions instead of one."
+	},
+	{
+		"id": "hale-and-hearty",
+		"name": "Hale and Hearty",
+		"source": "kin",
+		"description": "If you eat two rations instead of one during step 2 of the Camping Phase, you may charge an uncharged Bond."
+	},
+	{
+		"id": "giants-strength",
+		"name": "Giant's Strength",
+		"source": "kin",
+		"description": "You automatically win contests related to raw strength (arm wrestling, lifting contests, etc.) against other nontroll kin."
+	},
+	{
+		"id": "quicksilver-blood",
+		"name": "Quicksilver Blood",
+		"source": "kin",
+		"description": "Your blood has the appearance and consistency of quicksilver, and is incredibly caustic to metal. When this talent is Wounded by a metal weapon, the weapon is Destroyed."
+	},
+	{
+		"id": "berserkergang",
+		"name": "Berserkergang",
+		"source": "kin",
+		"description": "Your blood is boiling hot. When this talent is Wounded, you may choose to enter a berserker rage. While berserk during a Challenge, you cannot Avoid, Dodge, Speak Incantations, Banter, or Aid Another; however, all of your Attacks are made with favor.\n\nYour rage ends when you defeat every enemy on the field. If an ally has attacked or hurt you during this Challenge, they count as an enemy. You must spend a Resolve to end your rage prematurely."
+	},
+	{
+		"id": "poison-blood",
+		"name": "Poison Blood",
+		"source": "kin",
+		"description": "Your black blood is a deadly poison. When this talent is Wounded by a bite, the attacker suffers Critical damage."
+	},
+	{
+		"id": "blur",
+		"name": "Blur",
+		"source": "kin",
+		"description": "Your blood smokes like a thick mist. When this talent is Wounded, you become Shrouded. This lasts long enough for you to perform a single action or indefinitely if you stay still and take no actions."
+	},
+	{
+		"id": "byname",
+		"name": "Byname",
+		"source": "arete",
+		"description": "You are given a byname, like “the Tall,” “the Corpsegrinder, “the Patron Saint of Pilgrims,” or “the Blackhearted.” When that byname would be relevant to a test of fate, similar to a motif, you test with favor."
+	},
+	{
+		"id": "akashic-consciousness",
+		"name": "Akashic Consciousness",
+		"source": "arete",
+		"description": "Some high elves can cast their memories back through their bloodlines and ask questions of their ancestors or past incarnations. Spend a Resolve and ask the GM any question about an event that happened in the past. If it’s at all possible that one of your ancestors would know about it, the GM will answer the question."
+	},
+	{
+		"id": "area-sense",
+		"name": "Area Sense",
+		"source": "arete",
+		"description": "Spend 2 Resolve to meditate for a watch. Draw a card. The GM describes a number of interesting “visions” equal to the value of the drawn card during your meditation. (Remember, pages have a value of 11, knights have a value of 12, etc.)\n\nThese visions are sensual experiences. For example, you could hear the clatter of dice as bored crusaders gamble, smell a nearby goblin taking a shit, hear two guards talking about who’s going to be on duty tonight, sense the quivering tension of a spike trap embedded in the ceiling, and so on.\n\nThe GM provides these details by looking at their map and Meatgrinder table. Starting near the player’s current area and moving outwards, the GM provides one salient detail from the nearby rooms. Each vision should yield a meaningful detail (e.g., the presence of a hidden door, detected by an imperceptible draft in a nearby room), but need not be elaborate or detailed (i.e., the GM need not mention that the door is trapped, or that it is activated by pulling on a statue’s arm).\n\nAny Meatgrinder events that occur when a watch passes are resolved after the GM has given your visions."
+	},
+	{
+		"id": "spout-doom",
+		"name": "Spout Doom",
+		"source": "arete",
+		"description": "Spend a Resolve to ask the GM: “If I do X, what will happen?” The GM provides a prophecy, which pours unbidden out of your mouth."
+	},
+	{
+		"id": "uncanny-knowledge",
+		"name": "Uncanny Knowledge",
+		"source": "arete",
+		"description": "If nobody at the table has an appropriate motif to bid lore about a subject, you may bid lore about the issue at hand. This is similar to having a motif of “Whatever You Don’t Know, I Know.”"
+	},
+	{
+		"id": "iron-beards",
+		"name": "Iron Beards",
+		"source": "arete",
+		"description": "Spend a Resolve to automatically succeed on a test of fate related to strength, endurance, or stubbornness."
+	},
+	{
+		"id": "underfoot",
+		"name": "Underfoot",
+		"source": "arete",
+		"description": "Spend a Resolve to automatically succeed on a test of fate related to being quiet or subtle."
+	},
+	{
+		"id": "colossal",
+		"name": "Colossal",
+		"source": "arete",
+		"description": "Some trolls can perform feats of incredible strength that go beyond what would normally be attempted. Spend a Resolve to pull a portcullis up, smash down a door, push down a supporting column, or perform some other feat of impressive destruction. This talent can’t be used to do additional damage or give an effect, but can be used to change the battlefield during a Challenge."
+	},
+	{
+		"id": "jarl",
+		"name": "Jarl",
+		"source": "arete",
+		"description": "You may hatch or gather a horde of goblins to your cause. Goblins are pretty independent little creatures. They see you as “da boss” and take commands from you, but follow those commands in their own, strange, simple little ways.\n\nAssembling a goblin horde is a City Action. Spend any amount of XP to attract 2 + X goblins, where X equals the amount of XP you spent on this action. You may only ever have up to 8 goblins in your horde.\n\nA goblin horde counts as an animal companion. No matter how many goblins are in the horde, they always count as “one creature” and move around together. Goblins understand whatever language you speak, but can only follow one-word commands during Challenges (given using the Command action). They have tiny minds.\n\nEvery time a goblin horde takes a Wound, one of its members is killed.\n\nA goblin horde carries or hunts for their own food and supplies their own gear. Their gear is crap; they do not have any items or tools that you can use. They can act as porters: For each goblin in the horde, they can carry one slot worth of items."
+	},
+	{
+		"id": "aegis",
+		"name": "Aegis",
+		"source": "path",
+		"requiredItemIds": [
+			"shield-light"
+		],
+		"description": "If you are carrying an intact shield and would suffer an effect from a physical source (an attack, a trap, etc.), you may elect to Notch your shield instead of taking the effect."
+	},
+	{
+		"id": "doom-eye",
+		"name": "Doom Eye",
+		"source": "path",
+		"requiredItemIds": [
+			"weapon-bow"
+		],
+		"description": "When wielding a missile weapon during a Challenge, you may spend a Sword card on your turn to perform a perfect shot. This Attack automatically hits, regardless of the target’s Initiative."
+	},
+	{
+		"id": "heavy-metal-machine",
+		"name": "Heavy Metal Machine",
+		"source": "path",
+		"requiredItemIds": [
+			"armor-iron"
+		],
+		"description": "During Challenges, if you are wearing iron or steel armor, you may use a miscellaneous action (discarding any card) to add your Swords to your Initiative as an interrupt against a single action. You may only use this talent once per round."
+	},
+	{
+		"id": "monster-hunter",
+		"name": "Monster Hunter",
+		"source": "path",
+		"description": "When you master or train this talent, choose both a hated foe and a specialization of that enemy.\n\n- You gain a motif called “[Foe] Hunter.” You can use this motif to bid lore about these creatures or to gain favor in tests of fate related to them, as normal.\n\n- You make Attacks with favor against foes of your specialization.\n\nChoose a foe and a specialization from the following list—you can change your foe as a City Action if some new type of creature really gives you reason to be pissed off."
+	},
+	{
+		"id": "reaver",
+		"name": "Reaver",
+		"source": "path",
+		"description": "When you Attack during Challenges, you may also move one zone as you charge towards your foe."
+	},
+	{
+		"id": "two-handed-focus",
+		"name": "Two-handed Focus",
+		"source": "path",
+		"description": "If you are wielding a melee weapon with both hands during a Challenge, you may Attack as a minor action with *either* a Pentacles or a Swords card."
+	},
+	{
+		"id": "war-stories",
+		"name": "War Stories",
+		"source": "path",
+		"description": "As a Camp Action, tell your guild the story of some of your past adventures. Maybe this was an adventure you've played out in-character, or maybe one in your backstory. You—and everyone who listens and role-plays with you a little— gets to choose one of the following benefits:\n\n- They may charge an uncharged Bond.\n\n- They gain an extra point of Resolve; this can bring their Resolve up to 5."
+	},
+	{
+		"id": "acrobat",
+		"name": "Acrobat",
+		"source": "path",
+		"description": "You no longer need to test fate to climb sheer surfaces or walk across narrow ledges or tightropes. You climb and scamper along difficult or vertical terrain as easily as walking. During Challenges, you may move this way as a miscellaneous action, as easily as walking to a new zone.\n\nAdditionally, if you are prepared, you may treat a fall as if it were 20’ shorter. If you are not prepared for a fall, you may spend a Resolve to treat it as if it were 20’ shorter."
+	},
+	{
+		"id": "ambusher",
+		"name": "Ambusher",
+		"source": "path",
+		"description": "In the first round of a Challenge, whenever you would deal damage, you deal 2 Wounds instead of 1.\n\nSpend a Resolve to resist being ambushed. You raise a hue and cry to warn your guild of the threat beforehand."
+	},
+	{
+		"id": "con-artist",
+		"name": "Con Artist",
+		"source": "path",
+		"description": "If you spend a few minutes observing a person in conversation or talking to them, you may bid lore to ask the GM to reveal either one of their likes or their dislikes (your choice)."
+	},
+	{
+		"id": "fight-dirty",
+		"name": "Fight Dirty",
+		"source": "path",
+		"description": "During Challenges, you may Roughhouse as a minor action with *either* a Pentacles or Swords card. Additionally, you gain several new Roughhouse options:\n\n- Exhaust\n- Notch\n- Silence"
+	},
+	{
+		"id": "quick",
+		"name": "Quick!",
+		"source": "path",
+		"description": "During Challenges, if you are wearing light or no armor, you may treat Pentacles actions as interrupts."
+	},
+	{
+		"id": "sneak",
+		"name": "Sneak",
+		"source": "path",
+		"description": "At any point, you may declare that you go sneaking. This allows you to go dramatically off-stage.\n\nLater, if you are not present in a scene and it’s at least somewhat plausible that you could have snuck there, spend a Resolve to arrive on the scene dramatically. If a Challenge has yet to begin, this arrival counts as an ambush. If combat has already begun, nobody is surprised because everybody is on edge—simply join the flow of combat per usual.\n\nIf you go sneaking and all tension evaporates, you may rejoin the scene by slinking out of the shadows. This does not cost a Resolve.\n\nThis talent also gives you a new Camp Action: Infiltrate. When you Infiltrate, you investigate a specific location that you know of in your current dungeon level. Thereafter, you may bid lore to ask the GM a specific yes or no question about something you’d know having infiltrated that location, e.g., “Is this door trapped?”, “Is this room guarded?”, “Is the wizard’s bedroom on this level?”, “Do the bandits have bows?”, “Were the orcs green-skinned?”"
+	},
+	{
+		"id": "up-my-sleeve",
+		"name": "Up My Sleeve",
+		"source": "path",
+		"description": "You may declare that you have had a common, one-slot item with you the whole time. Twice per Crawl (one for each sleeve), spend a Resolve and declare that you had a [blank] up your sleeve. This can include a lockpick, a dagger, a handkerchief, an empty vial, a length of wire, or anything else that the GM generally finds viable."
+	},
+	{
+		"id": "alchemy",
+		"name": "Alchemy",
+		"source": "path",
+		"requiredItemIds": [
+			"alchemy-kit",
+			"hermetic-bottle"
+		],
+		"description": "This talent gives you a new Camp Action: Brew Alchemy. When you Brew Alchemy, you use an alchemy kit to turn any number of reagents you have into alchemical substances. Reagents are harvested from the bodies of Underworld monsters. Alchemical substances are kept in hermetic bottles and divided into three categories: potions, oils, and bombs."
+	},
+	{
+		"id": "beast-master",
+		"name": "Beast Master",
+		"source": "path",
+		"description": "This talent allows you to train and issue commands to your animal companions. As a Camp Action, you may teach one animal companion one command. Normal trained animals may learn up to three commands. It is possible to retrain an animal with a new command, replacing one of their previously mastered commands.\n\nPick from this list of commands (or new ones that the GM approves):\n\n- Sic ‘Em\n- Hunt\n- Get Help\n- Do a Tric\n- Heel\n- Guard\n- Fetch\n- Stay\n- Track\n\nIf you have mastered this talent, one animal you own is considered your familiar. Familiars can learn five different commands. Furthermore, if your familiar would take a Wound that would kill them, you may spend a Resolve to declare that they’re only at Death’s Door and not actually dead."
+	},
+	{
+		"id": "bookworm",
+		"name": "Bookworm",
+		"source": "path",
+		"description": "You have an almost encyclopedic knowledge of everything you have read. Once you have used the Read a Book Camp Action, you may thereafter bid lore to ask a question about the subject of that text. Keep a list of books that you’ve read. These are treated like motifs for the purpose of bidding lore, but don’t aid you in tests of fate."
+	},
+	{
+		"id": "chirurgeon",
+		"name": "Chirurgeon",
+		"source": "path",
+		"requiredItemIds": [
+			"poultice"
+		],
+		"description": "You may provide healing to your companions. You can expend a poultice to Heal someone. This effect cannot be used to clear the Stressed condition.\n\nAdditionally, this talent gives you a new Camp Action: Chirurgery. When you use Chirurgery on a non-Stressed guild-mate using the Rest and Recover Camp Action, you may Heal all of their Wounds."
+	},
+	{
+		"id": "counsel",
+		"name": "Counsel",
+		"source": "path",
+		"description": "Any time during a Challenge, you may yell advice to another adventurer and hand the player a card from your hand. The card’s suit must match the action you counsel them to take. The other player may play that card as long as they use it to take your advice. In all other ways, it is treated as a normal Challenge card.\n\nIf you spend a Resolve when you use this talent, the other player may play this card as an interrupt. Otherwise, the standard one-card-per-turn rule remains in effect.\n\nYou may use this talent once per round."
+	},
+	{
+		"id": "high-chant",
+		"name": "High Chant",
+		"source": "path",
+		"description": "This talent gives you a new Camp Action: Perform the High Chant. When you Perform the High Chant, speak at least two stanzas of epic poetry for the table. If you do so, you may select a number of cards from the minor arcana discard pile equal to your Cups. These are called inspiration cards. Distribute the cards to other players— you may keep one for yourself. No player can ever have more than one inspiration card. Inspiration cards may be spent as actions during a Challenge. Alternatively, you may spend your inspiration card instead of drawing from the deck when you test fate or push fate. Inspiration cards last until used or until the end of the session, whichever comes first."
+	},
+	{
+		"id": "loremaster",
+		"name": "Loremaster",
+		"source": "path",
+		"description": "You are a student of ancient languages and lore. This talent confers three advantages:\n\n- You have knowledge of many languages and tongues. You are assumed to be passingly fluent in any spoken language that you might encounter.\n\n- You can translate ancient scripts and runes. Translating a short ancient runic passage that you encounter while delving takes a watch or two. Translating a longer text (such as a book) requires a City Action.\n\n- When you bid lore, you may spend a Resolve instead of spending a lore bid."
+	},
+	{
+		"id": "counter-spell",
+		"name": "Counter-spell",
+		"source": "path",
+		"description": "You can counter the effects of sorcery with an effort of will. There are two applications for this talent:\n\n- You can stop enemy sorcerers from casting spells in battle. During Challenges, if you can perceive a sorcerer casting a spell, you may spend a Resolve to Speak Incantations as an interrupt.\n\n- If your Speak Incantations value is greater than the enemy sorcerer’s total value, their spell fizzles out.\n\n- If your Speak Incantations value is equal to or less than the enemy’s total value, the spell fizzles out but you must draw on the maleficence table as the magic goes awry.\n\n- You can negate a spell already in play. You may spend a Resolve to immediately end the ongoing effects of a spell."
+	},
+	{
+		"id": "dwimmercraft",
+		"name": "Dwimmercraft",
+		"source": "path",
+		"description": "Suffused with the arcane arts, you can perform small (but meaningful) expressions of magic. You may perform the following minor effects:\n\n- You may levitate an object in your zone that weighs about 10 lbs. and that fits comfortably in one hand. You have no fine motor control over this effect, but can bring things to you, lift them up, or push them away.\n\n- You may conjure a showy, harmless, and obviously magical illusion—a shower of sparks, a colorful rainbow stretched between your hands, a flickering image of your first love.\n\n- You conjure a simple illusion of something that you can hold in one hand. Anybody that tries to interact with this object will realize it’s an illusion, but the sight of it is fairly convincing.\n\nAdditionally, by spending a Resolve, you can focus your second sight for a watch. Second sight allows you to see invisible and Shrouded things. You can perceive the true form of any illusion. You can automatically tell when things are magical or under enchantment. You can also tell if somebody else is a sorcerer.\n\nUsing this talent during a Challenge counts as a miscellaneous action."
+	},
+	{
+		"id": "gramarye",
+		"name": "Gramarye",
+		"source": "path",
+		"requiredItemIds": [
+			"archwood-wand"
+		],
+		"description": "You have learned how to draw on the energies of the far realms. Using this talent, you can release a blast of magical energy up to one zone away through an archwood wand, doing damage as a weapon. During Challenges, Attacks with your wand count as Wands actions.\n\nAdditionally, you gain a new Camp Action: Make a Pact. When you Make a Pact, choose to observe one or more pacts from the facing page."
+	},
+	{
+		"id": "magic-of-the-wastes",
+		"name": "Magic of the Wastes",
+		"source": "path",
+		"description": "You may cast spells of the Wastes. The Wastes are a grim place of death and decay. Spells of this realm deal with matters of undeath, spread fear, or cause harm."
+	},
+	{
+		"id": "magic-of-the-weald",
+		"name": "Magic of the Weald",
+		"source": "path",
+		"description": "You may cast spells of the Weald. The Weald is a verdant and wild place. Spells of this realm affect the elements, command beasts, and reshape the natural world."
+	},
+	{
+		"id": "magic-of-the-weird",
+		"name": "Magic of the Weird",
+		"source": "path",
+		"description": "You may cast spells of the Weird. The Weird is a place of dream, untouched by sanity. Spells of this realm affect one’s mind and emotions, conjure illusions, and bend reality."
+	},
+	{
+		"id": "magic-of-the-welkin",
+		"name": "Magic of the Welkin",
+		"source": "path",
+		"description": "You may cast spells of the Welkin. The Welkin is a bright and holy place. Spells of this realm deal with angels, provide healing and protection, and invoke an awful wonder."
+	}
 ]

@@ -1,0 +1,90 @@
+[
+	{
+		"id": "the-four-phases",
+		"section": "basics",
+		"title": "The Four Phases",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "The Four Phases",
+		"tags": ["core", "structure", "crawl", "challenge", "camp", "city"]
+	},
+	{
+		"id": "the-flow-of-play",
+		"section": "basics",
+		"title": "The Flow of the Play",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "The Flow of the Play",
+		"until": "Adjudicating the game: GM responses",
+		"tags": ["session", "structure"]
+	},
+	{
+		"id": "adjudicating-the-game",
+		"section": "basics",
+		"title": "Adjudicating the Game: GM Responses",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Adjudicating the game: GM responses",
+		"omitRange": {
+			"from": "- “OK, you grab the portcullis before it slams down.",
+			"to": "### “No, you can’t do that”"
+		},
+		"mustContain": ["### “No, you can’t do that”", "bits of wire just lying around your jail cell"],
+		"mustNotContain": ["mechanism’s gears"],
+		"tags": ["gm", "adjudication"]
+	},
+	{
+		"id": "the-major-and-minor-arcana",
+		"section": "basics",
+		"title": "The Major and Minor Arcana",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "The Major and Minor Arcana",
+		"tags": ["tarot", "deck", "card-values"]
+	},
+	{
+		"id": "tests-of-fate",
+		"section": "basics",
+		"title": "Tests of Fate",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Tests of Fate",
+		"tags": ["core", "resolution", "tarot", "attributes", "outcomes"]
+	},
+	{
+		"id": "pushing-fate",
+		"section": "basics",
+		"title": "Pushing Fate",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Pushing fate",
+		"until": "Example test of fate",
+		"tags": ["core", "resolution", "great-failure", "the-fool"]
+	},
+	{
+		"id": "favor-and-disfavor",
+		"section": "basics",
+		"title": "Favor and Disfavor",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Favor and disfavor",
+		"tags": ["core", "resolution", "motifs", "resolve", "aiding"]
+	},
+	{
+		"id": "bound-by-fate",
+		"section": "basics",
+		"title": "Bound by Fate",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Bound by fate",
+		"tags": ["core", "resolution", "retries"]
+	},
+	{
+		"id": "group-tests",
+		"section": "basics",
+		"title": "Group Tests",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Group tests",
+		"tags": ["core", "resolution", "group"]
+	},
+	{
+		"id": "effects",
+		"section": "basics",
+		"title": "Effects",
+		"file": "01 - Chapter 1 - The Basics.md",
+		"heading": "Effects",
+		"tags": ["core", "effects", "conditions"]
+	}
+]

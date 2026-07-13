@@ -1,0 +1,282 @@
+[
+	{
+		"id": "brainfever",
+		"name": "Brainfever",
+		"tradition": "wastes",
+		"component": "A pouch of powder made from wild marjoram, thyme, verbena, and myrtle leaves",
+		"description": "The sorcerer takes a pinch of the component powder and blows it towards the target of this spell. The target enters a rage.\n\n- The target gains favor on Attacks, but they must always play the lowest-value card they draw for their Initiative.\n\n- Creatures that don’t feel emotions (such as nonsentient constructs) are not affected by this spell.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "control-undead",
+		"name": "Control Undead",
+		"tradition": "wastes",
+		"component": "A poppet woven of branches and tied with grass picked from a graveyard on the night of the new moon",
+		"description": "This spell allows the sorcerer to Control an undead creature, delivering one order.\n\n- This order may have a number of words equal to the sorcerer’s Wands attribute.\n\n- Each additional Resolve spent allows the command to be extended by a number of words equal to the sorcerer’s Wands attribute.\n\nThis spell lasts until the order is fulfilled. Resolve spent on casting this spell cannot refresh as long as this spell continues."
+	},
+	{
+		"id": "darklight",
+		"name": "Darklight",
+		"tradition": "wastes",
+		"component": "The pickled left hand of a hanged murderer",
+		"description": "A candle held in the pickled hand will not go out while this spell is active. This candle provides light only for the one holding it and cannot be seen by others, allowing the target to move stealthily with perfect visibility.\n\n- The candle ignores torches gutter results on the Meatgrinder table.\n\n- Each additional Resolve spent allows another person to see the darklight.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "fear",
+		"name": "Fear",
+		"tradition": "wastes",
+		"component": "A candle made of the fat of a black serpent with the wick comprised of the hair of a murdered woman",
+		"description": "The sorcerer weaves an illusion visible only to the target, causing them to perceive a second, willing target as a terrifying grotesquery. The primary target is Inspired with fear towards the illusion-cloaked creature.\n\n- Fearful creatures will attempt to flee the source of their fear, avoiding combat unless it is necessary to escape. They prioritize high-value cards for their Initiative.\n\n- Creatures that do not feel emotions or are not affected by illusions are not affected by this spell.\n\nThis spell is maintained with concentration, but any actions that would change the target’s Disposition also end this spell."
+	},
+	{
+		"id": "fleshcraft",
+		"name": "Fleshcraft",
+		"tradition": "wastes",
+		"component": "A silver athame",
+		"description": "The sorcerer uses the silver knife to cut off one of their body parts, which can then move independently but clumsily on its own.\n\n- If the detached body part would take damage, the target takes 1 Piercing Wound and the spell ends.\n\n- If the detached body part is placed in its original position, it willingly rejoins with the target’s body.\n\n- A detached hand can crawl like a spider. It's very difficult to notice. It can choke a sleeping man or drop poison into a cup relatively easily.\n\n- A detached eye can roll around on the ground. The target can close their eyes and see through the detached eye perfectly.\n\n- A detached ear sort of flops like a fish on land. The target can hear through it perfectly.\n\n- A detached mouth can speak normally.\n\nThis spell is maintained with concentration to keep the detached body part animate. Resolve spent on casting this spell can never refresh as long as the spell continues."
+	},
+	{
+		"id": "malediction",
+		"name": "Malediction",
+		"tradition": "wastes",
+		"component": "The pickled eye of a miser buried in a pauper’s grave",
+		"description": "The target suffers a random Curse—draw on the table on the facing page to find out which one. Sorcerers often use this spell to bully others into completing quests or working their will.\n\nUnlike other spells, the Curse remains in place until the sorcerer dismisses it (which they can do at any time) *or* it is counter-spelled. The Curse cannot be overcome using the Recover action.\n\nThis spell is not maintained with concentration. Resolve spent on casting this spell can never refresh as long as this spell continues.\n\n| Card | Malediction Curse |\n|:---:|---|\n| I | Dogs hate you. Any dog you meet will automatically try and attack you, and prioritizes you over all other targets. At the end of the City Phase, you become either Staggered (from being savaged) or Stressed (because you spent the entire time hiding from dogs)—50/50 chance either way. |\n| II | You’re afflicted with bad dreams. You have a 50% chance to wake from sleep Stressed due to your nightmares. |\n| III | Food has a 50% chance of becoming ash when you eat it. If this happens, you waste that ration. |\n| IV | You are doomed. You become Exhausted. |\n| V | You gain the appearance of a desiccated corpse. Most GM characters will be hostile towards you. Nobody wants to sleep with you. On the plus side, most undead will ignore you. |\n| VI | You’re cursed to speak in rhymes. Everything you say in-character must rhyme. |\n| VII | Your weapons rust and break easily. Any time you play a card of 10 or higher to Attack, your weapon suffers a Notch. Wooden weapons can suffer 1 Notch, iron weapons can suffer 2, and steel weapons can suffer 3 before breaking. |\n| VIII | Your sexual anatomy changes. It’s weird (but maybe exciting?). |\n| IX | Rats and other vermin fall in love with you. They follow you around everywhere. They want to sleep in your mouth. Every night, there is a 50% chance they’ll relieve you of something in your pack that they know you don’t want and replace it with garbage. Nice garbage. |\n| X | Every footstep you take rings an ethereal, unseen bell that accompanies a voice that says “SHAME.” Stealth is impossible. |\n| Page | You grow sick and infirm. You must burn two charged Bonds to clear Wounded talents and the Injured condition instead of one. You are (regrettably) immune to the Heal effect. |\n| Knight | You grow old for the duration of the curse—like a withered crone. You are ugly and unattractive. You cannot see more than 30’ in front of you through your cataracts and you cannot use the Dash action. |\n| Queen | You can only speak Tylwyth. Is that a language you understand? No? Then you sound like you’re just speaking gibberish. |\n| King | When you enter a stressful situation (like combat), test Wands. If you fail, you turn into a chicken for one round (or equivalent). |"
+	},
+	{
+		"id": "necromancy",
+		"name": "Necromancy",
+		"tradition": "wastes",
+		"component": "A pickled tongue tattooed with sigils of speech",
+		"description": "Place the component tongue inside the skull of a dead person. The sorcerer can now speak to the target as if it were alive.\n\n- The target is under no compulsion to be helpful or truthful, but they can be bargained with as normal. The dead sometimes care about finishing their unfinished business, gaining revenge, saying farewell to their loved ones, or sundry other tasks.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "raise-zombie",
+		"name": "Raise Zombie",
+		"tradition": "wastes",
+		"component": "Mithril ink",
+		"description": "The sorcerer spends a watch tracing arcane symbols in mithril ink around a body. Through this ritual, the sorcerer beckons a devil from the Waste to crawl into the corpse and binds the devil to their service. This creates a zombie (see Appendix C).\n\n- A zombie has no attributes. They are rotting flesh. However, they generally have all the physical capabilities possessed in life.\n\n- The sorcerer can issue orders to a bound zombie during Challenges using the Command action. The zombie will obey most commands in genuinely good faith and with reasonable intelligence. Zombies even obey suicidal commands.\n\n- A zombie remains bound until it has obeyed a number of commands or performed tasks equal to the sorcerer's Wands attribute.\n\n- Each additional Resolve spent grants extra commands equal to the sorcerer’s Wands attribute.\n\n- When the required number of services have been performed, the devil claims the body for its own purposes. The zombie may then attack, shuffle away, or crumble into a heap of ash.\n\nThis spell lasts until the zombie has completed its services. Resolve spent on casting this spell can never refresh as long as this spell continues."
+	},
+	{
+		"id": "stinking-cloud",
+		"name": "Stinking Cloud",
+		"tradition": "wastes",
+		"component": "A mummified green frog stuffed with grave dirt",
+		"description": "The miasma of a thousand opened coffins is expelled from the sorcerer’s mouth. The sorcerer’s current zone or an adjacent zone is filled with a stinking cloud.\n\n- All those who begin the round in the cloud become Stunned and draw 1 fewer card at the beginning of the round.\n\n- This effect is cumulative. For example, if someone remains in the cloud for a second round, they suffer an additional Stun, drawing 2 fewer cards for that round. If someone stays in the cloud for four rounds, they are Knocked-out.\n\n- The sorcerer can make the stinking cloud larger by spending more Resolve on this spell. Each additional Resolve spent increases the number of zones affected by one.\n\n- Creatures who do not breathe are immune to this spell.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "withering",
+		"name": "Withering",
+		"tradition": "wastes",
+		"component": "A jar of hundreds of old fingernails, each etched with the rune of decay",
+		"description": "If cast on a living creature, the target suffers a Wound as a grave chill grips them.\n\n- The target is afflicted with obvious signs of aging— grey hair, wrinkled skin, jaundiced eyes, liver spots— until this Wound is healed.\n\nIf cast on an undead creature, the target is not harmed but becomes more terrible.\n\n- A zombie is transformed into a skeleton.\n\n- A skeleton is transformed into a wraith.\n\nIf cast on an object, it shows obvious signs of decay.\n\n- Food becomes rotten; chains become rusted; wood becomes moldy; stone is unaffected.\n\n- The object takes a Notch. If 2 Resolve is spent on this spell, the object is Destroyed."
+	},
+	{
+		"id": "control-animal",
+		"name": "Control Animal",
+		"tradition": "weald",
+		"component": "A scepter made of a lion’s bone writ with runes of domination",
+		"description": "This spell allows the sorcerer to Control an animal of the field, forest, or fountains, delivering one order.\n\n- This order may have a number of words equal to the sorcerer’s Wands attribute.\n\n- Each additional Resolve spent allows the command to be extended by a number of words equal to the sorcerer’s Wands attribute.\n\n- Animals will not obey obviously suicidal orders.\n\nThis spell lasts until the order is fulfilled. Resolve spent on casting this spell cannot refresh as long as this spell continues."
+	},
+	{
+		"id": "defy-depths",
+		"name": "Defy Depths",
+		"tradition": "weald",
+		"component": "A calcified mermaid fetus",
+		"description": "If cast on a human-sized creature, they can walk on the surface of the water.\n\n- If cast on an object about the size of a chest or smaller, it will float on the surface of the water, even if submerged or sunken.\n\n- Small sunken ships (like rowboats) can be raised by spending +1 Resolve, and large sunken ships for +3 Resolve.\n\n- Each additional Resolve spent adds one target.\n\nThis spell is maintained by concentration."
+	},
+	{
+		"id": "flare",
+		"name": "Flare",
+		"tradition": "weald",
+		"component": "Guano of a dire bat",
+		"description": "This spell causes a light source to violently flare then fizzle out. Candles and lanterns may be relit later; torches cannot.\n\n- Candles simply pop wax and go out; they can be lit again later.\n\n- Torches and lanterns flare dramatically and Wound the bearer. The target catches on fire.\n\n- Campfires cause a bomb-like explosion. Compare the sorcerer’s Speak Incantation value against the Initiative of each character in the zone. If the sorcerer’s total is higher, the creature is Blinded. This lasts until the end of the target’s next turn or equivalent."
+	},
+	{
+		"id": "gust-of-wind",
+		"name": "Gust of Wind",
+		"tradition": "weald",
+		"component": "Beetle shells etched with runes",
+		"description": "With a tumult of wind, Displace a human-sized target to an adjacent zone.\n\n- The target lands gently and the movement doesn't harm them, but they might be set down in a hazardous space (such as a pool of acid).\n\n- The sorcerer may use this spell on themselves to navigate around the battlefield and cross gaps."
+	},
+	{
+		"id": "protection-from-the-elements",
+		"name": "Protection from the Elements",
+		"tradition": "weald",
+		"component": "A leather bag made out of the stomach of an ungoat and filled with beads",
+		"description": "The target of the spell becomes almost immune to damage from one of the chosen elements.\n\n- **Fire:** The target and their gear take no damage from heat or flames up to and including a forge’s fire.\n\n- **Water:** The target and their gear take no damage from cold or icy blasts.\n\n- **Air:** The target does not need to breathe.\n\n- **Earth:** The target and their gear take no damage from falling.\n\n- Each additional Resolve spent protects against an additional element.\n\n- Each additional Resolve spent adds one target.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "speak-to-animal",
+		"name": "Speak to Animal",
+		"tradition": "weald",
+		"component": "A mummified dire spider egg",
+		"description": "The sorcerer places the component under their tongue. A dire spider’s egg is about the size of a chicken egg, so this garbles their speech in a way that’s comprehensible to animals. The sorcerer can now talk to animals as if the animal was capable of normal speech.\n\n- The animal is under no particular compulsion to help the sorcerer, but animals are generally helpful and truthful.\n\n- Normal animals are a bit simple.\n\n- By that token, animals care a lot about things in their particular sphere and generally ignore things outside of it. They care about food, mating, and safety—and very little else. For example, it is easy for sheep to distinguish members of their own flock, but almost impossible for a sheep to distinguish between two elves.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "thunderclap",
+		"name": "Thunderclap",
+		"tradition": "weald",
+		"component": "A shard of broken thunderbolt iron",
+		"description": "The last syllable of the sorcerer’s incantation resounds like a thunderclap throughout a zone the sorcerer can see.\n\n- This instantly shatters all fragile objects in the zone: untempered glass, porcelain, and the like.\n\n- All creatures in the zone, except the sorcerer, must either drop everything they're holding to hold their hands over their ears *or* be Stunned and Deafened."
+	},
+	{
+		"id": "totem",
+		"name": "Totem",
+		"tradition": "weald",
+		"component": "The last acorn dropped from an elder oak",
+		"description": "The sorcerer places the acorn into their mouth (or the mouth of their target). They transform into a unique animal shape representative of their soul’s totem.\n\n- Talk to the GM about what this totem is, or randomly determine it using the chart on the facing page.\n\n- While in this form, the target’s attributes are all +0.\n\n- Tests of fate related to actions the totem is known for are made with a +5 bonus.\n\n- The transformation is near instantaneous, but it transforms neither worn items nor carried objects, which fall to the ground around the target.\n\nSpitting the acorn out ends the spell. So, whenever the target wants to talk, eat, drink, or pick something up with their mouth, the spell ends.\n\n### Random Totem\n\nDraw a minor arcana card and cross-reference its value and suit to determine the sorcerer's totem.\n\n| Card | Swords | Cups | Pentacles | Wands |\n|:---:|---|---|---|---|\n| I | Ape | Rat | Frog | Bonnacon |\n| II | Armadillo | Pelican | Goat | Capricorn |\n| III | Badger | Peacock | Hedgehog | Centipede, Dire |\n| IV | Bat | Rabbit | Hog | Coatl |\n| V | Bear | Raccoon | Hyena | Grasshopper, Dire |\n| VI | Cat | Seal | Jackdaw | Griffin |\n| VII | Cattle | Snake | Kangaroo | Hippogriff |\n| VIII | Crab | Stoat | Leopard | Mammoth |\n| IX | Crocodile | Swan | Lion | Owlbear |\n| X | Deer | Tiger | Mouse | Rat, Dire |\n| Page | Dog | Turtle | Mule | Roc |\n| Knight | Eagle | Vulture | Opossum | Snail, Dire |\n| Queen | Elk | Walrus | Otter | Spider, Dire |\n| King | Fox | Wolf | Owl | Thunder Lizard |"
+	},
+	{
+		"id": "wall-of-elements",
+		"name": "Wall of Elements",
+		"tradition": "weald",
+		"component": "A snail’s shell filled with mellified mummy",
+		"description": "For each Resolve spent on this spell, the sorcerer conjures one 10' x 10' x 2' section of wall made from one of the four elements.\n\n- Walls of earth are opaque and tough as stone.\n\n- Walls of wind aren't opaque but missile weapons or flying creatures cannot pass through.\n\n- Walls of fire are opaque but permeable—any creature passing through them suffers a Wound.\n\n- Walls of water are opaque and impermeable. They can only be raised in bodies of water, but prevent ships and other watercraft from approaching.\n\nThis spell is maintained by concentration."
+	},
+	{
+		"id": "woodweave",
+		"name": "Woodweave",
+		"tradition": "weald",
+		"component": "A vial of woodwose blood",
+		"description": "The sorcerer can control the growth of plants and the shape of wood.\n\n- If cast on a living plant, the sorcerer can either make it grow very quickly, benefiting from the Grow effect, or wither it back to a seed, Shrinking it.\n\n- If cast on a wooden object, the object is Notched as the wood warps and reshapes.\n\n- If cast in a place of vegetation, the sorcerer can conjure entangling vines to Root all creatures in a single zone.\n\n- Given raw materials of equivalent size, the sorcerer can instantly shape a wooden object using this spell."
+	},
+	{
+		"id": "animate-object",
+		"name": "Animate Object",
+		"tradition": "weird",
+		"component": "A vial of quicksilver",
+		"description": "The sorcerer commands an object, ordering it to fulfill its intended purpose. A dagger stabs. A key unlocks. A pick digs.\n\n- This order may have a number of words equal to the sorcerer’s Wands attribute. The item obeys the order as if wielded by an invisible hand.\n\n- Each additional Resolve spent allows the command to be extended by a number of words equal to the sorcerer’s Wands attribute.\n\n- An item will only ever fulfill one task per casting of this spell, no matter how many words are spoken in explanation. A key will unlock either the door to the cell, or your manacles, or your friend’s manacles, but never all three in the same casting. By this token, an unattended weapon will only strike once per casting.\n\n- In a Challenge, the item’s action has the same value as the sorcerer’s Speak Incantation value.\n\nThis spell lasts until the item fulfills its task. Resolve spent on casting this spell can never refresh as long as the spell continues."
+	},
+	{
+		"id": "change-size",
+		"name": "Change Size",
+		"tradition": "weird",
+		"component": "A twine of tails from a rat king",
+		"description": "The sorcerer causes the target to either Shrink or Grow. A size-changed creature shrinks or grows to either half or double their original height.\n\n- When this would be advantageous (squeezing into holes, sneaking around), they gain favor.\n\n- When this would be disadvantageous (contests of strength), they gain disfavor.\n\n- The size difference never affects Attack values, but might influence actions like Roughhouse.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "enrage",
+		"name": "Enrage",
+		"tradition": "weird",
+		"component": "A mummified viper",
+		"description": "The sorcerer weaves an illusion visible only to the target, causing them to perceive a second, willing target as a nebulous but hated foe. The primary target is Inspired with anger towards the illusion-cloaked creature.\n\n- In combat, anger makes people stupid and clumsy. The angry creature will try and focus on the source of their anger. An angry creature will attack recklessly, with little regard to the environment.\n\n- Creatures that do not feel emotions or are not affected by illusions are not affected by this spell.\n\nThis spell is maintained with concentration, but any actions that would change the target’s Disposition also end this spell."
+	},
+	{
+		"id": "give-form-to-nothingness",
+		"name": "Give Form to Nothingness",
+		"tradition": "weird",
+		"component": "A drum made of the hide of an albino deer writ with runes",
+		"description": "The sorcerer plays the rune-painted drum as they cast the spell. All intangible or invisible entities or objects in that room become both tangible and visible.\n\n- This spell’s component, a drum, is standard size but requires two hands to play during Challenges.\n\n- Each additional Resolve spent allows the sorcerer to target one extra room.\n\nThis spell lasts as long as the drum is played."
+	},
+	{
+		"id": "illusion",
+		"name": "Illusion",
+		"tradition": "weird",
+		"component": "A seven-faceted prism",
+		"description": "The sorcerer creates an illusion of any object or creature.\n\n- The illusion is merely an image—a hologram—and has no weight or substance, creates no sound, no smells, etc.\n\n- Illusions are only additive, never subtractive. For example, something cannot be made unseen with an illusion, but an illusory wall could obscure it. Making something unseen is the purview of the Shroud spell.\n\n- The illusion obeys the sorcerer’s mental commands. During Challenges, this requires a miscellaneous action.\n\nThis spell is maintained by concentration. While maintaining the spell, the sorcerer may add details to the illusion by spending 1 Resolve per detail. For example, they may elect for an illusion of a knight to pull a new item (such as a scroll or weapon) from its pack by spending 1 Resolve."
+	},
+	{
+		"id": "mirror-meld",
+		"name": "Mirror Meld",
+		"tradition": "weird",
+		"component": "A vial of tears collected from dreaming children",
+		"description": "The sorcerer sprinkles the component on the surface of a mirror to create a portal into the mirror through which creatures or items may pass.\n\n- The person who steps into the mirror becomes just a reflection; they are only visible within the mirror. They see and hear everything said near the mirror, but cannot interact with the world.\n\n- The mirror must be large enough to allow entrance; a halfling can step into a relatively small mirror, whereas it must be truly large to accommodate a troll. Multiple creatures may inhabit the same mirror as reflections.\n\n- A creature dwelling in the mirror may exit at any time by stepping back through the mirror portal.\n\n- Items may be left in the mirror. They will be visible but intangible to the outside world.\n\n- If the mirror is broken, the reflected adventurers are shunted back into reality and take 2 Wounds. Items in the mirror are Destroyed when they return to reality.\n\n- Items “carried” in a mirror still take up pack slots due to magical weight.\n\nThis spell persists until the creatures inside choose to leave or the mirror is broken."
+	},
+	{
+		"id": "portable-hole",
+		"name": "Portable Hole",
+		"tradition": "weird",
+		"component": "A circle of hide, of a diameter no larger than nine inches, cut from a black calf sacrificed at midnight",
+		"description": "When the sorcerer speaks the incantation and places the circle of calfskin, it becomes an opening through any inanimate material.\n\n- While the spell is active, the circle is essentially a hole—a window—to the immediate other side of the inanimate material. This creates an opening through walls/doors/chests, through which things can pass.\n\n- This spell simply doesn’t function on living tissue.\n\n- Things that fit somewhere in the blurred line of living and unliving (silicon viruses, undead, and animate stone gargoyles) are left up to the discretion of the GM.\n\n- This spell never damages the actual integrity of the transposing surface. Even if a portable hole is placed in a strategic load bearing section, the structure itself remains whole.\n\n- If the inanimate material has no other “side,” a hole about a foot deep opens. Items placed in this hole are swallowed, but not damaged by, the surrounding material when the spell ends.\n\nThis spell is maintained by concentration. When the spell ends, the window closes back into the component circle of calfskin."
+	},
+	{
+		"id": "scry",
+		"name": "Scry",
+		"tradition": "weird",
+		"component": "A crystal ball",
+		"description": "The sorcerer peers into the crystal ball and can see one location that they have visited before.\n\n- By default, this spell only functions if the chosen location is in the same metaphysical area that the sorcerer is currently in—the same city, dungeon level, forest, etc.\n\n- The sorcerer can see a location outside their current metaphysical area by spending +1 Resolve.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "shroud",
+		"name": "Shroud",
+		"tradition": "weird",
+		"component": "The funerary winding-sheet of one who died by an elf’s arrow",
+		"description": "The sorcerer spreads the component sheet over the target. The target and everything they carry becomes Shrouded.\n\n- A Shrouded creature is impossible to see without the aid of magic or special senses. Typically, if a Shrouded creature stands still and stays quiet, they cannot be deliberately targeted by creatures that can’t see them.\n\n- If the Shrouded creature moves, those nearby may have a vague sense of their presence. All attempts to target them are made with disfavor.\n\n- Shrouded creatures make harmful actions with favor against creatures who can’t see them.\n\nThe illusory magic required to hide something becomes confused and strained when the target interacts with visible objects. If the subject sharpens their sword, drinks a potion from their belt, or puts on a disguise, the invisibility is maintained. If the subject opens a door, fires an arrow at a foe, or ties a friend’s shoelaces together, an additional Resolve must be immediately spent to maintain the spell.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "sleep",
+		"name": "Sleep",
+		"tradition": "weird",
+		"component": "A pouch of powder made from crushed lotus seeds, sand, and wormwood",
+		"description": "The sorcerer takes a pinch of the component powder and blows it towards the target. The target falls under the influence of a supernatural soporific.\n\n- If not in a tense or dangerous situation, the subject takes the Knockout effect and can only be awoken with a sharp slap.\n\n- If cast with 4 Resolve, the target doesn’t age or require food while asleep.\n\n- If in a tense or dangerous situation (like combat), the target becomes drowsy and is Stunned."
+	},
+	{
+		"id": "augury",
+		"name": "Augury",
+		"tradition": "welkin",
+		"component": "A copy of the Codex Sophia, the sacred book of the Mythric cult",
+		"description": "The sorcerer receives supernatural wisdom to intuit the meaning of signs and portents by practicing rhapsodomancy—a form of book-based divination. This allows them to avoid the consequences of failure or great failures by looking into the future and forestalling doom.\n\nIf a test of fate would be called for and the sorcerer has time to consult a random page of the Codex Sophia and cast this spell, the GM draws a card for the test of fate instead of the player. Without showing it to the players, the GM describes the contents of the card as a parable from the Codex Sophia.\n\n- For example, the X of Swords might yield the description, “And it said that / a man, stabbed many times, lying face down / may be very wounded, or very dead. / His face is turned away.”\n\n- The sorcerer’s player uses their out-of-character knowledge of the iconography of the tarot to interpret these results in character. They are not allowed to use outside help (no checking your phone).\n\n- Once the spell has been cast, a member of the guild may choose to attempt the task or not. If the attempt is made, the GM reveals the card.\n\n- Because casting this spell technically happens before making the test of fate, the player who makes the attempt of the test may elect to spend a Resolve for favor. They may also push fate with this test as normal.\n\n- If the guild decides not to take a course of action based on the augury, the bound by fate rule is still obeyed. The card is discarded. That action would either be successful (or not) until the situation significantly changes."
+	},
+	{
+		"id": "binding",
+		"name": "Binding",
+		"tradition": "welkin",
+		"component": "The finger bone of a holy person buried in sacred soil for a year",
+		"description": "When casting this spell, the sorcerer holds the component out as a ward and names one creature. Any creature(s) so named in the sorcerer’s sight are Rooted.\n\n- If the name is specific (“John Doe”) the spell affects everyone by this specific name.\n\n- If the name is generic (“human”) the spell affects every creature of that type.\n\n- Per the GM’s judgment, castings that are vague or confusing might create maleficence.\n\n- This continues until the sorcerer’s concentration is interrupted. Affected creatures cannot use Recover to clear this Effect. The spell must be countered or interrupted.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "charm",
+		"name": "Charm",
+		"tradition": "welkin",
+		"component": "Oils of myrrh burned in an ivory censer",
+		"description": "The sorcerer weaves an illusion visible only to the target, causing them to perceive a second, willing target as an undefined but trusted friend. The primary target is Inspired with trust towards the illusion-cloaked creature.\n\n- Creatures with the trust Disposition are not inclined to fight. If the situation obligates a fight without changing this Disposition, the creature might attempt to learn more about the guild’s prowess through nonlethal methods.\n\n- Creatures that do not feel emotions or are not affected by illusions are not affected by this spell.\n\nThis spell is maintained with concentration, but any actions that would change the target’s Disposition also end this spell."
+	},
+	{
+		"id": "circle-of-protection",
+		"name": "Circle of Protection",
+		"tradition": "welkin",
+		"component": "Ashes from a venerated saint held in a small silver monstrance",
+		"description": "As preparation for casting, the sorcerer spends a watch sketching out a circle of protective runes with the ashes. This circle encompasses a radius of no more than 10’.\n\nWhen the sorcerer incants this spell, they select one of the far realms (Waste, Weald, Weird, or Welkin). Creatures and spirits native to that far realm are unable to pass or harm those on the other side of the circle.\n\n- If the sorcerer traces the circle but does not incant to empower it, it is possible to use it as a “trap” for a spirit by casting the spell once the spirit unwittingly crosses into the runic circle.\n\n- Each additional Resolve spent allows the sorcerer to ban spirits from another far realm.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "feather",
+		"name": "Feather",
+		"tradition": "welkin",
+		"component": "A feather from a lamassu",
+		"description": "The target item or creature floats, its weight is reduced to that of a feather.\n\n- If falling, the target floats gently to the ground. A sorcerer may cast this spell quickly in response to falling, but must already have the component in their hand to do so.\n\n- If moving across a surface, the target takes no damage from hazardous scenery (like spikes) and will not trigger pressure-plate traps.\n\n- Heavy objects become easy to move.\n\nThis spell is maintained with concentration."
+	},
+	{
+		"id": "guardian-angel",
+		"name": "Guardian Angel",
+		"tradition": "welkin",
+		"component": "A vial of water collected by a virgin from a sacred spring",
+		"description": "When the sorcerer casts this spell, they summon an invisible minor welkin spirit known as a guardian angel. The sorcerer binds this guardian angel to a target to protect them from a single blow.\n\n- During Challenges, the sorcerer hands the target the card used for Speak Incantation. This card is placed facedown in front of the target player. At their discretion, they can flip the card up and use its value to either Dodge or Riposte.\n\n- The defensive action’s total value is cumulative with other actions of the same type. For example, if a player has a facedown Dodge and the Guardian Angel card is used to Dodge, the two actions values will be added together.\n\n- This spell does not count towards the limit of one facedown card per player. However, you cannot have multiple instances of this spell at the same time.\n\nThis spell lasts until used."
+	},
+	{
+		"id": "heavenfire",
+		"name": "Heavenfire",
+		"tradition": "welkin",
+		"component": "A votive candle made of the rendered fat of a sacrificed bull",
+		"description": "The sorcerer summons a gout of heavenfire towards the target. Heavenfire is a bright flame that burns with light but no heat. It does not consume whatever it is burning.\n\n- If cast on a living, sighted target, the sudden light Blinds them for a few moments.\n\n- In a Challenge, this lasts until the end of their next turn.\n\n- If cast on the undead or a spirit of the Wastes, this spell deals Piercing damage.\n\n- If cast on an object, it glows with bright light.\n\n- Because heavenfire does not create heat, the sorcerer can light the tip of their wand or their hat to provide light.\n\n- Items lit with heavenfire go out when a torches gutter result is drawn on the Meatgrinder table.\n\n- Heavenfire acts (in most ways) like normal flame. It can be extinguished through water or lack of oxygen."
+	},
+	{
+		"id": "life",
+		"name": "Life",
+		"tradition": "welkin",
+		"component": "A feather from a phoenix",
+		"description": "This spell has no effect on living and otherwise-healthy creatures. However, if cast on someone who is at Death’s Door, they clear that condition. That person then takes the Stressed condition.\n\n- If cast on an afflicted creature, this spell reduces the progress of the affliction by one stage. If this would cure the first stage of affliction, the affliction is removed.\n\n- If cast on the undead, they suffer a Wound.\n\n- If cast on a plant, it Grows very quickly.\n\n- Each additional Resolve spent allows the sorcerer to add another target."
+	},
+	{
+		"id": "seal-pact",
+		"name": "Seal Pact",
+		"tradition": "welkin",
+		"component": "A bag of goblin teeth and finger joints",
+		"description": "The sorcerer uses this spell to magically seal a contract or oath made by two willing parties.\n\n- If a party to the oath ever violates the terms of the pact, two things happen:\n\n- All other parties to the oath are immediately aware of the violation; and\n\n- The violator becomes doomed: at the absolutely most crucial moment in the future, they will automatically suffer a great failure when testing fate.\n\n- Being doomed isn't *necessarily* a death sentence, but taken in concert with disgruntled parties, it often is.\n\n- Additional parties may be added to the pact for +1 Resolve per person.\n\nThis spell is permanent unless it is dispelled. Dispelling this spell triggers the first consequence but not the second. Once the pact is violated, however, these magical consequences cannot be dispelled or removed by any means."
+	},
+	{
+		"id": "veritas",
+		"name": "Veritas",
+		"tradition": "welkin",
+		"component": "Sacramental wine made of rare grapes in a golden ciborium",
+		"description": "When cast on a person, the sorcerer knows if the target knowingly tells a lie.\n\n- While under the effect of the spell, the target understands that they are essentially hooked up to a magical polygraph.\n\nThis spell is maintained with concentration."
+	}
+]

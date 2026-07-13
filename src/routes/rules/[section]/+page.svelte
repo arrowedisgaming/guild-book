@@ -1,9 +1,10 @@
 <script lang="ts">
 	import RuleArticle from '$lib/components/rules/RuleArticle.svelte';
+	import { sectionLabel } from '$lib/content/sections';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const label = $derived(data.section.charAt(0).toUpperCase() + data.section.slice(1));
+	const label = $derived(sectionLabel(data.section));
 </script>
 
 <svelte:head><title>{label} rules — Guild Book</title></svelte:head>

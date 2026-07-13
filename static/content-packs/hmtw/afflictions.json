@@ -2,40 +2,84 @@
 	{
 		"id": "giant-rat-venom",
 		"name": "Giant Rat Venom",
-		"description": "A festering toxin carried by the bites of giant rats.",
+		"description": "A green rat the size of a dog, covered in buboes, welts, and goiters, bites you. It only gets worse from there.",
 		"stages": [
-			{ "stage": 1, "effect": "The bite turns green and fetid and smells foul.", "cureCost": 1 },
-			{ "stage": 2, "effect": "You are permanently Exhausted while at this stage.", "cureCost": 1 },
-			{ "stage": 3, "effect": "Your lungs fill with mucus — after every test of fate, take a Piercing Wound.", "cureCost": 2 }
+			{
+				"stage": 1,
+				"effect": "The wound turns ugly: green and fetid. It begins to stink, but there are no other effects.",
+				"cureCost": 1
+			},
+			{
+				"stage": 2,
+				"effect": "You feel like hot garbage. You become permanently Exhausted.",
+				"cureCost": 1
+			},
+			{
+				"stage": 3,
+				"effect": "Your lungs are filled with green mucus. Every time you test fate, you take a Piercing Wound after the test is resolved.",
+				"cureCost": 2
+			}
 		]
 	},
 	{
 		"id": "black-honey",
 		"name": "Black Honey",
-		"description": "An addictive narcotic; early doses sharpen you before the habit takes hold.",
+		"description": "A thick molasses that tastes so, so sweet. It’s like meth and speed had a terrifying demon baby. You act preternaturally fast while on the honey.\n\nEach time you take black honey, you are re-exposed to the affliction. If you’ve previously cured stage 2, erase the marking in the stage 2 section.",
 		"stages": [
-			{ "stage": 1, "effect": "Draw 5 cards in encounters instead of 4 — at the cost of a few teeth. Quitting outright costs 5 charges.", "cureCost": 5 },
-			{ "stage": 2, "effect": "Jittery and sweating: Cups drops to 1 and fine motor-control tests take disfavor. Re-exposure resets this stage.", "cureCost": 1 }
+			{
+				"stage": 1,
+				"effect": "If you’ve recently taken black honey, you may choose to draw 5 cards during an encounter instead of 4. If you do so, you spit out 1–4 teeth.",
+				"cureCost": 5
+			},
+			{
+				"stage": 2,
+				"effect": "You’re jittery and sweaty. Your Cups score equals 1 and you suffer disfavor on all tests of fate that require fine motor control.",
+				"cureCost": 1
+			}
 		]
 	},
 	{
 		"id": "ghost-lotus",
 		"name": "Ghost Lotus",
-		"description": "A dream-flower that unmoors the mind by degrees.",
+		"description": "The seeds of the ghost lotus rewrite pathways in the user’s brain. The feeling is incredibly addictive. Habitual users of the lotus (called lotusphages) become very strange and otherworldly: their personalities change, their memories become distorted, and they have trouble distinguishing between the waking world and dreams.",
 		"stages": [
-			{ "stage": 1, "effect": "Euphoria — effects that would prevent sleep no longer trouble you. Costs 1 XP to shake off.", "cureCost": 1 },
-			{ "stage": 2, "effect": "You lose symbolic thought: you cannot read or write, but illusions cannot fool you.", "cureCost": 2 },
-			{ "stage": 3, "effect": "Lost in a waking dream — rewrite the descriptor of one of your motifs.", "cureCost": 1 }
+			{
+				"stage": 1,
+				"effect": "You experience euphoria. This effect cancels out any effects that hamper your ability to sleep.\n\nRequires 1XP to recover from stage 1. No charges are otherwise needed.",
+				"cureCost": 1
+			},
+			{
+				"stage": 2,
+				"effect": "At this stage, you lose the ability to understand representative thought. Paintings and illustrations are just blobs of color. Words are meaningless lines on paper. You cannot read. You cannot write. You are also immune to illusions.",
+				"cureCost": 2
+			},
+			{
+				"stage": 3,
+				"effect": "You become lost in a waking dream. Rewrite one of your motif descriptors. For example, if you have the “Romancing Swordsman” motif, replace “Romancing” with another word (e.g., Ambitious, Addled, Drowsy, Sadistic, etc.).",
+				"cureCost": 1
+			}
 		]
 	},
 	{
 		"id": "great-contagion",
 		"name": "The Great Contagion",
-		"description": "The dreaded plague of the deep levels. It does not forgive delay.",
+		"description": "“Oh Mythrys, do I have the red welts? I have the red welts don’t I? I’m going to die. Tell Mama I love her.”",
 		"stages": [
-			{ "stage": 1, "effect": "Red whorls bloom across your skin; take a Piercing Wound.", "cureCost": 2 },
-			{ "stage": 2, "effect": "The sickness bites deep: take Critical damage.", "cureCost": 2 },
-			{ "stage": 3, "effect": "Death. There is no recovery from the final stage.", "cureCost": null }
+			{
+				"stage": 1,
+				"effect": "Your skin breaks out into red whorls that are very painful to the touch. You take a Piercing Wound.",
+				"cureCost": 2
+			},
+			{
+				"stage": 2,
+				"effect": "You take Critical damage.",
+				"cureCost": 2
+			},
+			{
+				"stage": 3,
+				"effect": "You die.",
+				"cureCost": null
+			}
 		]
 	}
 ]

@@ -3,12 +3,15 @@
 	import { wizard, WIZARD_STEPS } from '$lib/stores/wizard';
 	import { createBlankCharacter } from '$lib/types/character';
 	import WizardNav from '$lib/components/wizard/WizardNav.svelte';
+	import Prose from '$lib/components/ui/Prose.svelte';
+	import { paragraphizeSentences } from '$lib/utils/text';
 	import type { PageData } from './$types';
 
 	const STEP = 2;
 	let { data }: { data: PageData } = $props();
 
 	let pathId = $state($wizard.character.pathId);
+	let selectedPath = $derived(data.paths.find((path) => path.id === pathId) ?? null);
 
 	function next() {
 		wizard.updateCharacter((c) => ({
@@ -28,15 +31,27 @@
 <h1>Choose your Path</h1>
 <p class="lede">Your path is your calling. It sets your highest attribute (a 4) to its suit.</p>
 
-<div class="grid">
+<div class="choices" role="radiogroup" aria-label="Path">
 	{#each data.paths as path (path.id)}
-		<button type="button" class="card" class:sel={pathId === path.id} onclick={() => (pathId = path.id)}>
-			<span class="name">{path.name}</span>
-			<span class="suit">Highest attribute: {path.suit}</span>
-			<span class="desc">{path.description}</span>
+		<button
+			type="button"
+			class="choice"
+			class:sel={pathId === path.id}
+			role="radio"
+			aria-checked={pathId === path.id}
+			onclick={() => (pathId = path.id)}
+		>
+			{path.name}
 		</button>
 	{/each}
 </div>
+
+{#if selectedPath}
+	<section class="details" aria-live="polite">
+		<p class="suit">Highest attribute: {selectedPath.suit}</p>
+		<Prose text={paragraphizeSentences(selectedPath.description, 3)} />
+	</section>
+{/if}
 
 <WizardNav backPath={WIZARD_STEPS[STEP - 1].path} onContinue={next} continueDisabled={!pathId} />
 
@@ -45,42 +60,43 @@
 		color: var(--ink-soft);
 		margin-top: -0.25rem;
 	}
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-		gap: 0.75rem;
-		margin-top: 1.25rem;
-	}
-	.card {
+	.choices {
 		display: flex;
-		flex-direction: column;
-		gap: 0.3rem;
-		text-align: left;
-		padding: 0.95rem;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+	.choice {
+		font-family: var(--font-heading);
+		font-size: 1.05rem;
+		padding: 0.5rem 1.1rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
 		border-radius: 4px;
 		background: var(--parchment);
 		cursor: pointer;
 	}
-	.card:hover {
+	.choice:hover {
 		border-color: color-mix(in oklab, var(--accent) 55%, transparent);
 	}
-	.card.sel {
+	.choice.sel {
 		border-color: var(--accent);
-		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
-	}
-	.name {
-		font-family: var(--font-heading);
-		font-size: 1.1rem;
+		background: color-mix(in oklab, var(--accent) 12%, var(--parchment));
+		color: var(--accent);
 	}
 	.suit {
+		margin: 0 0 0.65rem;
 		font-size: 0.8rem;
 		text-transform: capitalize;
 		color: var(--accent);
 		font-family: var(--font-subhead);
 	}
-	.desc {
-		font-size: 0.85rem;
+	.details {
+		max-width: 44rem;
+		margin-top: 1rem;
+		padding: 1rem 1.1rem;
+		border-left: 2px solid color-mix(in oklab, var(--accent) 45%, transparent);
+		background: color-mix(in oklab, var(--accent) 4%, var(--parchment));
+		font-size: 0.9rem;
 		color: var(--ink-soft);
 	}
 </style>

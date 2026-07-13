@@ -1,71 +1,737 @@
 [
-	{ "id": "animal-feed", "name": "Animal Feed", "tier": "impoverished", "category": "food", "slots": 1, "description": "Feed for one kind of companion (hound, falcon, horse…). Feed them each camp or they weaken." },
-	{ "id": "bedroll", "name": "Bedroll", "tier": "impoverished", "category": "gear", "slots": 2, "description": "Sleeping without shelter marks you Stressed — a bedroll counts toward having shelter." },
-	{ "id": "candles", "name": "Candles", "tier": "impoverished", "category": "light", "slots": 1, "notches": 1, "properties": ["Bright light for the holder, dim for the guild", "Goes out if dropped (can be relit)", "2 flickers of fuel"], "description": "Cheap light. Can be snuffed and relit; burns through two flickers before it's spent." },
-	{ "id": "chalk", "name": "Chalk", "tier": "impoverished", "category": "tool", "slots": 1, "description": "Mark passages in the maze, warn of traps, draw what words can't say." },
-	{ "id": "clothes-rags", "name": "Clothes, Rags", "tier": "impoverished", "category": "clothing", "slots": 1, "description": "Enough to preserve your dignity — barely. Worn clothes take no slots; spares take one." },
-	{ "id": "firewood", "name": "Firewood", "tier": "impoverished", "category": "gear", "slots": 1, "description": "A campfire even in the deepest dark. Fire counts toward shelter at camp." },
-	{ "id": "flint-and-tinder", "name": "Flint and Tinder", "tier": "impoverished", "category": "tool", "slots": 1, "description": "Start fires." },
-	{ "id": "iron-spikes", "name": "Iron Spikes", "tier": "impoverished", "category": "tool", "slots": 1, "stack": { "per": 6, "unit": "spikes" }, "description": "Wedge doors, anchor ropes. Six share a slot; drive them with a hammer." },
-	{ "id": "lard", "name": "Lard", "tier": "impoverished", "category": "gear", "slots": 1, "description": "Burns well, greases mechanisms and surfaces, and in a pinch counts as a ration." },
-	{ "id": "leeches", "name": "Leeches, Jar of", "tier": "impoverished", "category": "remedy", "slots": 1, "notches": 1, "properties": ["Camp: draw a card — Cups or Wands counts as 2 charges toward curing an affliction"], "description": "Medicinal leeches. Applied at camp they may draw out an affliction." },
-	{ "id": "pipe-and-pipeweed", "name": "Pipe and Pipeweed", "tier": "impoverished", "category": "gear", "slots": 1, "properties": ["Smoke it all to clear Stressed"], "description": "A little comfort in the dark. Finishing the pouch clears the Stressed condition." },
-	{ "id": "pole-10ft", "name": "Pole, 10'", "tier": "impoverished", "category": "tool", "slots": 2, "carry": "belt-only", "description": "Prod suspicious flagstones from a respectful distance. Oversized: rides the belt, never the pack." },
-	{ "id": "poultice", "name": "Poultice", "tier": "impoverished", "category": "remedy", "slots": 1, "properties": ["Expend at Death's Door: test Wands (favor with a medical motif) to save them"], "description": "Herb-soaked bandages. The difference between a funeral and a bad week; also what a chirurgeon works with." },
-	{ "id": "rations", "name": "Rations", "tier": "impoverished", "category": "food", "slots": 1, "description": "Hardtack, dried fruit and meat, and a canteen of water (or swill). Eat one when the guild breaks bread or mark Stressed." },
-	{ "id": "religious-paraphernalia", "name": "Religious Paraphernalia", "tier": "impoverished", "category": "gear", "slots": 1, "properties": ["Brandish: test Wands to displace one undead or spirit"], "description": "Icons, amulets, rosaries — the courage to hold the dark at arm's length." },
-	{ "id": "rope", "name": "Rope", "tier": "impoverished", "category": "tool", "slots": 1, "notches": 2, "description": "Fifty feet. There is no dungeon problem rope does not improve." },
-
-	{ "id": "weapon-axe", "name": "Axe", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Take-down: downing a foe lets the same Attack value strike another enemy in the zone", "Can be wielded two-handed"], "description": "Hatchets of war. When one enemy falls, the swing carries into the next." },
-	{ "id": "weapon-blade", "name": "Blade", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Riposte deals 2 Wounds instead of 1", "Can be wielded two-handed"], "description": "Swords long and short. In a fencer's hands, the counter-cut bites twice as deep." },
-	{ "id": "weapon-bow", "name": "Bow", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Ranged", "Aim (Swords): bank a facedown card, reveal on the shot to add its value", "Melee attackers gain favor against you"], "description": "Needs arrows. Patient hands make impossible shots." },
-	{ "id": "weapon-crossbow", "name": "Crossbow", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Ranged", "All Attacks deal Piercing damage", "Reload/crank as a miscellaneous action", "Melee attackers gain favor against you"], "description": "Needs bolts. Slow to span, but armor means nothing to it." },
-	{ "id": "weapon-dagger", "name": "Dagger", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Piercing vs unarmed, Rooted, or Tripped targets", "Throwable without engaging"], "description": "Stilettos and dirks. Ugly work up close; the only blade that can't be swung two-handed." },
-	{ "id": "weapon-flail", "name": "Flail", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Attacks cannot be absorbed by shields", "Always wins Initiative ties", "Can be wielded two-handed"], "description": "Ball-and-chain and morning star. It curls around shields as if they weren't there." },
-	{ "id": "weapon-hammer", "name": "Hammer / Mace", "tier": "impoverished", "category": "weapon", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Attack ≥ 2× the target's Initiative deals 2 Wounds", "Can be wielded two-handed"], "description": "Blunt and final. Catch a foe flat-footed and something breaks." },
-	{ "id": "weapon-polearm", "name": "Polearm", "tier": "impoverished", "category": "weapon", "slots": 2, "carry": "hand", "notches": 2, "properties": ["Ripostes are interrupts", "Two-handed"], "description": "Spears, halberds, quarterstaffs. Reach turns defense into offense." },
-	{ "id": "arrows", "name": "Arrows", "tier": "impoverished", "category": "ammunition", "slots": 1, "stack": { "per": 12, "unit": "arrows" }, "description": "A quiver's dozen per slot. Hits destroy the arrow; misses can be recovered; fletch more at camp." },
-	{ "id": "bolts", "name": "Bolts", "tier": "impoverished", "category": "ammunition", "slots": 1, "stack": { "per": 12, "unit": "bolts" }, "description": "Crossbow bolts, twelve to a slot. Hits destroy the bolt; misses can be recovered." },
-
-	{ "id": "armor-light", "name": "Armor, Light", "tier": "common", "category": "armor", "slots": 1, "wornBeltSlots": 1, "notches": 1, "properties": ["Worn: takes 1 belt slot", "Absorbs 1 Notch"], "description": "Leather jerkin, orcish furs, lacquered bone. Turns one blow that would have been you." },
-	{ "id": "caltrops", "name": "Caltrops", "tier": "common", "category": "tool", "slots": 1, "properties": ["Scattered: unshod creatures crossing take a Wound"], "description": "Deny the ground behind you." },
-	{ "id": "chain", "name": "Chain", "tier": "common", "category": "tool", "slots": 1, "notches": 2, "stack": { "per": 1, "unit": "10 ft" }, "description": "Ten feet per slot. Binds what rope can't hold." },
-	{ "id": "clothes-common", "name": "Clothes, Common", "tier": "common", "category": "clothing", "slots": 1, "description": "Serviceable and unremarkable — good for dirty work." },
-	{ "id": "cooking-gear", "name": "Cooking Gear", "tier": "common", "category": "tool", "slots": 1, "description": "Turn hunted game into rations at camp." },
-	{ "id": "crowbar", "name": "Crowbar", "tier": "common", "category": "tool", "slots": 1, "properties": ["Pry doors and chests: test Swords"], "description": "Louder than lockpicks, and the door doesn't survive either way." },
-	{ "id": "fishing-gear", "name": "Fishing Gear", "tier": "common", "category": "tool", "slots": 1, "description": "Pull food from the Underworld's waters — where the waters allow it." },
-	{ "id": "garlic", "name": "Garlic", "tier": "common", "category": "gear", "slots": 1, "properties": ["Brandish: test Wands to displace the impure"], "description": "The old wards work. Undead and impure spirits recoil from a firm hand and a full bulb." },
-	{ "id": "grappling-hook", "name": "Grappling Hook", "tier": "common", "category": "tool", "slots": 1, "properties": ["With rope: climb sheer surfaces without testing fate"], "description": "Thrown iron fingers. Bring rope — it's a separate slot." },
-	{ "id": "hammer-tool", "name": "Hammer (tool)", "tier": "common", "category": "tool", "slots": 1, "description": "Drive spikes and pitons, break what needs breaking. Smashing with a weapon notches the weapon instead." },
-	{ "id": "hatchet", "name": "Hatchet", "tier": "common", "category": "tool", "slots": 1, "notches": 2, "description": "Fell wood, cut rope, open a stubborn door — at some cost to the edge." },
-	{ "id": "helm", "name": "Helm", "tier": "common", "category": "armor", "slots": 1, "notches": 1, "properties": ["Worn on the head (no belt slots)", "Absorbs 1 Notch"], "description": "Turns one blow aside before it's spent." },
-	{ "id": "hermetic-bottle", "name": "Hermetic Bottle", "tier": "common", "category": "container", "slots": 1, "notches": 1, "properties": ["Fragile: destroyed after 1 Notch"], "description": "Sealed glass for reagents, oils, bombs, and potions. An alchemist's other hand." },
-	{ "id": "lockpicks", "name": "Lockpicks", "tier": "common", "category": "tool", "slots": 1, "stack": { "per": 6, "unit": "picks" }, "properties": ["Pick a lock: test Pentacles — failure snaps a pick"], "description": "Six slender answers per slot; every failed question costs one." },
-	{ "id": "mirror", "name": "Mirror", "tier": "common", "category": "gear", "slots": 1, "notches": 1, "description": "Hygiene, corner-peeking, and the polite way to meet a petrifying gaze." },
-	{ "id": "musical-instrument", "name": "Musical Instrument", "tier": "common", "category": "gear", "slots": 1, "notches": 2, "description": "Lute, harp, flute, or drum — keeps the campfire merry." },
-	{ "id": "pick", "name": "Pick", "tier": "common", "category": "tool", "slots": 2, "carry": "belt-only", "description": "Digging iron. Oversized: rides the belt, never the pack." },
-	{ "id": "quill-and-ink", "name": "Quill and Ink", "tier": "common", "category": "gear", "slots": 1, "description": "For maps, letters, and literary ambitions." },
-	{ "id": "shield-light", "name": "Shield, Light", "tier": "common", "category": "shield", "slots": 1, "carry": "hand", "notches": 1, "properties": ["Held: ties in Challenges go to you, not the attacker", "May swap Initiative for a hand card (miscellaneous action)", "Absorbs 1 Notch"], "description": "A wooden answer to sharp questions. Sling it on your back to free the hand." },
-	{ "id": "shovel", "name": "Shovel", "tier": "common", "category": "tool", "slots": 2, "carry": "belt-only", "description": "Digging steel. Oversized: rides the belt, never the pack." },
-	{ "id": "tinkers-kit", "name": "Tinker's Kit", "tier": "common", "category": "tool", "slots": 2, "properties": ["Camp: remove 1 Notch from an item (can't salvage the Destroyed)"], "description": "Scrap, files, and patience. Keeps good gear from becoming grave goods." },
-	{ "id": "torch", "name": "Torch", "tier": "common", "category": "light", "slots": 1, "notches": 1, "properties": ["Bright light for the holder, dim for the guild", "Dropped: 50% chance it dies (and can't be relit)", "3 flickers of fuel"], "description": "Honest fire on a stick. Burns through three flickers." },
-	{ "id": "wolfsbane", "name": "Wolfsbane", "tier": "common", "category": "gear", "slots": 1, "properties": ["Brandish: test Wands to displace wolves and lycanthropes"], "description": "The flower the moon-cursed cannot abide." },
-
-	{ "id": "alchemy-kit", "name": "Alchemy Kit", "tier": "luxurious", "category": "tool", "slots": 2, "notches": 2, "description": "Alembics, burners, and measures — turns monster reagents into potions, oils, and bombs at camp." },
-	{ "id": "armor-iron", "name": "Armor, Iron", "tier": "luxurious", "category": "armor", "slots": 2, "wornBeltSlots": 2, "notches": 2, "properties": ["Worn: takes 2 belt slots", "Absorbs 2 Notches", "Spells cannot target the wearer (spell effects still apply)", "No swimming, sneaking, or spellcasting"], "description": "Iron mail over a padded gambeson — the bane of sorcerers, and of subtlety." },
-	{ "id": "armor-steel", "name": "Armor, Steel", "tier": "luxurious", "category": "armor", "slots": 3, "wornBeltSlots": 3, "notches": 3, "properties": ["Worn: takes 3 belt slots", "Absorbs 3 Notches", "No swimming, sneaking, or spellcasting"], "description": "Full plate. The best answer to steel there is; magic is another matter." },
-	{ "id": "bezoar", "name": "Bezoar", "tier": "luxurious", "category": "remedy", "slots": 1, "properties": ["Swallow: counts as 8 burned charges toward curing an affliction"], "description": "A stone from a goat's stomach, worth more than gold when the poison sets in." },
-	{ "id": "blank-book", "name": "Blank Book", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "description": "For notes, maps, and the memoir you keep threatening to write." },
-	{ "id": "booze-fancy", "name": "Booze, Fancy", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "description": "Strong, expensive, and openable exactly once — trade it, gift it, or mark the occasion." },
-	{ "id": "clothes-finery", "name": "Clothes, Finery", "tier": "luxurious", "category": "clothing", "slots": 1, "description": "Sets you apart in the City. Adventure will ruin it — adventure ruins everything nice." },
-	{ "id": "falconry-gear", "name": "Falconry Gear", "tier": "luxurious", "category": "gear", "slots": 1, "description": "Gloves, tethers, and hoods — everything the hawk expects of you." },
-	{ "id": "hourglass", "name": "Hourglass", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "description": "Time flows strangely below. Glass and sand keep it honest." },
-	{ "id": "lantern", "name": "Lantern", "tier": "luxurious", "category": "light", "slots": 1, "notches": 1, "properties": ["Bright light for the holder, dim for the guild", "Dropped: destroyed", "Belt-tied: shatters (and oils you) if you take a Wound", "Burns oil: 4 flickers per flask"], "description": "Steady shuttered light — as long as nothing jostles it." },
-	{ "id": "manacles", "name": "Manacles", "tier": "luxurious", "category": "tool", "slots": 1, "notches": 2, "description": "For bringing someone back to the City — and the reward posted for them." },
-	{ "id": "oil-flask", "name": "Oil, Flask", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "properties": ["Fuels a lantern (4 flickers)"], "description": "Lantern fuel, fire-starter, lubricant. Flammable in every helpful and unhelpful way." },
-	{ "id": "shield-heavy", "name": "Shield, Heavy", "tier": "luxurious", "category": "shield", "slots": 1, "carry": "hand", "notches": 2, "properties": ["Held: ties in Challenges go to you, not the attacker", "May swap Initiative for a hand card (miscellaneous action)", "Absorbs 2 Notches"], "description": "Metal-faced and unarguable. Sling it on your back to free the hand." },
-	{ "id": "spyglass", "name": "Spyglass", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "properties": ["Magnifies up to 5×"], "description": "See trouble before trouble sees you." },
-	{ "id": "tent", "name": "Tent", "tier": "luxurious", "category": "gear", "slots": 2, "carry": "belt-only", "properties": ["Shelters two — counts toward shelter at camp"], "description": "Comfortable sleeping for two. Oversized: rides the belt, never the pack." },
-	{ "id": "archwood-wand", "name": "Wand of Archwood", "tier": "luxurious", "category": "gear", "slots": 1, "notches": 1, "properties": ["With Gramarye: a missile weapon of magical blasts (up to one zone)"], "description": "Cut from willing archwood — the sorcerer's ritual implement and, for the learned, a weapon." },
-	{ "id": "weapon-silver", "name": "Weaponry, Silver", "tier": "luxurious", "category": "weapon", "slots": 1, "carry": "hand", "notches": 1, "properties": ["Effective against lycanthropes, spirits, and certain undead", "Soft: absorbs only 1 Notch"], "description": "Any weapon, cast in moon-metal. It bites what iron can't — and bends where iron wouldn't." }
+	{
+		"id": "animal-feed",
+		"name": "Animal Feed",
+		"tier": "impoverished",
+		"category": "food",
+		"slots": 1,
+		"description": "Animal feed works like rations for animals. Each Camp Phase, you must feed each animal companion feed or they will become weak and stop following commands. Animal feed is specific to a particular animal (hound, falcon, horse, etc.)."
+	},
+	{
+		"id": "bedroll",
+		"name": "Bedroll",
+		"tier": "impoverished",
+		"category": "gear",
+		"slots": 2,
+		"description": "Bedrolls consist of blankets and bedding materials. Without either a bedroll or a tent, sleeping on the cold ground makes you Stressed. (2 slots)"
+	},
+	{
+		"id": "candles",
+		"name": "Candles",
+		"tier": "impoverished",
+		"category": "light",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Bright light for the holder, dim for the guild",
+			"Goes out if dropped (can be relit)",
+			"2 flickers of fuel"
+		],
+		"description": "Candles provide bright light for the person carrying them, but don’t provide any light for those nearby. As such, they are used when the guild—as a whole— prefers stealth. Candles can be snuffed out and relit (whereas torches cannot be). Candles go out when dropped. Candles can flicker 2 times before they’re used up."
+	},
+	{
+		"id": "chalk",
+		"name": "Chalk",
+		"tier": "impoverished",
+		"category": "tool",
+		"slots": 1,
+		"description": "Chalk can make marks almost anywhere—useful for plotting your way around a maze, warning fellow adventurers about traps, or making crude drawings of your rivals’ mothers."
+	},
+	{
+		"id": "clothes-rags",
+		"name": "Clothes, Rags",
+		"tier": "impoverished",
+		"category": "clothing",
+		"slots": 1,
+		"description": "Rags preserve your basic dignity, but make you look like the worst sort of peasant.\n\n-"
+	},
+	{
+		"id": "firewood",
+		"name": "Firewood",
+		"tier": "impoverished",
+		"category": "gear",
+		"slots": 1,
+		"description": "Firewood allows you to build campfires even when in the deepest dungeon."
+	},
+	{
+		"id": "flint-and-tinder",
+		"name": "Flint and Tinder",
+		"tier": "impoverished",
+		"category": "tool",
+		"slots": 1,
+		"description": "Flint and tinder let you start fires."
+	},
+	{
+		"id": "iron-spikes",
+		"name": "Iron Spikes",
+		"tier": "impoverished",
+		"category": "tool",
+		"slots": 1,
+		"stack": {
+			"per": 6,
+			"unit": "spikes"
+		},
+		"description": "Iron spikes can be used to wedge doors closed, serve as pitons for climbing, or be driven through the heart of the undead. (Stackable 6 per slot)"
+	},
+	{
+		"id": "lard",
+		"name": "Lard",
+		"tier": "impoverished",
+		"category": "gear",
+		"slots": 1,
+		"description": "Lard is the fat of a pig. It burns well, can be used as a grease to lubricate tools and surfaces, and can even be used as soap. You can also eat it like a ration in a pinch to keep from starving."
+	},
+	{
+		"id": "leeches",
+		"name": "Leeches, Jar of",
+		"tier": "impoverished",
+		"category": "remedy",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Camp: draw a card — Cups or Wands counts as 2 charges toward curing an affliction"
+		],
+		"description": "Leeches draw out bad blood and let good yellow phlegm and bile reign in your poisoned body. You can apply leeches to another adventurer with the Use an Item Camp Action. If you do so, draw a card. If you draw a Swords or Pentacles card, nothing happens. If you draw a Cups or Wands card, the leeched adventurer counts as having burned 2 charges to cure an affliction."
+	},
+	{
+		"id": "pipe-and-pipeweed",
+		"name": "Pipe and Pipeweed",
+		"tier": "impoverished",
+		"category": "gear",
+		"slots": 1,
+		"properties": [
+			"Smoke it all to clear Stressed"
+		],
+		"description": "Pipe and pipeweed are a great way to relax, clear your mind, and make the camp smell nice. Smoking all of your pipeweed clears the Stressed condition."
+	},
+	{
+		"id": "pole-10ft",
+		"name": "Pole, 10'",
+		"tier": "impoverished",
+		"category": "tool",
+		"slots": 2,
+		"carry": "belt-only",
+		"description": "10’ poles are helpful, too-long walking sticks that you can use to prod and poke for traps and hazards. (Oversized)"
+	},
+	{
+		"id": "poultice",
+		"name": "Poultice",
+		"tier": "impoverished",
+		"category": "remedy",
+		"slots": 1,
+		"properties": [
+			"Expend at Death's Door: test Wands (favor with a medical motif) to save them"
+		],
+		"description": "Poultices are bandages infused with healthful herbs. They have a few different uses:\n\n- You can expend a poultice to try and save a character at Death’s Door. The injured character test Wands; this test has favor if the person applying it has a medical motif. If successful, the Death’s Door condition is cured and the character returns to consciousness. If it is a failure, the character dies. See Death’s Door for the full rules.\n\n- Poultices are also necessary for the use of the Chirurgeon talent."
+	},
+	{
+		"id": "rations",
+		"name": "Rations",
+		"tier": "impoverished",
+		"category": "food",
+		"slots": 1,
+		"description": "Rations consist of hardtack, dried fruit, and dried meats. It might not be delicious, but it’s better than starving. Each ration contains a canteen with a day’s worth of water or swill alcohol."
+	},
+	{
+		"id": "religious-paraphernalia",
+		"name": "Religious Paraphernalia",
+		"tier": "impoverished",
+		"category": "gear",
+		"slots": 1,
+		"properties": [
+			"Brandish: test Wands to displace one undead or spirit"
+		],
+		"description": "Religious paraphernalia is a catchall term for the icons, amulets, or rosaries used to ward away certain types of undead or spirits. If brandished, test Wands. If successful, Displace one affected creature. During a Challenge, brandishing a religious icon is a Wands action."
+	},
+	{
+		"id": "rope",
+		"name": "Rope",
+		"tier": "impoverished",
+		"category": "tool",
+		"slots": 1,
+		"notches": 2,
+		"description": "Rope comes in lengths of 50’. Every adventurer worth their salt carries a bit of rope on them."
+	},
+	{
+		"id": "weapon-axe",
+		"name": "Axe",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Take-down: downing a foe lets the same Attack value strike another enemy in the zone",
+			"Can be wielded two-handed"
+		],
+		"description": "Axes include all types of chopping weapons, such as battle axes, bardiches, or mattocks. When an axe Attack takes down an enemy, you may use the same Attack value against another opponent in the same zone."
+	},
+	{
+		"id": "weapon-blade",
+		"name": "Blade",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Riposte deals 2 Wounds instead of 1",
+			"Can be wielded two-handed"
+		],
+		"description": "Blades include all types of swords, from short swords to longswords. When you successfully Riposte with a blade, you deal 2 Wounds instead of 1 Wound."
+	},
+	{
+		"id": "weapon-bow",
+		"name": "Bow",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Ranged",
+			"Aim (Swords): bank a facedown card, reveal on the shot to add its value",
+			"Melee attackers gain favor against you"
+		],
+		"description": "Bows are ranged weapons that use arrows. When wielding a bow, you gain access to the special Aim Challenge Action.\n\n- Aim is a Swords action. Declare who you’re targeting and play your card facedown. When you next Attack with your bow, you may reveal the card and add its value to your total Attack.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
+	},
+	{
+		"id": "weapon-crossbow",
+		"name": "Crossbow",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Ranged",
+			"All Attacks deal Piercing damage",
+			"Reload/crank as a miscellaneous action",
+			"Melee attackers gain favor against you"
+		],
+		"description": "Crossbows are mechanized ranged weapons with a locking mechanism to keep the bowstring taut. All Attacks with a crossbow deal Piercing damage. However, your crossbow must be reloaded and cranked as a miscellaneous action after firing.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
+	},
+	{
+		"id": "weapon-dagger",
+		"name": "Dagger",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Piercing vs unarmed, Rooted, or Tripped targets",
+			"Throwable without engaging"
+		],
+		"description": "Daggers are short, bladed weapons that include stilettos, gladiuses, and dirks. Daggers deal Piercing damage against targets who are unarmed, Rooted, or Tripped. Daggers may be thrown to Attack targets in your zone without engaging them."
+	},
+	{
+		"id": "weapon-flail",
+		"name": "Flail",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Attacks cannot be absorbed by shields",
+			"Always wins Initiative ties",
+			"Can be wielded two-handed"
+		],
+		"description": "Flails include any flexible weapon, such as morning stars or ball-and-chain. Flail Attacks cannot be absorbed by shields and always win ties with Initiative."
+	},
+	{
+		"id": "weapon-hammer",
+		"name": "Hammer / Mace",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Attack ≥ 2× the target's Initiative deals 2 Wounds",
+			"Can be wielded two-handed"
+		],
+		"description": "Hammers and maces include any type of smashing weapon. When your Attack value is at least *twice* that of your opponent’s Initiative, your hammer deals 2 Wounds instead of 1 Wound."
+	},
+	{
+		"id": "weapon-polearm",
+		"name": "Polearm",
+		"tier": "impoverished",
+		"category": "weapon",
+		"slots": 2,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Ripostes are interrupts",
+			"Two-handed"
+		],
+		"description": "Polearms are long-hafted weapons that include spears, halberds, and quarterstaffs. Ripostes are interrupts when wielding a polearm. (2 slots)"
+	},
+	{
+		"id": "arrows",
+		"name": "Arrows",
+		"tier": "impoverished",
+		"category": "ammunition",
+		"slots": 1,
+		"stack": {
+			"per": 12,
+			"unit": "arrows"
+		},
+		"description": "You must keep track of your arrows and bolts. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
+	},
+	{
+		"id": "bolts",
+		"name": "Bolts",
+		"tier": "impoverished",
+		"category": "ammunition",
+		"slots": 1,
+		"stack": {
+			"per": 12,
+			"unit": "bolts"
+		},
+		"description": "You must keep track of your arrows and bolts. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
+	},
+	{
+		"id": "armor-light",
+		"name": "Armor, Light",
+		"tier": "common",
+		"category": "armor",
+		"slots": 1,
+		"wornBeltSlots": 1,
+		"notches": 1,
+		"properties": [
+			"Worn: takes 1 belt slot",
+			"Absorbs 1 Notch"
+		],
+		"description": "Light armor is designed for movement and comfort; it can typically be worn under normal clothes—or may have the appearance of fine garb. Common forms of light armor include leather jerkins, orcish furs, or bone armor. Light armor can absorb 1 Notch.\n\n- Light armor takes up 1 belt slot."
+	},
+	{
+		"id": "caltrops",
+		"name": "Caltrops",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"properties": [
+			"Scattered: unshod creatures crossing take a Wound"
+		],
+		"description": "Caltrops are nails designed to be scattered on the ground. They deny areas to your foes, especially cavalry. When scattered, any unshod creature walking in the zone takes a Wound."
+	},
+	{
+		"id": "chain",
+		"name": "Chain",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"notches": 2,
+		"stack": {
+			"per": 1,
+			"unit": "10 ft"
+		},
+		"description": "Chain comes in 10’ lengths per slot. Chain is useful for all sorts of bindings and haulings."
+	},
+	{
+		"id": "clothes-common",
+		"name": "Clothes, Common",
+		"tier": "common",
+		"category": "clothing",
+		"slots": 1,
+		"description": "Common clothes won’t make you popular at parties, but they’re serviceable and good for dirty work.\n\n-"
+	},
+	{
+		"id": "cooking-gear",
+		"name": "Cooking Gear",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"description": "Cooking gear is needed to prepare hunted game into edible food during the Camp Phase."
+	},
+	{
+		"id": "crowbar",
+		"name": "Crowbar",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"properties": [
+			"Pry doors and chests: test Swords"
+		],
+		"description": "Crowbars are used to pry open doors and chests by testing Swords. Less subtle than a lockpick, doing so breaks the door in question."
+	},
+	{
+		"id": "fishing-gear",
+		"name": "Fishing Gear",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"description": "Fishing gear is needed to fish and gather food on bodies of water—like in the deadly Boundless Moat."
+	},
+	{
+		"id": "garlic",
+		"name": "Garlic",
+		"tier": "common",
+		"category": "gear",
+		"slots": 1,
+		"properties": [
+			"Brandish: test Wands to displace the impure"
+		],
+		"description": "Garlic wards away certain types of undead and impure spirits. If brandished, test Wands. If successful, Displace one affected creature. In a Challenge, brandishing garlic is a Wands action."
+	},
+	{
+		"id": "grappling-hook",
+		"name": "Grappling Hook",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"properties": [
+			"With rope: climb sheer surfaces without testing fate"
+		],
+		"description": "Grappling hooks, when combined with rope, let you climb sheer surfaces without testing fate. A grappling hook takes up its own slot, separate from the rope."
+	},
+	{
+		"id": "hammer-tool",
+		"name": "Hammer (tool)",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"description": "Hammers are used to drive in spikes and pitons, break things that don’t want to be broken, and are generally useful tools. It should be noted that trying to smash things open with weapons generally results in a Notched or Destroyed weapon."
+	},
+	{
+		"id": "hatchet",
+		"name": "Hatchet",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"notches": 2,
+		"description": "Hatchets are used to fell wood, cut ropes, and smash open doors. It should be noted that trying to smash things open with weapons generally results in a Notched or Destroyed weapon."
+	},
+	{
+		"id": "helm",
+		"name": "Helm",
+		"tier": "common",
+		"category": "armor",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Worn on the head (no belt slots)",
+			"Absorbs 1 Notch"
+		],
+		"description": "Helms can turn aside deadly blows. A helm can absorb 1 Notch before being Destroyed. (1 belt slot)"
+	},
+	{
+		"id": "hermetic-bottle",
+		"name": "Hermetic Bottle",
+		"tier": "common",
+		"category": "container",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Fragile: destroyed after 1 Notch"
+		],
+		"description": "Hermetic bottles keep alchemical reagents fresh and potent. They are used to hold alchemical substances like bombs, oils, and potions. An essential tool for the Alchemy talent."
+	},
+	{
+		"id": "lockpicks",
+		"name": "Lockpicks",
+		"tier": "common",
+		"category": "tool",
+		"slots": 1,
+		"stack": {
+			"per": 6,
+			"unit": "picks"
+		},
+		"properties": [
+			"Pick a lock: test Pentacles — failure snaps a pick"
+		],
+		"description": "Lockpicks can be used to pick a lock with a successful test of Pentacles. If you fail, one of your lockpicks breaks. (Stackable 6 per slot)"
+	},
+	{
+		"id": "mirror",
+		"name": "Mirror",
+		"tier": "common",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"description": "Mirrors are kept by those still trying to keep up a semblance of hygiene, or just to reflect a monster’s dread gaze back onto itself."
+	},
+	{
+		"id": "musical-instrument",
+		"name": "Musical Instrument",
+		"tier": "common",
+		"category": "gear",
+		"slots": 1,
+		"notches": 2,
+		"description": "Musical instruments are often carried by adventurers, as song keeps campfires merry in a dark and oppressive environment. These could be lutes, harps, flutes, viols, drums, or anything else found in the Wide World."
+	},
+	{
+		"id": "pick",
+		"name": "Pick",
+		"tier": "common",
+		"category": "tool",
+		"slots": 2,
+		"carry": "belt-only",
+		"description": "Picks are tools used for digging. (Oversized)"
+	},
+	{
+		"id": "quill-and-ink",
+		"name": "Quill and Ink",
+		"tier": "common",
+		"category": "gear",
+		"slots": 1,
+		"description": "Quill and ink are necessary tools for the journey into literary fame."
+	},
+	{
+		"id": "shield-light",
+		"name": "Shield, Light",
+		"tier": "common",
+		"category": "shield",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 1,
+		"properties": [
+			"Held: ties in Challenges go to you, not the attacker",
+			"May swap Initiative for a hand card (miscellaneous action)",
+			"Absorbs 1 Notch"
+		],
+		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. Shields take one of your hand slots.\n\n- Light shields are made from wood. They can absorb 1 Notch.\n\n- Heavy shields are made of metal or similarly sturdy materials and can absorb 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
+	},
+	{
+		"id": "shovel",
+		"name": "Shovel",
+		"tier": "common",
+		"category": "tool",
+		"slots": 2,
+		"carry": "belt-only",
+		"description": "Shovels are tools used for digging. Like picks. But different. (Oversized)"
+	},
+	{
+		"id": "tinkers-kit",
+		"name": "Tinker's Kit",
+		"tier": "common",
+		"category": "tool",
+		"slots": 2,
+		"properties": [
+			"Camp: remove 1 Notch from an item (can't salvage the Destroyed)"
+		],
+		"description": "Tinker’s kits are metal-working tools and scrap metal. You can repair damaged equipment with a tinker’s kit by performing the Use an Item Camp Action to remove 1 Notch. Destroyed equipment cannot be salvaged in this manner. (2 slots)"
+	},
+	{
+		"id": "torch",
+		"name": "Torch",
+		"tier": "common",
+		"category": "light",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Bright light for the holder, dim for the guild",
+			"Dropped: 50% chance it dies (and can't be relit)",
+			"3 flickers of fuel"
+		],
+		"description": "Torches provide bright light to the person holding them and dim light for everybody else in the guild. Torches have a 50% chance to go out when dropped. Torches that are extinguished are almost impossible to relight. Torches can flicker 3 times before they’re used up."
+	},
+	{
+		"id": "wolfsbane",
+		"name": "Wolfsbane",
+		"tier": "common",
+		"category": "gear",
+		"slots": 1,
+		"properties": [
+			"Brandish: test Wands to displace wolves and lycanthropes"
+		],
+		"description": "Wolfsbane repels wolves and lycanthropes. If brandished, test Wands. If successful, Displace one affected creature. During a Challenge, brandishing wolfsbane is a Wands action."
+	},
+	{
+		"id": "alchemy-kit",
+		"name": "Alchemy Kit",
+		"tier": "luxurious",
+		"category": "tool",
+		"slots": 2,
+		"notches": 2,
+		"description": "Alchemy kits are used to mix reagents into alchemical substances (bombs, potions, oils). They are a required tool for the Alchemy talent. (2 slots)"
+	},
+	{
+		"id": "armor-iron",
+		"name": "Armor, Iron",
+		"tier": "luxurious",
+		"category": "armor",
+		"slots": 2,
+		"wornBeltSlots": 2,
+		"notches": 2,
+		"properties": [
+			"Worn: takes 2 belt slots",
+			"Absorbs 2 Notches",
+			"Spells cannot target the wearer (spell effects still apply)",
+			"No swimming, sneaking, or spellcasting"
+		],
+		"description": "Iron armor consists of a coat of iron mail worn over a padded gambeson. Iron armor can absorb 2 Notches.\n\n- Iron armor is the bane of sorcerers—spells cannot target anyone wearing iron armor; however, you can still be hurt by the effects of spells (e.g., burned by a wall of fire).\n\n- You cannot cast spells if wearing iron armor.\n\n- Iron armor takes up 2 belt slots while worn.\n\n- Due to iron’s weight, it is impossible to swim or sneak while wearing iron armor."
+	},
+	{
+		"id": "armor-steel",
+		"name": "Armor, Steel",
+		"tier": "luxurious",
+		"category": "armor",
+		"slots": 3,
+		"wornBeltSlots": 3,
+		"notches": 3,
+		"properties": [
+			"Worn: takes 3 belt slots",
+			"Absorbs 3 Notches",
+			"No swimming, sneaking, or spellcasting"
+		],
+		"description": "Steel armor is a full set of steel plate. Steel does not provide the same protection against magic as iron, but provides an ideal defense against the blows of sword or mace. Steel armor can absorb 3 Notches.\n\n- Steel armor takes up 3 belt slots while worn.\n\n- Due to steel’s weight, it is impossible to swim or sneak while wearing steel armor.\n\n- Even though steel armor does not cancel targeted spells, you cannot cast while wearing it due to the latent iron content in the metal."
+	},
+	{
+		"id": "bezoar",
+		"name": "Bezoar",
+		"tier": "luxurious",
+		"category": "remedy",
+		"slots": 1,
+		"properties": [
+			"Swallow: counts as 8 burned charges toward curing an affliction"
+		],
+		"description": "Bezoars are stones composed of hair, vegetable material, and bile found in the stomachs of goats. If swallowed, a bezoar acts as a powerful anti-poison. It counts as 8 burned charges for the purposes of curing an affliction while Resting and Recovering."
+	},
+	{
+		"id": "blank-book",
+		"name": "Blank Book",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"description": "Blank books are useful for taking notes or even composing a memoir for later publication."
+	},
+	{
+		"id": "booze-fancy",
+		"name": "Booze, Fancy",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"description": "Booze is any alcohol that’s nice, strong, and expensive. This can be traded to Underworld denizens, given as a gift to a noble, or opened for a special occasion. Weak alcohol like small beer, cider, or watery wine is considered to be part of a ration."
+	},
+	{
+		"id": "clothes-finery",
+		"name": "Clothes, Finery",
+		"tier": "luxurious",
+		"category": "clothing",
+		"slots": 1,
+		"description": "Finery sets you apart from the general rabble. Be careful, though; adventuring has a tendency to make you dirty and bloody."
+	},
+	{
+		"id": "falconry-gear",
+		"name": "Falconry Gear",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"description": "Falconry gear includes gloves, tethers, hoods, and everything needed to enjoy the royal sport of hawking."
+	},
+	{
+		"id": "hourglass",
+		"name": "Hourglass",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"description": "Hourglasses are one of the best ways to track time in the strange Underworld. Even then, adventurers will notice that time flows curiously. An hour in the Underworld might be a day in the City."
+	},
+	{
+		"id": "lantern",
+		"name": "Lantern",
+		"tier": "luxurious",
+		"category": "light",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Bright light for the holder, dim for the guild",
+			"Dropped: destroyed",
+			"Belt-tied: shatters (and oils you) if you take a Wound",
+			"Burns oil: 4 flickers per flask"
+		],
+		"description": "Lanterns provide bright light to the person holding them and dim light for everybody else in the guild. Lanterns are lit by oil, which must be carried separately. Lanterns shatter when they are dropped. You can tie a lantern to your belt, but if you take a Wound the lantern shatters and you’re covered in oil. A lantern can flicker 4 times before their oil is used up."
+	},
+	{
+		"id": "manacles",
+		"name": "Manacles",
+		"tier": "luxurious",
+		"category": "tool",
+		"slots": 1,
+		"notches": 2,
+		"description": "Manacles are used to restrain people, usually to haul them back to the City for a reward."
+	},
+	{
+		"id": "oil-flask",
+		"name": "Oil, Flask",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Fuels a lantern (4 flickers)"
+		],
+		"description": "Oil, usually carried in a flask, is used to fuel lanterns. It can also fuel other fires, or be used as lubrication. A flask of oil provides 4 flickers to a lantern."
+	},
+	{
+		"id": "shield-heavy",
+		"name": "Shield, Heavy",
+		"tier": "luxurious",
+		"category": "shield",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 2,
+		"properties": [
+			"Held: ties in Challenges go to you, not the attacker",
+			"May swap Initiative for a hand card (miscellaneous action)",
+			"Absorbs 2 Notches"
+		],
+		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. Shields take one of your hand slots.\n\n- Light shields are made from wood. They can absorb 1 Notch.\n\n- Heavy shields are made of metal or similarly sturdy materials and can absorb 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
+	},
+	{
+		"id": "spyglass",
+		"name": "Spyglass",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"Magnifies up to 5×"
+		],
+		"description": "Spyglasses magnify things up to five times."
+	},
+	{
+		"id": "tent",
+		"name": "Tent",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 2,
+		"carry": "belt-only",
+		"properties": [
+			"Shelters two — counts toward shelter at camp"
+		],
+		"description": "Tents provide shelter and comfortable sleeping for up to two people. Without a bedroll or tent, sleeping on the cold ground makes you Stressed. (Oversized)"
+	},
+	{
+		"id": "archwood-wand",
+		"name": "Wand of Archwood",
+		"tier": "luxurious",
+		"category": "gear",
+		"slots": 1,
+		"notches": 1,
+		"properties": [
+			"With Gramarye: a missile weapon of magical blasts (up to one zone)"
+		],
+		"description": "Wands of archwood are ritual implements that allow sorcerers to focus their magical potential. If you have the Gramarye talent, you may use an archwood wand as a missile weapon to create blasts of magical energy up to a zone away."
+	},
+	{
+		"id": "weapon-silver",
+		"name": "Weaponry, Silver",
+		"tier": "luxurious",
+		"category": "weapon",
+		"slots": 1,
+		"carry": "hand",
+		"notches": 1,
+		"properties": [
+			"Effective against lycanthropes, spirits, and certain undead",
+			"Soft: absorbs only 1 Notch"
+		],
+		"description": "Weaponry includes any basic arms and ammo listed in the Weapons section on the following page.\n\n- Silver weaponry is expensive, but silver is often useful against lycanthropes, spirits, and certain types of undead. Silver weaponry is soft and easily damaged, however. Silver weapons can only absorb 1 Notch before being Destroyed."
+	}
 ]

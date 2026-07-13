@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   region, disable while working, and retry font loading after a failed fetch.
   Persisted builder drafts are validated field by field on load.
 
+<!-- TODO: The Elite/Dungeon Lord "draws an additional Challenge card" mechanic
+     is intentionally NOT stored on Appendix C stat blocks — it's a Chapter 7
+     hand-size procedure keyed to threat type. Surface it in the rules reference
+     when Chapter 7 combat content is imported, so it isn't lost. -->
+
 ### Added
 
 - A Markdown-driven content pipeline for the complete current pack, including all

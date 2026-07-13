@@ -1,0 +1,1426 @@
+{
+	"themes": [
+		{
+			"id": "beast",
+			"name": "Beast",
+			"description": "Creatures from the realm of Flesh are \"natural\" creatures. This includes animals that exist in the real world (bears, snakes, wolves) and those who appear only in medieval bestiaries (cockatrices and krakens).\n\nThere's an enormous amount of inspiration to be found in medieval understandings of animals. According to medieval bestiaries, panthers have a sweet-smelling breath that lures dragons, pelicans feed their young with their own blood, and goat's blood can melt diamonds. Subvert tropes by making these myths real for your game.",
+			"likes": ["Its Mate", "Its Young", "Easy Sources of Food"],
+			"hates": ["Fire"],
+			"notes": [
+				{
+					"name": "Fleet",
+					"text": "On its turn, the beast can Move 1 zone without spending a card."
+				}
+			],
+			"chooseLesserDooms": "Choose 1 of the following",
+			"lesserDooms": [
+				{
+					"name": "Bite",
+					"text": "On a successful Attack, the target is *also* either Disarmed or Tripped (GM's choice)."
+				},
+				{
+					"name": "Claw",
+					"text": "On a successful Attack, if the beast's total Attack value is double the Initiative of the target, deal 2 Wounds."
+				},
+				{
+					"name": "Special Locomotion",
+					"text": "The beast has a special type of movement—flight, burrowing, climbing, etc. The beast can Move in this way to avoid the adventurers and leave the area (unless the adventurers have some way to keep up)."
+				},
+				{
+					"name": "Trample",
+					"text": "On an unsuccessful Attack, the beast may use their Attack action against a second target in the same zone."
+				}
+			]
+		},
+		{
+			"id": "elemental",
+			"name": "Elemental",
+			"description": "Elementals are defined by the habitat in which they live. They are the inhabitants, guardians, or personification of natural phenomena.\n\nElementals are cousins to spirits even though they're native to the realm of Flesh. They understand the practicalities of temporal experience more completely than those from the far realms. Still, they are not the same as elves, orcs, and humans—they are strangers, coming in contact with mortals only rarely. Elementals can be at turns helpful and harmful, capricious and caring.\n\nThis group includes humanoid, intelligent creatures (mermaids, dryads), animal-like creatures (salamanders, thunderbirds), and creatures composed of animated elemental energy (tree giants, fire elementals).",
+			"likes": ["Learning About Mortals"],
+			"hates": ["Elemental Opposition (Fire vs Water, Air vs Earth)", "Trespassing"],
+			"notes": [
+				{
+					"name": "Elemental Immunity",
+					"text": "An elemental takes no damage from their chosen element. A huldra cannot drown. A salamander cannot be burned. A tree giant shrugs off weapons made of wood."
+				},
+				{
+					"name": "Elemental Travel",
+					"text": "In their natural environment, the elemental can Move 1 zone without spending a card *each* turn."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Engulf",
+					"text": "The elemental can attempt to pull an adventurer into their element as a Roughhouse action: air elementals pull the adventurer into the air and drop them, water elementals pull them under the water, etc. This deals Piercing damage."
+				}
+			]
+		},
+		{
+			"id": "man",
+			"name": "Man",
+			"description": "\"Man\" is a misnomer; the term is chosen merely because it sounds archaic. This theme includes the sentient people (humans, elves, gnomes, etc.). These are people, not Underworld creatures.\n\nThere isn't a template, really. Represent people in your game by making actual characters. If the character is strange or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms that represent their core gimmick.",
+			"builderMode": "unsupported",
+			"builderNote": "There isn't a template, really. Represent people in your game by making actual characters — if the character is strange or monstrous, give them a few special greater dooms that represent their core gimmick."
+		},
+		{
+			"id": "sorcerous",
+			"name": "Sorcerous",
+			"description": "There are blasphemies summoned into this world by sorcerers playing god. Sorcerers are full of bad ideas. \"What if I created a bear with the head of an owl? What if I made this albino ape sentient? What if I made one really big eye float around?\" Awful. Nobody likes sorcerers.\n\nSorcerous creatures include all manner of abominations, experiments, maleficence side effects, and cursed entities.\n\nSorcerous creatures do not have any default lesser dooms.",
+			"likes": ["Magic", "Eating Strange Things (Brains, Coins, Curses)", "Radioactive Materials"],
+			"hates": ["Beauty", "Music", "Children's Laughter"],
+			"notes": [
+				{
+					"name": "Smell Magic",
+					"text": "The creature can smell magical effects. They can identify who is and isn't a sorcerer by scent."
+				},
+				{
+					"name": "Strange Body",
+					"text": "(Optional) Many sorcerous creatures are invulnerable to a certain type of harm (fire, weapons, acid, blunt force trauma, etc.). At the same time, they are explicitly vulnerable from another common type of harm and take 2 Wounds instead of 1 from this source (electricity, cold temperatures, poison, etc.)."
+				}
+			]
+		},
+		{
+			"id": "spirit",
+			"name": "Spirit",
+			"description": "There are dream worlds called the far realms outside of this reality. The beings that dwell in those places do not have physical forms, but must clothe themselves in flesh when visiting this realm. These creatures are called *spirits* because they are not naturally physical.\n\nThe four far realms are the Waste, Weald, Weird, and Welkin. It is said devils live in the Waste. It is said that daemons live in the Weald. It is said that jinni live in the Weird. It is said that angels live in the Welkin.\n\nThese spirits are alien creatures with an alien understanding of the realm of Flesh. They are baffled by the ideas of food, evolution, skin, isolated sensory experiences, and other mundane events. This makes them, even the most benevolent ones, incredibly dangerous.",
+			"likes": ["Flattery", "One Specific Human Emotion/Virtue/Vice/Activity"],
+			"hates": ["Iron", "Cats", "Running Water"],
+			"lesserDooms": [
+				{
+					"name": "Natural Sorcery",
+					"text": "Most spirits can cast one or two spells from the appropriate far realm at will using the Speak Incantations action. The spirit does not require spell components. The spirit does not use Resolve to cast this spell."
+				}
+			]
+		},
+		{
+			"id": "undead",
+			"name": "Undead",
+			"description": "There are magics that attempt to create deathlessness. Such magic is omnipresent in the Underworld. These spells force the body to keep moving even after grievous injury and shackle the soul to this plane. At the best of times, this prolongs mortal life. Most of the time, it creates the curse of undeath.\n\nUndead creatures toil endlessly towards purposes inimical to life. Some are mindless, killing with the irresistible but dispassionate power of an earthquake or mudslide. Some are miserable and seek momentary relief through the torture and dismemberment. Others are methodical, deliberately trying to swell the ranks of the undead by slaughtering the living.\n\nThis category includes physical undead (zombies, skeletons, vampires) and immaterial undead (ghosts, shadows, wraiths).",
+			"likes": ["Some Fond Memory of Life"],
+			"hates": ["The Living"],
+			"notes": [
+				{
+					"name": "Breathless and Undreaming",
+					"text": "The undead ignore any effects related to living processes. They do not breathe. They do not sleep. They cannot be poisoned. They are immune to the Poison Blood of seablooded orcs."
+				},
+				{
+					"name": "Rotting Brains",
+					"text": "The undead ignore any attempts to manipulate their minds. They are immune to the Inspire effect. They cannot see illusions."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Devour the Living",
+					"text": "If a living creature is Knocked-out or at Death's Door, play a lesser doom card to devour it. This Heals 2 Wounds."
+				},
+				{
+					"name": "Fear",
+					"text": "Play a lesser doom card and compare its value to the Initiative of each character in the same zone. If the undead does this on its turn, it adds its Wands to the total value. Adventurers it succeeds against are Displaced to an adjacent zone of the player's choice."
+				}
+			]
+		}
+	],
+	"threats": [
+		{
+			"id": "minion",
+			"name": "Minion",
+			"description": "Minions are simple and weak. They pose little physical threat, don't employ tactics in combat, and are easy to bully or frighten. Use this template to represent untrained peasantry, prey animals, and weak monsters.\n\nMinions do not have any default greater dooms.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 2,
+			"defense": 0
+		},
+		{
+			"id": "brute",
+			"name": "Brute",
+			"description": "Brutes are powerful but stupid. Whereas they might have hulking strength or deadly magical abilities, they are easy to outwit. Adventurers fighting brutes in a straightforward way will likely be overwhelmed. However, if the adventurers employ a plan to trick, deceive, trap, or otherwise outsmart a brute enemy, you should allow this plan to work automatically.",
+			"attributes": { "swords": 6, "pentacles": 4, "cups": 1, "wands": 1 },
+			"health": 2,
+			"defense": 6,
+			"notes": [
+				{
+					"name": "Tough",
+					"text": "Actions that target brutes must *exceed* (not just match) their Initiative."
+				}
+			],
+			"chooseGreaterDooms": "Choose 1 or 2",
+			"greaterDooms": [
+				{
+					"name": "Overwhelming Attack",
+					"text": "The brute can play a greater doom card as an Attack action."
+				},
+				{
+					"name": "Deadly Attack",
+					"text": "When the brute Attacks, discard a greater doom card to deal a deadly attack. If successful, deal 2 Wounds instead of 1."
+				},
+				{
+					"name": "Corrosive Attack",
+					"text": "When the brute Attacks, discard a greater doom card to target an adventurer's gear. If successful, deal no damage but Destroy one item."
+				},
+				{
+					"name": "Untouchable",
+					"text": "The brute can play a greater doom card as their Initiative."
+				}
+			]
+		},
+		{
+			"id": "strategist",
+			"name": "Strategist",
+			"description": "Strategists are physically weak but intensely clever. Play strategists to the utmost of your ability, using your abilities to hit the adventurers where it hurts. Strategists never fall for obvious plans and always approach combat cautiously. Disengage and utilize guerrilla tactics whenever possible.",
+			"attributes": { "swords": 1, "pentacles": 4, "cups": 2, "wands": 3 },
+			"health": 3,
+			"defense": 3,
+			"chooseGreaterDooms": "Choose 1 or 2",
+			"greaterDooms": [
+				{
+					"name": "Tactics",
+					"text": "Discard a greater doom card to turn a standard Challenge Action into an interrupt. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Cautious Retreat",
+					"text": "Discard a greater doom card to automatically disengage from a single adventurer. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Sorcery",
+					"text": "The strategist can cast spells using the rules in Appendix A. They have a few components at their disposal. Cast spells by playing a lesser doom Speak Incantations action and discarding a greater doom card instead of spending Resolve. Each additional greater doom card discarded counts as an additional +1 Resolve."
+				}
+			]
+		},
+		{
+			"id": "elite",
+			"name": "Elite",
+			"description": "Elites are competent enemies capable of matching an entire adventuring guild on their own. Elites have potent magical abilities that allow them to ignore mundane threats.",
+			"attributes": { "swords": 4, "pentacles": 4, "cups": 4, "wands": 4 },
+			"health": 12,
+			"defense": 0,
+			"notesOptional": true,
+			"notes": [
+				{
+					"name": "Invulnerable",
+					"text": "The elite ignores all damage except from a specific source (e.g., silver weapons, iron weapons, fire)."
+				},
+				{
+					"name": "Retributive",
+					"text": "Any creature engaged with the elite automatically takes 1 Wound at the start of their turn."
+				},
+				{
+					"name": "Threshold",
+					"text": "The elite does not take *any* damage until they are dealt 2 Wounds in a single turn. Afterwards, they take damage normally."
+				}
+			],
+			"chooseGreaterDooms": "Choose 1 or 2",
+			"greaterDooms": [
+				{
+					"name": "Command",
+					"text": "When the elite Attacks, discard a greater doom card to attempt to command the target instead of dealing damage. If successful, the target is Controlled—they immediately perform the commanded action. The total value for the Controlled action is equal to the value of the lesser doom card used to Attack."
+				},
+				{
+					"name": "Intangible",
+					"text": "Discard a greater doom card to turn tangible or intangible. While intangible, physical objects pass harmlessly through the elite. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Potence",
+					"text": "Play a greater doom card to cause all adventurers in the elite's zone to automatically take a specific effect (e.g., Stun, Deafen, Notch)."
+				},
+				{
+					"name": "Regenerate",
+					"text": "Discard a greater doom card to Heal 1 Wound. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Shapeshifter",
+					"text": "Play a greater doom card to take a new shape. The elite gains any abilities associated with the new shape, such as flying or swimming."
+				}
+			]
+		},
+		{
+			"id": "dungeon-lord",
+			"name": "Dungeon Lord",
+			"description": "Each dungeon level of the Underworld is ruled by a dungeon lord. These ancient creatures possess magical powers, wealth, and monstrous minions. They understand the secret history of the Underworld.\n\nDungeon lords are the most dangerous enemies an adventuring guild can face because they are both hyperintelligent and powerful. To represent their heightened intelligence, you can use your meta-knowledge as the GM (like listening to the players' table chatter) while taking actions for a dungeon lord.\n\nEach dungeon lord is like a puzzle. Although singular creatures, dungeon lords have several pools of Health and Defense. Each pool has special rules associated with it, like lesser and greater dooms. As long as that pool of HD is undefeated, the dungeon lord has access to those abilities. Each pool can be attacked separately. The GM must make it clear what parts of a dungeon lord can be attacked.\n\nSometimes a dungeon lord can only be defeated if you destroy each pool of HD. Sometimes the dungeon lord can only be defeated if their core pool of HD is depleted.\n\nDungeon lords do not have any default greater dooms.",
+			"attributes": { "swords": 3, "pentacles": 3, "cups": 3, "wands": 3 },
+			"statNote": "Choose 1 attribute to increase to 6. HD: Special — a dungeon lord has several named pools of Health and Defense, each with its own rules and dooms.",
+			"builderMode": "pools",
+			"builderNote": "Dungeon lords are fought in several named pools of Health and Defense, each with its own rules and dooms. The builder does not support pool editing yet — see the Sporehulk and the Yellow King in the reference for complete examples."
+		}
+	],
+	"bestiary": [
+		{
+			"id": "animate-statue",
+			"name": "Animate Statue",
+			"theme": "sorcerous",
+			"threat": "brute",
+			"flavor": "A statue animated by way of a bound spirit. They are built of bronze—dull metal with a greenish hue—shaped in a Greco-Roman style, and tend to portray nude youths. Basically, they all look a little bit like Michelangelo's David: seventeen feet tall, out of proportion hands, buff as hell, small penises.\n\nAnimate statues are intelligent but cannot speak. They fight with their bare hands by smashing, grabbing, and squeezing. The statue's low Health and high Defense represent the animate statue having a weak spot—a magical rune that keeps the spirit bound to its form.",
+			"attributes": { "swords": 5, "pentacles": 5, "cups": 1, "wands": 1 },
+			"health": 1,
+			"defense": 15,
+			"likes": ["To Sleep", "To Be Admired", "Sculptors"],
+			"hates": ["Sorcerers (attacks them first)", "Iconoclasts"],
+			"notes": [
+				{
+					"name": "Construct",
+					"text": "Animate statues treat Notches as 2 Wounds."
+				},
+				{
+					"name": "Magically Null",
+					"text": "Animate statues are immune to magic, except magic that specifically targets objects (per GM's discretion)."
+				},
+				{
+					"name": "Sense Magic",
+					"text": "Animate statues can sense magical effects. It can identify who is and isn't a sorcerer by sight."
+				},
+				{
+					"name": "Tough",
+					"text": "Actions that target the animate statue must *exceed* (not just match) its Initiative."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Haymaker",
+					"text": "When the animate statue Attacks on its turn, the Attack targets all adventurers in its zone."
+				},
+				{
+					"name": "Grab",
+					"text": "The animate statue can Roughhouse to attempt to grab a foe. While grabbed, an adventurer is Rooted but moves with the animate statue. The animate statue can hold two adventurers at a time.\n\n- While grabbed, a foe can be squeezed (see below).\n- While grabbed, any Attacks that miss the animate statue automatically hit a grabbed foe instead."
+				},
+				{
+					"name": "Throw Stones",
+					"text": "The animate statue can Attack by lifting and throwing heavy things—suits of armor or dislodged stones or held foes. If a grabbed adventurer is thrown, they automatically take a Wound."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Squeeze",
+					"text": "Play a greater doom card to squeeze all grabbed adventurers, automatically dealing them a Wound."
+				}
+			]
+		},
+		{
+			"id": "bloodybones",
+			"name": "Bloodybones",
+			"theme": "sorcerous",
+			"threat": "minion",
+			"flavor": "Most adventurers would assume that a bloodybones is a type of undead. It would stand to reason: a red skeleton, covered in blood, threaded together with a simple circulatory system. It looks like a bloody jellyfish sitting on top of a corpse.\n\nIt isn't undead, however. A bloodybones is a type of ooze—just in the shape of a skeleton. Perhaps the ooze once absorbed parts of an actual skeleton? Nobody's sure. They're speechless and unthinking. Bloodybones slorp through the Underworld, reaching out with sticky fingers to grab and grasp adventurers.\n\nBy all known metrics, a bloodybones is immortal. It is invulnerable to every type of harm. Weapons squish through them. Fire crackles harmlessly along them. Withering spells simply produce the unpleasant smell of burning garbage.\n\nLuckily, they are very weak creatures. Each \"bone\" is like a condom full of spaghetti. They're soft and easily dealt with. Clever adventurers can stick them into iron maidens, push them into pits, or simply walk away from them at a brisk pace.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": "∞",
+			"defense": 0,
+			"statNote": "A bloodybones has no specific lesser or greater dooms. They use the standard list of actions during a Challenge.",
+			"likes": ["Screams of Pain", "Eating Nerve Clusters", "Uranium Deposits"],
+			"hates": ["Music", "Children's Laughter"],
+			"notes": [
+				{
+					"name": "Immune to Damage",
+					"text": "Bloodybones have infinite Health. They never actually take a Wound, no matter what is done to them."
+				},
+				{
+					"name": "Smell Magic",
+					"text": "Bloodybones can smell magical effects. They can identify who is and isn't a sorcerer by scent."
+				}
+			]
+		},
+		{
+			"id": "brain-spider",
+			"name": "Brain Spider",
+			"theme": "sorcerous",
+			"threat": "strategist",
+			"flavor": "Giant spiders with huge pulsing brains for bodies. They're gross as hell. They speak through headache-inducing telepathy.\n\nBrain spiders act like Saturday morning cartoon villains. They say things like, \"Nyehh, you'll never get out of my web this time!\" They tell people their plans so they feel smart. They make web-based puns.",
+			"attributes": { "swords": 1, "pentacles": 4, "cups": 2, "wands": 3 },
+			"health": 3,
+			"defense": 3,
+			"likes": ["Eating Brains", "Puzzles and Riddles (their hobbies)"],
+			"hates": ["Paladins", "Feeling Stupid"],
+			"notes": [
+				{
+					"name": "Squishy",
+					"text": "Brain spiders are immune to bludgeoning and smashing weapons, such as hammers and maces."
+				},
+				{
+					"name": "Telepathic",
+					"text": "The brain spider speaks telepathically. They can communicate with anyone, regardless of the languages they speak."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Great Leap",
+					"text": "The brain spider can jump 2 zones when Dashing. When doing so, they clear any intervening obstacles (avoiding pits, hazardous terrain, adventurers blocking the way, etc.)."
+				},
+				{
+					"name": "Wall Crawling",
+					"text": "The brain spider can effortlessly climb on walls. If a brain spider Moves onto a wall, it can avoid the adventurers and leave the area (unless the adventurers have some way to keep up)."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Tactics",
+					"text": "Discard a greater doom card to turn a standard Challenge Action into an interrupt."
+				},
+				{
+					"name": "Web",
+					"text": "When the brain spider Attacks, discard a greater doom card to cast a web on a single target. If successful, the Attack deals no damage but the target is completely wrapped in webs. They can free one limb at a time using the Recover action and are Rooted until all limbs have been freed."
+				}
+			]
+		},
+		{
+			"id": "cockatrice",
+			"name": "Cockatrice",
+			"theme": "beast",
+			"threat": "elite",
+			"flavor": "The cockatrice is a morphological anomaly that occurs when a chicken egg is hatched by a deaf adder. Its appearance is like a dire chicken, standing man's height. Its tail is a giant snake's body. As such, it appears to have two heads: one chicken and one serpent. Unbeknown to most, the snake head is the \"real\" head. The entire chicken body is the tail, and has no brain or sense organs whatsoever (but can still attack and fly!). It often looks like the cockatrice is walking backwards.\n\nWhen the cockatrice's true eyes focus their gaze on a living body, that body begins to rapidly calcify. With a few moments of intense concentration, a cockatrice can petrify anybody it looks at.\n\nThe cockatrice's blood reverses this process, but the blood must be very fresh. Cockatrices use this technique to store food. It can voluntarily weep blood, which changes a bit of the petrified creature back to flesh, which the cockatrice then eats.",
+			"attributes": { "swords": 4, "pentacles": 4, "cups": 4, "wands": 4 },
+			"health": 5,
+			"defense": 0,
+			"likes": ["Warmth and Heat", "Its Young", "Dire Rats (to eat)", "Shiny Objects (distracting)"],
+			"hates": ["Normal Chickens (jealous)"],
+			"notes": [
+				{
+					"name": "Gaze of the Cockatrice",
+					"text": "The cockatrice can focus its gaze at one creature once per round. This ability is automatic; cards are not spent to activate this ability. This ability has two phases.\n\n- Phase 1: The adventurer becomes Rooted. The adventurer may Recover from this effect.\n- Phase 2: If the cockatrice stares at a Rooted target, they are Cursed with petrification and turned to stone. Curses cannot be Recovered from.\n\nThe effect is not reflected by mirrors."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Tail Bite",
+					"text": "On a successful Attack, the target both takes a Wound and is Displaced."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Backwards Charge",
+					"text": "When the cockatrice Attacks, discard a greater doom card to Move up to 2 zones and cut at a foe with its spurs. If successful, the target is both Wounded and Tripped. The cockatrice can maintain its gaze and charge."
+				},
+				{
+					"name": "Flutter",
+					"text": "Play a greater doom card to automatically disengage from *all* adventurers and fly 1 zone away."
+				}
+			]
+		},
+		{
+			"id": "devil-gluttony",
+			"name": "Devil, Gluttony",
+			"theme": "spirit",
+			"threat": "strategist",
+			"flavor": "Spirits from the Wastes are called \"devils.\" They earn the title. They're real mean sons of bitches.\n\nThere are seven types of devils—one for each of the deadly sins. To a devil, a mortal creature committing a sin is delicious food. A fib is a snack. False witness is a feast. A gluttony devil is given here as an example. Wiggle the stats around to create devils of different types.\n\nDevils range from small to titanic, and are riots of corporeality. Gluttony devils are on the smaller scale and covered with mouths. They are nothing but mouths. Their joints—elbows, knees, wrists, etc.—hide hungry little mouths. Their stomachs are spheres of annihilation.\n\nA gluttony devil will offer the adventurers a bargain: for the rest of their life, he'll bring them whatever food they want to eat. This means the adventurers might never have to care about food again! In exchange, when they're dead, they give the devil permission to eat them. What do they care? They're dead!\n\nIf an adventurer agrees, the devil will present a contract written in shit on a hog's skin. The contract is written in an archaic version of Vetus; only Loremasters can properly read it. (Some loopholes in the contract: the contracted must eat all of what the devil brings them; the contracted must never give away the devil-brought food; being devoured means that the adventurer can never be brought back from Death's Door, etc.)",
+			"attributes": { "swords": 1, "pentacles": 5, "cups": 2, "wands": 3 },
+			"health": 3,
+			"defense": 0,
+			"likes": ["To Make Contracts", "To Eat People", "To Turn People Into Cannibals"],
+			"hates": ["Vegans", "Clean Water"],
+			"notes": [
+				{
+					"name": "Endless Gullet",
+					"text": "Devils cannot be poisoned. They are immune to the Poison Blood of seablooded orcs."
+				},
+				{
+					"name": "Untouched by Hot Iron",
+					"text": "Devils are immune to any crafted or forged weapon. They are still vulnerable to natural dangers like fire, falls, and drowning. They can even be bashed by a branch or stone."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Bite",
+					"text": "The devil can Roughhouse to attempt to bite a foe. While bitten, an adventurer is Rooted but moves with the devil. The devil can bite up to four adventurers at a time.\n\n- While bitten, a foe can be swallowed (see below).\n- While bitten, any Attacks that miss the devil *automatically* hit a bitten foe instead."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Fiendish Retreat",
+					"text": "Discard a greater doom card to automatically disengage from an adventurer. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Stinking Cloud",
+					"text": "Play a greater doom card to fart out a Stinking Cloud into their zone or 1 zone away, per the spell in Appendix A. All other creatures who begin the round in the cloud become Stunned and draw 1 fewer card at the beginning of the round."
+				},
+				{
+					"name": "Swallow",
+					"text": "If the devil is currently holding someone in its mouth, play a greater doom card to swallow the victim. A victim is held in an extradimensional space until they fall into the devil's stomach. Defeating the devil makes them automatically barf up all swallowed creatures.\n\n- Victims can use the Test Fate action to test Swords while swallowed.\n- If the victim succeeds 3 times, they make the devil vomit them up.\n- If the victim fails 3 times, they fall into the devil's stomach and are annihilated.\n- Great successes count as 2 successes and great failures count as 2 failures for this purpose.\n- Smart ideas (like feeding the devil something blessed by the Welkin) automatically make them barf up all swallowed creatures."
+				}
+			]
+		},
+		{
+			"id": "dragon",
+			"name": "Dragon",
+			"theme": "beast",
+			"threat": "elite",
+			"flavor": "Dragons are enigmatic creatures. It's clear they're intelligent. They have been observed tunneling sections of the Underworld, designing and resetting traps, and hoarding treasures. However, nobody has successfully communicated with one. No one knows why they do what they do. What do they want?\n\nDragons are always terrifying creatures. Seeing a dragon for the first time is an awe-inspiring experience. The feeling of seeing a thing so alien in scale and scope, a thing so ancient; people call it \"the dragonfear.\" Even veteran men-at-arms quail when this leftover from the deepest regions of time comes before them.\n\nIts presence is an assault. Its smell is that of bat guano: a dry ammonia scent. It rumbles to itself, a sound like low thunder that you feel more than hear. Heat, like summer on an asphalt road, radiates from it.\n\nFrom tip to tail, the thing is enormous, scaled, and grotesquely bulbous. When it moves, it undulates like a snake, even though it has four stout tree-like limbs. Horns arc from its snout, down its back, and end on its pendulous tail.\n\nThen, you see its eye, covered in its nictitating membrane. The awful yellow, unlike any color you've seen before. Then the eye opens…",
+			"attributes": { "swords": 6, "pentacles": 3, "cups": 3, "wands": 3 },
+			"health": 5,
+			"defense": 10,
+			"likes": ["Fire", "Gold", "Royalty (nobody knows why)", "Traps"],
+			"hates": ["Cold (cold blooded)", "Panthers (natural enemies)"],
+			"notes": [
+				{
+					"name": "Huge",
+					"text": "Practically speaking, dragons are so large they are immune to being Roughhoused, unless the adventurer has some way to affect a creature of giant size."
+				},
+				{
+					"name": "Tough",
+					"text": "Actions that target the dragon must *exceed* (not just match) its Initiative."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Claw",
+					"text": "On a successful Attack, if the dragon's total Attack value is double the Initiative of the target, deal 2 Wounds."
+				},
+				{
+					"name": "Flight",
+					"text": "If they have enough space, the dragon can fly as a Move action. While flying, they lazily circle through the air. This keeps the dragon out of melee engagement, though they're still vulnerable to ranged weapons.\n\n- While flying, the dragon can make a fly-by attack. On the same turn as it makes a fly-by attack, the dragon can be targeted by melee attacks. This does not cause the dragon to become engaged."
+				},
+				{
+					"name": "Tail Whip",
+					"text": "The dragon's Attack targets *all* adventurers in its zone."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Armored Scales",
+					"text": "The dragon can play a greater doom card as their Initiative."
+				},
+				{
+					"name": "Breath of Fire",
+					"text": "When the dragon Attacks, discard a greater doom card to breathe a gout of flame up to 1 zone away.\n\n- If the Attack is successful against a target wearing metal armor, it deals Critical damage as the armor is super-heated to a deadly degree.\n- If the Attack is successful against a target not wearing metal armor, it deals 3 Wounds."
+				},
+				{
+					"name": "Overwhelming Bite",
+					"text": "The dragon can play a greater doom card as an Attack action. If successful, the target takes a Wound and is *also* either Disarmed or Tripped (GM's choice)."
+				}
+			]
+		},
+		{
+			"id": "face-rat",
+			"name": "Face Rat",
+			"theme": "beast",
+			"threat": "minion",
+			"flavor": "Imagine a huge rat. Now give it a human face. Now imagine that face as a blank canvas of flesh.\n\nNow imagine the rat biting you. Now imagine that it has your face.\n\nThat's what a face rat is. It's a bad rat that steals your face.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 2,
+			"defense": 0,
+			"likes": ["Its Mate", "Its Weird Pink Babies"],
+			"hates": ["Fire"],
+			"notes": [
+				{
+					"name": "Scurry",
+					"text": "On its turn, the face rat can Move 1 zone without spending a card."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Bad Little Hands",
+					"text": "The face rat can Roughhouse to steal one of the target's belt items. If successful, it holds it in its bad little hands. It can't use the item, but might scurry away with it or break it if it's fragile. You have to Disarm or kill the face rat to get the item back."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Infectious Disease",
+					"text": "When the face rat Attacks, discard a greater doom card to give a poisonous bite. If successful, the victim contracts the face rat disease affliction in addition to a Wound. See the Face Rat Disease sidebar."
+				},
+				{
+					"name": "Steal Face",
+					"text": "When the face rat Attacks, discard a greater doom card to attempt to steal the target's face. If successful, the face rat Blinds and Silences the adventurer instead of dealing a Wound. The rat now permanently has a face identical to the victim. The victim must Recover from the Blind and Silence effects separately."
+				}
+			],
+			"sidebars": [
+				{
+					"title": "Face Rat Disease (Affliction)",
+					"body": "**Stage 1**: Your face becomes a featureless mask. You gain disfavor on tests of Wands to influence others. Requires 1 charge to cure.\n\n**Stage 2**: Skin grows over your nose and mouth. You are Silenced. Requires 1 charge to cure.\n\n**Stage 3**: Skin grows over your eyes. You are Blind. Requires 2 charges to cure."
+				}
+			]
+		},
+		{
+			"id": "fungoid",
+			"name": "Fungoid",
+			"theme": "elemental",
+			"threat": "strategist",
+			"flavor": "Strange mushrooms bloom in the Underworld. Some fungi are poisonous. Some fungi are harmless and delicious. Some are poisonous in an intoxicating way. A rare species of fungi appears to be intelligent.\n\nAt least, these fungi replicate intelligence by way of mimicry. Perhaps they are just a species of mimic? Or perhaps mimics are just another type of fungoid?\n\nIn any event, fungoids are shambling, seven-foot tall humanoid mushrooms that possess brain-fucking spores. Fungoids can make people see things that aren't there—even taking on the forms of their companions.",
+			"attributes": { "swords": 4, "pentacles": 1, "cups": 2, "wands": 3 },
+			"health": 3,
+			"defense": 3,
+			"likes": ["Learning About Mortals", "Dampness", "Rain", "Tearing Things Up (obsessively shreds paper, sticks, the edges of their fingernails, etc.)"],
+			"hates": ["Open Spaces", "Trespassers"],
+			"notes": [
+				{
+					"name": "Brain Spores",
+					"text": "Every time an adventurer successfully Attacks a fungoid in melee, they *automatically* lose 1 lore bid as a result of the mind-boggling spores the fungoid bleeds."
+				},
+				{
+					"name": "Poison Immunity",
+					"text": "Fungoids cannot be poisoned."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Choking Spores",
+					"text": "Play a lesser doom card to Silence all creatures in the same zone as the fungoid. An adventurer can Recover to clear the Silenced effect."
+				},
+				{
+					"name": "Minor Illusion",
+					"text": "Play a lesser doom card to create an illusion of any non-living object. The illusion is merely an image—a hologram—and has no weight or substance, creates no sound, no smells, etc."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Fungal Regeneration",
+					"text": "Discard a greater doom card to Heal 1 Wound. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Perfect Imitation",
+					"text": "Play a greater doom card to create the illusion that the fungoid is a perfect doppelganger of any person. If they are in the same zone as the original, it is impossible for an outside observer to tell who the original is. Any actions that would target the fungoid have a 50% chance of affecting the original instead. This illusion ends when the fungoid takes a Wound."
+				}
+			]
+		},
+		{
+			"id": "griffin",
+			"name": "Griffin",
+			"theme": "beast",
+			"threat": "brute",
+			"flavor": "Nobody knew griffins were real until the opening of the Underworld. As near as humans knew, they had dreamed up the answer to the question, \"What if a lion had an eagle's head and eagle's wings and a serpent as a tail?\" Then, they explored the Underworld and found that these things were real.\n\nLike any invasive species, griffins are a nuisance. They have no ecological niche that they really fit into. They're like kudzu or Asiatic carp. They swarm. Luckily, griffins are extremely good sport, and nobles love to hunt them.\n\nGriffins understand Chivalric but cannot speak.",
+			"attributes": { "swords": 4, "pentacles": 3, "cups": 1, "wands": 1 },
+			"health": 7,
+			"defense": 0,
+			"likes": ["Compliments (it's vain)", "Its Mate", "Its Nest", "Other Birds (considers itself king of birds)"],
+			"hates": ["Fire", "Harpies", "Lions (rivals)"],
+			"notes": [
+				{
+					"name": "Fleet",
+					"text": "On their turn, the griffin can Move 2 zones without spending a card."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Flight",
+					"text": "If they have enough space, the griffin can fly as a Move action. While flying, they lazily circle through the air. This keeps the griffin out of melee engagement, though they're still vulnerable to ranged weapons.\n\n- While flying, the griffin can make a fly-by attack. On the same turn as it makes a fly-by attack, the griffin can be targeted by melee attacks. This does not cause the griffin to become engaged."
+				},
+				{
+					"name": "Talons",
+					"text": "On a successful Attack, if the griffin's total Attack value is double the Initiative of the target, deal 2 Wounds."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Grab",
+					"text": "When you Roughhouse, discard a greater doom card to attempt to grab the target. If successful, the target is Rooted and moves with the griffin.\n\n- If the griffin is flying (or if the grab is done during a fly-by attack), it can choose to drop its victim on a subsequent turn as a free action. The victim suffers falling damage based on the height of the room.\n- The target can Recover from this effect as normal, but will suffer falling damage if they use this action while the griffin is flying.\n- Any Attacks that miss the griffin automatically hit the grabbed victim instead."
+				}
+			]
+		},
+		{
+			"id": "harpy",
+			"name": "Harpy",
+			"theme": "elemental",
+			"threat": "minion",
+			"flavor": "Half-woman and half-vulture, harpies are savage, pitiless, and disgusting. Their woman halves are devoid of anything resembling empathy or mercy. They delight in cruelty, especially mean jokes. They have a very developed sense of schadenfreude. Their bird-halves are caked in filth, blood, and excrement. Their smell is terrible.\n\nA harpy rarely uses weapons or armor. They prefer to avoid direct combat through flight. When pressed, they can attack with their sharp talons. A harpy will always prefer to gang up on a single target with her sisters rather than engage in a fair fight.",
+			"attributes": { "swords": 2, "pentacles": 2, "cups": 0, "wands": 0 },
+			"health": 3,
+			"defense": 0,
+			"likes": ["Cruel Jokes", "Raw and Rotten Food", "Shiny Treasure (not necessarily good treasure)"],
+			"hates": ["Clean Water", "Beautiful Women (attacks them first)", "Jokes at Their Own Expense"],
+			"notes": [
+				{
+					"name": "Flutter",
+					"text": "Harpies Move 1 zone without spending a card *each* turn."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Flight",
+					"text": "If they have enough space, the harpy can fly as a Move action. While flying, they lazily circle through the air. This keeps the harpy out of melee engagement, though they're still vulnerable to ranged weapons.\n\n- While flying, the harpy can make a fly-by attack. On the same turn as it makes a fly-by attack, the harpy can be targeted by melee attacks. This does not cause the harpy to become engaged."
+				},
+				{
+					"name": "Pelt with Stones",
+					"text": "Play any card to pick up a piece of scenery (firewood, crumbling stones, etc.). These can be thrown while flying as a missile Attack."
+				},
+				{
+					"name": "Pull Into the Air",
+					"text": "The harpy may attempt to pull an adventurer into the air and drop them; on its turn, the harpy adds its Pentacles to this action's total value. This deals Piercing damage. The harpy is engaged by this action."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Shriek",
+					"text": "Play a greater doom card to let out an earsplitting wail. All non-harpies in the same zone are Stunned. Other creatures in the area will be drawn to this sound."
+				}
+			]
+		},
+		{
+			"id": "imp",
+			"name": "Imp",
+			"theme": "spirit",
+			"threat": "minion",
+			"flavor": "Imps are the worst. And they're fucking everywhere. Every section of the Underworld has its own special, shitty little subspecies. Forest imps dangle down from trees. Castle imps disassemble things that are made. Ink imps leave little black footprints everywhere and ruin your clothes.\n\nImps are infuriating to fight. They bounce out of the way of your sword blow and push you into your ally. They pick up your bomb and throw it back at you. They pour water on your torch. They shit in your eyes and trip you.\n\nEven so, they are pretty easy to kill. However, they reproduce from violence. Cut an imp in half and it'll regrow into two imps. For imps, a battle is like sex. A war is like an orgy. They love it!",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 2,
+			"defense": 0,
+			"likes": ["Weird Stinks"],
+			"hates": ["Iron", "Cats", "Clean Water"],
+			"notes": [
+				{
+					"name": "Wimps",
+					"text": "Imps always play the lowest card for their Initiative."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Vomit",
+					"text": "When the imp Attacks, it can cram its fingers down its throat and puke pure acid. On a successful Attack, it deals no damage but Notches one of the target's items."
+				},
+				{
+					"name": "Piss and Shit",
+					"text": "When the imp Roughhouses, it might unload its watery bowels. On a successful Roughhouse, the target is also Stressed."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Bad Luck Machine",
+					"text": "Discard a greater doom card as an interrupt. Any action that targeted the imp now targets another creature in the same zone (even the adventurer doing the action). The action now has disfavor, and is applied to the new target's Initiative and resolved as normal."
+				}
+			],
+			"sidebars": [
+				{
+					"title": "What do these imps want?",
+					"body": "Look at the top card of the minor arcana discard pile.\n\n- **Swords**: They desire meat. Flesh.\n- **Pentacles**: They want to get the shiniest thing. Then they want to throw it into a deep pit.\n- **Cups**: They want something to keep as a pet. (Woe for whatever they decide to \"adopt.\")\n- **Wands**: Blood. They crave the blood of sorcerers."
+				}
+			]
+		},
+		{
+			"id": "jinn",
+			"name": "Jinn",
+			"theme": "spirit",
+			"threat": "elite",
+			"flavor": "Magical taxonomies name spirits from the Weird \"jinni.\" Jinni are personified thoughtforms, embodying concepts, emotions, and sciences. No one in the universe is as wise as a jinn on their chosen subject. Usually, a jinn looks like a weird dude and speaks Tylwyth.\n\n(Sherlock Holmes is probably a good example of a jinn. Super smart about one subject. Stupid idiot about everything else. Looks like a weird dude.)\n\nIf you can find a way to please a jinn, they have absolutely the best advice about a niche subject. For example, a jinn might embody \"Warcraft,\" \"Revelry,\" \"Medicine,\" or \"Grammar.\" Find the Jinn of Warcraft to learn what your enemies will do next, what tactics you should use to defeat them, and get hot tips about chess.",
+			"attributes": { "swords": 4, "pentacles": 4, "cups": 4, "wands": 4 },
+			"health": 7,
+			"defense": 0,
+			"likes": ["Flattery", "Drugs", "Rare Books", "Human's Dreams"],
+			"hates": ["Iron", "Rudeness", "Violence"],
+			"notes": [
+				{
+					"name": "Second Sight",
+					"text": "Jinni can see Shrouded creatures and instantly identify magical effects."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Body of Smokeless Fire",
+					"text": "Discard any card to turn tangible or intangible. While intangible, physical objects pass harmlessly through the jinn. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Invisible",
+					"text": "Play any card to become Shrouded. While Shrouded, the jinn is impossible to see without the aid of magic or special senses. If the jinn stays still and stays quiet, they cannot be deliberately targeted by creatures that can't see them. This effect ends if the jinn interacts with the physical world (making an attack, opening a door, etc.)."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Possess",
+					"text": "When the jinn Attacks, discard a greater doom card to attempt to command the target instead of dealing damage. If successful, the target is Controlled—they immediately perform the commanded action. The total value for the Controlled action is equal to the value of the lesser doom card used to Attack."
+				}
+			]
+		},
+		{
+			"id": "kelpie",
+			"name": "Kelpie",
+			"theme": "elemental",
+			"threat": "brute",
+			"flavor": "Kelpies are like aquatic horses. In shape, they look mostly like terrestrial horses, except they have fish-like eyes, webbed feet, whale-like tails, and water weeds woven into their manes.\n\nThere are many legends about kelpies drowning unwitting people who ride them as they suddenly bolt and plunge into the ocean. They're all true. Kelpies love drowning people! Eating waterlogged people is their favorite food. They resent every fish they eat to supplement their diet.\n\nKelpies understand Tylwyth but cannot speak.",
+			"attributes": { "swords": 4, "pentacles": 6, "cups": 1, "wands": 1 },
+			"health": 5,
+			"defense": 0,
+			"likes": ["Young Women (to eat)", "Horses (herd instincts)"],
+			"hates": ["Fire", "Silver"],
+			"notes": [
+				{
+					"name": "Bonding Back",
+					"text": "Kelpies secrete a glue-like ooze from their manes. Anybody who attempts to ride a kelpie (or even touches their mane) is automatically Rooted to their back.\n\n- An adventurer can Recover to clear this effect.\n- If an adventurer is Rooted to its back, the kelpie can plunge into the water. An adventurer who starts their turn underwater suffers 1 Piercing damage.\n- An adventurer wearing metal armor who Recovers underwater cannot swim (but can be rescued)."
+				},
+				{
+					"name": "Threshold",
+					"text": "The kelpie does not take any damage until they are dealt 2 Wounds in a single turn *or* takes damage from a silver weapon. Afterwards, they take damage normally."
+				},
+				{
+					"name": "Water Horse",
+					"text": "Kelpies can both swim like a fish and walk on the surface of the water. If in the water, kelpies can Move 1 zone without spending a card *each* turn."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Trample",
+					"text": "On an unsuccessful Attack, the kelpie may use their Attack action against a second target in the same zone."
+				}
+			]
+		},
+		{
+			"id": "lich-yellow-king",
+			"name": "Lich, The Yellow King",
+			"theme": "undead",
+			"threat": "dungeon-lord",
+			"flavor": "The word *lich* means \"corpse,\" though it is sometimes more polite to call them \"flesh-body bodhisattvas\" to their face. Regardless, liches are corpses that remain animate and passably sentient long after death.\n\nLiches are miserable creatures. We're not playing the tired refrain that \"Living forever is a curse and a burden.\" It isn't. Life is usually desirable. Life unending is a desirable thing. But lichdom is not. Lichdom is not eternal life; it is eternal death.\n\nLichdom is only possible for the truly mad and the truly obsessed. One does not—cannot—become a lich if they have good intentions sadly bound by brief mortal constraints. To become a lich, one must have an obsession that they cannot give up, not even in death: some love, some vengeance, some task that must persist, long after their muscles give out, their skin is torn away, and their bones crumble into dirt.\n\nMany have attempted to attain a state of lichdom. Few have succeeded. The Yellow King is one who has entered these blasphemed ranks. The Yellow King's name is cursed forever. He is synonymous with evil and sorrow.\n\nThe Yellow King is obsessed with unrequited love. He speaks in simpering tones about his one true love Kloë, their short affair, and their tragic parting. In actuality, this lich is a big misogynistic moron.",
+			"attributes": { "swords": 3, "pentacles": 3, "cups": 3, "wands": 6 },
+			"likes": ["Rambling About Unrequited Love", "Romantic Poetry", "Performative Weeping", "Magical Theory"],
+			"hates": ["Being Interrupted As He Raves", "Strong Acids (like wine)", "Puns"],
+			"specialRules": "When defeated, a lich's body crumbles away until a single impenetrable, invulnerable crystal skull remains. The crystal skull will eventually regrow a body unless the lich's phylactery is destroyed.\n\nA lich's phylactery is the key to their immortality. The phylactery can be anything, as long as it's an object of complete obsession for the lich. It can be an egg, a shell, or a broken dagger. It's almost always transitory and vulnerable—that's why the lich is obsessed with it. The lich almost always has their phylactery nearby.\n\nLastly, liches usually have powerful items they can employ during battle—a crown of archwood, in the case of the Yellow King. Taking these away will deprive a lich of power, but they can rarely be used by someone else.",
+			"pools": [
+				{
+					"id": "phylactery",
+					"name": "Phylactery",
+					"health": 1,
+					"defense": 0,
+					"text": "The Yellow King's phylactery is a love letter from Kloë, filed away on a shelf of seemingly identical letters in his chambers. The Yellow King will always regrow his body unless this phylactery is destroyed."
+				},
+				{
+					"id": "crown-of-archwood",
+					"name": "Crown of Archwood",
+					"health": 1,
+					"defense": 4,
+					"text": "The Yellow King wears a crown of archwood that allows him to use his magical powers without having components in hand.\n\nNotching the crown deals 2 Wounds to the crown. Destroying it disables the crown entirely. Disarming the crown knocks it from the Yellow King's head, denying him these abilities until he Recovers the crown.\n\nWhile wearing the crown, an adventurer with the Gramarye talent can make magical attacks as if they were wielding an archwood wand. Adventurers cannot use the Spite Alone Holds Me Aloft or Day of Tears and Mourning abilities. The crown can be sold for 1,000g in the City.\n\nThe Yellow King has the following powers while wearing the crown.",
+					"notes": [
+						{
+							"name": "Spite Alone Holds Me Aloft",
+							"text": "The Yellow King can levitate as a miscellaneous action, hovering in the air for as long as he wishes. While he hovers in the upper reaches of the room, the Yellow King can only be struck by ranged attacks."
+						}
+					],
+					"lesserDooms": [
+						{
+							"name": "If the Poison Won't Take You My Dogs Will",
+							"text": "The Yellow King makes Attacks with arcane energy up to one zone away. He adds his Wands attribute (instead of Swords) to these Attacks on his turn. The Yellow King is never engaged by using this ability."
+						}
+					],
+					"greaterDooms": [
+						{
+							"name": "Day of Tears and Mourning",
+							"text": "While wearing the crown, the Yellow King can cast any spells from Appendix A without components. Cast spells by playing a lesser doom Speak Incantations action and discarding a greater doom card instead of spending Resolve. Each additional greater doom card discarded counts as an additional +1 Resolve."
+						}
+					]
+				},
+				{
+					"id": "body",
+					"name": "Body",
+					"health": 5,
+					"defense": 9,
+					"text": "If defeated, the Yellow King will be reduced to an invulnerable crystal skull that will eventually regrow a body as long as his phylactery is intact. While his body still lives, he has the following abilities.",
+					"notes": [
+						{
+							"name": "Breathless and Undreaming",
+							"text": "The Yellow King ignores any effects related to living processes. He does not breathe. He does not sleep. He cannot be poisoned. He is immune to the Poison Blood of seablooded orcs."
+						},
+						{
+							"name": "Second Sight",
+							"text": "The Yellow King permanently benefits from the effects of second sight. He can see and identify magical effects and perceive Shrouded creatures."
+						},
+						{
+							"name": "Rotting Brains",
+							"text": "The Yellow King ignores any attempts to manipulate his mind. He is immune to the Inspire effect. He cannot see illusions."
+						}
+					],
+					"lesserDooms": [
+						{
+							"name": "I Am the Fucking Death Dealer/I Am the Butcher of the World",
+							"text": "The Yellow King manifests and strikes with a weapon of hate—a sword of blood, a whip of tears, etc. Treat as a melee Attack that deals Piercing damage."
+						},
+						{
+							"name": "May Failure Be Your Noose",
+							"text": "If an adventurer fails to hit the Yellow King's Initiative, the Yellow King may immediately play a card to make any standard Challenge Action against that adventurer. This action does not count towards the one card per turn limit."
+						},
+						{
+							"name": "Sorrow! Sorrow! Sorrow!",
+							"text": "Role-play a few sentences about unrequited love. Play a lesser doom card and compare its value to the Initiative of each character who can hear the Yellow King. If the Yellow King does this on his turn, he adds his Wands to the total value. Characters he succeeds against suffer the Stun effect."
+						}
+					],
+					"greaterDooms": [
+						{
+							"name": "Do You Doubt Me, Traitor?",
+							"text": "When the Yellow King takes damage, discard a greater doom card to force the attacking player to cross something off their character sheet—a talent, a motif, their name, a pack slot, anything. Put a big X through it. The adventurer regains the crossed-out part of the character sheet at the end of their next Camp Phase. This action does not count towards the one card per turn limit."
+						},
+						{
+							"name": "Faithful Servant, Tender Companion",
+							"text": "Play a greater doom card to create a temporary clone of any dead person from the guild's past. The clone knows everything they knew in life and has HD 1/0."
+						},
+						{
+							"name": "Soft Is Their Throat, Soft Is Their Skull/Fragrant Is My Many Flower'd Crown",
+							"text": "When the Yellow King Attacks, discard a greater doom card to attempt to enchant a single target. If successful, the target is Controlled to accomplish some insane task. Example tasks:\n\n- Protect something because your heart has been put inside of it.\n- You aren't wearing anything. Cover up!\n- Make a meal for your baby. Your baby likes meat."
+						}
+					]
+				}
+			],
+			"sidebars": [
+				{
+					"title": "Lyric incantations",
+					"body": "The names of the lich's dooms are borrowed from the song titles of an artist called Lingua Ignota. Use them as incantations you speak while using the abilities. The effect is compelling at the table."
+				}
+			]
+		},
+		{
+			"id": "lion",
+			"name": "Lion",
+			"theme": "beast",
+			"threat": "strategist",
+			"flavor": "Medieval lions are pretty different from the creatures that you or I know. They have allegorical magical powers. They are literally the king of beasts.\n\nA lion and lioness mate face to face. They produce five cubs in their first litter, four cubs next year, then three, and so on. After their sixth litter, the lions become sterile. (A lion can also mate with a great cat called a pard. The offspring of this union is a leopard.)\n\nLion cubs are born dead. After the third day of their birth, the parents bring them to life by roaring.\n\nA lion is a noble creature. It will never kill anything that prostrates itself to it and asks for mercy.",
+			"attributes": { "swords": 6, "pentacles": 2, "cups": 1, "wands": 3 },
+			"health": 3,
+			"defense": 3,
+			"likes": ["Its Mate", "Its Young", "Fresh Ape Meat"],
+			"hates": ["Sound of Creaking Cart Wheels", "White Chickens", "Fire"],
+			"notes": [
+				{
+					"name": "Fleet",
+					"text": "On its turn, the lion can Move 1 zone without spending a card."
+				},
+				{
+					"name": "Untrackable",
+					"text": "If the lion knows it is being hunted, it will cover its tracks with its tail. This perfectly prevents all efforts to track it."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Bite",
+					"text": "On a successful Attack, the target is *also* either Disarmed or Tripped (GM's choice)."
+				},
+				{
+					"name": "Claw",
+					"text": "On a successful Attack, if the lion's total Attack value is double the Initiative of the target, deal 2 Wounds."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Cautious Retreat",
+					"text": "Discard a greater doom card to automatically disengage from a single adventurer. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Roar of Life",
+					"text": "If a creature dies without sin, a lion's roar can bring them back to life.\n\n- Usually only children are without sin, but maybe an adult could be sin-less if they've just gotten cleansed by a sin-eater or god or something and haven't had time to have any covetous thoughts."
+				}
+			]
+		},
+		{
+			"id": "mimic",
+			"name": "Mimic",
+			"theme": "sorcerous",
+			"threat": "brute",
+			"flavor": "Sometimes the Animate Object spell lingers too long. Sometimes it's used on the same object too often. Sometimes the spell is interrupted and maleficence occurs. When these things happen, mimics are born.\n\nMimics are objects that have accidentally become alive. In general, they hate this. No loving creator god shaped their biological processes. Their insides are riddled with mistakes: frayed nerves, benign tumors, and too many organs.\n\nA mimic at rest looks exactly like a normal object—a chest, a broom, a cache of coins, a book. When it's disturbed, it roars to life in a riot of teeth, eyes, and grabbing pseudopods. Like Cookie Monster, they crush up their food without swallowing. Then it goes back to sleep and resumes its perfect camouflage as an item.\n\nIf an adventurer tries to interact with a camouflaged mimic, they test Cups. On a success, they pull back before the mimic wakes up. On a failure, they take a Piercing wound as the mimic ambushes them. A Challenge proceeds if the guild continues to engage with the mimic.",
+			"attributes": { "swords": 4, "pentacles": 0, "cups": 1, "wands": 1 },
+			"health": 2,
+			"defense": 6,
+			"likes": ["Sleeping"],
+			"hates": ["Itself"],
+			"notes": [
+				{
+					"name": "Construct",
+					"text": "The mimic treats Notches as 2 Wounds."
+				},
+				{
+					"name": "Tough",
+					"text": "Actions that target mimics must *exceed* (not just match) their Initiative."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Harden",
+					"text": "Discard a greater doom card to become immune to the last type of weapon that Wounded the mimic. It can only be immune to one weapon type at a time. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Riot of Teeth",
+					"text": "When the mimic Attacks, discard a greater doom card to gnash with its riot of teeth. If successful, the Attack deals Piercing damage."
+				}
+			]
+		},
+		{
+			"id": "nymph",
+			"name": "Nymph",
+			"theme": "elemental",
+			"threat": "strategist",
+			"flavor": "Elemental manifestations sometimes take on a beautiful feminine aspect. These are called \"nymphs.\" Nymphs are given more specific names based on the element they live in. Nymphs that live in trees are called dryads, nymphs that live in caves on a mountain are called oreads, and so on.\n\nNymphs do not intend to be dangerous, but often are. It's not that nymphs hate mortals. They actually might like them. But nymphs don't fully understand or appreciate how mortals work. More than one nymph has come back to their grotto and muttered \"Oh, right. You eat food and breathe air.\"\n\nNymphs can sometimes be bribed to aid travelers. They sometimes know the location of lost or hidden treasures within their domains.\n\nIf threatened, a nymph will run and hide in her elemental home.",
+			"attributes": { "swords": 1, "pentacles": 3, "cups": 2, "wands": 4 },
+			"health": 3,
+			"defense": 0,
+			"likes": ["Music", "Wine", "Gossip", "Gifts (of almost any sort)", "Clams, Crabs, Cockles, Cowries"],
+			"hates": ["Being Read Poetry", "\"Drama\"", "Sour Tastes"],
+			"notes": [
+				{
+					"name": "Elemental Immunity",
+					"text": "A nymph takes no damage from their chosen element: a nereid cannot drown, a dryad shrugs off weapons made of wood, etc."
+				},
+				{
+					"name": "Elemental Meld",
+					"text": "A nymph can become immaterial and step into their elemental home as a miscellaneous action. An oread steps directly into a rock. An aurea merges into a cloud. A dryad becomes one with her tree."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Bewitching Beauty",
+					"text": "Discard any card to automatically Displace all adventurers who can see the nymph. The victim moves towards the nymph in the most direct manner possible. An adventurer can spend 1 Resolve to resist this effect.\n\n- If piloting a ship, they immediately pilot it towards the nymph. If standing on deck, they will leap into the water and start swimming. If the nymph is over a big pit, they will walk headlong into the pit.\n- If engaged, this prompts damage from those the adventurer is engaged with as normal."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Expeditious Retreat",
+					"text": "Discard a greater doom card to automatically disengage from *all* adventurers. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Sleep Song",
+					"text": "Speak Incantations and discard a greater doom card to attempt to lull an adventurer to sleep. If the Speak Incantations action is successful, the target takes the Knockout effect and can only be awoken with a sharp slap."
+				}
+			],
+			"sidebars": [
+				{
+					"title": "What do these nymphs want?",
+					"body": "Look at the top card of the minor arcana discard pile.\n\n- **Swords:** \"Which one of us is the fairest? If you choose me, I'll give you some treasure I've found!\"\n- **Pentacles:** \"What are the latest fashions among the ladies of the City? We wish to dress like humans!\"\n- **Cups:** \"We're thirsty! Do you have any wine to drink? We only like sweet wine!\"\n- **Wands:** \"We're seeking new songs. Can you teach us one? No, no, we've heard that one before!\""
+				}
+			]
+		},
+		{
+			"id": "ogre",
+			"name": "Ogre",
+			"theme": "sorcerous",
+			"threat": "brute",
+			"flavor": "\"Ogre\" isn't a species—it's a curse.\n\nWhen you wrong somebody and they curse at you, it doesn't do a lot. But when you really wrong a lot of people, and they all curse at you, you can feel it. Each curse is like a bee sting, making flesh swell.\n\nOgres are people who have done a lot of people a lot of wrong. They're swollen with curses. Their heads are warty, tuberous growths containing very dim, very mean thoughts. Their huge, grinning mouths are full of grinding, stinking black teeth. Their skin is so swollen with cutaneous layers that they can barely feel the outside world. They are huge.\n\nOgres tend to carry large, simple weapons, such as uprooted trees, battering rams, and gibbet cages.",
+			"attributes": { "swords": 6, "pentacles": 4, "cups": 1, "wands": 1 },
+			"health": 3,
+			"defense": 5,
+			"likes": ["Eating (anything)", "Hurting Puppies", "Seeing Children Cry"],
+			"hates": ["Elves (will always attack them first)", "Laughter (think people are laughing at them)"],
+			"notes": [
+				{
+					"name": "Eat-Eat-Eat",
+					"text": "The ogre can play any card to eat an object they are holding. Eaten objects are Destroyed.\n\n- Ogres can eat damn near anything. Given time, the ogre can chew through stone doors or iron bars. Nothing they eat harms them in any way. Ogres cannot be poisoned and are immune to the Poison Blood of seablooded orcs. They can even swallow potent artifacts like cursed magic rings without ill effect."
+				},
+				{
+					"name": "That Hideous Strength",
+					"text": "Ogres have strength to rival that of trolls. The ogre can play any card to lift a portcullis, smash down a door, pull a stone from a wall, or perform other incredible feats of strength."
+				},
+				{
+					"name": "Tough",
+					"text": "Actions targeting ogres must *exceed* (not just match) their Initiative."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Sweeping Club",
+					"text": "When the ogre Attacks on its turn, the Attack targets all adventurers in its zone."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Bully",
+					"text": "Role-play saying something mean and nasty about a particular adventurer. Discard a greater doom card to force that adventurer to erase the charge on one charged Bond."
+				},
+				{
+					"name": "Overwhelming Attack",
+					"text": "The ogre can play a greater doom as an Attack action."
+				}
+			]
+		},
+		{
+			"id": "questing-beast",
+			"name": "Questing Beast",
+			"theme": "beast",
+			"threat": "strategist",
+			"flavor": "Like the griffin, the questing beast is a heraldic beast—thought to be fictional until the appearance of the Underworld. It resembles a long, serpentine crocodile in shape but has a furry, spotted hide like a leopard. Its cry sounds like thirty hunting hounds yipping and barking.\n\nA questing beast is so named because it exists only to be hunted. It's a coy little fellow that waits just out of bow shot. If you lose sight of it, it retraces its steps and peeps at you from around a tree. It carefully places its fewmets so you can find them.\n\nOf course, if you're chasing this thing through the Underworld, the questing beast is making a huge racket. Its barking draws the attention of creatures a few rooms away. It intentionally triggers traps as it runs past.",
+			"attributes": { "swords": 1, "pentacles": 4, "cups": 2, "wands": 3 },
+			"health": 3,
+			"defense": 3,
+			"likes": ["Bright Colors", "Fish (for food)", "Horses (thinks they're cute)", "Hunting Horns"],
+			"hates": ["Falcons (jealous of their ability to fly)", "Perfume"],
+			"notes": [
+				{
+					"name": "Fleet",
+					"text": "On its turn, the questing beast can Move 2 zones without spending a card."
+				},
+				{
+					"name": "Slippery",
+					"text": "Discard any card to avoid a dungeon hazard: bash down a door, trigger (and evade) a trap, leap a pit, or otherwise. This action does not count towards the one card per turn limit."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Nip",
+					"text": "On a successful Riposte, the questing beast deals 2 Wounds."
+				},
+				{
+					"name": "Trample",
+					"text": "On an unsuccessful Attack, the questing beast may use their Attack action against a second target in the same zone."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Evasive",
+					"text": "The questing beast can play a greater doom as a Dodge action."
+				},
+				{
+					"name": "Expeditious Retreat",
+					"text": "Discard a greater doom card to automatically disengage from *all* combatants. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Resilient",
+					"text": "Discard a greater doom card to automatically Recover from *all* effects. This action does not count towards the one card per turn limit."
+				},
+				{
+					"name": "Tactics",
+					"text": "Discard a greater doom card to turn a standard Challenge Action into an interrupt."
+				}
+			],
+			"sidebars": [
+				{
+					"title": "Remember",
+					"body": "Because major arcana do not have suits, you can always spend any lesser doom card to Dash."
+				}
+			]
+		},
+		{
+			"id": "skeleton",
+			"name": "Skeleton",
+			"theme": "undead",
+			"threat": "brute",
+			"flavor": "When an undead has survived long enough for its flesh to rot, for its brains to be eaten by maggots, and for its eyes to jelly and fall out, it becomes a skeleton.\n\nTheir existence is a curious perversion. How do they gambol about? How are their bones held together? What motivates them? The answer is hate.\n\nSkeletons hate the living. Living souls burn like torches in the blackness of the Underworld, and skeletons mindlessly seek to extinguish those bright lights.\n\nSkeletons sometimes pick up old and rusted weapons to channel their hate, but will also just plunge their bony fingers into an adventurer's eye sockets. Sometimes, they wear rusted old armor. If so, give them 1 or 2 points of Defense.",
+			"attributes": { "swords": 6, "pentacles": 1, "cups": 1, "wands": 4 },
+			"health": 6,
+			"defense": 0,
+			"likes": ["Almost Nothing"],
+			"hates": ["Life", "Sound", "Light"],
+			"notes": [
+				{
+					"name": "Breathless and Undreaming",
+					"text": "Skeletons ignore any effects related to living processes. They do not breathe. They do not sleep. They cannot be poisoned. They are immune to the Poison Blood of seablooded orcs."
+				},
+				{
+					"name": "Empty Skulls",
+					"text": "Skeletons ignore any attempts to manipulate their minds. They are immune to the Inspire effect. They cannot see illusions."
+				},
+				{
+					"name": "Fleshless",
+					"text": "Skeletons are immune to piercing weapons such as arrows and spears. Actions that target skeletons must *exceed* (not just match) their Initiative."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Unearthly Fear",
+					"text": "Play a lesser doom card and compare its value to the Initiative of *each* character in the same zone. If the skeleton does this on its turn, it adds its Wands to the total value. Adventurers it succeeds against are Stunned."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Absorb Bones",
+					"text": "If there is a ready source of bones in the skeleton's zone (e.g., a defeated skeleton), play a greater doom to take those bones. This Heals the skeleton."
+				}
+			]
+		},
+		{
+			"id": "slime",
+			"name": "Slime",
+			"theme": "sorcerous",
+			"threat": "elite",
+			"flavor": "Slimes are the products of alchemical mishaps. All too often, when an unfortunate adventurer takes a spill and finds the contents of their backpack crushed, they find themselves in a predicament as alchemical reagents mix together and give birth to a new monster.\n\nSlimes are like amoebas at a macroscale. Though they may look like translucent trash bags, their insides are actually crushing muscles. Anything that a slime engulfs is quickly eviscerated.\n\nSlimes can glurt through any space bigger than a keyhole. They can slide under doors and pour themselves through cracks.",
+			"attributes": { "swords": "X", "pentacles": "X", "cups": 0, "wands": 0 },
+			"health": 6,
+			"defense": 0,
+			"statNote": "Slimes have Swords and Pentacles ratings equal to their current Health.",
+			"likes": ["Warmth", "Movement", "Dead Corpses It Can Crush and Digest"],
+			"hates": ["Elephants (no one knows why)", "Salt", "Fire"],
+			"notes": [
+				{
+					"name": "Acidic",
+					"text": "Weapons that damage a slime are *automatically* Notched."
+				},
+				{
+					"name": "Impermeable Membrane",
+					"text": "Slimes are immune to slashing weapons (like swords) and crushing weapons (like hammers). They take damage as normal from sharp, piercing attacks (like from arrows, daggers, or spears)."
+				},
+				{
+					"name": "Salt Reactive",
+					"text": "If an adventurer has salt in hand, they can attempt to throw it onto a slime. This is treated as an Attack that inflicts 2 Wounds to the slime on a success."
+				},
+				{
+					"name": "Shapeless Body",
+					"text": "Slimes are immune to being Displaced, Rooted, or Tripped."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Protoplasmic Attack",
+					"text": "On a successful Roughhouse, the target is engulfed. The target is Rooted, moving with the slime. Additionally, at the beginning of their turn, the target automatically takes 1 Wound, and all worn gear and items on their belt are Notched. The target must test Swords to try and escape; this uses the rules for the Test Fate action."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Grind",
+					"text": "Discard a greater doom card to automatically deal 1 Wound to all creatures currently engulfed. This does not count against the one card per turn limit."
+				},
+				{
+					"name": "Regenerate",
+					"text": "Discard a greater doom card to Heal the slime. This power cannot be used if salt has been spread on it this turn. This does not count against the one card per turn limit."
+				}
+			]
+		},
+		{
+			"id": "titan-sporehulk",
+			"name": "Titan, The Sporehulk",
+			"theme": "elemental",
+			"threat": "dungeon-lord",
+			"flavor": "In the time before time, when the far realms were much closer to this one, entities called titans shaped the realm of Flesh. They exalted the mountains, poured the seas, flattened the valleys, and molded the trees. Each titan was unique, given a particular form for its particular function.\n\n(It was the dragons who put a stop to all this. It was the dragons who invented time. It was His Majesty the Worm who invented death.)\n\nEventually, the titans were slain and laid to rest. All save one—the Sporehulk. It is his lonely task to watch over the bodies of his fallen comrades.\n\nThe Sporehulk is a towering giant, standing forty feet tall. He is covered in shaggy moss and mushrooms, resembling a hill that came to life and started shambling around. The Sporehulk cannot speak (he has no mouth) but can understand Tylwyth.\n\nThe Sporehulk is utterly gentle unless someone disturbs the sepulchers that he guards. This drives him into a berserk rage.",
+			"attributes": { "swords": 7, "pentacles": 3, "cups": 3, "wands": 3 },
+			"likes": ["Flowers", "Small Woodland Mammals"],
+			"hates": ["Crowds", "Public Places", "Open Areas (especially afraid of the sky and weather)", "Disturbing the Tombs"],
+			"specialRules": "The Sporehulk itself is a battlefield. Its body is separated into four separate sections, each one of which is a zone and an antagonist in its own right. The Sporehulk consists of its Legs, its Torso, its Left Arm and its Right Arm.\n\nEach section of the Sporehulk has a lesser and greater doom associated with it. If a particular section is disabled, entangled, or defeated, it can no longer use those abilities.\n\nAn adventurer can climb on the Sporehulk by using the Dash action. This allows them to move up or down one section at a time. An adventurer can target any section they are currently climbing with melee attacks. While standing on the ground, melee attacks can only target the Sporehulk's Legs.\n\n**Rune of protection.** On the Sporehulk's back (Torso area) is a magical rune of protection. The Sporehulk is immune to damage until its rune of protection is destroyed. Attacks simply bounce off of him and cause the magical rune to pulse with dull light.\n\nA successful Attack that targets the rune of protection will deal 1 Wound to the Sporehulk's Torso and end this immunity. To target the rune, a player just needs to specify that they are attempting to hit it with their attack. An adventurer must be climbing on the Sporehulk's Torso to make a melee attack on the rune. An adventurer can target the rune with a missile attack from the ground as long as they can see the Sporehulk.\n\nDespite having separate pools of HD for each section, the Sporehulk only has a single Initiative.",
+			"pools": [
+				{
+					"id": "legs",
+					"name": "Legs",
+					"health": 4,
+					"defense": 0,
+					"text": "If the Sporehulk's Legs are defeated, it crumples to its knees. Its Arms and Torso can now be targeted with melee attacks. If the Legs are defeated, it can Move by crawling (as long as its Arms are intact) but cannot Dash.",
+					"lesserDooms": [
+						{
+							"name": "Kick",
+							"text": "The Sporehulk kicks out and makes an Attack that targets all adventurers in its zone."
+						}
+					],
+					"greaterDooms": [
+						{
+							"name": "Rampage",
+							"text": "The Sporehulk can play a greater doom as his Initiative."
+						}
+					]
+				},
+				{
+					"id": "arms",
+					"name": "Left Arm / Right Arm",
+					"health": 5,
+					"defense": 0,
+					"text": "Each arm is a separate pool of Health/Defense: 5/0 each.",
+					"lesserDooms": [
+						{
+							"name": "Grab",
+							"text": "The Sporehulk can Roughhouse to attempt to grab a foe. While grabbed, an adventurer is Rooted but moves with the Sporehulk. The Sporehulk can hold two adventurers at a time.\n\n- While grabbed, a foe can be squeezed (see below).\n- While grabbed, any Attacks that miss the Sporehulk automatically hit a grabbed foe instead."
+						},
+						{
+							"name": "Throw Stones",
+							"text": "The Sporehulk can Attack by lifting and throwing heavy things—suits of armor or dislodged stones or held foes. If a grabbed adventurer is thrown, they automatically take a Wound."
+						}
+					],
+					"greaterDooms": [
+						{
+							"name": "Smash",
+							"text": "The Sporehulk can play a greater doom as an Attack action."
+						},
+						{
+							"name": "Squeeze",
+							"text": "Play a greater doom card to squeeze all grabbed adventurers, automatically dealing them a Wound."
+						}
+					]
+				},
+				{
+					"id": "torso",
+					"name": "Torso",
+					"health": 5,
+					"defense": 10,
+					"text": "The Sporehulk will not die until his Torso's section is defeated.",
+					"notes": [
+						{
+							"name": "Tough",
+							"text": "Actions that target the Sporehulk's Torso must *exceed* (not just match) its Initiative."
+						}
+					],
+					"lesserDooms": [
+						{
+							"name": "Shake",
+							"text": "The Sporehulk shakes and Roughhouses all adventurers climbing him. If successful, the adventurer falls to the ground, causing them to be Tripped and suffer Piercing damage."
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ungoat",
+			"name": "Ungoat",
+			"theme": "sorcerous",
+			"threat": "minion",
+			"flavor": "A goat. But horrible. A sack of skin sliding along the floor like an ooze, boasting too many legs and not enough hooves, an erect phallus, a mossy smell, a malformed head spasming intermittently, horns pointing in different directions, three rows of grinding teeth, and a swollen, forked tongue. And those eyes. Those damn goat eyes.\n\nAn ungoat's main goal is to try and get into adventurers' packs and eat their magic reagents, archwood wands, and other sorcerous implements. It bleats piteously if attacked. An ungoat can't (or won't) do much to defend itself. If locked away, it always seems to escape somehow.\n\nIt might not be apparent, but an ungoat is related to an ooze.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 2,
+			"defense": 0,
+			"likes": ["Eating Spell Reagents", "Opening Packs", "Spilling Things"],
+			"hates": ["Enclosures", "Smell of Lavender", "Loud Sounds"],
+			"notes": [
+				{
+					"name": "Maleficent Retribution",
+					"text": "Any direct Wound inflicted on the ungoat causes the attacker to draw from a random maleficence table as the forces of chaos seep out of the injury.\n\n- Salt does not trigger this effect.\n- Non-direct attacks, like traps or Rube Goldberg devices, do not trigger this effect."
+				},
+				{
+					"name": "Salt Reactive",
+					"text": "If an adventurer has salt in hand, they can attempt to throw it onto an ungoat. This is treated as an Attack, and inflicts two Wounds to the ungoat on a success."
+				},
+				{
+					"name": "Smell Magic",
+					"text": "The ungoat can smell magical effects. It can identify who is and isn't a sorcerer by scent."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Rummage",
+					"text": "When the ungoat Roughhouses, they can pull an item out of the target's backpack. This item is dropped to the ground.\n\n- Adventurers can Recover dropped items.\n- The goat can pick up dropped items with *any* card."
+				}
+			]
+		},
+		{
+			"id": "vampire",
+			"name": "Vampire",
+			"theme": "undead",
+			"threat": "elite",
+			"flavor": "Zombies and skeletons at least know they're dead. Vampires haven't figured it out yet. They're baffled and hurt to be abandoned by people who have long since passed away. They struggle to understand new words and customs. They look in the mirror and find nobody there. Thus, they turn to being cruel as a way to cope with lingering in a living world that has moved on.\n\nOver the centuries that they live, vampires undergo metamorphosis into single-minded predators. They evolve (remarkably quickly, given evolution's normal timescale) to hunt humanoids. If they still look like a mortal being, it is only because of mimicry—like how certain parasitic species of ants invade other hives by looking like their hosts.",
+			"attributes": { "swords": 4, "pentacles": 4, "cups": 4, "wands": 4 },
+			"health": 7,
+			"defense": 2,
+			"likes": ["Blood (especially that of virgins)", "Giving Long Soliloquies", "Playing With Its Food", "Nocturnal Predators", "Counting Things (actually quite obsessive-compulsive)"],
+			"hates": ["Sunlight", "Fresh Herbs", "Running Water", "Religious Iconography (naturally blasphemous)"],
+			"notes": [
+				{
+					"name": "Breathless and Ageless",
+					"text": "The vampire does not age or breathe. (They do have other physical processes, however. They both sleep and can be poisoned.)"
+				},
+				{
+					"name": "Feed",
+					"text": "If an Attack action actually Wounds a condition or talent (instead of Notching armor or a shield), the vampire can discard any card to quickly feed on the blood drawn. This Heals the vampire."
+				},
+				{
+					"name": "Invulnerable",
+					"text": "The vampire ignores all damage except from silver weapons, magic, and fire. This ability is negated by the presence of wholesome herbs (such as garlic) or sunlight."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Call Bats",
+					"text": "Play a lesser doom card to summon a cloud of bats. The card played is the bat's Initiative. A cloud of bats has the stats of a HD 2/0 beast minion. If the bats are active, the GM draws +2 Challenge cards at the beginning of a round."
+				},
+				{
+					"name": "Supernatural Grace",
+					"text": "A vampire may have as many Dodge cards facedown at a time as they wish. As normal, the vampire still only plays one card per turn. The vampire may decide which Dodge card to use to counter a particular Attack, however only one Dodge card may be used per Attack."
+				},
+				{
+					"name": "Supernatural Speed",
+					"text": "Discard as many lesser doom cards as you wish, Moving 1 zone per card. This does not count towards the one card per turn limit."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Bat Form",
+					"text": "Play a greater doom card to take the shape of a monstrous bat. While in this form, the vampire can fly 1 zone as a Move action."
+				},
+				{
+					"name": "Mesmerize",
+					"text": "When the vampire Attacks, discard a greater doom card to attempt to mesmerize the target instead of dealing damage. If successful, the target is Controlled—they immediately perform the commanded action. The total value for the Controlled action is equal to the value of the lesser doom card used to Attack.\n\n- This only works on creatures looking in the vampire's eyes. An adventurer can try and avoid the vampire's gaze to avoid this ability. The player must specifically state they are not looking at the vampire's eyes, however actions they take while avoiding the vampire's gaze (such as Attacking the vampire) suffer disfavor."
+				},
+				{
+					"name": "Mist Form",
+					"text": "Play a greater doom card to take the shape of an intangible mist. While in mist form, physical objects pass harmlessly through the vampire."
+				}
+			],
+			"sidebars": [
+				{
+					"title": "Becoming a Vampire",
+					"body": "Adventurers who seek quick power by undergoing the transformation to vampire are sorely disappointed. At first, it's all pain and no gain: a young vampire is a wretched creature—they catch on fire when exposed to sunlight and can only eat blood. It takes at least a century for a vampire to manifest the least of their powers."
+				},
+				{
+					"title": "Killing the Vampire",
+					"body": "If slain, a vampire will rise again the following night unless special care is taken to ritually desecrate the corpse. Much superstition and folklore surrounds vampires, and the rites needed to give a vampire a final death seem to vary from region to region.\n\nHere is a list of commonly believed ways to cause a vampire's final death. **Four of these rumors are true.** It's up to the GM to determine which methods are real and which ones are superstition. By spending a lore bid, any adventurer may be told *one* of these rumors.\n\n- Drive a wooden stake through the vampire's heart\n- Decapitate the vampire\n- …with a silver weapon\n- Burn the vampire's decapitated head\n- Stuff the vampire's mouth with cloves of garlic\n- Stuff the vampire's mouth with holy testaments of Mythrys\n- Bury the vampire in wild rose petals\n- Cover the vampire's body with salt\n- Say prayers to Mythrys over the vampire's body"
+				}
+			]
+		},
+		{
+			"id": "winter-wolf",
+			"name": "Winter Wolf",
+			"theme": "elemental",
+			"threat": "minion",
+			"flavor": "Winter wolves are elementals that live in snow clouds and atop snow-capped mountains. They take the shape of terrestrial wolves, but their body is only howling winds constrained by living ice.\n\nIn many ways, they are like terrestrial wolves. They have a low, animalistic intelligence. They are pack animals with strong familial relationships. Their goals are mostly related to food and safety.\n\nIn many other ways, they are clearly elementals. Clouds are as solid as mountains to them, and they travel on fogs and mists. They speak simple phrases in Tylwyth with the voice of a winter wind.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 4,
+			"defense": 0,
+			"likes": ["Its Pack", "Its Cubs", "Stormblooded Orcs (won't attack willingly)"],
+			"hates": ["Heat and Fire", "Salamanders"],
+			"notes": [
+				{
+					"name": "Aura of Ice",
+					"text": "Anybody who begins their turn engaged with a winter wolf is automatically Rooted as snow and ice freeze their feet into place."
+				},
+				{
+					"name": "Vulnerable to Fire",
+					"text": "Damage from fire deals 2 Wounds to a winter wolf. An adventurer can hit them with their torch or lantern to deal damage in this way, but this Destroys that item."
+				},
+				{
+					"name": "Elemental Travel",
+					"text": "Winter wolves can walk on water as it freezes under their paws. Winter wolves can choose to treat clouds, vapors, and mists as solid."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Breath of Ice",
+					"text": "When the winter wolf Attacks, discard a greater doom card to breathe a blast of ice against all adventurers in their zone. If successful, it deals a Wound *and* Destroys all liquid items on the adventurer's belt.\n\n- For example, a hermetic bottle with a potion would be Destroyed, the bottle cracking as the potion freezes."
+				}
+			]
+		},
+		{
+			"id": "wraith",
+			"name": "Wraith",
+			"theme": "undead",
+			"threat": "strategist",
+			"flavor": "When the flesh falls away, when the bones decay, when all is dust—the wraith remains. The spark of necromantic energy that once made the zombie trudge around is free of physical constraint and lurks in the world like a shadow.\n\nWraiths haunt the lonesome places where their bodies finally gave up. When they sense the presence of the living, they are drawn to them. They are desperate to make the living understand the pain of undeath. They whisper their regrets in their ears, they place their cold fingers over their mouths, they cling to them and try to get warm.\n\nIf they're successful, the wraith soon has company.",
+			"attributes": { "swords": 4, "pentacles": 1, "cups": 2, "wands": 3 },
+			"health": 4,
+			"defense": 0,
+			"likes": ["Sympathy", "Cataloging its Agonies"],
+			"hates": ["Its Continuous Existence", "Bright Light (avoids adventurers carrying light sources)"],
+			"notes": [
+				{
+					"name": "Shadow Form",
+					"text": "A wraith is naturally intangible. Physical objects pass harmlessly through the wraith, *but* the wraith can choose to interact with the physical world at will. A wraith becomes tangible in bright light.\n\n- An adventurer with a torch or lantern can use a miscellaneous action (any card) to shine their light onto a wraith to make it tangible to everyone until the end of the round."
+				},
+				{
+					"name": "Spectral",
+					"text": "A wraith is not a physical being. They are immune to any effect based on biology or mental control. They cannot see illusions."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Fear",
+					"text": "Play a lesser doom card and compare its value to the Initiative of *each* character in the same zone. If the wraith does this on its turn, it adds its Wands to the total value. Adventurers it succeeds against are Displaced to an adjacent zone of the player's choice."
+				},
+				{
+					"name": "Retreat into the Shadows",
+					"text": "Discard any card to automatically disengage from *all* adventurers. This action does not count towards the one card per turn limit."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Dolorous Kiss",
+					"text": "When the wraith Attacks, discard a greater doom card to attempt to drain the target's life energy. If successful, the adventurer loses 1 XP in addition to a Wound. This XP is restored if the wraith is destroyed."
+				}
+			]
+		},
+		{
+			"id": "zombie",
+			"name": "Zombie",
+			"theme": "undead",
+			"threat": "minion",
+			"flavor": "When someone dies in the Underworld, strange magics bind their souls to their bodies a little too long. This allows adventurers to be revived even from grievous wounds. It also creates zombies.\n\nThe brains rotting in the zombie's skull still seem to send out a stray impulse every once in a while. This causes zombies to perform some actions that mimic life. They eat. (God, do they eat.)\n\nThey sometimes desperately hold on to their old possessions—some favored sword, an idol, a book. They are drawn to and wander around places that are well-known to them.\n\nBut, at the same time, they no longer have any shred of mercy or humanity. Mothers will attack and devour their children. Children will feast on their fathers. Zombies are men made into monsters.\n\nZombies usually carry the weapons they carried as adventurers, wielded clumsily. Zombies are sometimes still outfitted in old, rusty armor they wore in life. In this case, give them 1 Defense.",
+			"attributes": { "swords": 0, "pentacles": 0, "cups": 0, "wands": 0 },
+			"health": 1,
+			"defense": 0,
+			"likes": ["Some Fond Memory of Life"],
+			"hates": ["The Living"],
+			"notes": [
+				{
+					"name": "Breathless and Undreaming",
+					"text": "Zombies ignore any effects related to living processes. They do not breathe. They do not sleep. They cannot be poisoned. They are immune to the Poison Blood of seablooded orcs."
+				},
+				{
+					"name": "Rotting Brains",
+					"text": "Zombies ignore any attempts to manipulate their minds. They are immune to the Inspire effect. They cannot see illusions."
+				}
+			],
+			"lesserDooms": [
+				{
+					"name": "Devour the Living",
+					"text": "If a living creature is Knocked-out or at Death's Door, play a lesser doom card to devour it. This Heals 2 Wounds to the zombie."
+				}
+			],
+			"greaterDooms": [
+				{
+					"name": "Last Grasp",
+					"text": "When the zombie would take a Wound, discard a greater doom instead. The zombie takes no Wound, but one of its limbs is severed. The limb continues to attack independently. This adds a new enemy to combat. This action does not count against the one card per turn limit.\n\n- The severed limb has the same Initiative as the zombie. The severed limb can suffer 1 Wound before it stops moving. The severed limb cannot use the Last Gasp action."
+				}
+			]
+		}
+	]
+}

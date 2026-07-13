@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (dungeon denizens)
+
+- **Denizen reference** (`/denizens`): the full Appendix C bestiary (27 creatures,
+  including the multi-pool dungeon lords), browsable with theme/threat filters and
+  name search, plus the six theme and five threat templates. Book text reproduced
+  directly — confirmed open content by the author.
+- **Denizen builder** (`/denizens/build`): a six-step wizard following the book's
+  "monstrous mixology" recipe — concept, theme, threat, seeded stat block,
+  template doom pick-lists plus custom dooms, and a live stat-block review. Draft
+  persists in localStorage.
+- **Denizen export**: Obsidian-flavored Markdown (copy or download) and a one-page
+  stat-block PDF, from both the reference and the builder.
+- Denizens Playwright e2e suite (`tests/e2e/denizens.spec.ts`); the e2e web server
+  now boots without a real `AUTH_SECRET`.
+- Builder capability metadata in the content pack (`builderMode`/`builderNote`):
+  pool-based (Dungeon Lord) and description-only (Man) templates are
+  reference-only in the builder, with the reason shown in place.
+- Stat invariants from the book enforced in the schema and as live builder
+  warnings: Health starts at 1+ (or ∞), Defense may be 0, Health/Defense travel
+  as a pair, and blank stats are omitted from stat blocks and exports.
+- Export buttons announce clipboard/PDF failures to the screen-reader live
+  region, disable while working, and retry font loading after a failed fetch.
+  Persisted builder drafts are validated field by field on load.
+
 ### Added
 
 - A Markdown-driven content pipeline for the complete current pack, including all

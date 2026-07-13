@@ -10,6 +10,12 @@ describe('renderMarkdown', () => {
 		expect(renderMarkdown('One.\n\nTwo.')).toBe('<p>One.</p>\n<p>Two.</p>');
 	});
 
+	it('renders dash blocks as unordered lists', () => {
+		expect(renderMarkdown('Intro.\n\n- First\n- **Second**')).toBe(
+			'<p>Intro.</p>\n<ul><li>First</li><li><strong>Second</strong></li></ul>'
+		);
+	});
+
 	it('escapes HTML before applying emphasis (no injection)', () => {
 		const out = renderMarkdown('<script>alert(1)</script> **safe**');
 		expect(out).toContain('&lt;script&gt;');

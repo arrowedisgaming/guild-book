@@ -16,7 +16,11 @@ import type {
 	NamedEntry,
 	AfflictionDefinition,
 	RuleEntry,
-	SpellDefinition
+	SpellDefinition,
+	DenizensFile,
+	DenizenThemeDefinition,
+	DenizenThreatDefinition,
+	DenizenDefinition
 } from '$lib/types/content-pack';
 import {
 	contentPackSchema,
@@ -30,6 +34,7 @@ import {
 	afflictionsFileSchema,
 	rulesFileSchema,
 	spellsFileSchema,
+	denizensFileSchema,
 	parseOrThrow
 } from '$lib/schemas/content-pack.schema';
 
@@ -44,6 +49,7 @@ import conditionsJson from '../../../../static/content-packs/hmtw/conditions.jso
 import afflictionsJson from '../../../../static/content-packs/hmtw/afflictions.json';
 import rulesJson from '../../../../static/content-packs/hmtw/rules.json';
 import spellsJson from '../../../../static/content-packs/hmtw/spells.json';
+import denizensJson from '../../../../static/content-packs/hmtw/denizens.json';
 
 // Singleton caches.
 let cachedPack: GuildBookContentPack | null = null;
@@ -57,6 +63,7 @@ let cachedConditions: NamedEntry[] | null = null;
 let cachedAfflictions: AfflictionDefinition[] | null = null;
 let cachedRules: RuleEntry[] | null = null;
 let cachedSpells: SpellDefinition[] | null = null;
+let cachedDenizens: DenizensFile | null = null;
 
 export function getContentPack(): GuildBookContentPack {
 	if (!cachedPack) cachedPack = parseOrThrow(contentPackSchema, indexJson, 'index.json');
@@ -111,6 +118,23 @@ export function getRules(): RuleEntry[] {
 export function getSpells(): SpellDefinition[] {
 	if (!cachedSpells) cachedSpells = parseOrThrow(spellsFileSchema, spellsJson, 'spells.json');
 	return cachedSpells;
+}
+
+function getDenizensFile(): DenizensFile {
+	if (!cachedDenizens) cachedDenizens = parseOrThrow(denizensFileSchema, denizensJson, 'denizens.json');
+	return cachedDenizens;
+}
+
+export function getDenizenThemes(): DenizenThemeDefinition[] {
+	return getDenizensFile().themes;
+}
+
+export function getDenizenThreats(): DenizenThreatDefinition[] {
+	return getDenizensFile().threats;
+}
+
+export function getBestiary(): DenizenDefinition[] {
+	return getDenizensFile().bestiary;
 }
 
 /** Everything the creation wizard needs, in one validated bundle. */

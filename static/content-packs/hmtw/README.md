@@ -29,6 +29,10 @@ markdown through `Prose.svelte` (bold, italics, `-` lists, sub-headings).
 - **Known source-export omission:** the damaged "A myth of the underfolk" fragment
   is deliberately excluded from the Underfolk description. The pipeline publishes
   only the complete, exact paragraphs that precede it rather than inventing text.
+- **Transcribed directly (not pipeline-generated):** `denizens.json` (Appendix C:
+  the six themes, five threats, and the full bestiary) reproduces the book text
+  directly — the author has confirmed the full text is open content under the
+  Adherent of the Worm licence, not just the mechanics.
 
 ### The pipeline
 

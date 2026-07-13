@@ -18,3 +18,29 @@ in particular resolve Goudy Old Style.
 If any face cannot be licensed for web embedding, drop it from
 `src/lib/themes/fonts.css` and point that role's `--font-*` token in
 `src/lib/themes/base.css` at an OFL fallback — a one-line change.
+
+## PDF-export faces (`hmtw/`, TTF)
+
+These are **embedded into generated PDFs** (the denizen stat-block export,
+`src/lib/export/denizen-pdf-export.ts`), not served as webfonts. They are
+fetched in the browser at export time. Three of them are TTF cuts of faces the
+webfont table above already tracks; the licence questions are the same, plus
+PDF-embedding rights specifically.
+
+All four files are byte-identical (verified by SHA-256) to the copies shipped in
+the official Creator's Kit ("Adherent of the Worm Template", `Document fonts/`
+folder), renamed for URL-friendliness:
+
+| File | Face | Kit filename | Licence status |
+| --- | --- | --- | --- |
+| `hmtw/IMFellEnglish-Regular.ttf` | IM Fell English (Igino Marini) | `IM_FELL_ENGLISH_ROMAN.TTF` | **OFL** — clear to embed |
+| `hmtw/IMFellEnglish-Italic.ttf` | IM Fell English Italic | `IM_FELL_ENGLISH_ITALIC.TTF` | **OFL** — clear to embed |
+| `hmtw/HamletOrNot.ttf` | Hamlet or Not | `HamletOrNot.ttf` | Freeware, supplied by the kit — verify PDF-embedding terms |
+| `hmtw/CaslonAntique-Bold.ttf` | Caslon Antique Bold | `Caslon Antique Bold.ttf` | Freeware, supplied by the kit — verify PDF-embedding terms |
+
+The kit ships no separate licence/notice files for these four faces (its only
+bundled licence texts cover faces we don't embed), so there is nothing further
+to vendor alongside them.
+
+IM Fell English has no bold cut, so the PDF's bold slot (ability names)
+intentionally maps to Caslon Antique Bold.

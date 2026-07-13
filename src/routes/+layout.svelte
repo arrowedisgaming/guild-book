@@ -14,6 +14,7 @@
 		<nav class="site-nav">
 			<a href="/create/hmtw/identity">Create</a>
 			<a href="/rules">Rules</a>
+			<a href="/denizens">Denizens</a>
 			<a href="/deck">Deck</a>
 			{#if data.user}
 				<a href="/characters">My Adventurers</a>

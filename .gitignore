@@ -58,3 +58,7 @@ rulebooks/
 HisMajestytheWorm-CRB.pdf
 # InDesign brand/style template package (fonts with mixed licences, book art)
 Adherent of the Worm Template/
+
+# Locally-supplied credentials — never commit
+secrets.*
+

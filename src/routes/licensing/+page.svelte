@@ -1,16 +1,5 @@
 <script lang="ts">
-	import CardTable from '$lib/components/decoration/CardTable.svelte';
 	import OrnamentalBorder from '$lib/components/decoration/OrnamentalBorder.svelte';
-
-	const fontRows: (string | number)[][] = [
-		['IM Fell English', 'Body & quotes', 'SIL Open Font License (OFL)'],
-		['Bilbo Display', 'Display / H1', 'Freeware — verify webfont terms'],
-		['HamletOrNot', 'Headings', 'Freeware — verify webfont terms'],
-		['Caslon Antique', 'Subheadings', 'Freeware — verify webfont terms'],
-		['Dark Roast', 'Pull-quotes', 'Freeware — verify webfont terms'],
-		['Kelmscott', 'Sidebar headings', 'Freeware — verify webfont terms'],
-		['Goudy Old Style', 'Sidebar body', '⚠ Monotype — commercial webfont licence required']
-	];
 </script>
 
 <svelte:head><title>Licensing &amp; Credits — Guild Book</title></svelte:head>
@@ -58,10 +47,9 @@
 
 	<h2>Typography</h2>
 	<p class="muted">
-		The book's typefaces are used to match its style. Licence status is tracked below — faces marked
-		for verification must be cleared for web embedding before a public launch.
+		The book's typefaces are used to match its style. Body text is set in IM Fell English by Igino
+		Marini, under the SIL Open Font License.
 	</p>
-	<CardTable columns={['Typeface', 'Role', 'Licence']} rows={fontRows} />
 </section>
 
 <style>

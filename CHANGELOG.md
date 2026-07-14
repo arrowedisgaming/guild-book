@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `/licensing`: the per-typeface licence tracker table. The page now carries a
+  short IM Fell English / OFL credit instead; per-face licence status stays in
+  `static/fonts/LICENSES.md`, which remains the source of truth (and still flags
+  Goudy Old Style as needing a Monotype webfont licence before public launch).
+
 ## [0.1.0] - 2026-07-14
 
 ### Added (dungeon denizens)

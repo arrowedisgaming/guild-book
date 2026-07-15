@@ -448,6 +448,25 @@ export type TarotProcedureScope =
 
 export type TarotDeckId = 'major' | 'minor';
 
+/**
+ * Which deck a step draws from.
+ *
+ * `session` — the campaign's shared, persistent draw pile. Subject to card
+ * conservation, deck exhaustion/reshuffle, and the Fool's reshuffle trigger.
+ *
+ * `fresh` — a newly shuffled deck unrelated to the campaign decks, drawn and
+ * discarded within the step. The card never enters a session zone, so it is
+ * outside card conservation, never exhausts, and cannot trigger a Fool
+ * reshuffle. Still server-authoritative: the shuffle is seeded server-side and
+ * the client never determines the result.
+ *
+ * A `fresh` + `minor` draw is the 56-card minor arcana — Ch1:201, "There are
+ * fifty-six minor arcana cards… four suits of fourteen cards". The Fool is
+ * *borrowed from the major arcana* into the player deck and is therefore not in
+ * a fresh minor deck, so such a draw always yields a value of I–King.
+ */
+export type TarotDeckScope = 'session' | 'fresh';
+
 export type TarotOperation =
 	| 'draw'
 	| 'deal'
@@ -478,6 +497,8 @@ export interface TarotProcedureStepDefinition {
 	actor: 'gm' | 'player' | 'system';
 	operation: TarotOperation;
 	deck?: TarotDeckId;
+	/** Defaults to `session`. See {@link TarotDeckScope}. */
+	deckScope?: TarotDeckScope;
 	draw?: TarotDrawSpec;
 	/** Set when this step resolves its drawn card(s) against an oracle table. */
 	lookupTableId?: string;
@@ -561,6 +582,8 @@ export interface TarotLookupTable {
 	id: string;
 	title: string;
 	deck: TarotDeckId;
+	/** Defaults to `session`. See {@link TarotDeckScope}. */
+	deckScope?: TarotDeckScope;
 	axis: 'card' | 'card-by-suit' | 'suit-by-step';
 	columns: { id: string; label: string }[];
 	rows: TarotLookupRow[];

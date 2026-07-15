@@ -334,6 +334,10 @@ const tarotSourceRefSchema = z.object({
 
 const tarotDeckIdEnum = z.enum(['major', 'minor']);
 
+/** `fresh` draws a newly shuffled deck unrelated to the campaign decks: outside
+ *  card conservation, never exhausts, cannot trigger a Fool reshuffle. */
+const tarotDeckScopeEnum = z.enum(['session', 'fresh']);
+
 const tarotProcedurePhaseEnum = z.enum(['crawl', 'challenge', 'camp', 'city', 'cross-phase']);
 
 const tarotProcedureScopeEnum = z.enum([
@@ -367,6 +371,7 @@ const tarotProcedureStepDefinitionSchema = z.object({
 	actor: z.enum(['gm', 'player', 'system']),
 	operation: tarotOperationEnum,
 	deck: tarotDeckIdEnum.optional(),
+	deckScope: tarotDeckScopeEnum.optional(),
 	draw: tarotDrawSpecSchema.optional(),
 	lookupTableId: z.string().optional(),
 	visibility: z.enum(['public', 'actor-private', 'recipient-private']),
@@ -410,6 +415,7 @@ export const tarotLookupTableSchema = z.object({
 	id: z.string(),
 	title: z.string(),
 	deck: tarotDeckIdEnum,
+	deckScope: tarotDeckScopeEnum.optional(),
 	axis: z.enum(['card', 'card-by-suit', 'suit-by-step']),
 	columns: z.array(z.object({ id: z.string(), label: z.string() })).min(1),
 	rows: z.array(z.object({ key: tarotLookupKeySchema, cells: z.array(tarotLookupCellSchema) })).min(1),

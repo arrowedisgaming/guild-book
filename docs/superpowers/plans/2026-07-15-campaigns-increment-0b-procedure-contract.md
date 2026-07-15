@@ -20,7 +20,12 @@ The licence permits this. The Adherent of the Worm licence reads "the mechanics 
 
 Both were verified against the vault, and both are why this increment cannot reuse the rules-import path wholesale.
 
-**1. The existing pipeline deletes every oracle table.** `extractRuleBody` (`md-lib.mjs:240-244`) runs `stripExampleSubsections`, which drops any sub-section whose heading matches `/^example\b/i`. The tables are titled `## Example Meatgrinder table` and `## Example City Events`. Extracting Meatgrinder through the rules path yields **zero table rows**. That behavior is correct for the rules reference and must not be changed; this increment adds a parallel extraction path instead.
+**1. The rules path drops the two largest tables and structurally flattens the rest.** Two distinct problems, both verified by running the pipeline:
+
+- `extractRuleBody` (`md-lib.mjs:240-244`) runs `stripExampleSubsections`, which drops any sub-section whose heading matches `/^example\b/i`. The two biggest oracle tables are titled `## Example Meatgrinder table` and `## Example City Events`, so extracting Meatgrinder through the rules path yields **zero table rows**. They are gone.
+- Every *other* oracle table survives — We're Doomed (10 rows), Starting Disposition (9), Maleficence of the Wastes (16), Carouse/Hangover (23) — but only as **Markdown text inside a prose body**. There are no typed keys, so a range like `I–VII` is a string in a paragraph; and `stripWikilinks` (`md-lib.mjs:136-152`) has already flattened `[[13 - Appendix C - Dungeon Denizens#Imp|imp]]` to the bare word `imp`, destroying the reference target the coverage tests need.
+
+Both behaviors are correct for the rules reference and must not be changed. Neither output is usable as structured lookup data, so this increment adds a parallel extraction path rather than reusing or modifying the rules path.
 
 **2. The tables are structured data, not prose.** Verified shapes:
 
@@ -34,6 +39,24 @@ Both were verified against the vault, and both are why this increment cannot reu
 | Doomsaying | minor | `suit-by-step` | 4 suits × 4 steps, four draws |
 
 Range keys use an **en-dash** (`I–VII`), not a hyphen. Suit header cells contain `<img src="images/suit-swords.svg" …>` markup followed by the visible label. Six table cells contain live-value tokens — `[value]`, `[odd]`, `[even]`, `[discard]`, `[adventurers]` — which Chapter 9 defines: "Anything in brackets [ ] refers to the top card of the minor arcana discard pile." Four table cells contain wikilink cross-references to Appendix C denizens and Appendix B alchemy.
+
+## Findings from executing Increment 0a
+
+Four things surfaced while importing the rules prose. Each changes this increment's work, and each was verified against the vault.
+
+**1. Three specification rule errors. Reconcile before authoring the manifest.**
+
+| §9 / §8.7 claim | Source reality | Consequence |
+|---|---|---|
+| `Aim` is a Challenge modifier owned by the Challenge module (§8.7) | `Aim` appears **twice in the entire vault**, both in `09 - Chapter 9 …:760-762`, as a bullet inside the **Bows equipment** entry. There is no Chapter 7 heading. | The mechanic is real ("play your card facedown… reveal the card and add its value to your total Attack") and belongs in v1, but it is an equipment-granted action with no heading. `challenge-aim` needs a bullet anchor and cites no rules entry. |
+| "shield **Initiative replacement**" (§8.6, §8.7) | **No such mechanic exists.** `### Shield` (`09 - Chapter 9 …:683`) is about absorbing Notches. The only Initiative-adjacent shield rule is a **tie-break**: "Ties go to the attacker unless the defender has a shield" (`07 - Chapter 7 …:263`, `:415`, `:431`). | `challenge-shield-initiative` as named would encode a rule the game does not have. Re-scope it to a tie-break modifier on Attack/Riposte resolution, or drop it. **This needs a spec amendment, not a manifest entry.** |
+| Doomsaying, Strange Communions, As Above So Below are Appendix D Special City Actions (§9:444) | **Correct.** All three are bullets: `:806`, `:1050`, `:1066`. Beware `### As Above, So Below` at `10 - Chapter 10 …:594` — it is a *movie* in the Inspirational Media list. | All three need bullet anchors. `city-as-above-so-below` is a `reorder-top` over the minor deck's top three. |
+
+**2. The privacy model's rulebook citation is not extractable.** "No peeking!" — the design review's primary justification for hidden hands, and what §8.2 leans on with "The rulebook explicitly forbids peeking at another player's face-down card" — lives in an Obsidian **sidebar callout** (`07 - Chapter 7 …:338-340`), and `stripCallouts` removes all callouts by design. The "Four aces" poker-face sidebar (`:391-399`) has the same problem. So `challenge-facedown-cards` exists in the pack, but **its body does not contain the privacy rule**. A procedure citing it as the basis for the privacy model would be citing prose that omits the rule. Decide one of: cite the sidebar by file/line in the audit rather than via `ruleEntryIds`; or add an opt-in `keepCallouts` manifest flag (no committed entry sets it, so it cannot drift). Do not weaken `stripCallouts` globally.
+
+**3. `md-rules.mjs` ignored the `after` anchor.** Fixed during 0a (`extractRuleBody` was called without `entry.after`, so a disambiguating entry silently imported the first match). `md-procedures.mjs` must pass `after` from the start — Chapter 7's `1. Draw Challenge cards` occurs three times, and the GM hand formula is the third.
+
+**4. Not every table is stripped, and that matters for the audit.** See "Two source facts" below. Tables that survive into `rules.json` are prose with flattened cross-references; the same table extracted here must be the structured record. Expect the same text to exist in both files in different shapes — that is intended, not duplication to eliminate.
 
 ## Global Constraints
 
@@ -521,7 +544,18 @@ An entry that resolves a table adds a `lookupTable` block naming the source to e
 }
 ```
 
-**Two entries need a bullet anchor, not a heading.** Doomsaying (`14 - Appendix D …:806`) and Strange Communions (`:1050`) are bullet list items under repeated `#### Special City Action:` headings. Give those manifest entries an `anchor` field holding the bullet's exact leading text (`"- **Doomsaying:**"`), and have the importer locate the section by `after` + anchor rather than by heading alone. Their `ruleEntryIds` are `[]` — Increment 0a records why. Note also that `city-as-above-so-below` cites `gm-as-above-so-below`, which is in **Chapter 10**, not Appendix D as §9:444 claims.
+**Four entries need a bullet anchor, not a heading.** All are bullet list items no `extractSection` call can address:
+
+| Entry | Source | Mechanic |
+|---|---|---|
+| `city-doomsaying` | `14 - Appendix D …:806` | Four minor draws; suit selects the row, step selects the column |
+| `city-strange-communions` | `14 - Appendix D …:1050` | Draw Challenge cards from deck top, discard top, or a mix |
+| `city-as-above-so-below` | `14 - Appendix D …:1066` | `reorder-top` over the minor deck's top three |
+| `challenge-aim` | `09 - Chapter 9 …:760-762` | Bow equipment grants a facedown Swords action; reveal adds value to Attack |
+
+Give those manifest entries an `anchor` field holding the bullet's exact leading text (`"- **Doomsaying:**"`), and have the importer locate the section by `after` + anchor rather than by heading alone. Their `ruleEntryIds` are `[]` — Increment 0a records why.
+
+`extractSection` must never be pointed at `10 - Chapter 10 …:594` for As Above So Below; that heading is a movie review. §9:444 is right that all three City Actions are in Appendix D.
 
 The importer calls `extractSection` for every declared file/heading so renamed or missing source headings fail the local build. It verifies every `ruleEntryId` exists in the committed `rules.json`. The manifest includes unsupported audit-only entries with an empty `steps` array; the generated runtime JSON filters those out, while the audit retains them.
 

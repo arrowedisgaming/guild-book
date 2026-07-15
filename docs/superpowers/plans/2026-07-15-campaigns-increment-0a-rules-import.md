@@ -316,12 +316,14 @@ The boundary is the moment of use (specification §9). Import:
 
 Do **not** import City Creation, Underworld Creation, or the Job Board. Those are preparation tooling and are deferred.
 
-- [ ] **Step 2: Record the two source-location corrections**
+- [ ] **Step 2: Record the source-location findings**
 
-Two specification statements are wrong about where this content lives, and the manifest is the record of truth:
+The specification is **correct** that all three Special City Actions are in Appendix D. An earlier draft of this plan "corrected" it to say As Above So Below lives in Chapter 10; that was wrong, and the trap is worth knowing about:
 
-1. §9:438 and §9:444 call Doomsaying, Strange Communions, and As Above So Below "the three named **Appendix D** Special City Actions". `As Above, So Below` is a `###` heading in **Chapter 10** (`10 - Chapter 10 …:594`), not Appendix D. It is imported here as `gm-as-above-so-below`.
-2. Doomsaying (`14 - Appendix D …:806`) and Strange Communions (`:1050`) are **bullet list items** under repeated `#### Special City Action:` headings, not addressable sections. `extractSection` cannot target them, so they get **no rules entry** in this increment. Increment 0b addresses their tables through an explicit anchor selector, and their `ruleEntryIds` must therefore be empty. Flag both in the completion record.
+1. **`### As Above, So Below` at `10 - Chapter 10 …:594` is a found-footage movie**, sitting under `# Inspirational and Educational Reading` → `## Movies`. Importing it by heading yields a film review, not a rule. The real City Action is `14 - Appendix D …:1066` — "You may go stargazing at the Sidereal House. Draw the top three cards from the minor arcana deck and place them back in any order" — which is the top-three reorder §9:438 describes.
+2. **All three Special City Actions are bullet list items**, not addressable sections: Doomsaying (`:806`), Strange communions (`:1050`), As above so below (`:1066`). They sit under repeated `#### Special City Action:` headings, so `extractSection` cannot target them and they get **no rules entry** in this increment. Increment 0b reaches them with an explicit anchor selector, and their `ruleEntryIds` must therefore be empty. Flag all three in the completion record.
+
+The general lesson for anyone extending this manifest: **a matching heading is not a matching rule.** Verify the extracted body, not just that extraction succeeded.
 
 - [ ] **Step 3: Run the full increment gate**
 
@@ -342,14 +344,30 @@ git add scripts/content-import/manifest/rules-md.json static/content-packs/hmtw/
 git commit -m "feat(content): import cross-chapter in-session rules"
 ```
 
-## Increment 0a Completion Record
+## Increment 0a Completion Record — executed 2026-07-15
 
-Record in the implementation PR:
+**Status: complete. Gate A1 passes.**
 
-- Total rule entry count before and after, and the per-chapter breakdown.
-- Any heading whose section was pure tables and was therefore deferred to Increment 0b (Task 3 Step 4).
-- Confirmation that `CHANGELOG.md`'s hand-size TODO is closed and `challenge-gm-hand-size` carries a threat-tier sentinel.
-- Confirmation that Doomsaying and Strange Communions have no rules entry, with the bullet-anchor reason.
-- Output of `md-rules.mjs --check` showing `0 drifted`.
+| Measure | Result |
+|---|---|
+| Rule entries | 10 → **54** (+44) |
+| Per source | Ch6 +12, Ch7 +14, Ch8 +3, Ch9 +5, Ch4 +1, Ch5 +2, Ch10 +1, Appendix A +6 |
+| `md-rules.mjs --check` | `Checked 54 rules, 0 drifted` |
+| `npm run content:verify` | 173 fields / 9 collections, 54 rules, 40 spells — all `0 drifted` |
+| `npm run check` | 4593 files, 0 errors, 0 warnings |
+| `npm test` | 148 passed |
+| Existing entries | Byte-identical — regenerated `rules.json` diff is **+225 / −0** |
 
-Do not begin Increment 0b until `tests/unit/rules-coverage.test.ts` passes, because every `ruleEntryId` it validates resolves against this increment's output.
+**Production fix required by this increment:** `md-rules.mjs:60` called `extractRuleBody` without `entry.after`, so a manifest entry disambiguating a repeated heading silently imported the first match. `md-inject.mjs:77` already passed it. Caught by a `mustContain` sentinel on `challenge-gm-hand-size`, which would otherwise have imported a one-line flow summary in place of the GM hand formula. No committed entry used `after`, so the fix produced zero drift.
+
+**Hand-size TODO closed.** `challenge-gm-hand-size` carries the threat-tier clause verbatim (`+2 cards if there is an elite enemy`, `+3 cards if there is a dungeon lord`), guarded by sentinels. `CHANGELOG.md`'s TODO is removed and the closure recorded under Unreleased.
+
+**Deliberately absent, each for a source reason:**
+
+- `camp-sequence`, `city-sequence` — `# The Flow of the X Phase` runs to the next `#`, and every candidate `until` anchor collides with the identically-named flow-summary item, so the flow list cannot be sliced. Both are chapter overviews no procedure cites; importing them means an 8k/23k blob duplicating the entries beside them. Revisit only if `md-lib` grows an `until`-with-`after` form.
+- `gm-as-above-so-below` — the Chapter 10 heading is a movie. The real City Action is an Appendix D bullet; see Task 5 Step 2.
+- Doomsaying, Strange Communions, As Above So Below, and `Aim` — all bullet items, no rules entry, deferred to Increment 0b's anchor selector.
+
+**Findings handed to Increment 0b:** three specification rule errors (`Aim`'s location, the non-existent "shield Initiative replacement", and the As Above So Below movie trap) and one structural problem — the "No peeking!" privacy rule lives in a sidebar callout that `stripCallouts` removes, so the privacy model's rulebook citation is not extractable. All four are recorded in that plan's "Findings from executing Increment 0a".
+
+Increment 0b may begin: `tests/unit/rules-coverage.test.ts` passes, so every `ruleEntryId` it validates resolves against this increment's output.

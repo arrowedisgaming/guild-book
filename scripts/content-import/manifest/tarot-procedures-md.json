@@ -6,8 +6,15 @@
 			"title": "Test of Fate",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "01 - Chapter 1 - The Basics.md", "heading": "Tests of Fate" },
-			"ruleEntryIds": ["tests-of-fate", "favor-and-disfavor", "pushing-fate"],
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Tests of Fate"
+			},
+			"ruleEntryIds": [
+				"tests-of-fate",
+				"favor-and-disfavor",
+				"pushing-fate"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -15,7 +22,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -26,11 +36,15 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "discard-pending",
+					"precondition": "previous-step-failed"
 				}
 			]
 		},
@@ -39,8 +53,13 @@
 			"title": "Group Test",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "01 - Chapter 1 - The Basics.md", "heading": "Group tests" },
-			"ruleEntryIds": ["group-tests"],
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Group tests"
+			},
+			"ruleEntryIds": [
+				"group-tests"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -48,7 +67,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -59,7 +81,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -72,8 +97,13 @@
 			"title": "Augury",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Augury" },
-			"ruleEntryIds": ["sorcery-augury"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Augury"
+			},
+			"ruleEntryIds": [
+				"sorcery-augury"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -81,7 +111,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "actor-private",
 					"resultVisibility": "gm-private",
 					"completion": "gm-confirmed",
@@ -129,7 +162,10 @@
 					"actor": "system",
 					"operation": "deal",
 					"deck": "minor",
-					"draw": { "kind": "formula", "formulaId": "player-hand-size" },
+					"draw": {
+						"kind": "formula",
+						"formulaId": "player-hand-size"
+					},
 					"visibility": "recipient-private",
 					"resultVisibility": "actor-private",
 					"completion": "automatic",
@@ -140,7 +176,10 @@
 					"actor": "system",
 					"operation": "deal",
 					"deck": "major",
-					"draw": { "kind": "formula", "formulaId": "gm-hand-size" },
+					"draw": {
+						"kind": "formula",
+						"formulaId": "gm-hand-size"
+					},
 					"visibility": "actor-private",
 					"resultVisibility": "gm-private",
 					"completion": "automatic",
@@ -213,9 +252,16 @@
 			"title": "Black Honey",
 			"phase": "challenge",
 			"scope": "supported-v1",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Black honey" },
-			"ruleEntryIds": ["crawl-black-honey"],
-			"modifierIds": ["challenge-black-honey"],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Black honey"
+			},
+			"ruleEntryIds": [
+				"crawl-black-honey"
+			],
+			"modifierIds": [
+				"challenge-black-honey"
+			],
 			"steps": [
 				{
 					"id": "modified-deal",
@@ -234,9 +280,16 @@
 			"title": "Stun",
 			"phase": "challenge",
 			"scope": "supported-v1",
-			"source": { "file": "01 - Chapter 1 - The Basics.md", "heading": "Effects" },
-			"ruleEntryIds": ["effects"],
-			"modifierIds": ["challenge-stun"],
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Effects"
+			},
+			"ruleEntryIds": [
+				"effects"
+			],
+			"modifierIds": [
+				"challenge-stun"
+			],
 			"steps": [
 				{
 					"id": "forced-discard",
@@ -255,9 +308,16 @@
 			"title": "Brainfever",
 			"phase": "challenge",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Brainfever" },
-			"ruleEntryIds": ["sorcery-brainfever"],
-			"modifierIds": ["challenge-brainfever"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Brainfever"
+			},
+			"ruleEntryIds": [
+				"sorcery-brainfever"
+			],
+			"modifierIds": [
+				"challenge-brainfever"
+			],
 			"steps": [
 				{
 					"id": "forced-initiative",
@@ -276,9 +336,16 @@
 			"title": "Counsel",
 			"phase": "challenge",
 			"scope": "supported-v1",
-			"source": { "file": "05 - Chapter 5 - The Four Paths.md", "heading": "Counsel" },
-			"ruleEntryIds": ["paths-counsel"],
-			"modifierIds": ["challenge-counsel"],
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "Counsel"
+			},
+			"ruleEntryIds": [
+				"paths-counsel"
+			],
+			"modifierIds": [
+				"challenge-counsel"
+			],
 			"steps": [
 				{
 					"id": "transfer-card",
@@ -297,9 +364,16 @@
 			"title": "Guardian Angel",
 			"phase": "challenge",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Guardian Angel" },
-			"ruleEntryIds": ["sorcery-guardian-angel"],
-			"modifierIds": ["challenge-guardian-angel"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Guardian Angel"
+			},
+			"ruleEntryIds": [
+				"sorcery-guardian-angel"
+			],
+			"modifierIds": [
+				"challenge-guardian-angel"
+			],
 			"steps": [
 				{
 					"id": "transfer-card",
@@ -324,7 +398,9 @@
 				"anchor": "- Aim is a Swords action."
 			},
 			"ruleEntryIds": [],
-			"modifierIds": ["challenge-aim"],
+			"modifierIds": [
+				"challenge-aim"
+			],
 			"steps": [
 				{
 					"id": "aim-prepare",
@@ -357,7 +433,11 @@
 				"file": "06 - Chapter 6 - The Crawl Phase.md",
 				"heading": "Example Meatgrinder table"
 			},
-			"ruleEntryIds": ["crawl-meatgrinder", "crawl-loud-noises", "crawl-moving-carefully"],
+			"ruleEntryIds": [
+				"crawl-meatgrinder",
+				"crawl-loud-noises",
+				"crawl-moving-carefully"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -365,7 +445,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "meatgrinder",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -379,8 +462,14 @@
 			"title": "We’re Doomed!",
 			"phase": "crawl",
 			"scope": "supported-v1",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "We’re doomed!" },
-			"ruleEntryIds": ["crawl-were-doomed", "crawl-darkness"],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "We’re doomed!"
+			},
+			"ruleEntryIds": [
+				"crawl-were-doomed",
+				"crawl-darkness"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -388,7 +477,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "were-doomed",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -406,7 +498,9 @@
 				"file": "04 - Chapter 4 - Kith and Kin.md",
 				"heading": "Wood elf arête talent: Area Sense"
 			},
-			"ruleEntryIds": ["kith-area-sense"],
+			"ruleEntryIds": [
+				"kith-area-sense"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -414,7 +508,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -427,8 +524,14 @@
 			"title": "Starting Disposition",
 			"phase": "crawl",
 			"scope": "supported-v1",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Starting Disposition" },
-			"ruleEntryIds": ["crawl-starting-disposition", "crawl-social-encounters-disposition"],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Starting Disposition"
+			},
+			"ruleEntryIds": [
+				"crawl-starting-disposition",
+				"crawl-social-encounters-disposition"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -454,7 +557,9 @@
 				"heading": "3. No rest for the wicked",
 				"after": "Use a Talent"
 			},
-			"ruleEntryIds": ["camp-no-rest-for-the-wicked"],
+			"ruleEntryIds": [
+				"camp-no-rest-for-the-wicked"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -472,7 +577,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -485,8 +593,13 @@
 			"title": "Patrol",
 			"phase": "camp",
 			"scope": "supported-v1",
-			"source": { "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Patrol" },
-			"ruleEntryIds": ["camp-patrol"],
+			"source": {
+				"file": "08 - Chapter 8 - The Camp Phase.md",
+				"heading": "Patrol"
+			},
+			"ruleEntryIds": [
+				"camp-patrol"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -494,7 +607,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
-					"draw": { "kind": "fixed", "count": 2 },
+					"draw": {
+						"kind": "fixed",
+						"count": 2
+					},
 					"lookupTableId": "meatgrinder",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -508,16 +624,26 @@
 			"title": "High Chant",
 			"phase": "camp",
 			"scope": "supported-v1",
-			"source": { "file": "05 - Chapter 5 - The Four Paths.md", "heading": "High Chant" },
-			"ruleEntryIds": ["paths-high-chant"],
-			"modifierIds": ["camp-high-chant"],
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"modifierIds": [
+				"camp-high-chant"
+			],
 			"steps": [
 				{
 					"id": "select-inspiration",
 					"actor": "player",
 					"operation": "select-from-discard",
 					"deck": "minor",
-					"draw": { "kind": "formula", "formulaId": "high-chant-selection" },
+					"draw": {
+						"kind": "formula",
+						"formulaId": "high-chant-selection"
+					},
 					"visibility": "actor-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
@@ -540,8 +666,13 @@
 			"title": "Leeches",
 			"phase": "camp",
 			"scope": "supported-v1",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Leeches" },
-			"ruleEntryIds": ["city-leeches"],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Leeches"
+			},
+			"ruleEntryIds": [
+				"city-leeches"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -549,7 +680,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -562,8 +696,13 @@
 			"title": "Overland Travel",
 			"phase": "camp",
 			"scope": "supported-v1",
-			"source": { "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Overland Travel" },
-			"ruleEntryIds": ["camp-overland-travel"],
+			"source": {
+				"file": "08 - Chapter 8 - The Camp Phase.md",
+				"heading": "Overland Travel"
+			},
+			"ruleEntryIds": [
+				"camp-overland-travel"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -571,7 +710,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "meatgrinder",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -585,8 +727,13 @@
 			"title": "City Events",
 			"phase": "city",
 			"scope": "supported-v1",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Example City Events" },
-			"ruleEntryIds": ["city-events"],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Example City Events"
+			},
+			"ruleEntryIds": [
+				"city-events"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -594,7 +741,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "city-events",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -608,22 +758,25 @@
 			"title": "Signs and Portents",
 			"phase": "city",
 			"scope": "supported-v1",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Signs and Portents" },
-			"ruleEntryIds": ["city-signs-and-portents"],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Signs and Portents"
+			},
+			"ruleEntryIds": [
+				"city-signs-and-portents"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-sign",
+					"id": "consult-discard-top",
 					"actor": "gm",
-					"operation": "draw",
+					"operation": "consult-discard-top",
 					"deck": "minor",
-					"deckScope": "fresh",
-					"draw": { "kind": "fixed", "count": 1 },
 					"lookupTableId": "signs-and-portents",
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -632,8 +785,13 @@
 			"title": "Beg and Busk",
 			"phase": "city",
 			"scope": "supported-v1",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Beg and Busk" },
-			"ruleEntryIds": ["city-beg-and-busk"],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Beg and Busk"
+			},
+			"ruleEntryIds": [
+				"city-beg-and-busk"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -641,7 +799,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -654,8 +815,13 @@
 			"title": "Carouse",
 			"phase": "city",
 			"scope": "supported-v1",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Carouse" },
-			"ruleEntryIds": ["city-carouse"],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Carouse"
+			},
+			"ruleEntryIds": [
+				"city-carouse"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -663,7 +829,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "hangover",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -689,7 +858,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 4 },
+					"draw": {
+						"kind": "fixed",
+						"count": 4
+					},
 					"lookupTableId": "doomsaying",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -739,7 +911,10 @@
 					"actor": "player",
 					"operation": "reorder-top",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 3 },
+					"draw": {
+						"kind": "fixed",
+						"count": 3
+					},
 					"visibility": "actor-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
@@ -752,8 +927,13 @@
 			"title": "Maleficence",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Maleficence" },
-			"ruleEntryIds": ["sorcery-maleficence"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence"
+			},
+			"ruleEntryIds": [
+				"sorcery-maleficence"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -761,7 +941,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "maleficence-wastes",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -773,7 +956,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "maleficence-weald",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -785,7 +971,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "maleficence-weird",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -797,7 +986,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "maleficence-welkin",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -811,8 +1003,13 @@
 			"title": "Malediction",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Malediction" },
-			"ruleEntryIds": ["sorcery-malediction"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Malediction"
+			},
+			"ruleEntryIds": [
+				"sorcery-malediction"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -820,7 +1017,10 @@
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "malediction",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -843,8 +1043,13 @@
 			"title": "Random Totem",
 			"phase": "cross-phase",
 			"scope": "supported-v1",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Random Totem" },
-			"ruleEntryIds": ["sorcery-totem"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Random Totem"
+			},
+			"ruleEntryIds": [
+				"sorcery-totem"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
@@ -852,7 +1057,10 @@
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
 					"lookupTableId": "random-totem",
 					"visibility": "public",
 					"resultVisibility": "public",
@@ -870,20 +1078,21 @@
 				"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
 				"heading": "Creating surprises"
 			},
-			"ruleEntryIds": ["gm-creating-surprises"],
+			"ruleEntryIds": [
+				"gm-creating-surprises"
+			],
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-twist",
+					"id": "consult-discard-top",
 					"actor": "gm",
-					"operation": "draw",
+					"operation": "consult-discard-top",
 					"deck": "minor",
-					"draw": { "kind": "fixed", "count": 1 },
 					"lookupTableId": "gm-twist",
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -892,7 +1101,10 @@
 			"title": "Job Board (Example Contracts)",
 			"phase": "city",
 			"scope": "deferred-preparation",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Example Contracts" },
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Example Contracts"
+			},
 			"rationale": "A preparation generator: \"Draw ~5 cards to create a job board.\" The GM builds the board before the guild engages with it, so it is content creation rather than in-session resolution. Specification §9 defers it by name.",
 			"ruleEntryIds": [],
 			"modifierIds": [],
@@ -903,7 +1115,10 @@
 			"title": "City Creation — Districts",
 			"phase": "city",
 			"scope": "deferred-preparation",
-			"source": { "file": "14 - Appendix D - City Creation.md", "heading": "Reverse archaeology" },
+			"source": {
+				"file": "14 - Appendix D - City Creation.md",
+				"heading": "Reverse archaeology"
+			},
 			"rationale": "GM preparation tooling. The boundary is the moment of use: generating a City before play is deferred, while the three Special City Actions that occur during play are supported.",
 			"ruleEntryIds": [],
 			"modifierIds": [],
@@ -914,7 +1129,10 @@
 			"title": "Underworld Creation",
 			"phase": "crawl",
 			"scope": "deferred-preparation",
-			"source": { "file": "15 - Appendix E - Underworld Creation.md", "heading": "The Augury" },
+			"source": {
+				"file": "15 - Appendix E - Underworld Creation.md",
+				"heading": "The Augury"
+			},
 			"rationale": "GM preparation tooling. Distinct from the Augury spell (test-augury), which is cast during play; this is the Underworld-generation procedure of the same name.",
 			"ruleEntryIds": [],
 			"modifierIds": [],
@@ -925,7 +1143,10 @@
 			"title": "Flat 50% Chances",
 			"phase": "cross-phase",
 			"scope": "not-applicable-non-tarot",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Malediction" },
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Malediction"
+			},
 			"rationale": "Several Malediction curses and similar rules specify a flat \"50% chance\" without prescribing tarot. These stay GM-adjudicated and are never simulated with a card draw; the catalog models them as a manual-choice step inside oracle-malediction.",
 			"ruleEntryIds": [],
 			"modifierIds": [],
@@ -946,68 +1167,102 @@
 			"id": "were-doomed",
 			"title": "We’re Doomed!",
 			"deck": "minor",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "We’re doomed!" }
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "We’re doomed!"
+			}
 		},
 		{
 			"id": "starting-disposition",
 			"title": "Starting Disposition",
 			"deck": "minor",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Starting Disposition" }
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Starting Disposition"
+			}
 		},
 		{
 			"id": "city-events",
 			"title": "City Events",
 			"deck": "major",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Example City Events" }
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Example City Events"
+			}
 		},
 		{
 			"id": "signs-and-portents",
 			"title": "Signs and Portents",
 			"deck": "minor",
-			"deckScope": "fresh",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Signs and Portents" }
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Signs and Portents"
+			}
 		},
 		{
 			"id": "hangover",
 			"title": "Hangover",
 			"deck": "major",
-			"source": { "file": "09 - Chapter 9 - The City Phase.md", "heading": "Carouse" }
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Carouse"
+			},
+			"bracketConvention": "minor-discard-top",
+			"$comment": "Ch9:275 declares the convention for this table: every bracket refers to the top card of the minor arcana discard pile."
 		},
 		{
 			"id": "maleficence-wastes",
 			"title": "Maleficence of the Wastes",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Maleficence of the Wastes" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Wastes"
+			}
 		},
 		{
 			"id": "maleficence-weald",
 			"title": "Maleficence of the Weald",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Maleficence of the Weald" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Weald"
+			}
 		},
 		{
 			"id": "maleficence-weird",
 			"title": "Maleficence of the Weird",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Maleficence of the Weird" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Weird"
+			}
 		},
 		{
 			"id": "maleficence-welkin",
 			"title": "Maleficence of the Welkin",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Maleficence of the Welkin" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Welkin"
+			}
 		},
 		{
 			"id": "malediction",
 			"title": "Malediction Curse",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Malediction" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Malediction"
+			}
 		},
 		{
 			"id": "random-totem",
 			"title": "Random Totem",
 			"deck": "minor",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Random Totem" }
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Random Totem"
+			}
 		},
 		{
 			"id": "gm-twist",
@@ -1033,46 +1288,81 @@
 			"id": "challenge-black-honey",
 			"title": "Black Honey",
 			"phase": "challenge",
-			"source": { "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Black honey" },
-			"ruleEntryIds": ["crawl-black-honey"],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Black honey"
+			},
+			"ruleEntryIds": [
+				"crawl-black-honey"
+			],
 			"behaviorId": "deal-size-delta",
-			"params": { "cards": 1 }
+			"params": {
+				"cards": 1
+			}
 		},
 		{
 			"id": "challenge-stun",
 			"title": "Stun",
 			"phase": "challenge",
-			"source": { "file": "01 - Chapter 1 - The Basics.md", "heading": "Effects" },
-			"ruleEntryIds": ["effects"],
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Effects"
+			},
+			"ruleEntryIds": [
+				"effects"
+			],
 			"behaviorId": "forced-hand-discard",
-			"params": { "immediate": true }
+			"params": {
+				"immediate": true
+			}
 		},
 		{
 			"id": "challenge-brainfever",
 			"title": "Brainfever",
 			"phase": "challenge",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Brainfever" },
-			"ruleEntryIds": ["sorcery-brainfever"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Brainfever"
+			},
+			"ruleEntryIds": [
+				"sorcery-brainfever"
+			],
 			"behaviorId": "forced-initiative-selection",
-			"params": { "select": "lowest-value" }
+			"params": {
+				"select": "lowest-value"
+			}
 		},
 		{
 			"id": "challenge-counsel",
 			"title": "Counsel",
 			"phase": "challenge",
-			"source": { "file": "05 - Chapter 5 - The Four Paths.md", "heading": "Counsel" },
-			"ruleEntryIds": ["paths-counsel"],
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "Counsel"
+			},
+			"ruleEntryIds": [
+				"paths-counsel"
+			],
 			"behaviorId": "private-transfer",
-			"params": { "suitMustMatchAction": true }
+			"params": {
+				"suitMustMatchAction": true
+			}
 		},
 		{
 			"id": "challenge-guardian-angel",
 			"title": "Guardian Angel",
 			"phase": "challenge",
-			"source": { "file": "11 - Appendix A - Sorcery.md", "heading": "Guardian Angel" },
-			"ruleEntryIds": ["sorcery-guardian-angel"],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Guardian Angel"
+			},
+			"ruleEntryIds": [
+				"sorcery-guardian-angel"
+			],
 			"behaviorId": "private-transfer",
-			"params": { "suitMustMatchAction": false }
+			"params": {
+				"suitMustMatchAction": false
+			}
 		},
 		{
 			"id": "challenge-aim",
@@ -1085,16 +1375,25 @@
 			},
 			"ruleEntryIds": [],
 			"behaviorId": "prepared-facedown-bonus",
-			"params": { "suit": "swords" }
+			"params": {
+				"suit": "swords"
+			}
 		},
 		{
 			"id": "camp-high-chant",
 			"title": "High Chant",
 			"phase": "camp",
-			"source": { "file": "05 - Chapter 5 - The Four Paths.md", "heading": "High Chant" },
-			"ruleEntryIds": ["paths-high-chant"],
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
 			"behaviorId": "inspiration-distribution",
-			"params": { "maxPerPlayer": 1 }
+			"params": {
+				"maxPerPlayer": 1
+			}
 		}
 	],
 	"formulas": [
@@ -1106,7 +1405,9 @@
 				"heading": "1. Draw Challenge cards",
 				"after": "GMing the Challenge"
 			},
-			"ruleEntryIds": ["challenge-gm-hand-size"],
+			"ruleEntryIds": [
+				"challenge-gm-hand-size"
+			],
 			"params": {
 				"base": 3,
 				"perEnemyType": 1,
@@ -1125,15 +1426,26 @@
 				"heading": "1. Draw Challenge cards",
 				"after": "Special rules"
 			},
-			"ruleEntryIds": ["challenge-draw-cards"],
-			"params": { "base": 4 }
+			"ruleEntryIds": [
+				"challenge-draw-cards"
+			],
+			"params": {
+				"base": 4
+			}
 		},
 		{
 			"id": "high-chant-selection",
 			"title": "High Chant inspiration count",
-			"source": { "file": "05 - Chapter 5 - The Four Paths.md", "heading": "High Chant" },
-			"ruleEntryIds": ["paths-high-chant"],
-			"params": { "perCups": 1 }
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"params": {
+				"perCups": 1
+			}
 		}
 	]
 }

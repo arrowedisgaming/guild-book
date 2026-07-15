@@ -490,24 +490,6 @@ export type TarotProcedureScope =
 
 export type TarotDeckId = 'major' | 'minor';
 
-/**
- * Which deck a step draws from.
- *
- * `session` — the campaign's shared, persistent draw pile. Subject to card
- * conservation, deck exhaustion/reshuffle, and the Fool's reshuffle trigger.
- *
- * `fresh` — a newly shuffled deck unrelated to the campaign decks, drawn and
- * discarded within the step. The card never enters a session zone, so it is
- * outside card conservation, never exhausts, and cannot trigger a Fool
- * reshuffle. Still server-authoritative: the shuffle is seeded server-side and
- * the client never determines the result.
- *
- * A `fresh` + `minor` draw is the 56-card minor arcana — Ch1:201, "There are
- * fifty-six minor arcana cards… four suits of fourteen cards". The Fool is
- * *borrowed from the major arcana* into the player deck and is therefore not in
- * a fresh minor deck, so such a draw always yields a value of I–King.
- */
-export type TarotDeckScope = 'session' | 'fresh';
 
 export type TarotOperation =
 	| 'draw'
@@ -531,6 +513,9 @@ export type TarotDrawSpec =
 /** Where a step's result becomes visible once resolved. */
 export type TarotResultVisibility = 'public' | 'actor-private' | 'gm-private';
 
+/** Guards a step that is not always legal. */
+export type TarotStepPrecondition = 'previous-step-failed';
+
 /** What happens to a partially-resolved step when a session is recovered or ended. */
 export type TarotRecovery = 'discard-pending' | 'return-to-draw' | 'retain-pending';
 
@@ -539,9 +524,12 @@ export interface TarotProcedureStepDefinition {
 	actor: 'gm' | 'player' | 'system';
 	operation: TarotOperation;
 	deck?: TarotDeckId;
-	/** Defaults to `session`. See {@link TarotDeckScope}. */
-	deckScope?: TarotDeckScope;
 	draw?: TarotDrawSpec;
+	/**
+	 * A step that is only legal in some state. Ch1: pushing fate is offered only
+	 * after a failure, so a data-driven runner must not present it unconditionally.
+	 */
+	precondition?: TarotStepPrecondition;
 	/** Set when this step resolves its drawn card(s) against an oracle table. */
 	lookupTableId?: string;
 	visibility: 'public' | 'actor-private' | 'recipient-private';
@@ -593,10 +581,19 @@ export interface TarotLookupKeySuit {
 export type TarotLookupKey = TarotLookupKeyRange | TarotLookupKeySuit;
 
 /**
- * A live reference to table state. Ch9: "Anything in brackets [ ] refers to the
- * top card of the minor arcana discard pile."
+ * A typed reference to the top card of the minor arcana discard pile, per Ch9's
+ * bracket convention. The book uses three forms, and a flat enum could not carry
+ * the operand of the latter two:
+ *   `[value]`          -> that card's value
+ *   `[odd]` / `[even]` -> a branch on its parity
+ *   `[Swords]` …       -> a branch on its suit
+ *   `[1-2]`, `[9-King]`-> a branch on its value range
  */
-export type TarotLookupToken = 'value' | 'suit' | 'odd' | 'even' | 'discard' | 'adventurers';
+export type TarotLookupToken =
+	| { kind: 'value' }
+	| { kind: 'parity'; parity: 'odd' | 'even' }
+	| { kind: 'suit'; suit: SuitId }
+	| { kind: 'range'; from: string; to: string };
 
 /** A cross-reference the source expressed as a wikilink. */
 export interface TarotLookupReference {
@@ -629,8 +626,12 @@ export interface TarotLookupTable {
 	id: string;
 	title: string;
 	deck: TarotDeckId;
-	/** Defaults to `session`. See {@link TarotDeckScope}. */
-	deckScope?: TarotDeckScope;
+	/**
+	 * Set when the table declares Ch9's bracket convention (`:275`): every bracket
+	 * refers to the top card of the minor arcana discard pile. Table-scoped —
+	 * Meatgrinder and City Events use brackets as category labels instead.
+	 */
+	bracketConvention?: 'minor-discard-top';
 	axis: 'card' | 'card-by-suit' | 'suit-by-step';
 	columns: { id: string; label: string }[];
 	rows: TarotLookupRow[];

@@ -8,12 +8,20 @@
 //   node scripts/content-import/md-procedures.mjs --dry-run          # preview, write nothing
 //
 // --check re-extracts every table from the local vault and validates every
-// declared source heading, so a renamed heading fails the build. --check-generated
-// renders only what the committed manifest implies and never opens the ignored
-// copyrighted Markdown, so CI can run it. The asymmetry is deliberate and load
-// bearing: --check-generated CANNOT prove table *text* matches the book, because
-// it has no book. Table text is covered by digest integrity in CI (see
-// verify-pack-version.mjs) and by full re-extraction locally.
+// declared source heading, so a renamed heading or a changed table fails the
+// build. It is the only check that proves the output matches the book.
+//
+// --check-generated never opens the ignored copyrighted Markdown, so CI can run
+// it. Be precise about what that buys, because it is easy to overstate:
+//   it DOES verify   procedures/modifiers/formulas and the audit re-render from
+//                    the manifest, and that every table's declared id/title/deck/
+//                    bracketConvention/source still matches the committed output.
+//   it does NOT verify table ROWS. Those cannot be re-derived without the book.
+//
+// So committed row text is covered by *tamper-evidence* (the content digest in
+// verify-pack-version.mjs proves the bytes were not edited after generation) and
+// by *local* re-extraction. Neither proves, in CI, that a row matches the
+// rulebook — only that nobody changed it since a human ran the real --check.
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -105,13 +113,17 @@ function buildTables(manifest) {
 			declared.source.file,
 			declared.source.heading,
 			declared.source.after,
-			{ anchor: declared.source.anchor, deck: declared.deck }
+			{
+				anchor: declared.source.anchor,
+				deck: declared.deck,
+				bracketConvention: Boolean(declared.bracketConvention)
+			}
 		);
 		return {
 			id: declared.id,
 			title: declared.title,
 			deck,
-			...(declared.deckScope ? { deckScope: declared.deckScope } : {}),
+			...(declared.bracketConvention ? { bracketConvention: declared.bracketConvention } : {}),
 			axis,
 			columns,
 			rows,
@@ -128,6 +140,42 @@ function readManifest() {
 function compileWithoutVault(manifest) {
 	const committed = JSON.parse(readFileSync(PROCEDURES_JSON, 'utf8'));
 	return compileProcedureContent(manifest, committed.lookupTables ?? []);
+}
+
+/**
+ * Verify the committed tables still agree with what the manifest declares.
+ *
+ * Table *rows* cannot be re-derived without the vault, but every declared
+ * attribute can be: id, title, deck, bracketConvention, and source. Without
+ * this, editing a table's deck or source in the manifest passed CI silently,
+ * because compileWithoutVault copies the committed tables straight back in.
+ */
+function checkDeclaredTables(manifest, committed) {
+	const problems = [];
+	const byId = new Map(committed.lookupTables.map((t) => [t.id, t]));
+	for (const declared of manifest.lookupTables) {
+		const actual = byId.get(declared.id);
+		if (!actual) {
+			problems.push(`declared table ${declared.id} is missing from the committed output`);
+			continue;
+		}
+		for (const key of ['title', 'deck', 'bracketConvention']) {
+			if (JSON.stringify(declared[key]) !== JSON.stringify(actual[key])) {
+				problems.push(
+					`${declared.id}.${key}: manifest ${JSON.stringify(declared[key])} vs committed ${JSON.stringify(actual[key])}`
+				);
+			}
+		}
+		if (JSON.stringify(declared.source) !== JSON.stringify(actual.source)) {
+			problems.push(`${declared.id}.source differs from the manifest`);
+		}
+	}
+	for (const id of byId.keys()) {
+		if (!manifest.lookupTables.some((t) => t.id === id)) {
+			problems.push(`committed table ${id} is not declared in the manifest`);
+		}
+	}
+	return problems;
 }
 
 const serialize = (value) => JSON.stringify(value, null, '\t') + '\n';
@@ -151,9 +199,14 @@ function main() {
 			console.error('DRIFT tarot-procedure-audit.md');
 			drift++;
 		}
+		for (const problem of checkDeclaredTables(manifest, committed)) {
+			console.error(`DRIFT lookupTables — ${problem}`);
+			drift++;
+		}
 		console.log(
-			`\nChecked ${fresh.procedures.length} procedures and the audit against the manifest, ${drift} drifted.` +
-				'\nNote: table text is not re-extracted here (no Markdown vault in CI); its integrity is covered by the content digest.'
+			`\nChecked ${fresh.procedures.length} procedures, ${manifest.lookupTables.length} table declarations, and the audit against the manifest, ${drift} drifted.` +
+				'\nNote: table ROWS are not re-extracted here — that needs the Markdown vault, which CI does not have.' +
+				'\nRow text is covered only by the content digest (tamper-evidence), NOT by re-derivation from the book.'
 		);
 		if (drift) process.exit(1);
 		return;

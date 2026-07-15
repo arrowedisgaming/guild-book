@@ -40,6 +40,22 @@ Both behaviors are correct for the rules reference and must not be changed. Neit
 
 Range keys use an **en-dash** (`I–VII`), not a hyphen. Suit header cells contain `<img src="images/suit-swords.svg" …>` markup followed by the visible label. Six table cells contain live-value tokens — `[value]`, `[odd]`, `[even]`, `[discard]`, `[adventurers]` — which Chapter 9 defines: "Anything in brackets [ ] refers to the top card of the minor arcana discard pile." Four table cells contain wikilink cross-references to Appendix C denizens and Appendix B alchemy.
 
+## Findings from an adversarial review (Codex gpt-5.5, 2026-07-15)
+
+Seven issues found after 0b/0.5 merged. All fixed on `fix/campaigns-oracle-review-findings`. Recorded because the *pattern* matters more than the individual bugs.
+
+**Three were the same mistake: reading where a rule is printed, not where it is used.** See roadmap decision D7.
+
+1. **Signs and Portents was wrong, and so was the decision built on it.** Modelled as a fresh draw; Ch9:130 says the GM *looks at the top card of the minor arcana discard pile*. See the withdrawn D6.
+2. **`gm-twist` consumed a card it should only read.** Ch10:354: "Glance at the top of the minor arcana discard pile." In a shared session a `draw` mutates the deck and changes later odds.
+3. **The bracket convention was under-modelled.** Ch9:275 declares it for the Hangover table: *every* bracket refers to the discard top. The flat enum only matched `[value]`/`[odd]`/`[even]`, so `[Swords]`, `[1–2]` and `[9–King]` extracted as `tokens: []` — the suit- and range-branches, i.e. most of the rule. Now a typed union, opt-in per table so City Events' `[Curiosity]` labels are not mistyped as selectors.
+4. **`<br>` was stripped without a space**, welding clauses: `"…on your face.• It is:"`. The Hangover rows were materially corrupted.
+5. **`--check-generated` never verified table declarations.** It copied committed tables back in and compared only procedures/modifiers/formulas, so changing a table's `deck` or `source` in the manifest passed CI silently. Now checks every declared attribute; proven by tampering.
+6. **`resolveTestOfFate` did not enforce the push precondition.** `canPush` is an output hint and cannot guard a caller. An initial success could be pushed into an automatic great failure. **The engine's own test was constructing that illegal state** (a 17 being pushed) and passed only because the guard was absent.
+7. **The header comment overstated what CI proves.** `--check-generated` cannot prove row text matches the book — it has no book. Committed rows have *tamper-evidence* via the digest, not re-derivation. Now stated precisely.
+
+**Test-quality lesson:** the token test matched cell text against the same enum the parser used — asserting the implementation back at itself, structurally unable to catch #3. Both replacements are mutation-tested: reintroduce the bug and they fail.
+
 ## Findings from executing Increment 0a
 
 Four things surfaced while importing the rules prose. Each changes this increment's work, and each was verified against the vault.

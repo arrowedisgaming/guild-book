@@ -413,5 +413,230 @@
 			"gm",
 			"dooms"
 		]
+	},
+	{
+		"id": "camp-patrol",
+		"section": "camp-phase",
+		"title": "Patrol",
+		"body": "Keep guard, patrolling around your encampment and setting up assault counter-measures.\n\nIf an adventurer takes the Patrol action, the GM draws twice on the Meatgrinder table and takes a non-random encounter result if available during step 3 of the Camp Phase (No Rest for the Wicked).",
+		"tags": [
+			"camp",
+			"tarot",
+			"meatgrinder",
+			"camp-action"
+		]
+	},
+	{
+		"id": "camp-no-rest-for-the-wicked",
+		"section": "camp-phase",
+		"title": "No Rest for the Wicked",
+		"body": "While the adventurers rest, the Underworld continues to go about its sinister business. The GM should draw on the Meatgrinder table for the dungeon the adventurers are camping in. Random events like rainstorms and rising fog will add flavor to the Camp Phase, but probably won’t impose any special rules. If a random encounter is pulled, the Camp Phase is interrupted by a Challenge.\n\nIt is assumed that adventurers are taking turns guarding the camp while they rest. If a random encounter occurs, the GM should randomly determine who’s on watch. An easy way to do this is to look at the top card of the minor arcana discard pile: the suit displayed corresponds to the path of the adventurer on guard. If there are multiple adventurers of the same path, odd cards target the player to the GM’s left, even cards target the player to the GM’s right.\n\nThe adventurer on guard tests Cups.\n\n- If successful, the alarm is raised before the random encounter finds the encampment. The guild has a brief period of time to prepare.\n\n- If the test of fate is a failure, the guild is surprised.\n\n- A guild caught asleep is very vulnerable—nobody is wearing armor or actively wielding weapons.\n\n- See Special rules for the rules about surprise.\n\nIf one of the players has performed the Patrol action, the GM draws twice on the Meatgrinder table and chooses a non-encounter result if possible. A Challenge only occurs if both cards reveal a random encounter—the GM chooses which one to use.\n\nOnce the Challenge is resolved, the Camp Phase continues on to step 4.",
+		"tags": [
+			"camp",
+			"tarot",
+			"oracle",
+			"watch",
+			"meatgrinder"
+		]
+	},
+	{
+		"id": "camp-overland-travel",
+		"section": "camp-phase",
+		"title": "Overland Travel",
+		"body": "Most of *His Majesty the Worm* is focused on dungeon-crawling in the mythic Underworld. It abstracts concerns of food, time, and distance into the flow of the Camp and Crawl Phases. If your game takes place in a setting where the sun shines, you might want a system that adds an additional layer of logistics to travel. If this is the case, use these rules.\n\nEach day is divided into three watches. Each watch takes about eight hours.\n\nUsing these optional rules, timekeeping becomes important. After three watches, a new day dawns. The GM should step through the calendar as they pass day by day.\n\nFor each watch, follow this procedure:\n\n### 1. Choose action\n\nThe guild chooses a single overland action to take.\n\n### 2. Meatgrinder\n\nThe GM draws on their Meatgrinder table for a random event or encounter.\n\n### 3. Set the scene\n\nThe GM describes the random encounter in the context of the hex the guild is traveling in. The players and the GM play out the scene, and when it’s over, the GM calls for a new overland action to be chosen.",
+		"tags": [
+			"camp",
+			"travel",
+			"tarot",
+			"optional"
+		]
+	},
+	{
+		"id": "city-events",
+		"section": "city-phase",
+		"title": "City Events",
+		"body": "The City is never dull. When you stagger back to the surface, you enter a chaotic metropolis with all its intrigues, politics, and spectacle.\n\nBefore play, the GM should construct a City Events table, detailing potential events that frame the guild’s visit. During this step, the GM draws a major arcana card, consults this table, and interprets the result.\n\nThe results need not happen instantly. For example, if the GM draws a rumor on the City Events table, they might have a contract-giver or shopkeeper deliver the rumor to the guild through the course of playing out the City Phase.\n\nThe City Events table should have twenty-one entries and follow this formula:\n\nCuriosities (I–V): *Curiosities* are moments of serendipity. GMs, use these events to inject color into the game. Curiosities create a sense of realness, and are opportunities to demonstrate what kind of City exists in your game. Are curiosity events dark portents like raving madmen calling for repentance under the blood moon or are they bucolic affairs with Punch and Judy puppet shows?\n\nHappenings (VI–X): *Happenings* are events that frame the lives of the residents of the City. These are the saturnalia, feasts, and holy days that break up the wheel of years. Happenings should make the City Phase feel *different* to the players.\n\nVisiting the City during a religious festival is much different than visiting during the normal drudge of days.\n\nRumors (XI–XV): *Rumors* hint at the contents of the Underworld: treasures, monsters, traps, hazards, and history. Rumors are opportunities to tell lore and define the “story” of the dungeon.\n\nTravel events (XVI–XX): *Travel events* are often things that go wrong in a trip to the City, or a chance to confront the players to make a hard choice.\n\nSigns and Portents (XXI): *Signs and portents* are special events wherein weirdness has spilled out from the Underworld and complicates life in the City. When drawing this result, the GM looks at the top card of the minor arcana discard pile and then consults the Signs and Portents table.\n\nLike the Meatgrinder table, the GM should keep the City Events table tidy and fresh, swapping out used entries with new content (see step 8).\n\nThe next page has an example City Events table to serve as a starting point.",
+		"tags": [
+			"city",
+			"tarot",
+			"oracle",
+			"events"
+		]
+	},
+	{
+		"id": "city-signs-and-portents",
+		"section": "city-phase",
+		"title": "Signs and Portents",
+		"body": "| Card | Signs and Portents |\n|:---:|---|\n| I | The Mushroom Forest: Yellow mushrooms with pink gills erupt from the flagstones of a random district. They stand as tall as columns, choking off traffic and commerce. That district’s special City Action cannot be used this City Phase. |\n| II | The Blood-Red Star: A comet hangs over the City: a menstrual smear across the sky in both night and day. Its sickly red-brown light causes sleeplessness in the City. Everyone you meet is haggard and bleary eyed, barely holding onto sanity. You can’t sleep either. Begin the next Crawl Phase Stressed. |\n| III | Mists: Emerald-colored fog rises out of the mouths to the Underworld, blotting out the sun. This phase takes place in an unnatural, unending night. |\n| IV | The Ancient Quarter: A district of the City that hasn’t existed in centuries reappears from the mists of the ages. Its residents are antique and deeply confused about where they are and how they got here. Draw an additional district, per the rules in Appendix D: City Creation. This district becomes a part of the present City. |\n| V | The Honey Cult: An adventurer brought black honey to the City. All who eat of it profess to see terrible and wonderful visions of a pregnant woman. They rave about the Nascent Horde. Something about their ravings causes a deep anxiety inside of you. |\n| VI | Dreams: Dreams begin wandering through the City. A husband begins having the dreams of his wife. A hay merchant suddenly begins having the dreams of his neighbor, a clothier. The archbishop begins having dreams of the inbred princess locked in the Tower of Forbiddance. Each player must tell one secret to another player, which their adventurer dreams about. |\n| VII | The Slime Catastrophe: Some thoughtless adventurer brought a baby green slime back into the City. It quickly grew in size, swallowing the food of the inn, the horses, the stables, and entire city blocks. Before it was vanquished with a fire, it ate an entire district. Remove one random district from the City. |\n| VIII | Rip Van Winkle: Time moves strangely in the Underworld. You return to the City a full 100 years after you left. Your children are old and your lovers are dead. |\n| IX | The Thing in the Water: Fishermen pull forth the corpse of some stupendous white thing from the waters of the Grey. The ocean sings a pitiful song for the next week. The song elicits a feeling of devastating ennui. Several named GM characters walk into the ocean and are never seen again. |\n| X | Dog Suicide: All the dogs of the City commit suicide overnight: they throw themselves off of bridges, smash themselves through glass windows, drown themselves in the Grey. |\n| XI | The Black Miracle of the Statues: Every graven image in the City begins speaking terrible blasphemies. In a fit of iconoclasm, the Cult begins smashing all representative art. Statues, paintings, idols, mosaics, figureheads, children’s toys, etc., are all fuel for their holy bonfires. Religious fervor is increased in the near term. |\n| XII | The Blood Rain: Red clouds, swollen like pustules, begin raining blood. The blood flows in rivulets down the streets, pollutes cisterns, stains everything. It’s gross. |\n| XIII | The Child of Silence: A giant infant crawls down the streets. The thing is surrounded with an aura of impenetrable silence: no sound whatsoever carries in its presence. It seems to be hunting the guild. The guild can hide and forestall this doom, though the Child of Silence will doubtless cause some terrible harm if left unchecked. |\n| XIV | What Is Dead May Never Die: The dead haunt the City. Until the guild finds the source of the undead in the Underworld and quells it, no City Actions can be performed. If the plague of the dead is allowed to continue, the Underworld will breach onto the surface, devouring the City (as it has devoured so many cities before). |\n\nRefer to this table when the City Events table yields a XXI result.",
+		"tags": [
+			"city",
+			"tarot",
+			"oracle",
+			"signs"
+		]
+	},
+	{
+		"id": "city-beg-and-busk",
+		"section": "city-phase",
+		"title": "Beg and Busk",
+		"body": "Sing for coin in streets and winesinks.\n\n- Draw from the minor arcana deck. You gain gold equal to the numerical value of your draw + Wands attribute.",
+		"tags": [
+			"city",
+			"tarot",
+			"city-action"
+		]
+	},
+	{
+		"id": "city-carouse",
+		"section": "city-phase",
+		"title": "Carouse",
+		"body": "Spend everything you earned on drinking and whoring.\n\n- If you spend 50% of the gold you brought back, you get 1XP.\n\n- If you spend 100% of the gold you brought back, you get 2XP.\n\n- In addition, the GM draws a major arcana and consults the Hangover table on the next page to see if there are any complications later.\n\nCarousing is an easy, micro-math way to get a meaningful benefit. It emulates genre staples of heroes like Conan or Fafhrd and the Gray Mouser frittering away last adventure’s booty and starting each story dead broke.\n\nAnything in brackets [ ] refers to the top card of the minor arcana discard pile. Sometimes brackets provide numerical values—for example, “[value] in gold coins” provides a number of gold coins equal to the value of the card. Sometimes brackets provide a random result within the table’s entry based on the suit of the card.\n\n| Card | Hangover |\n|:---: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| I | You awaken with a headache and [value] new gold coins in your pocket. |\n| II | You awaken in the stocks, having been left there to sober up. A little bruised, but no worse for wear. Your guild has a chance to make fun of you and throw tomatoes before you’re let out. |\n| III | A cowbell has been hung around your neck by a steel chain. The chain is too small to remove over your head, and you don’t have the key to the lock. You clang while you walk until you solve this problem. |\n| IV | You awaken with a marriage ring on your finger, but no memory of who you married. |\n| V | You awaken in a strange room, heavy pounding on the door. The people on the other side are very angrily demanding their money back. |\n| VI | You awaken with a marriage ring on a finger. The finger isn’t yours. |\n| VII | You awaken next to a [even] High Priest / [odd] High Priestess. They thank you for helping them break their vows, and showing them what it means to be happy. |\n| VIII | You are thrown through the window of your usual watering hole. “And stay out!” the proprietor adds. You are banned from your favorite tavern. |\n| IX | You awaken with a new tattoo. • The tattoo is on your: [Swords] arm, [Pentacles] leg, [Cups] backside, [Wands] face.• It is: [1–2] horribly offensive, [3–8] cringe and misspelled, [9–King] pretty sweet. |\n| X | You awaken in an alley. Hobos around you seem to be wearing your clothes and armor. But you’re wearing theirs, so… even trade? |\n| XI | A letter is delivered to your room. It’s from a local aristocrat and they have accepted your invitation to a duel. The duel is in [value] days. |\n| XII | You awaken in the muck of a cistern wearing only your smallclothes. All the other items you had on you are missing as well. |\n| XIII | You don’t remember exactly what you did, but by the wanted posters lining the streets you can guess it wasn’t good. Choose based on the card’s suit: [Swords] armed robbery, [Pentacles] attempted pick-pocketing, [Cups] lewd acts, [Wands] consorting with dark entities. |\n| XIV | You find an invoice in your pouch: “Sold: One (1) soul for one (1) beer.” Your signature and an infernal symbol seal the contract. |\n| XV | You awaken to the sounds of sobbing. There seems to be a nobleman hogtied and gagged on your floor. How strange. |\n| XVI | Why are you naked and wearing a fake bull’s head? Why does this shop have nothing but broken plates and smashed glass? Why are the shopkeeper and constables so angry and yelling? |\n| XVII | Luckily, it only burns when you pass water. |\n| XVIII | You back your way out of a blackout wrapped in a warm snuggly robe standing in a candle lit room. It’s nice. “The dark pact is complete,” a deep baritone voice says, “Go forth, my brothers, and see that our lord’s will be done.”... Wait, what? |\n| XIX | Where the hells is your hand? Why can you feel it crawling? |\n| XX | You remember agreeing to a dare. It had something to do with a candle and flatulence. • You find that: [Swords] a district is burnt down[Pentacles] two districts are burnt down[Cups] three districts are burnt down[Wands] as Cups, but a fire spirit is still roaming the City, and the sorcerers are pissed. |\n| XXI | Did you always have those circular puncture marks on your neck? I’m sure it’ll be fiiiine. |",
+		"tags": [
+			"city",
+			"tarot",
+			"oracle",
+			"hangover",
+			"city-action"
+		]
+	},
+	{
+		"id": "city-leeches",
+		"section": "city-phase",
+		"title": "Leeches",
+		"body": "Leeches draw out bad blood and let good yellow phlegm and bile reign in your poisoned body. You can apply leeches to another adventurer with the Use an Item Camp Action. If you do so, draw a card. If you draw a Swords or Pentacles card, nothing happens. If you draw a Cups or Wands card, the leeched adventurer counts as having burned 2 charges to cure an affliction.",
+		"tags": [
+			"city",
+			"tarot",
+			"equipment",
+			"camp",
+			"afflictions"
+		]
+	},
+	{
+		"id": "kith-area-sense",
+		"section": "kith-and-kin",
+		"title": "Area Sense",
+		"body": "Spend 2 Resolve to meditate for a watch. Draw a card. The GM describes a number of interesting “visions” equal to the value of the drawn card during your meditation. (Remember, pages have a value of 11, knights have a value of 12, etc.)\n\nThese visions are sensual experiences. For example, you could hear the clatter of dice as bored crusaders gamble, smell a nearby goblin taking a shit, hear two guards talking about who’s going to be on duty tonight, sense the quivering tension of a spike trap embedded in the ceiling, and so on.\n\nThe GM provides these details by looking at their map and Meatgrinder table. Starting near the player’s current area and moving outwards, the GM provides one salient detail from the nearby rooms. Each vision should yield a meaningful detail (e.g., the presence of a hidden door, detected by an imperceptible draft in a nearby room), but need not be elaborate or detailed (i.e., the GM need not mention that the door is trapped, or that it is activated by pulling on a statue’s arm).\n\nAny Meatgrinder events that occur when a watch passes are resolved after the GM has given your visions.",
+		"tags": [
+			"kith",
+			"talent",
+			"crawl",
+			"tarot"
+		]
+	},
+	{
+		"id": "paths-counsel",
+		"section": "four-paths",
+		"title": "Counsel",
+		"body": "Any time during a Challenge, you may yell advice to another adventurer and hand the player a card from your hand. The card’s suit must match the action you counsel them to take. The other player may play that card as long as they use it to take your advice. In all other ways, it is treated as a normal Challenge card.\n\nIf you spend a Resolve when you use this talent, the other player may play this card as an interrupt. Otherwise, the standard one-card-per-turn rule remains in effect.\n\nYou may use this talent once per round.",
+		"tags": [
+			"paths",
+			"talent",
+			"challenge",
+			"tarot",
+			"transfer"
+		]
+	},
+	{
+		"id": "paths-high-chant",
+		"section": "four-paths",
+		"title": "High Chant",
+		"body": "This talent gives you a new Camp Action: Perform the High Chant. When you Perform the High Chant, speak at least two stanzas of epic poetry for the table. If you do so, you may select a number of cards from the minor arcana discard pile equal to your Cups. These are called inspiration cards. Distribute the cards to other players— you may keep one for yourself. No player can ever have more than one inspiration card. Inspiration cards may be spent as actions during a Challenge. Alternatively, you may spend your inspiration card instead of drawing from the deck when you test fate or push fate. Inspiration cards last until used or until the end of the session, whichever comes first.",
+		"tags": [
+			"paths",
+			"talent",
+			"camp",
+			"tarot",
+			"inspiration"
+		]
+	},
+	{
+		"id": "gm-creating-surprises",
+		"section": "gamemastering",
+		"title": "Creating Surprises",
+		"body": "If things are beginning to get stagnant, introduce something that changes the Challenge dramatically. Let the potential energy transfer into kinetic energy.\n\nHere’s a table to inspire ideas for different ways to shake things up. Glance at the top of the minor arcana discard pile for a random event:\n\n| Card | Twist |\n|:---:|---|\n| I | The current conflict smashes down a nearby wall, connecting the current room to an adjacent one. What dwells in that room, and how will it interact with the current scene? |\n| II | A wandering monster wanders into the scene. |\n| III | An infantile wandering monster wanders into the scene. It imprints onto a random adventurer. |\n| IV | A rival adventuring party, currently struggling with problems of their own, crash onto the scene. |\n| V | Something in the current scene is revealed to only be an illusion. |\n| VI | Something in the scene is revealed, with further investigation, to be something completely different. The orc is just three goblins in a trench coat. The gargoyle is just a statue. |\n| VII | A secret passage is revealed, leading to hidden treasure or danger. |\n| VIII | A chance blow rips open a backpack, causing two alchemical potions to crash onto the ground. As the two reagents mix, a terrible ooze begins to form, farting out magical clouds as it does. |\n| IX | Disembodied spirits climb inside the bodies of nearby slain foes and reanimate them as flesh puppets. The spirits have their own agendas. What do they want? |\n| X | A dropped torch or knocked over brazier starts a fire which quickly becomes a hazard as the area is filled with smoke and flames. |\n| Page | The area becomes suddenly flooded with water/wine/sludge/something else. What is the source of this deluge? |\n| Knight | The next time an adventurer is dealt a Wound, they are dazed. When they come to their senses, they distinctly remember a preternatural voice speaking to them. What is this divine revelation? Is it real? Or is there something going wrong in the unknowable space behind their eyes that’s undiagnosed? |\n| Queen | Death shows up and stands quietly in the corner. He’s a few minutes early, but is willing to wait. |\n| King | A stampede of doppelgangers barrels down the passage and accidentally bumps into the guild. They get all tangled up, tripping over each other. After the confusion, the party is substantially larger. Each player has at least two, but maybe as many as four new adventurers. Not even the players are sure who is who. Give them new adventurer sheets for their clones until things are sorted out. |",
+		"tags": [
+			"gm",
+			"tarot",
+			"oracle",
+			"twist"
+		]
+	},
+	{
+		"id": "sorcery-augury",
+		"section": "appendix-sorcery",
+		"title": "Augury",
+		"body": "### Component:\n\n*A copy of the Codex Sophia, the sacred book of the Mythric cult*\n\nThe sorcerer receives supernatural wisdom to intuit the meaning of signs and portents by practicing rhapsodomancy—a form of book-based divination. This allows them to avoid the consequences of failure or great failures by looking into the future and forestalling doom.\n\nIf a test of fate would be called for and the sorcerer has time to consult a random page of the Codex Sophia and cast this spell, the GM draws a card for the test of fate instead of the player. Without showing it to the players, the GM describes the contents of the card as a parable from the Codex Sophia.\n\n- For example, the X of Swords might yield the description, “And it said that / a man, stabbed many times, lying face down / may be very wounded, or very dead. / His face is turned away.”\n\n- The sorcerer’s player uses their out-of-character knowledge of the iconography of the tarot to interpret these results in character. They are not allowed to use outside help (no checking your phone).\n\n- Once the spell has been cast, a member of the guild may choose to attempt the task or not. If the attempt is made, the GM reveals the card.\n\n- Because casting this spell technically happens before making the test of fate, the player who makes the attempt of the test may elect to spend a Resolve for favor. They may also push fate with this test as normal.\n\n- If the guild decides not to take a course of action based on the augury, the bound by fate rule is still obeyed. The card is discarded. That action would either be successful (or not) until the situation significantly changes.",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"oracle",
+			"private-draw"
+		]
+	},
+	{
+		"id": "sorcery-brainfever",
+		"section": "appendix-sorcery",
+		"title": "Brainfever",
+		"body": "### Component:\n\n*A pouch of powder made from wild marjoram, thyme, verbena, and myrtle leaves*\n\nThe sorcerer takes a pinch of the component powder and blows it towards the target of this spell. The target enters a rage.\n\n- The target gains favor on Attacks, but they must always play the lowest-value card they draw for their Initiative.\n\n- Creatures that don’t feel emotions (such as nonsentient constructs) are not affected by this spell.\n\nThis spell is maintained with concentration.",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"challenge",
+			"initiative"
+		]
+	},
+	{
+		"id": "sorcery-maleficence",
+		"section": "appendix-sorcery",
+		"title": "Maleficence",
+		"body": "When magic goes wrong, draw on the appropriate maleficence table. This represents a catastrophic intrusion of the energies of the far realms into the realm of Flesh.\n\nHere are some circumstances where magic goes wrong:\n\n- A sorcerer is hurt while concentrating on a spell\n\n- Two spells cancel each other out\n\n- A sorcerer is interrupted during spellcasting\n\n- Other instances, per the GM's devising\n\nWhen maleficence comes into play, things get interesting.\n\n### Maleficence of the Wastes\n\n| Card | Result |\n|:---:|---|\n| I | A number of imps appear equal to the value of the top card in the minor arcana’s discard pile. |\n| II | The sorcerer vomits a pregnant rat, which falls to the ground and explodes as a surfeit of baby rats spill bloodily from her belly. Disease oozes from the undulating mass. |\n| III | The putrid stink of a mass grave fills the area. If the adventurers stay in the area, they all become Stressed due to the smell. |\n| IV | A chill, green fog rises. All exposed metal items the guild carries suffer two Notches as the fog rusts and corrupts the metal. |\n| V | Demonic flies fill this room. All perishable items will soon be consumed as the flies swarm into their packs, leaving behind demonic maggots. |\n| VI | Wounds stop closing. The guild cannot heal Wounded talents or the Injured condition until the Fool causes the decks to be reshuffled. |\n| VII | The sorcerer begins to uncontrollably weep blood. It’s hard to see anything through bloody tears (disfavor in combat or any vision-based activities). And, of course, it ruins their robes. This persists until the Fool causes the decks to be reshuffled. |\n| VIII | An invisible mark appears on the sorcerer’s forehead. The sorcerer becomes the primary target of all undead creatures. They wish to talk to them, to touch them, to kiss them, to hurt them, to make them understand. This lasts until the mark is cleansed (per GM’s discretion). |\n| IX | The sorcerer’s shadow departs to perform some mischief. It will return once it’s gotten into some sort of trouble. Until then, the sorcerer lacks a shadow. |\n| X | The sorcerer immediately begins vomiting up a parasitic twin in chunks: little hands, eyes, hair, teeth. They can do very little until the whole thing is out. In a Challenge, this gives the sorcerer the Stunned effect. This maleficence lasts for an entire watch. |\n| Page | The sorcerer’s irises become golden, like a wolf’s. This change is permanent. |\n| Knight | The sorcerer grows black, goat-like horns. These are permanent, but can be sawed off without any pain. Just the stumps will remain. |\n| Queen | The sorcerer’s reflection (in mirrors and other reflective surfaces) begins to rapidly decompose. Eventually, they’ll only see their bleached white skull when they look into a mirror. This is permanent. |\n| King | The entire region is blighted. Plants wither and die. Mothers yield only stillbirths. If the sorcerer is near civilization, there will be consequences. |\n\n### Maleficence of the Weald\n\n| Card | Result |\n|:---:|---|\n| I | A hairless ape crawls into reality. It disembowels itself, presenting its intestines to the sorcerer with an ingratiating smile. It then dies, smiling all the while. |\n| II | Shrieker mushrooms quickly bloom around the sorcerer. Any movement through the area raises a mighty ruckus that provokes a random encounter draw on the Meatgrinder table. |\n| III | Thorns sprout and fill the sorcerer’s zone, Rooting everybody. Everyone must untangle themselves. During a Challenge, this requires the Recover action. |\n| IV | Evil weather manifests physically in the Underworld— the caverns fill with torrential rains, blizzards, or simooms. |\n| V | Any potions carried by the sorcerer explode. The bottles are Destroyed. This causes any items written adjacent to them on the adventurer sheet to be ruined. |\n| VI | Lightning arcs out of the sorcerer’s body and Wounds everybody carrying metal in the room, friend or foe. |\n| VII | Every animal on the Meatgrinder table for this region is drawn towards the sorcerer. The next watch is automatically an encounter with every animal in the area. |\n| VIII | All wooden objects (wands, doors, chests, staffs, torches, bows, etc.) near the sorcerer warp and twist, as if bent by a giant’s hands. All wooden objects in the room are Destroyed. Traps on wooden doors or chests are triggered and affect whatever’s nearest them, as applicable. |\n| IX | An earthquake shakes the area within one mile of the sorcerer. Structures not built to last are destroyed. |\n| X | The sorcerer’s clothes and gear catch on fire. They immediately take a Wound. The sorcerer must put themselves out or they will continue to burn; this is a Recover action during a Challenge. The GM should arbitrate how this is done, and potential consequences. |\n| Page | The sorcerer’s legs turn backwards and grow fur, reminiscent of a goat’s. This is permanent. |\n| Knight | The sorcerer buds a thick, meaty fungus that grows like an insipid cancer on their skin. This is permanent until the disease can be cured. Eating it is addictive. |\n| Queen | The sorcerer is Cursed with lycanthropy. When the moon shines, they undergo a change: it is messy, uncontrolled, and violent. Lycanthropy is permanent unless a cure is discovered. |\n| King | The guild is now the subject of a Wild Hunt. A gnome politely informs the guild that they now have a one- day head start before an army of wood elves does their very best to try and kill them. Good luck. |\n\n### Maleficence of the Weird\n\n| Card | Result |\n|:---:|---|\n| I | The sorcerer loses their voice. They are Silenced until the Fool causes the decks to be reshuffled. Later, the sorcerer’s relatives swear they heard the sorcerer calling to them from the darkness. |\n| II | Nightmarish idols of Jungian manifestations are rapidly built by invisible hands out of any available material near the sorcerer. |\n| III | Everybody in the room (including the sorcerer) must immediately test Wands. Any who fail suffer the Knockout effect and fall into a deep sleep. |\n| IV | Everybody in the sorcerer’s zone (including the sorcerer) is immediately Inspired with a random Disposition. Roleplay as appropriate. |\n| V | A mouth opens on the back of the sorcerer’s skull. It babbles in Tylwyth. The GM immediately delivers a rumor to anybody who can understand it. The mouth, drooling, remains until the Fool reshuffles the decks. |\n| VI | The sorcerer begins weeping gooey, saline-tasting tears. They also weep out several small oozes that crawl away to eat and get big. |\n| VII | The sorcerer’s skin, organs, and muscles become invisible. Until the Fool shuffles the decks, the sorcerer appears to be an animate skeleton with an interwoven system of nerves and veins. It’s creepy as fuck. GM characters are horrified. |\n| VIII | The sorcerer becomes a living illusion. An illusion is nothing but a hologram. They cannot interact with the plane of Flesh or cast spells, but can see and be seen. However, anything illusory is real to the sorcerer. An illusory sword can cut them, an illusory dragon can eat them. This persists until the Fool shuffles the decks. |\n| IX | The sorcerer is no longer able to speak except in rhyme. Everything they say in character must be in the form of rhyming couplets. This lasts until after the next Camp Phase. |\n| X | The sorcerer’s worst nightmare physically manifests in the realm of Flesh during step 3 of the next Camp Phase. The GM and the sorcerer’s player should talk beforehand about what this is. |\n| Page | The sorcerer’s coloring pales. Their hair, skin, and irises become milky white. This is permanent. |\n| Knight | The sorcerer grows a third eye in the center of their forehead. Whenever they use Dwimmercraft, this eye opens. Otherwise, it’s unnoticeable. This is permanent. |\n| Queen | A hekatephage—a Shrouded and intangible spirit that devours magic—begins following the sorcerer. The sorcerer must find some way to banish or defeat it or any non-concentration spell is ended prematurely. |\n| King | The sorcerer is permanently Cursed with Silence. However, illusory text hovers over their head for a few moments when they speak, like speech balloons. Luckily, they can still cast spells. |\n\n### Maleficence of the Welkin\n\n| Card | Result |\n|:---:|---|\n| I | The players that sit to the left and the right of the sorcerer have all of their adventurers’ conditions Healed. The sorcerer suffers an equal number of Wounds. (If this kills the sorcerer, they are canonized.) |\n| II | Painful boils rise on the sorcerer’s skin, a side effect from undiluted celestial radiation. The sorcerer takes a Wound and becomes Stressed. |\n| III | Rations in the current room become strangely tainted: water turns to blood and dried meat becomes pulsing flesh. Only purely vegan rations are unaffected. |\n| IV | Divine locusts, with hard, golden, metallic shells and human faces, swarm. They destroy all foliage and plant life in the entire dungeon level. |\n| V | An angelic chant manifests around the sorcerer. The music is beautiful, but loud. Stealth is impossible. The chanting subsides the next time the Fool causes the decks to be reshuffled. |\n| VI | The sorcerer manifests the piteous stigmata of Mythrys. They are Exhausted until they use a City Action to pray at a mythraeum. |\n| VII | All weapons (except those explicitly made of iron) in the sorcerer’s current room are permanently transformed into tools of similar sizes or shapes. For example, a sword might be transformed into a plowshare or a spear into a pruning hook. |\n| VIII | The sorcerer’s brow is lit with a halo. Everybody is suitably impressed, except for spirits. All spirits have an automatic negative reaction to the sorcerer and, in combat, will target them above all others. This halo lasts until the sorcerer uses a City Action to pray at a mythraeum. |\n| IX | A ghostly hand manifests nearby and begins scribing a prophecy in Vetus on a nearby surface, foretelling doom unless very specific (and unlikely) set of requirements is fulfilled. |\n| X | Upon their return to the City, any guild members who are parents are informed that their firstborn child has died. It is reported that the sorcerer’s name is written in runes across their deceased child’s forehead. |\n| Page | Greed is a vile sin. Precious coins and gems on the sorcerer’s person permanently become scarabs. |\n| Knight | An animate statue emerges from stone. It looks almost exactly like a stony twin of the sorcerer. Its mission is to kill and replace the sorcerer. |\n| Queen | The sorcerer becomes 8 months pregnant, regardless of whether they have the normal equipment required. While pregnant, they are Exhausted. If carried to term, a semi-divine child is brought into the world. |\n| King | A discharge-brown star appears in the sky. At the end of the third night, a tremendous meteor destroys a random district of the City, which makes the City uninhabitable for weeks and weeks. |",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"oracle",
+			"tables"
+		]
+	},
+	{
+		"id": "sorcery-malediction",
+		"section": "appendix-sorcery",
+		"title": "Malediction",
+		"body": "### Component:\n\n*The pickled eye of a miser buried in a pauper’s grave*\n\nThe target suffers a random Curse—draw on the table on the facing page to find out which one. Sorcerers often use this spell to bully others into completing quests or working their will.\n\nUnlike other spells, the Curse remains in place until the sorcerer dismisses it (which they can do at any time) *or* it is counter-spelled. The Curse cannot be overcome using the Recover action.\n\nThis spell is not maintained with concentration. Resolve spent on casting this spell can never refresh as long as this spell continues.\n\n| Card | Malediction Curse |\n|:---:|---|\n| I | Dogs hate you. Any dog you meet will automatically try and attack you, and prioritizes you over all other targets. At the end of the City Phase, you become either Staggered (from being savaged) or Stressed (because you spent the entire time hiding from dogs)—50/50 chance either way. |\n| II | You’re afflicted with bad dreams. You have a 50% chance to wake from sleep Stressed due to your nightmares. |\n| III | Food has a 50% chance of becoming ash when you eat it. If this happens, you waste that ration. |\n| IV | You are doomed. You become Exhausted. |\n| V | You gain the appearance of a desiccated corpse. Most GM characters will be hostile towards you. Nobody wants to sleep with you. On the plus side, most undead will ignore you. |\n| VI | You’re cursed to speak in rhymes. Everything you say in-character must rhyme. |\n| VII | Your weapons rust and break easily. Any time you play a card of 10 or higher to Attack, your weapon suffers a Notch. Wooden weapons can suffer 1 Notch, iron weapons can suffer 2, and steel weapons can suffer 3 before breaking. |\n| VIII | Your sexual anatomy changes. It’s weird (but maybe exciting?). |\n| IX | Rats and other vermin fall in love with you. They follow you around everywhere. They want to sleep in your mouth. Every night, there is a 50% chance they’ll relieve you of something in your pack that they know you don’t want and replace it with garbage. Nice garbage. |\n| X | Every footstep you take rings an ethereal, unseen bell that accompanies a voice that says “SHAME.” Stealth is impossible. |\n| Page | You grow sick and infirm. You must burn two charged Bonds to clear Wounded talents and the Injured condition instead of one. You are (regrettably) immune to the Heal effect. |\n| Knight | You grow old for the duration of the curse—like a withered crone. You are ugly and unattractive. You cannot see more than 30’ in front of you through your cataracts and you cannot use the Dash action. |\n| Queen | You can only speak Tylwyth. Is that a language you understand? No? Then you sound like you’re just speaking gibberish. |\n| King | When you enter a stressful situation (like combat), test Wands. If you fail, you turn into a chicken for one round (or equivalent). |",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"oracle",
+			"curse"
+		]
+	},
+	{
+		"id": "sorcery-totem",
+		"section": "appendix-sorcery",
+		"title": "Totem",
+		"body": "### Component:\n\n*The last acorn dropped from an elder oak*\n\nThe sorcerer places the acorn into their mouth (or the mouth of their target). They transform into a unique animal shape representative of their soul’s totem.\n\n- Talk to the GM about what this totem is, or randomly determine it using the chart on the facing page.\n\n- While in this form, the target’s attributes are all +0.\n\n- Tests of fate related to actions the totem is known for are made with a +5 bonus.\n\n- The transformation is near instantaneous, but it transforms neither worn items nor carried objects, which fall to the ground around the target.\n\nSpitting the acorn out ends the spell. So, whenever the target wants to talk, eat, drink, or pick something up with their mouth, the spell ends.\n\n### Random Totem\n\nDraw a minor arcana card and cross-reference its value and suit to determine the sorcerer's totem.\n\n| Card | Swords | Cups | Pentacles | Wands |\n|:---:|---|---|---|---|\n| I | Ape | Rat | Frog | Bonnacon |\n| II | Armadillo | Pelican | Goat | Capricorn |\n| III | Badger | Peacock | Hedgehog | Centipede, Dire |\n| IV | Bat | Rabbit | Hog | Coatl |\n| V | Bear | Raccoon | Hyena | Grasshopper, Dire |\n| VI | Cat | Seal | Jackdaw | Griffin |\n| VII | Cattle | Snake | Kangaroo | Hippogriff |\n| VIII | Crab | Stoat | Leopard | Mammoth |\n| IX | Crocodile | Swan | Lion | Owlbear |\n| X | Deer | Tiger | Mouse | Rat, Dire |\n| Page | Dog | Turtle | Mule | Roc |\n| Knight | Eagle | Vulture | Opossum | Snail, Dire |\n| Queen | Elk | Walrus | Otter | Spider, Dire |\n| King | Fox | Wolf | Owl | Thunder Lizard |",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"totem"
+		]
+	},
+	{
+		"id": "sorcery-guardian-angel",
+		"section": "appendix-sorcery",
+		"title": "Guardian Angel",
+		"body": "### Component:\n\n*A vial of water collected by a virgin from a sacred spring*\n\nWhen the sorcerer casts this spell, they summon an invisible minor welkin spirit known as a guardian angel. The sorcerer binds this guardian angel to a target to protect them from a single blow.\n\n- During Challenges, the sorcerer hands the target the card used for Speak Incantation. This card is placed facedown in front of the target player. At their discretion, they can flip the card up and use its value to either Dodge or Riposte.\n\n- The defensive action’s total value is cumulative with other actions of the same type. For example, if a player has a facedown Dodge and the Guardian Angel card is used to Dodge, the two actions values will be added together.\n\n- This spell does not count towards the limit of one facedown card per player. However, you cannot have multiple instances of this spell at the same time.\n\nThis spell lasts until used.",
+		"tags": [
+			"sorcery",
+			"tarot",
+			"spell",
+			"challenge",
+			"transfer"
+		]
 	}
 ]

@@ -43,13 +43,18 @@ const REQUIRED_IDS = [
 	'challenge-greater-dooms',
 
 	// Chapter 8 — The Camp Phase
-	'camp-sequence',
+	// No `camp-sequence`: `# The Flow of the Camp Phase` runs to the next `#`
+	// (Overland Travel), so it cannot be sliced to the flow list — every `until`
+	// anchor collides with the identically-named flow summary item. It is a
+	// chapter overview no procedure cites, so it is out of scope rather than
+	// imported as an 8k blob that duplicates camp-patrol.
 	'camp-patrol',
 	'camp-no-rest-for-the-wicked',
 	'camp-overland-travel',
 
 	// Chapter 9 — The City Phase
-	'city-sequence',
+	// No `city-sequence`, for the same reason: it would import 23k of the whole
+	// chapter, duplicating city-events, city-carouse, and the rest.
 	'city-events',
 	'city-signs-and-portents',
 	'city-beg-and-busk',
@@ -57,11 +62,15 @@ const REQUIRED_IDS = [
 	'city-leeches',
 
 	// Cross-chapter, in-session only
+	// No `gm-as-above-so-below`: `### As Above, So Below` in Chapter 10 is a
+	// *movie* in the Inspirational Media list, not a rule. The real City Action
+	// is an Appendix D bullet (`:1066`), which `extractSection` cannot address;
+	// Increment 0b reaches it with an anchor selector, as with Doomsaying and
+	// Strange Communions.
 	'kith-area-sense',
 	'paths-high-chant',
 	'paths-counsel',
 	'gm-creating-surprises',
-	'gm-as-above-so-below',
 	'sorcery-augury',
 	'sorcery-maleficence',
 	'sorcery-malediction',

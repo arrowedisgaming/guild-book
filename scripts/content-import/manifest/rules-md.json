@@ -307,5 +307,155 @@
 		"file": "07 - Chapter 7 - The Challenge Phase.md",
 		"heading": "Greater dooms",
 		"tags": ["challenge", "tarot", "gm", "dooms"]
+	},
+	{
+		"id": "camp-patrol",
+		"section": "camp-phase",
+		"title": "Patrol",
+		"file": "08 - Chapter 8 - The Camp Phase.md",
+		"heading": "Patrol",
+		"tags": ["camp", "tarot", "meatgrinder", "camp-action"]
+	},
+	{
+		"id": "camp-no-rest-for-the-wicked",
+		"section": "camp-phase",
+		"title": "No Rest for the Wicked",
+		"file": "08 - Chapter 8 - The Camp Phase.md",
+		"heading": "3. No rest for the wicked",
+		"after": "Use a Talent",
+		"mustContain": ["top card of the minor arcana discard pile", "tests Cups"],
+		"tags": ["camp", "tarot", "oracle", "watch", "meatgrinder"]
+	},
+	{
+		"id": "camp-overland-travel",
+		"section": "camp-phase",
+		"title": "Overland Travel",
+		"file": "08 - Chapter 8 - The Camp Phase.md",
+		"heading": "Overland Travel",
+		"until": "Overland actions",
+		"tags": ["camp", "travel", "tarot", "optional"]
+	},
+	{
+		"id": "city-events",
+		"section": "city-phase",
+		"title": "City Events",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "3. City Events",
+		"after": "8. Restock the Underworld",
+		"tags": ["city", "tarot", "oracle", "events"]
+	},
+	{
+		"id": "city-signs-and-portents",
+		"section": "city-phase",
+		"title": "Signs and Portents",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Signs and Portents",
+		"tags": ["city", "tarot", "oracle", "signs"]
+	},
+	{
+		"id": "city-beg-and-busk",
+		"section": "city-phase",
+		"title": "Beg and Busk",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Beg and Busk",
+		"tags": ["city", "tarot", "city-action"]
+	},
+	{
+		"id": "city-carouse",
+		"section": "city-phase",
+		"title": "Carouse",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Carouse",
+		"mustContain": ["Hangover"],
+		"tags": ["city", "tarot", "oracle", "hangover", "city-action"]
+	},
+	{
+		"id": "city-leeches",
+		"section": "city-phase",
+		"title": "Leeches",
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"heading": "Leeches",
+		"tags": ["city", "tarot", "equipment", "camp", "afflictions"]
+	},
+	{
+		"id": "kith-area-sense",
+		"section": "kith-and-kin",
+		"title": "Area Sense",
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"heading": "Wood elf arête talent: Area Sense",
+		"tags": ["kith", "talent", "crawl", "tarot"]
+	},
+	{
+		"id": "paths-counsel",
+		"section": "four-paths",
+		"title": "Counsel",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "Counsel",
+		"tags": ["paths", "talent", "challenge", "tarot", "transfer"]
+	},
+	{
+		"id": "paths-high-chant",
+		"section": "four-paths",
+		"title": "High Chant",
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"heading": "High Chant",
+		"mustContain": ["inspiration card"],
+		"tags": ["paths", "talent", "camp", "tarot", "inspiration"]
+	},
+	{
+		"id": "gm-creating-surprises",
+		"section": "gamemastering",
+		"title": "Creating Surprises",
+		"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
+		"heading": "Creating surprises",
+		"tags": ["gm", "tarot", "oracle", "twist"]
+	},
+	{
+		"id": "sorcery-augury",
+		"section": "appendix-sorcery",
+		"title": "Augury",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Augury",
+		"tags": ["sorcery", "tarot", "spell", "oracle", "private-draw"]
+	},
+	{
+		"id": "sorcery-brainfever",
+		"section": "appendix-sorcery",
+		"title": "Brainfever",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Brainfever",
+		"tags": ["sorcery", "tarot", "spell", "challenge", "initiative"]
+	},
+	{
+		"id": "sorcery-maleficence",
+		"section": "appendix-sorcery",
+		"title": "Maleficence",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Maleficence",
+		"tags": ["sorcery", "tarot", "spell", "oracle", "tables"]
+	},
+	{
+		"id": "sorcery-malediction",
+		"section": "appendix-sorcery",
+		"title": "Malediction",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Malediction",
+		"tags": ["sorcery", "tarot", "spell", "oracle", "curse"]
+	},
+	{
+		"id": "sorcery-totem",
+		"section": "appendix-sorcery",
+		"title": "Totem",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Totem",
+		"tags": ["sorcery", "tarot", "spell", "totem"]
+	},
+	{
+		"id": "sorcery-guardian-angel",
+		"section": "appendix-sorcery",
+		"title": "Guardian Angel",
+		"file": "11 - Appendix A - Sorcery.md",
+		"heading": "Guardian Angel",
+		"tags": ["sorcery", "tarot", "spell", "challenge", "transfer"]
 	}
 ]

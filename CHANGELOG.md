@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The rules reference now covers the four phase chapters and the in-session
+  rules they lean on: Crawl (Meatgrinder, light and We're Doomed, Disposition),
+  Challenge (the round sequence, Initiative, facedown cards, the Fool, Dooms,
+  and the GM hand-size formula), Camp (Patrol, No Rest for the Wicked, Overland
+  Travel), and City (City Events, Signs and Portents, Beg & Busk, Carouse).
+  Cross-chapter in-session rules are imported alongside them: Area Sense,
+  Counsel, High Chant, Creating Surprises, and the live tarot spells (Augury,
+  Brainfever, Maleficence, Malediction, Totem, Guardian Angel). 44 new entries,
+  extracted by the pipeline rather than retyped.
+- The Elite/Dungeon Lord "draws an additional Challenge card" mechanic is now
+  surfaced in the reference as `challenge-gm-hand-size`, closing a TODO left
+  when Appendix C landed. It is a Chapter 7 hand-size procedure keyed to threat
+  type (+2 for an elite, +3 for a dungeon lord), deliberately not stored on the
+  stat blocks; a manifest sentinel now fails the build if the clause ever drops
+  out of extraction.
+
+### Fixed
+
+- `md-rules.mjs` ignored a manifest entry's `after` anchor, so an entry
+  disambiguating a repeated heading silently imported the first match instead of
+  the intended one. Chapter 7 alone has five such headings — `1. Draw Challenge
+  cards` occurs three times (flow summary, player rule, GM rule). `md-inject.mjs`
+  already honoured `after`; the two importers now agree. No previously committed
+  entry used `after`, so existing output is unchanged.
+
 ### Removed
 
 - `/licensing`: the per-typeface licence tracker table. The page now carries a
@@ -39,11 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export buttons announce clipboard/PDF failures to the screen-reader live
   region, disable while working, and retry font loading after a failed fetch.
   Persisted builder drafts are validated field by field on load.
-
-<!-- TODO: The Elite/Dungeon Lord "draws an additional Challenge card" mechanic
-     is intentionally NOT stored on Appendix C stat blocks — it's a Chapter 7
-     hand-size procedure keyed to threat type. Surface it in the rules reference
-     when Chapter 7 combat content is imported, so it isn't lost. -->
 
 ### Added
 

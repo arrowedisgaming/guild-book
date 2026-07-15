@@ -19,6 +19,10 @@ export interface MinorCard {
 	label: string;
 }
 
+/** Which Doom abilities a major can activate (Ch7). The Fool has no tier. */
+export type DoomTier = 'lesser' | 'greater';
+export type ValueParity = 'odd' | 'even';
+
 export interface MajorCard {
 	kind: 'major';
 	id: string;
@@ -26,11 +30,38 @@ export interface MajorCard {
 	name: string;
 	/** The Fool is 0; majors otherwise carry their number. */
 	value: number;
+	/**
+	 * Lesser or greater Doom. Absent for the Fool, which is borrowed into the
+	 * player deck and is not a Doom card.
+	 */
+	doomTier?: DoomTier;
+	valueParity: ValueParity;
 }
 
 export type TarotCard = MinorCard | MajorCard;
 
 const FOOL_ID = 'fool';
+
+/**
+ * Derives a major's typed metadata. The lesser/greater boundary is a game rule
+ * read from `config.doomTiers`, not an engine constant — Ch7 states it, and
+ * hardcoding 14 here would put a rule outside the content pack.
+ */
+function toMajorCard(config: TarotConfig, card: TarotConfig['majorArcana'][number]): MajorCard {
+	const { lesser, greater } = config.doomTiers;
+	const inBand = (band: { from: number; to: number }) =>
+		card.number >= band.from && card.number <= band.to;
+	return {
+		kind: 'major',
+		id: card.id,
+		number: card.number,
+		name: card.name,
+		value: card.number,
+		doomTier:
+			card.id === FOOL_ID ? undefined : inBand(lesser) ? 'lesser' : inBand(greater) ? 'greater' : undefined,
+		valueParity: card.number % 2 === 0 ? 'even' : 'odd'
+	};
+}
 
 /** All 56 minor-arcana cards (4 suits × 14 ranks). */
 export function buildMinorDeck(config: TarotConfig): MinorCard[] {
@@ -53,8 +84,7 @@ export function buildMinorDeck(config: TarotConfig): MinorCard[] {
 /** The Fool, borrowed from the major arcana into the player deck. */
 export function buildFool(config: TarotConfig): MajorCard | null {
 	const fool = config.majorArcana.find((c) => c.id === FOOL_ID);
-	if (!fool) return null;
-	return { kind: 'major', id: fool.id, number: fool.number, name: fool.name, value: fool.number };
+	return fool ? toMajorCard(config, fool) : null;
 }
 
 /**
@@ -69,9 +99,7 @@ export function buildPlayerDeck(config: TarotConfig): TarotCard[] {
 
 /** The GM's deck: major arcana excluding the Fool (I–XXI). */
 export function buildMajorDeck(config: TarotConfig): MajorCard[] {
-	return config.majorArcana
-		.filter((c) => c.id !== FOOL_ID)
-		.map((c) => ({ kind: 'major' as const, id: c.id, number: c.number, name: c.name, value: c.number }));
+	return config.majorArcana.filter((c) => c.id !== FOOL_ID).map((c) => toMajorCard(config, c));
 }
 
 /** Shuffle a deck deterministically from a seed (or an existing Rng). */

@@ -3,6 +3,7 @@ import {
 	buildMinorDeck,
 	buildPlayerDeck,
 	buildMajorDeck,
+	buildFool,
 	shuffleDeck,
 	draw,
 	drawWithReshuffle
@@ -122,5 +123,43 @@ describe('test of fate', () => {
 			pushedFate: true
 		});
 		expect(r).toBe('success');
+	});
+});
+
+describe('derived major metadata', () => {
+	it('builds 78 globally unique stable card ids', () => {
+		const cards = [...buildPlayerDeck(config), ...buildMajorDeck(config)];
+		expect(cards).toHaveLength(78);
+		expect(new Set(cards.map((card) => card.id)).size).toBe(78);
+	});
+
+	it('derives doom tier and parity for GM majors', () => {
+		const cards = buildMajorDeck(config);
+		expect(cards.find((card) => card.number === 14)).toMatchObject({
+			doomTier: 'lesser',
+			valueParity: 'even'
+		});
+		expect(cards.find((card) => card.number === 15)).toMatchObject({
+			doomTier: 'greater',
+			valueParity: 'odd'
+		});
+	});
+
+	it('reads the doom boundary from content rather than hardcoding it', () => {
+		const shifted = {
+			...config,
+			doomTiers: {
+				lesser: { ...config.doomTiers.lesser, to: 10 },
+				greater: { ...config.doomTiers.greater, from: 11 }
+			}
+		};
+		const cards = buildMajorDeck(shifted);
+		expect(cards.find((c) => c.number === 11)?.doomTier).toBe('greater');
+		expect(cards.find((c) => c.number === 14)?.doomTier).toBe('greater');
+	});
+
+	it('models the Fool by id with value zero and no doom tier', () => {
+		expect(buildFool(config)).toMatchObject({ id: 'fool', number: 0, value: 0 });
+		expect(buildFool(config)?.doomTier).toBeUndefined();
 	});
 });

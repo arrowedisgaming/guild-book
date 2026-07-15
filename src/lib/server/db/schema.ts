@@ -1,35 +1,57 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
 
 // ─── Auth.js tables ───────────────────────────────────────────────
-// Copied verbatim from the standard Auth.js Drizzle schema. `sessions` and
-// `verification_tokens` are unused under the JWT strategy but kept for adapter
-// compatibility and future email auth.
+// Based on the standard Auth.js Drizzle schema. `accounts.id` is retained for
+// migration compatibility; `sessions` and `verification_tokens` are unused
+// under the JWT strategy but kept for adapter compatibility and future auth.
 
-export const users = sqliteTable('users', {
-	id: text('id').primaryKey(),
-	name: text('name'),
-	email: text('email').unique(),
-	emailVerified: integer('email_verified', { mode: 'timestamp' }),
-	image: text('image')
-});
+export const users = sqliteTable(
+	'users',
+	{
+		id: text('id').primaryKey(),
+		name: text('name'),
+		email: text('email').unique(),
+		emailVerified: integer('email_verified', { mode: 'timestamp' }),
+		image: text('image')
+	},
+	(table) => [
+		// Provider profiles are normalized before adapter lookup. Keep this
+		// functional constraint as defense in depth for every other write path.
+		uniqueIndex('users_normalized_email_uq')
+			.on(sql`lower(trim(${table.email}))`)
+			.where(sql`${table.email} is not null`)
+	]
+);
 
-export const accounts = sqliteTable('accounts', {
-	id: text('id').primaryKey(),
-	userId: text('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	type: text('type').notNull(),
-	provider: text('provider').notNull(),
-	providerAccountId: text('provider_account_id').notNull(),
-	refresh_token: text('refresh_token'),
-	access_token: text('access_token'),
-	expires_at: integer('expires_at'),
-	token_type: text('token_type'),
-	scope: text('scope'),
-	id_token: text('id_token'),
-	session_state: text('session_state')
-});
+export const accounts = sqliteTable(
+	'accounts',
+	{
+		// Auth.js' adapter does not supply this legacy surrogate key. Keep it for
+		// migration compatibility, but generate it for every adapter insert.
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => nanoid(21)),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		type: text('type').notNull(),
+		provider: text('provider').notNull(),
+		providerAccountId: text('provider_account_id').notNull(),
+		refresh_token: text('refresh_token'),
+		access_token: text('access_token'),
+		expires_at: integer('expires_at'),
+		token_type: text('token_type'),
+		scope: text('scope'),
+		id_token: text('id_token'),
+		session_state: text('session_state')
+	},
+	(table) => [
+		// One external identity can belong to exactly one Guild Book user.
+		uniqueIndex('accounts_provider_identity_uq').on(table.provider, table.providerAccountId)
+	]
+);
 
 export const sessions = sqliteTable('sessions', {
 	sessionToken: text('session_token').primaryKey(),
@@ -39,11 +61,19 @@ export const sessions = sqliteTable('sessions', {
 	expires: integer('expires', { mode: 'timestamp' }).notNull()
 });
 
-export const verificationTokens = sqliteTable('verification_tokens', {
-	identifier: text('identifier').notNull(),
-	token: text('token').notNull(),
-	expires: integer('expires', { mode: 'timestamp' }).notNull()
-});
+export const verificationTokens = sqliteTable(
+	'verification_tokens',
+	{
+		identifier: text('identifier').notNull(),
+		token: text('token').notNull(),
+		expires: integer('expires', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		// Equivalent uniqueness to Auth.js' reference composite primary key,
+		// added non-destructively for the legacy table shape.
+		uniqueIndex('verification_tokens_identifier_token_uq').on(table.identifier, table.token)
+	]
+);
 
 // ─── Application tables ──────────────────────────────────────────
 

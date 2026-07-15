@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { buildCharacterViewFromContent } from '$lib/character/view';
+	import CharacterExportButtons from '$lib/components/character/CharacterExportButtons.svelte';
 	import { wizard, WIZARD_STEPS } from '$lib/stores/wizard';
 	import { SUIT_IDS, SUIT_LABELS } from '$lib/types/common';
 	import type { PageData } from './$types';
@@ -109,6 +111,14 @@
 
 {#if errorMsg}<p class="error">{errorMsg}</p>{/if}
 
+<section class="exports">
+	<h2>Take your adventurer with you</h2>
+	<p>These downloads work without an account.</p>
+	<div class="export-actions">
+		<CharacterExportButtons getView={() => buildCharacterViewFromContent(char, data)} />
+	</div>
+</section>
+
 <div class="save-row">
 	<a class="back" href={WIZARD_STEPS[STEP - 1].path}>← Back</a>
 	<button type="button" class="draft" disabled={saving} onclick={() => save(true)}>Save as draft</button>
@@ -184,6 +194,21 @@
 	}
 	.error {
 		color: var(--accent);
+	}
+	.exports {
+		padding: 1rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border-radius: 4px;
+	}
+	.exports p {
+		margin: 0 0 0.75rem;
+		color: var(--ink-soft);
+		font-size: 0.9rem;
+	}
+	.export-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 	.save-row {
 		display: flex;

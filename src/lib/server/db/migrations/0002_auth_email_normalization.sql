@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `users_normalized_email_uq` ON `users` (lower(trim("email"))) WHERE "users"."email" is not null;

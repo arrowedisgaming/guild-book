@@ -251,5 +251,167 @@
 			"social",
 			"disposition"
 		]
+	},
+	{
+		"id": "challenge-sequence",
+		"section": "challenge-phase",
+		"title": "The Flow of the Challenge Phase",
+		"body": "During the Crawl Phase, players and GMs exchange questions and answers. During Challenges, things become much more bounded. A Challenge narrows the lens of the adventure into every blow, every maneuver, every stunt that the players attempt.\n\nIn this phase, everybody at the table draws cards that represent their opportunities during combat. The players play these cards to choose specific actions—attacks, movement, pulling something from their pack, etc. The GM controls the hostile characters, be they monsters or mortals. Both sides pursue their goals while exchanging blows. When one side retreats, surrenders, or lies defeated, the Challenge Phase transitions back to the Crawl.\n\nThe Challenge Phase uses the following procedure. Play cycles through steps 1-5 until the Challenge is resolved. The rules for players and GMs differ slightly; GM-specific rules start see GMing the Challenge.\n\n### 0. Set the scene\n\nAs the Challenge begins, the GM frames the scene. They describe the different zones, note the combatants and their positions, and articulate if any scenery and hazards have special rules.\n\n### 1. Draw Challenge cards\n\nChallenges are split up into rounds. At the beginning of each round, each player draws four Challenge cards from the minor arcana deck. The GM draws a certain number of major arcana cards based on what enemies are being fought.\n\n### 2. Play Initiative\n\nPlayers choose one of their Challenge cards as their Initiative for the round. They place it facedown in front of them. The GM plays an Initiative card for every significant character or group of characters they control.\n\n### 3. Take turns\n\nThe GM counts up from lowest card (I) through the highest card (king). When the GM announces the Initiative of a GM character or adventurer, that character takes their turn.\n\n### 4. Minor actions\n\nAfter a turn is resolved, the GM asks: “Any minor actions?” Anybody who wants to take a minor action declares their action. Minor actions are resolved simultaneously.\n\nAfter all actions of a particular Initiative number are resolved, the GM continues the count upwards. Steps 3 and 4 repeat until everybody has had their turn.\n\n### 5. End the round\n\nOnce everybody has had their turn and the subsequent minor actions have been resolved, the round ends. Everybody discards any unused Challenge cards in their hand. Everybody discards their current Initiative card. Facedown cards remain in play. If the Fool was drawn during this past round, both minor and major arcana decks are shuffled. A new round begins.",
+		"tags": [
+			"challenge",
+			"structure",
+			"rounds"
+		]
+	},
+	{
+		"id": "challenge-draw-cards",
+		"section": "challenge-phase",
+		"title": "Draw Challenge Cards",
+		"body": "Challenges are split up into rounds.\n\nAt the beginning of each round, each player draws four Challenge cards from the minor arcana deck. The GM draws cards from the major arcana deck based on what kind of enemies they’re using, their powers, and their numbers.\n\nChallenge cards are spent on the following:\n\n- Initiative\n\n- Actions\n\n- Minor actions\n\nInitiative is a measure of how carefully or recklessly your adventurer is acting during that round. The lower your Initiative, the faster you take your turn. However, the lower your Initiative, the easier you are to hit during that round.\n\nActions are decisive deeds that determine whether you will survive or perish. The “acting player” is the player whose turn it is.\n\nCharacters take one action on their turn. Each player has one turn per round (unless they draw the Fool. The GM will take a turn for each important character they control.\n\nMinor actions are quick actions that take place during other characters’ turns. They happen after another person’s turn and take place simultaneously to all other minor actions taken at the same time.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"hand",
+			"deal"
+		]
+	},
+	{
+		"id": "challenge-play-initiative",
+		"section": "challenge-phase",
+		"title": "Play Initiative",
+		"body": "After drawing your Challenge cards, select one card and play it facedown. This is your Initiative for the round. The GM will play one Initiative card for each significant character or group of characters they control.\n\nInitiative determines how quickly you act during the round. Initiative also determines your defenses.\n\nWhen making a test of fate, if the total of the card’s value plus bonuses is 14+, the test is a success. The chaos of a Challenge changes this paradigm. To successfully attack, trip, cast a spell against, or otherwise affect a combatant in a Challenge, the total value of your card plus bonuses must equal or exceed that character’s Initiative.\n\nWhen other characters attempt to perform an action against you, flip your Initiative card face up (if it’s not already). Compare the action’s value against your Initiative.\n\n- If the value is greater than your Initiative, the action succeeds.\n\n- If the value is less than your Initiative, the action fails.\n\n- If the value ties your Initiative, it succeeds *unless* you are wielding a shield.\n\n### Tied Initiative\n\nIf two people have the same Initiative, they act at the same time. Players with the same Initiative decide among themselves who will declare their actions first. If there is a tie between a GM character and an adventurer, the GM determines who declares first.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"initiative"
+		]
+	},
+	{
+		"id": "challenge-take-turns",
+		"section": "challenge-phase",
+		"title": "Take Turns",
+		"body": "Each round, the GM counts up from lowest card (I) through the highest card (king). When the GM reaches your Initiative in their count, flip your Initiative card face up to declare that you are the acting player.\n\nTo perform an action, play one of your Challenge cards. There are a range of actions you can perform during Challenges, each of which is tied to one of the four suits. The rules for Challenge Actions are detailed.\n\n| Swords | Pentacles | Cups | Wands |\n|---|---|---|---|\n| Attack | Avoid | Aid Another | Banter |\n| Riposte | Dash | Command | Speak Incantation |\n| | Dodge | Pull Item from Pack | Recover |\n| | Roughhouse | Use Item | |\n\nThere are also miscellaneous actions that can be performed using any card, regardless of suit.\n\nOn your turn, you can use *any* card to perform *any* action, regardless of suit.\n\nYou may only spend one card per Initiative turn. If you have performed an action, you cannot also perform a minor action. Interrupt actions do not count towards the one card per turn limit.\n\nThe GM’s characters will also take turns over the course of the round. During an enemy character’s turn, the GM plays a card from their hand and adds their character’s attribute to the total value, just like players. The GM might have several characters that take turns over the course of a round.",
+		"tags": [
+			"challenge",
+			"turns",
+			"actions"
+		]
+	},
+	{
+		"id": "challenge-action-value",
+		"section": "challenge-phase",
+		"title": "Action Value",
+		"body": "On your turn, your action’s total value equals the card’s face value *plus* the associated attribute.\n\nFor example, if an acting player makes an Attack action with a IV of Cups card and has a Swords attribute of 3, their Attack has a total value of 7 (4+3).\n\nAll Challenge Actions (both actions and minor actions) can have favor/disfavor applied, per the rules see Favor and disfavor. The GM is the arbiter of when to apply favor and disfavor during Challenges.\n\n- Favor adds +3 to the action’s total value.\n\n- Disfavor subtracts -3 from the action’s total value.\n\nFor example, an adventurer dangling from a tower window by a rope might be given disfavor to an Attack action against a circling harpy due to the precariousness of their situation. Alternatively, an adventurer might be given favor to a Roughhouse action against a character who is standing near a puddle of oil because the ground is so slippery.\n\nYou can spend a point of Resolve to gain favor on a Challenge Action. Resolve cannot be spent to adjust your Initiative score.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"card-values"
+		]
+	},
+	{
+		"id": "challenge-facedown-cards",
+		"section": "challenge-phase",
+		"title": "Facedown Cards",
+		"body": "You usually play Challenge cards face up, but some actions (such as Dodge or Aid Another) are played facedown to represent your adventurer readying themselves to act.\n\nYou may only have one facedown action at a time. (Your Initiative card does not count towards this limit!) If you take an action that would cause you to place another card facedown, replace the current facedown card and discard the last one. If you no longer want to take the facedown action, discard the card.\n\nFacedown actions played on your turn add the appropriate attribute to the card’s value when the card is revealed. To help you remember when you played a facedown card (and to visually distinguish it from your Initiative), set the card down in a different position relative to your Initiative card.\n\n- If you play a card facedown on your turn, set the facedown card sideways *above* your Initiative card. When the time comes to reveal the card, add the appropriate attribute to the card’s value.\n\n- If you play a card facedown as a minor action, set the facedown card sideways *below* your Initiative card. When the time comes to reveal the card, use the face value of the card for the total.\n\nFacedown cards remain in play until they’re activated, you replace them with another action, you discard it, or the Challenge Phase ends.\n\nFacedown cards do not impact how many cards you draw at the beginning of the round—players always draw four Challenge cards.\n\nYou can use a defensive action (like Dodge or Riposte) for the benefit of anybody in your zone. It stays facedown until activated, as usual. If you move away from your ally before the defensive action triggers, discard your facedown card.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"privacy",
+			"facedown"
+		]
+	},
+	{
+		"id": "challenge-interrupt-actions",
+		"section": "challenge-phase",
+		"title": "Interrupt Actions",
+		"body": "Some talents or circumstances can turn an action into an interrupt. Interrupt actions take place *before* the acting player’s action.\n\nFor example, a halfling adventurer wielding a polearm might Riposte against a goblin charging at them before the goblin's Attack is resolved. If the halfling slays the goblin, they’re safe; if the goblin survives the interrupt, they follow through on their Attack.\n\nInterrupt actions do not count against the limit of one action per turn.",
+		"tags": [
+			"challenge",
+			"interrupts",
+			"turns"
+		]
+	},
+	{
+		"id": "challenge-the-fool",
+		"section": "challenge-phase",
+		"title": "The Fool",
+		"body": "If you pull the Fool when drawing Challenge cards, put it in your hand as normal.\n\nThe Fool is not played like other Challenge cards. The Fool has a value of 0 and is always played in conjunction with another card. When you play the Fool, you get an additional turn—you can play any card to perform any action and add the associated attribute to your total value. Additionally, this counts as an interrupt action. The Fool *always* goes first, no matter what.\n\nEssentially, drawing the Fool allows you to take two turns (but no minor actions) during a round.\n\nWhen the Fool is drawn, shuffle both the minor and major arcana decks at the end of the round.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"the-fool",
+			"reshuffle"
+		]
+	},
+	{
+		"id": "challenge-minor-actions",
+		"section": "challenge-phase",
+		"title": "Minor Actions",
+		"body": "After the acting player’s action is resolved, the GM asks the table if anybody wants to perform a minor action. To make a minor action, spend a Challenge card whose suit *matches* the action. A Cups card must be spent to make a Cups action, a Pentacles card must be spent to make a Pentacles action, and so on.\n\nMinor actions all happen essentially at the same time. Everybody who wants to perform a minor action declares what they want to do and puts down a card to represent this action. Then, everybody reveals their cards simultaneously. The GM describes the results of these actions in whatever order makes the most sense and is the most cinematic.\n\nThe players and the GM can both make minor actions. If the GM is performing a minor action, they declare their action at the same time as the players do. Because the GM uses the major arcana (which has no suits), they ignore the requirement that the card played must match the action’s suit—the GM can play any card to take a minor action.\n\nAfter all minor actions of a particular Initiative number are resolved, the GM continues the count upwards until all characters and enemies have had a turn.\n\n### Minor action value\n\nA minor action’s total value equals the card’s face value. You do not add your attribute to minor actions. A minor action’s value can also be affected by favor/disfavor.\n\nFor example, to use Roughhouse as a minor action, play a Pentacles card. The card only has its face value. For instance, the Knight of Pentacles has a total value of 12— your Pentacles attribute is not added.",
+		"tags": [
+			"challenge",
+			"minor-actions",
+			"turns"
+		]
+	},
+	{
+		"id": "challenge-end-the-round",
+		"section": "challenge-phase",
+		"title": "End the Round",
+		"body": "When every player and each GM character has had their turn (and all minor actions on the last turn have been resolved), the round is over. Facedown actions are left facedown. Any remaining Challenge cards in your hand are discarded. The players and the GM draw more Challenge cards and begin a new round.\n\nIf the Fool has been played, shuffle both the minor and the major arcana decks before dealing new cards.",
+		"tags": [
+			"challenge",
+			"rounds",
+			"cleanup"
+		]
+	},
+	{
+		"id": "challenge-gm-hand-size",
+		"section": "challenge-phase",
+		"title": "GM Challenge Hand Size",
+		"body": "During step 1, draw 3 Challenge cards from the **major arcana deck,** and add:\n\n- +1 card for each type of enemy\n\n- +1 card if the enemies outnumber the adventurers\n\n- +1 card if there are twice as many enemies as adventurers\n\n- +1 card for each enemy that’s physically larger than a human\n\n- +2 cards if there is an elite enemy\n\n- +3 cards if there is a dungeon lord\n\n(Elite enemies and dungeon lords are defined in Appendix C: Dungeon Denizens.)\n\nEach of these additional cards is cumulative. Check to see which are applicable at the start of each round. Therefore, if the number of enemies decreases, you will draw fewer major arcana cards.\n\nFor example, if there are twelve imps facing four adventurers, the GM draws 6 cards from the major arcana deck. That includes: 3 cards to start, +1 for the one type of enemy (imps), +1 for having more enemies than adventurers, +1 for having twice as many enemies than adventurers.\n\nIf, over the course of the Challenge, the adventurers reduce the number of imps to seven, the GM will draw 5 cards at the beginning of the next round: 3 + 1 for having one enemy type (imps) and +1 for having more enemies than adventurers.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"gm",
+			"hand",
+			"threat"
+		]
+	},
+	{
+		"id": "challenge-enemy-actions",
+		"section": "challenge-phase",
+		"title": "Enemy Actions",
+		"body": "When the Initiative count reaches the number of an enemy’s Initiative, flip it face up and take a turn for that character.\n\nPlay a Challenge card from your hand to take an action.\n\nThe number of the major arcana is the card’s value (e.g., Temperance [XIV] has a value of 14). Because the major arcana spans the values 1–21, they are categorized into two types of *doom*: lesser dooms and greater dooms. These speak to the sorts of dangers they involve for the adventurers.\n\nMajor arcana from I-XIV are lesser dooms.\n\nMajor arcana from XV-XXI are greater dooms.\n\nAppendix C: Dungeon Denizens has examples of lesser and greater dooms for each creature.",
+		"tags": [
+			"challenge",
+			"gm",
+			"denizens",
+			"actions"
+		]
+	},
+	{
+		"id": "challenge-lesser-dooms",
+		"section": "challenge-phase",
+		"title": "Lesser Dooms",
+		"body": "Lesser doom cards have values of 1–14. These are analogous to the minor arcana (which are also rated from 1–14).\n\nPlay any lesser doom card to make any Challenge Action (Attack, Dash, Dodge, etc.). Only add the enemy’s attributes to the action’s value on their turn, as normal.\n\nYou also play a lesser doom card to use an enemy’s lesser doom abilities. These are special powers or tactics unique to that creature.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"gm",
+			"dooms"
+		]
+	},
+	{
+		"id": "challenge-greater-dooms",
+		"section": "challenge-phase",
+		"title": "Greater Dooms",
+		"body": "Greater doom cards have values of 15–21.\n\nPlay a greater doom to activate an enemy’s greater doom abilities. These represent a creature’s most potent powers.\n\n- If the greater doom only affects the environment or yourself, the greater doom occurs as soon as you play the card.\n\n- If the greater doom targets an adventurer, your greater doom is played at the same time as a lesser doom card used as an Attack action. If the Attack is successful, the greater doom effect occurs.\n\n- The greater doom card is played regardless of whether the Attack hits or not.\n\nFor example, a dragon has a greater doom called “Breath of Fire.” To use it on an adventurer, use a lesser doom card (like the Hanged Man [XII]) to make an Attack action. At the same time, play any greater doom card (like the Star [XVII]) to activate Breath of Fire. If the Attack is successful, the adventurer is roasted by the dragon’s fiery breath and takes that effect.\n\nYou cannot typically play a greater doom card to make Challenge Actions like Attack, Dash, Dodge, etc. You *can* play greater doom cards to use any miscellaneous action except for Vigilance.\n\nYou can discard a greater doom to gain favor on another Challenge Action.\n\nLastly, some opponents have the ability to use greater doom cards for Challenge Actions. This represents a creature’s overwhelming, extra-human capabilities. For example, a giant may be able to use a greater doom like the Tower [XVI] as an Attack with a value of 16.",
+		"tags": [
+			"challenge",
+			"tarot",
+			"gm",
+			"dooms"
+		]
 	}
 ]

@@ -57,7 +57,10 @@ function build() {
 	const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 	const rules = [];
 	for (const entry of manifest) {
-		const body = omitRange(extractRuleBody(entry.file, entry.heading, entry.until), entry.omitRange);
+		const body = omitRange(
+			extractRuleBody(entry.file, entry.heading, entry.until, entry.after),
+			entry.omitRange
+		);
 		const problems = lintBody(body, entry);
 		if (problems.length) throw new Error(`[rules#${entry.id}] ${problems.join('; ')}`);
 		rules.push({

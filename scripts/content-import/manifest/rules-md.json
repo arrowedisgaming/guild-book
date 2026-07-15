@@ -184,5 +184,128 @@
 		"file": "06 - Chapter 6 - The Crawl Phase.md",
 		"heading": "Influencing Disposition",
 		"tags": ["crawl", "social", "disposition"]
+	},
+	{
+		"id": "challenge-sequence",
+		"section": "challenge-phase",
+		"title": "The Flow of the Challenge Phase",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "The Flow of the Challenge Phase",
+		"tags": ["challenge", "structure", "rounds"]
+	},
+	{
+		"id": "challenge-draw-cards",
+		"section": "challenge-phase",
+		"title": "Draw Challenge Cards",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "1. Draw Challenge cards",
+		"after": "Special rules",
+		"mustContain": ["four Challenge cards"],
+		"tags": ["challenge", "tarot", "hand", "deal"]
+	},
+	{
+		"id": "challenge-play-initiative",
+		"section": "challenge-phase",
+		"title": "Play Initiative",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "2. Play Initiative",
+		"after": "Special rules",
+		"tags": ["challenge", "tarot", "initiative"]
+	},
+	{
+		"id": "challenge-take-turns",
+		"section": "challenge-phase",
+		"title": "Take Turns",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "3. Take turns",
+		"after": "Special rules",
+		"until": "Action value",
+		"tags": ["challenge", "turns", "actions"]
+	},
+	{
+		"id": "challenge-action-value",
+		"section": "challenge-phase",
+		"title": "Action Value",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Action value",
+		"tags": ["challenge", "tarot", "card-values"]
+	},
+	{
+		"id": "challenge-facedown-cards",
+		"section": "challenge-phase",
+		"title": "Facedown Cards",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Facedown cards",
+		"mustContain": ["only have one facedown action at a time"],
+		"tags": ["challenge", "tarot", "privacy", "facedown"]
+	},
+	{
+		"id": "challenge-interrupt-actions",
+		"section": "challenge-phase",
+		"title": "Interrupt Actions",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Interrupt actions",
+		"tags": ["challenge", "interrupts", "turns"]
+	},
+	{
+		"id": "challenge-the-fool",
+		"section": "challenge-phase",
+		"title": "The Fool",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "The Fool",
+		"tags": ["challenge", "tarot", "the-fool", "reshuffle"]
+	},
+	{
+		"id": "challenge-minor-actions",
+		"section": "challenge-phase",
+		"title": "Minor Actions",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "4. Minor actions",
+		"after": "Special rules",
+		"tags": ["challenge", "minor-actions", "turns"]
+	},
+	{
+		"id": "challenge-end-the-round",
+		"section": "challenge-phase",
+		"title": "End the Round",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "5. End the round",
+		"after": "Special rules",
+		"tags": ["challenge", "rounds", "cleanup"]
+	},
+	{
+		"id": "challenge-gm-hand-size",
+		"section": "challenge-phase",
+		"title": "GM Challenge Hand Size",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "1. Draw Challenge cards",
+		"after": "GMing the Challenge",
+		"mustContain": ["elite enemy", "dungeon lord"],
+		"tags": ["challenge", "tarot", "gm", "hand", "threat"]
+	},
+	{
+		"id": "challenge-enemy-actions",
+		"section": "challenge-phase",
+		"title": "Enemy Actions",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "3. Enemy actions",
+		"until": "Lesser dooms",
+		"tags": ["challenge", "gm", "denizens", "actions"]
+	},
+	{
+		"id": "challenge-lesser-dooms",
+		"section": "challenge-phase",
+		"title": "Lesser Dooms",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Lesser dooms",
+		"tags": ["challenge", "tarot", "gm", "dooms"]
+	},
+	{
+		"id": "challenge-greater-dooms",
+		"section": "challenge-phase",
+		"title": "Greater Dooms",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Greater dooms",
+		"tags": ["challenge", "tarot", "gm", "dooms"]
 	}
 ]

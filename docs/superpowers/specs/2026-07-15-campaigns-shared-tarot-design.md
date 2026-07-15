@@ -1,8 +1,10 @@
 # Campaigns and Shared Tarot — Design Specification
 
-**Status:** Revised after written-spec review; awaiting final approval
+**Status:** **Approved 2026-07-15** by the project owner, after the written-spec review, the plan-amendment round, and the Increment 0a rules import.
 
 **Date:** 2026-07-15
+
+**Amendments since approval** are marked inline and recorded in the roadmap's Decision Log (`docs/superpowers/plans/2026-07-15-campaigns-shared-tarot-roadmap.md`). This document stays normative: where a plan and this specification conflict, stop and amend the plan. Where this specification and the **rulebook** conflict, the rulebook wins and this document is amended — see Decision D5. Two such corrections are already recorded in §8.7.
 
 **Target:** Guild Book, SvelteKit monolith on SQLite/D1
 

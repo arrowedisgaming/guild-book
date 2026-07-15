@@ -8,6 +8,24 @@
 
 **Tech Stack:** Cloudflare Pages/Workers Paid, D1, Wrangler, SvelteKit Cloudflare adapter, Playwright, Vitest, Node load harness, deployment runbooks.
 
+## Amendments — read before starting
+
+**Blocking decision: this project deploys to Pages, and two of this plan's mechanisms are Workers-only.** Resolve this before Task 1; it is a deployment-architecture decision, not an implementation detail, and it is deliberately deferred to this increment rather than blocking Increment 0.
+
+1. **`wrangler deploy --dry-run` fails on this repository.** `wrangler.toml:3` is a Pages config (`pages_build_output_dir = ".svelte-kit/cloudflare"`). Running the command produces `▲ WARNING It seems that you have run 'wrangler deploy' on a Pages project`, then `✘ ERROR Missing entry-point to Worker script`, and exits nonzero. Verified empirically. It appears in Task 1 Step 6 ("Expected: every command exits 0") and Task 6 Step 2's clean release suite, so both gates fail on first run. Worse, Task 1 Step 4 names it as the *acceptance source*: "Do not guess the binding API: the generated type file and `wrangler deploy --dry-run` are the acceptance source." That instruction cannot be followed on a Pages project.
+
+2. **The rate-limit binding does not exist on Pages, and the types will not tell you.** Verified: adding `[[ratelimits]]` to a copy of this Pages config and running `wrangler types` (4.110.0) emits `CAMPAIGN_LIMITER: RateLimit` with no error — but rate limiting is not a supported Pages Functions binding, so it is `undefined` at runtime. Task 1 Step 5 requires that campaign mutations "fail closed" when the shared binding is missing. Composed with a binding that silently type-checks and is always absent, that guard takes campaigns down in production *after every gate has passed green*. This is the plan's own safety mechanism producing the outage.
+
+   Decide one of:
+   - **Migrate to Workers.** `@sveltejs/adapter-cloudflare` supports both targets. This makes `[[ratelimits]]` and `wrangler deploy --dry-run` real, at the cost of a deployment migration on the release path.
+   - **Stay on Pages** and implement the shared limiter another way — a Cloudflare dashboard WAF rate-limit rule, or a D1/KV-backed counter. Then delete both the `[[ratelimits]]` binding and the `wrangler deploy --dry-run` gate from this plan, and rewrite Task 1 Step 4's acceptance source.
+
+   Do not proceed with the plan as written under either choice; it currently assumes Workers while the repository is Pages.
+
+3. **The in-memory limiter claim is accurate but narrower than stated.** Specification §11's "existing per-isolate in-memory limiter" is real — `src/hooks.server.ts:26` (`writeBuckets` Map), `:25` (60 writes/60 s), `:66` (`isRateLimited()`) — and characterizing it as development-only defense is fair. But `:67` scopes it to `/api/` paths with mutating methods, so **polling GETs are entirely unlimited today**. This plan's `session-poll` policy therefore has no existing behavior to degrade to if the shared limiter is absent. Account for that in the fail-closed design.
+
+4. **`tarot-art:verify` cannot run in the clean release suite.** Task 6 Step 2 includes it, but it rebuilds from the gitignored `assets-src/`. Use the `tarot-art:verify:ci` variant added by the art plan's amendment 2.
+
 ## Global Constraints
 
 - Increment 4 and the tarot artwork pipeline must both be complete.

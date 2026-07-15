@@ -8,6 +8,24 @@
 
 **Tech Stack:** Pure TypeScript engine, generated content-pack procedures/modifiers, Svelte 5 components, Vitest, Playwright multi-context tests.
 
+## Amendments — read before starting
+
+1. **`ChallengeConfig` is replaced by content, and Task 1 Step 4 was unreachable as written.** `calculateGmHandSize(config: ChallengeConfig, …)` (`:146`) had no path from content pack to runtime snapshot to reducer, verified end to end:
+   - Increment 0b's `TarotProceduresFile` had no slot for it.
+   - Increment 0b's generator emits only manifest-derived records, so nothing else can appear in `tarot-procedures.json`.
+   - Increment 2's pinned `SessionRuntimeContentV1` (`increment-2:327-336`) carries `tarot / procedures / cards / modifiers` and no challenge config, and this plan never touches `session-runtime.ts` or `session-runtime.schema.ts`.
+   - This plan lists `tarot-procedures.json` as modified "through its generator manifest" (`:29-33`) but omits `scripts/content-import/md-procedures.mjs` from both its Files list and its Task 1 `git add` (`:114`). Since `content:verify` runs `md-procedures.mjs --check` byte-for-byte, any hand-added config would be regenerated away and `--check` would fail.
+
+   Increment 0b now carries a `formulas: TarotFormulaDefinition[]` catalog for exactly this. Read the `gm-hand-size` entry's `params` instead of defining a `ChallengeConfig` literal, and let `playerBaseHandSize` (`:56`) come from the same catalog. If a needed parameter is absent, add it to Increment 0b's manifest and generator — and list `md-procedures.mjs` and `docs/rules/tarot-procedure-audit.md` in your Files and commit, because the audit regenerates from the same manifest and will otherwise drift.
+
+2. **Modifier IDs are namespaced.** `:40-48` expects `challenge?.modifierIds` to contain bare `'black-honey'`, `'stun'`, and so on. Increment 0b namespaces modifier IDs by procedure (`challenge-black-honey`, `challenge-stun`, `camp-high-chant`), matching the manifest's procedure IDs. Update this test to the namespaced form.
+
+3. **Integration suites need the vitest config fix from Increment 1.** Task 5 Step 3 and Task 6 Step 4 run `tests/integration/` paths whose "Expected: PASS" is unreachable until `vitest.config.ts` includes that directory. See the Increment 1 amendments.
+
+4. **Use the frozen command envelope.** Task 5's Resolve-spend command carries `observedCharacterVersion`, which exists in specification §10.2 and in the roadmap's amended freeze, but was absent from the roadmap's original and from Increment 2. Confirm Increment 2 adopted the three-field envelope before starting.
+
+5. **`doomTier` comes from content.** Global Constraint 3 states the I–XIV / XV–XXI boundary as a literal. Increment 0.5 amendment 5 moves that boundary into a `tarot.doomTiers` content block cited against Increment 0a's `challenge-dooms` entry. Read it from config; do not re-hardcode 14 here.
+
 ## Global Constraints
 
 - GM advances Challenge phases and rounds. Players control only their legal private hand and prepared/face-down commands.

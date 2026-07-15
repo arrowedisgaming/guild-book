@@ -8,6 +8,40 @@
 
 **Tech Stack:** SvelteKit server routes, Drizzle ORM, SQLite, Cloudflare D1, Zod, Node crypto/Web Crypto-compatible primitives, Vitest, Playwright.
 
+## Amendments — read before starting
+
+1. **This plan owns the vitest config fix, and nothing works without it.** `vitest.config.ts:7` is `include: ['tests/unit/**/*.test.ts']`. This plan creates five suites under `tests/integration/` (`campaign-constraints`, `campaign-service`, `campaign-membership`, `campaign-tenure`, `character-death`) and runs them in Tasks 3, 5, 6, and 7. Verified: a path outside the glob exits 1 with "No test files found", so Task 3 Step 2's "Expected: FAIL because the campaign tables are absent" is wrong (it fails on file discovery) and Step 5's "Expected: PASS" is unreachable. As the first plan to introduce the directory, this one fixes it: widen the include to `['tests/{unit,integration}/**/*.test.ts']` and add `vitest.config.ts` to Task 3's Files list and commit.
+
+2. **Task 6 gates on session state this increment does not create.** Lines 18, 21, 523, 550-556, and 564 require "no active/frozen session" checks, and Task 1's `CharacterLife` carries `sessionId`, but `playSessions` is created by Increment 2. Task 6 Step 1's tests ("observer cannot attach during an active/frozen session", "replace only with no active/frozen session", "archive denied with active/frozen session") have no data source. Line 558 defines a session *cleanup* port but never a session *state* port.
+
+   Resolve it by defining an injected session-state port in this increment with a null implementation:
+
+   ```ts
+   // src/lib/server/campaigns/session-state-port.ts
+   export interface SessionStatePort {
+     /** Returns the id of the campaign's active-or-frozen session, or null. */
+     activeSessionId(campaignId: string): Promise<string | null>;
+   }
+   /** Increment 1 ships this; Increment 2 replaces it with a playSessions query. */
+   export const noSessionsYet: SessionStatePort = { activeSessionId: async () => null };
+   ```
+
+   Task 6's tests then inject a stub returning a session ID, so the rule is proven here and the real query lands in Increment 2 without touching this logic. Do not pull `playSessions` forward into this increment's migration — that would split the session schema across two plans.
+
+3. **Use the specification's event table name.** Task 3 (line 301) creates `campaignAuditEvents`, but specification §6.5 normatively names `campaignEvents`, and §6 states that table names are "normative at the domain level". Increment 2 creates `campaignEvents` + `campaignEventSecrets`, which would leave this increment's creation and lifecycle writes stranded in a superseded table. Name it `campaignEvents` here and let Increment 2 add `campaignEventSecrets` alongside it.
+
+4. **Task 2's discovery grep misses two unguarded character writers.** The Files-list grep `rg "api/characters|expectedUpdatedAt" src` does not match `src/lib/server/character/share.ts`, which calls `.update(characters)` at `:42` and `:69`. Step 5's verification grep `rg "update\(characters\)|insert\(characters\)" src` does match it, so Step 5 fails against a file the plan never told you to touch. Add `share.ts` to Task 2's Files list.
+
+5. **`updateCharacterSchema` does not exist.** Task 2 Step 4 says to "change the update schema to `updateCharacterSchema`", but `character.schema.ts` exports only `characterDataSchema:59` and `createCharacterSchema:89`; the PUT route uses `createCharacterSchema` (`api/characters/[id]/+server.ts:46`) and reads `expectedUpdatedAt` ad-hoc at `:52-54`. This is a create-and-rewire, not an edit.
+
+6. **Task 4 specifies two different access APIs.** Step 1's test calls `loadCampaignAccess(ctx, 'campaign-a', 'owner')` returning `{ role: 'gm' }`; Step 3 specifies `requireCampaignAccess(event, campaignId)` returning a `CampaignRole` of `{ kind: 'gm' }`. Different name, arity, and discriminant. Pick one before writing the test.
+
+7. **Migrations are auto-named.** Tasks 1 and 3 name `0001_campaign_character_versions.sql` and `0002_campaign_foundation.sql`, but `npm run db:generate` generates its own suffix (cf. the committed `0000_dashing_surge.sql`) and writes the tag into `_journal.json`. Use `npx drizzle-kit generate --name campaign_character_versions` rather than renaming files by hand in two places.
+
+8. **Task 1 Step 2 runs a test file it has not created yet**, so vitest exits 1 with "No test files found" instead of showing a red test. Step 1 also never says which file each snippet belongs in. Create `tests/unit/character-life.test.ts` in Step 1.
+
+9. **Task 7's E2E env conflicts with the Playwright webserver.** `NODE_ENV=development` is required for the Credentials provider (`auth.ts:35,65`), but `playwright.config.ts:5` boots via `npm run build && npm run preview`, so that env would also apply to `vite build`. Reconcile before Task 7 — likely a dedicated test-only auth path rather than an env flag.
+
 ## Global Constraints
 
 - Do not repurpose or delete `guilds`, `guildMembers`, or `guildDraws`.

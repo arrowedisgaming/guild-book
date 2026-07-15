@@ -8,6 +8,20 @@
 
 **Tech Stack:** Pure TypeScript engine modules, content-pack procedure definitions, SvelteKit services/routes, SQLite/D1 atomic adapter, Svelte 5, Vitest, Playwright and accessibility assertions.
 
+## Amendments — read before starting
+
+**Oracles resolve their tables. The free-text descope is withdrawn.** Task 4 Step 3 previously read "The GM records a bounded free-text interpretation/outcome. The app does not generate prose." The project owner decided on 2026-07-15 that oracle procedures resolve the drawn card against the verbatim table and log the outcome, confirming specification §9 and §17.1. Increment 0b now generates those tables into `tarot-procedures.json` as typed `TarotLookupTable` records.
+
+Consequences for this plan:
+
+- Maleficence, Malediction, Random Totem, the GM twist, dispositions, Doomsaying, City Events, Signs, Hangover, Meatgrinder, and We're Doomed each resolve `drawn card → TarotLookupRow → cell text` and emit that text in the public event payload.
+- Three table axes exist and the runner must handle all three: `card` (single or **range** keys such as `I–VII`), `card-by-suit` (Random Totem's 14×4 grid), and `suit-by-step` (Doomsaying's four draws read left to right by suit). Do not assume one card yields one cell.
+- Six cells carry live tokens — `[value]`, `[odd]`, `[even]`, `[discard]`, `[adventurers]` — which Chapter 9 defines as referring to the top card of the minor arcana discard pile. Resolving a token reads public table state; it is not free text and not a second card draw.
+- Four cells carry cross-references to Appendix C denizens and Appendix B alchemy. Render them as links to existing content entries.
+- The GM still adjudicates the *fictional consequence*. The app supplies the rule text; it does not apply wounds, conditions, or narrative outcomes. That boundary (specification §8.6) is unchanged — what changed is that the app no longer asks the GM to retype the book.
+
+Task 4 Step 1's coverage matrix must therefore assert the resolved outcome text, not just the drawn card. Its list of asserted properties ("actor, deck, count, visibility, legal zone transitions, boundary") is now satisfiable: `deck`, `draw`, `resultVisibility`, and `recovery` are real fields on `TarotProcedureStepDefinition` as of Increment 0b Task 1.
+
 ## Global Constraints
 
 - This increment covers in-session procedures only. Job Board, dungeon/city generators, GM prep oracles, and full VTT tools remain deferred.
@@ -231,9 +245,27 @@ export interface FiniteProcedureStateV1 {
 
 The runner maps the current validated content step to one generic card command, enforces its actor/visibility/completion mode, advances exactly one step, and rejects unsupported operations. Procedure-specific modules add typed calculations or selection rules only where the generic runner cannot express them.
 
-- [ ] **Step 3: Implement oracle interpretation metadata**
+- [ ] **Step 3: Implement oracle table resolution**
 
-Card draw and derived suit/value/tier/parity are authoritative and public/private as the audited rule requires. The GM records a bounded free-text interpretation/outcome. The app does not generate prose or prep content. Per-denizen oracle abilities use generic predicates and a content lookup ID, never hardcoded denizen names.
+Card draw and derived suit/value/tier/parity are authoritative and public/private as the audited rule requires. A step carrying a `lookupTableId` then resolves its result from the content pack. Implement the resolver as a pure function in `src/lib/engine/session/lookup.ts`:
+
+```ts
+export function resolveLookup(
+	table: TarotLookupTable,
+	draws: DrawnCard[],
+	tableState: { minorDiscardTop: DrawnCard | null; adventurerCount: number }
+): ReduceResult<never, never, SessionRejection> | { ok: true; cells: ResolvedCell[] };
+```
+
+Behavior per axis:
+
+- **`card`** — one draw selects the single row whose `card-range` key contains the card's numeral. A card matching zero rows or more than one row is a content bug, not a runtime condition: Increment 0b's coverage test makes it unreachable, so reject with `content-mismatch` rather than guessing.
+- **`card-by-suit`** — one draw selects the row by rank and the column by suit, yielding one cell.
+- **`suit-by-step`** — N draws (Doomsaying: four), each selecting a row by its suit; step *i* reads column *i*. Result is the ordered cell list, read left to right.
+
+Then resolve tokens against `tableState`: `[value]`/`[suit]` from the minor discard top, `[odd]`/`[even]` from its parity, `[adventurers]` from the live roster count. A token whose source is absent (empty discard) rejects rather than rendering a literal `[value]` to the table.
+
+The GM still adjudicates the fictional consequence; the app supplies the rule text and never applies wounds, conditions, or narrative outcomes. It generates no prep content. Per-denizen oracle abilities use generic predicates and a content lookup ID, never hardcoded denizen names.
 
 - [ ] **Step 4: Preserve manual 50% behavior**
 

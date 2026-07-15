@@ -8,9 +8,21 @@
 
 **Tech Stack:** Node ESM, Sharp as a development build dependency, SHA-256, AVIF/WebP, Svelte 5, Vitest, Playwright visual/DOM assertions.
 
+## Amendments — read before starting
+
+1. **Permission is confirmed, but the repository still says otherwise.** The project owner confirmed permission for the 80-image set on 2026-07-15, so this plan proceeds. However, `scripts/fetch-rwsa-tarot.sh:8-10` still reads "get permission before shipping them in a public build", and `static/content-packs/hmtw/README.md` and `index.json`'s `license` field still assert "no book artwork, logos, or trade dress are reproduced". A future reader hitting those lines will reasonably conclude this build is unlicensed. Task 6 must update all three to record the confirmed permission and narrow the no-artwork claim to *rulebook* artwork, which remains true and is a separate legal posture from the public-domain RWS deck.
+
+2. **`tarot-art:verify` can never run in CI as designed.** `assets-src/` is gitignored, and `verify.mjs` rebuilds from source, so Increment 5 Task 6 Step 2 runs it inside a clean-install release suite where the source cannot exist. It will only ever be green on the owner's machine. Increment 0b solved exactly this shape for content with `--check-generated`: verify committed output against the committed manifest without opening ignored source. Add the equivalent here — `tarot-art:verify:ci` checks the committed manifest's hashes against the committed derivative files under `static/tarot/`, while the full `tarot-art:verify` re-derives from source locally. Be explicit in the script header that CI proves manifest/output integrity, not derivation fidelity.
+
+3. **Keep the source collection swappable.** `collectionId: 'rwsa'`, the `assets-src/tarot/rwsa` path, the `/tarot/rwsa/faces/…` output path, and the `RWSa-` filename constants are currently hardcoded across `source-map.mjs`, `build.mjs`, the resolver, and the manifest. The 1909 artwork is public domain and only these particular cleaned-up scans carry a permission claim, so an equivalent public-domain source (e.g. Wikimedia Commons) must stay a cheap swap rather than a rewrite. Make the collection a single declared constant that the map, paths, and manifest all read.
+
+4. **Do not delete the glyph renderer.** `src/lib/components/tarot/TarotCard.svelte` renders all 78 cards today with pure CSS and Unicode suit glyphs plus a `repeating-linear-gradient` back, with no images at all. Task 4 Step 2 replaces those branches with image-only rendering, which makes artwork a hard dependency of the table for every future contributor and every environment without the built assets. Keep the glyph path as the fallback and switch on the presence of `tarot-art.json`. This costs little and preserves a working table if the art must ever be pulled.
+
+5. **One mapping fact cannot be verified from filenames.** Which of `RWSa-X-BA` / `RWSa-X-RL` is the ornate versus plain back is not derivable from the names, and no test in this plan would catch a swap. Confirm visually during Task 1 and record the basis in the manifest.
+
 ## Global Constraints
 
-- The user has confirmed permission for the 80-image set; do not reopen the permission decision in this plan.
+- Permission for the 80-image set is confirmed (2026-07-15); do not reopen the permission decision in this plan. Do record it accurately in the artifacts named in amendment 1.
 - Source PNGs stay ignored and are never served, copied verbatim to production, or committed.
 - Exactly 78 stable face IDs and two named backs must map exactly once. Missing, duplicate, unexpected, or case-mismatched source files fail the build.
 - Preserve the complete artwork: use contain/fitted dimensions with no crop, face-up rotation, filter, recolor, generated frame, or generative edit.

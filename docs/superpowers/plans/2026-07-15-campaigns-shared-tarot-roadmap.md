@@ -8,9 +8,20 @@
 
 **Tech Stack:** SvelteKit 2, Svelte 5 runes, TypeScript strict, Drizzle ORM, SQLite/better-sqlite3, Cloudflare D1, Zod, Vitest, Playwright, Tailwind CSS v4.
 
+## Decision Log
+
+Decisions and open questions that change what gets built. The design review's B1 asked that external dependencies be tracked as named risks with owners rather than buried as assumptions; this is that register.
+
+| # | Question | Status | Resolution |
+|---|---|---|---|
+| D1 | Is permission granted for the 80-image Rider–Waite–Smith scan set? | **Resolved 2026-07-15** | Confirmed by the project owner. The art plan proceeds. `scripts/fetch-rwsa-tarot.sh:8-10`, the pack README, and `index.json`'s licence field still say otherwise and must be corrected — see the art plan's amendment 1. Keep the source collection swappable; the 1909 artwork is public domain and only these scans carry the claim. |
+| D2 | Do oracle procedures resolve their lookup tables, or does the GM type the outcome? | **Resolved 2026-07-15** | Full lookup. The app resolves the drawn card against the verbatim table and logs the outcome; the GM still adjudicates the fictional consequence. Confirms specification §9 and §17.1; withdraws Increment 4 Task 4 Step 3's free-text descope. Drives Increment 0b's `TarotLookupTable` contract. |
+| D3 | Is the specification approved? | **Open — blocks Increment 0a** | The spec header reads "awaiting final approval" while this roadmap lists "Approved spec" as Increment 0a's dependency. Approval should follow the amendments in this round, since four plans contradicted the spec at the time it was written. |
+| D4 | Cloudflare Pages or Workers? | **Open — blocks Increment 5 only** | `wrangler.toml` is a Pages config, but Increment 5 assumes Workers: `wrangler deploy --dry-run` errors on a Pages project, and the `[[ratelimits]]` binding is Workers-only yet type-checks cleanly on Pages, so it would be `undefined` at runtime and trip the plan's own fail-closed guard in production. Deliberately deferred — it does not block Increments 0a–4. See the Increment 5 amendments. |
+
 ## Global Constraints
 
-- The approved specification at `docs/superpowers/specs/2026-07-15-campaigns-shared-tarot-design.md` is normative. If a plan and the specification conflict, stop and amend the plan before implementing.
+- The specification at `docs/superpowers/specs/2026-07-15-campaigns-shared-tarot-design.md` is normative. If a plan and the specification conflict, stop and amend the plan before implementing. Where this roadmap's Contract Freeze previously conflicted with the specification, the freeze has been amended to match — see "Drift already present in the increment plans".
 - Keep game rules and procedure data in `static/content-packs/hmtw/`; Svelte components and route handlers must not encode rule thresholds or card transitions.
 - Keep `src/lib/engine/` pure: no SvelteKit, UI, database, clock, network, or environment imports.
 - The server is authoritative for shuffle order, draws, procedure legality, and card destinations.
@@ -30,16 +41,21 @@
 
 | Order | Plan | Deliverable | Depends on | Release state |
 |---|---|---|---|---|
-| 1 | `2026-07-15-campaigns-increment-0-rules-import.md` | Audited, generated tarot-procedure content | Approved spec | No campaign UI |
-| 2 | `2026-07-15-campaigns-increment-0-5-resolution-engine.md` | Correct standalone test/group resolution engine and `/deck` flow | Increment 0 | No campaign UI |
-| 3 | `2026-07-15-campaigns-increment-1-foundation.md` | Character versioning, campaign lifecycle, invites, roster, membership, tenure/death | Increment 0 | Feature-flagged internal routes |
-| 4 | `2026-07-15-campaigns-increment-2-shared-table-core.md` | Session persistence, generic shared deck, projections, polling, table shell | Increments 0, 0.5, 1 | Allowlisted pilot only after gate |
-| 5 | `2026-07-15-campaigns-increment-3-challenge.md` | Guided Challenge state machine and typed Challenge modifiers | Increment 2 | Allowlisted pilot |
-| 6 | `2026-07-15-campaigns-increment-4-completion.md` | Camp/Crawl/test/oracle procedures, history, corrections, leave cleanup, accessibility | Increment 3 | Release candidate |
-| P | `2026-07-15-campaigns-tarot-art-pipeline.md` | Deterministic 78-face/2-back responsive artwork pipeline | Increment 0 card IDs | Parallel; required before Increment 5 |
-| 7 | `2026-07-15-campaigns-increment-5-enablement.md` | Capacity proof, staging D1 validation, rollback rehearsal, public enablement | Increment 4 and artwork | Public release |
+| 1 | `2026-07-15-campaigns-increment-0a-rules-import.md` | Chapter 6–9 and cross-chapter rules prose in the browsable reference | Approved spec | No campaign UI |
+| 2 | `2026-07-15-campaigns-increment-0b-procedure-contract.md` | Audited, generated tarot-procedure content and verbatim oracle lookup tables | Increment 0a | No campaign UI |
+| 3 | `2026-07-15-campaigns-increment-0-5-resolution-engine.md` | Correct standalone test/group resolution engine and `/deck` flow | Increment 0b | No campaign UI |
+| 4 | `2026-07-15-campaigns-increment-1-foundation.md` | Character versioning, campaign lifecycle, invites, roster, membership, tenure/death | Increment 0b | Feature-flagged internal routes |
+| 5 | `2026-07-15-campaigns-increment-2-shared-table-core.md` | Session persistence, generic shared deck, projections, polling, table shell | Increments 0b, 0.5, 1 | Allowlisted pilot only after gate |
+| 6 | `2026-07-15-campaigns-increment-3-challenge.md` | Guided Challenge state machine and typed Challenge modifiers | Increment 2 | Allowlisted pilot |
+| 7 | `2026-07-15-campaigns-increment-4-completion.md` | Camp/Crawl/test/oracle procedures, history, corrections, leave cleanup, accessibility | Increment 3 | Release candidate |
+| P | `2026-07-15-campaigns-tarot-art-pipeline.md` | Deterministic 78-face/2-back responsive artwork pipeline | Increment 0b card IDs | Parallel; required before Increment 5 |
+| 8 | `2026-07-15-campaigns-increment-5-enablement.md` | Capacity proof, staging D1 validation, rollback rehearsal, public enablement | Increment 4 and artwork | Public release |
 
-The plans are executed in table order except the artwork plan, which may run after Increment 0 and must merge before public enablement. Do not parallelize two plans that both alter the database schema or character write path.
+The plans are executed in table order except the artwork plan, which may run after Increment 0b and must merge before public enablement. Do not parallelize two plans that both alter the database schema or character write path.
+
+This table supersedes specification §16's "Recommended release increments" list, which named a single Increment 0. §16 is advisory about sequencing ("recommended"); its normative content — the scope of each increment and what must be true before public enablement — is unchanged and is enforced by the gates below. Fold the split into §16 at the next spec amendment so the two do not drift.
+
+**Why Increment 0 is split.** The original combined plan required every procedure `ruleEntryId` to resolve against the generated rules output, but no task imported the chapters those IDs live in: `manifest/rules-md.json` covers only Chapter 1, and the pack README records the rest as deferred. The combined plan therefore failed against its own validator. 0a imports the prose through the existing, proven `md-rules.mjs` path; 0b adds the procedure contract and extracts the oracle tables through a new path, because `extractRuleBody` deliberately strips the `Example …` sub-sections the tables live under. The two halves are different machinery with different failure modes and are gated separately.
 
 ## Required Architectural Boundaries
 
@@ -85,7 +101,7 @@ describe('session engine import boundary', () => {
 
 ## Cross-Increment Contract Freeze
 
-Before Increment 2 starts, freeze these exported contracts and change them only through an explicit spec amendment:
+Before Increment 2 starts, freeze these exported contracts and change them only through an explicit spec amendment. **These are the amended, specification-conforming definitions.** The originals drifted from specification §10.2 before any code was written; Increments 2 and 3 must match what appears here, not what their own snippets currently say.
 
 ```ts
 // src/lib/types/session.ts
@@ -94,7 +110,13 @@ export type SessionPhase = 'crawl' | 'challenge' | 'camp' | 'city';
 
 export interface SessionCommandEnvelope<C> {
   commandId: string;
-  observedVersion: number;
+  /** Advisory freshness hint for the UI. NOT a precondition — see §10.2. */
+  observedSessionVersion: number;
+  /** Required only for structural intents: advance/complete procedure, end round,
+   *  end session, apply correction. This is the hard precondition. */
+  expectedStructuralVersion?: number;
+  /** Present only on resource-spend commands (pre-test Resolve for favor). */
+  observedCharacterVersion?: number;
   command: C;
 }
 
@@ -122,13 +144,46 @@ export type ReduceResult<S, E, R> =
 
 Route code may translate these domain results to HTTP, but reducer code must not contain HTTP status codes.
 
+### Drift already present in the increment plans
+
+Four contradictions exist today between this freeze, the specification, and the increment plans. The specification wins in every case. Reconcile them before Increment 2 starts:
+
+| Contract | Specification / freeze | What the plan says | Action |
+|---|---|---|---|
+| Command envelope | `observedSessionVersion` + optional `expectedStructuralVersion` + optional `observedCharacterVersion` (§10.2) | Increment 2 uses a single `observedVersion` and hard-checks it for structural commands | Adopt the three-field envelope above. The single-field form collapses an advisory hint and a precondition into one value and reintroduces the `409` storm the design review's B3 removed. |
+| `ReduceResult` | Generic in `<S, E, R>` | Increment 2 declares it non-generic, hardcoding `SessionEngineStateV1` / `SessionEvent[]` / `SessionRejection` | Keep the generic form; let Increment 2 alias it. |
+| Sync route | `GET /api/campaigns/[campaignId]/sync?after=<cursor>&version=<version>` (§10.1) | Increment 2 creates `/api/campaigns/[id]/events?since=<cursor>` | Adopt the specification route and parameters. |
+| `sessionCommands` columns | Stores both "client-observed version" and "optional structural precondition" (§6.5) | Increment 2 stores only `expectedVersion`/`resultingVersion` | Store both, so a rejected structural command is auditable. |
+
+`content-mismatch` and `stale-structure` are frozen rejection codes that no plan currently emits. Either wire them in Increment 2 or drop them from the freeze; do not leave them as decoration.
+
+### Test discovery is not configured for this work
+
+`vitest.config.ts:7` is `include: ['tests/unit/**/*.test.ts']`. Increments 1, 2, and 3 create roughly a dozen suites under `tests/integration/`, and **no plan modifies that config**. Running a path outside the include glob exits 1 with "No test files found", so every "Expected: PASS" on an integration suite is currently unreachable, and `npm test` in every release gate silently covers no integration test at all. Gate C's D1 failure-injection requirement cannot be met until this is fixed.
+
+Increment 1 owns the fix, as the first plan to introduce the directory: widen the include to `['tests/{unit,integration}/**/*.test.ts']`, and add `vitest.config.ts` to its Task 3 Files list and commit.
+
+`tests/unit/session/import-boundaries.test.ts` — the suite shown above as the enforcement mechanism for the architectural boundary — is likewise created by no task. Increment 2 owns it, alongside the first `src/lib/engine/session/` module.
+
 ## Release Gates
 
-### Gate A — Rules Foundation
+### Gate A1 — Rules Prose (Increment 0a)
+
+- [ ] `tests/unit/rules-coverage.test.ts` passes: Chapters 6–9 plus the targeted cross-chapter sections all resolve to committed rule entries.
+- [ ] The ten committed Chapter 1 entries are byte-for-byte unchanged; `md-rules.mjs --check` reports `0 drifted`.
+- [ ] `CHANGELOG.md`'s Challenge hand-size TODO is closed by a `challenge-gm-hand-size` entry carrying a threat-tier sentinel.
+- [ ] Every heading deferred to Increment 0b for being pure tables is named in the completion record.
+
+### Gate A2 — Procedure Contract and Oracle Tables (Increment 0b)
 
 - [ ] `docs/rules/tarot-procedure-audit.md` maps every searched tarot occurrence to `supported-v1`, `deferred-preparation`, or `not-applicable-non-tarot` with a source heading.
 - [ ] `npm run content:build` is deterministic and `npm run content:verify` passes from a clean worktree.
 - [ ] `tarot-procedures.json` validates, all stable card IDs are unique, and the runtime snapshot is below 2 MB.
+- [ ] Every procedure definition carries all ten fields specification §9:446 requires, including `deck`, draw count or formula, lookup table, result visibility, and recovery behavior.
+- [ ] Every `ruleEntryId` resolves against Increment 0a's committed `rules.json`.
+- [ ] Lookup-range coverage passes: each card-keyed table claims every card of its deck exactly once, with no gaps or overlaps.
+- [ ] Every wikilink cross-reference in a table cell resolves to a real content entry.
+- [ ] `md-rules.mjs --check` still reports `0 drifted`, proving the new table path did not disturb the rules path.
 - [ ] The content-pack version changes whenever generated procedure content changes.
 
 ### Gate B — Campaign Foundation

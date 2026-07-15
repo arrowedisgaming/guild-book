@@ -8,6 +8,24 @@
 
 **Tech Stack:** TypeScript strict, pure engine modules, Zod-backed content types, Svelte 5 runes, Vitest.
 
+## Amendments — read before starting
+
+1. **This plan depends on Increment 0b.** Task 1 Step 3 invokes `scripts/content-import/verify-pack-version.mjs --write` and expects a `contentDigest` field; both are created by Increment 0b Task 5. Do not start until Gate A2 passes.
+
+2. **Task 1 Step 2's "Expected: FAIL" is wrong for two of its three tests.** `tests/unit/tarot.test.ts:23-34` already covers the 78-card split (57 player + 21 GM) and the Fool's identity today, so those assertions pass immediately. Only the derived-metadata assertion (`doomTier`/`valueParity`) genuinely fails. Expect one red test, not three.
+
+3. **Task 4 breaks a suite it does not own.** Step 4 removes the `testOfFate` adapter, but `tests/unit/tarot.test.ts:74,85,96` calls `testOfFate(...)` and `:106,117` calls `classifyOutcome(...)`. That file is in neither Task 4's Files list nor its Step 6 `git add`, so Step 5's "Expected: PASS" fails. Add `tests/unit/tarot.test.ts` to Task 4's Files and migrate those five call sites in the same commit.
+
+4. **`resolveGroupTest` cannot have both signatures.** Step 1's test calls `resolveGroupTest(outcomes)` with one argument, while Step 3 requires classification to iterate the validated `tarot.resolution.groupOutcomes` ranges rather than hardcode the table. A pure function cannot read content it was not given. Use `resolveGroupTest(config, outcomes)` and update the Step 1 test to match.
+
+5. **The doom-tier boundary must come from content, not a literal.** Step 3's `doomTier: card.number <= 14 ? 'lesser' : 'greater'` violates this plan's own first Global Constraint and CLAUDE.md's "all game data changes go in content-pack JSON". The string `doom` appears zero times in `rules.json` today, so the 14 boundary is currently unsourced. Add a `tarot.doomTiers` block to the content pack alongside the `favorModifier`/`groupOutcomes` additions this plan already makes, cite it against the Increment 0a `challenge-dooms` entry, and read the boundary from config.
+
+6. **The `/deck?seed=` work needs two files not in Task 4's list.** `src/routes/deck/+page.server.ts` currently reads no `url`/searchParams, and `src/lib/stores/tarot-deck.ts:31` hardcodes `makeRng(browser ? \`${Math.random()}\` : 'ssr')`. Both must change for a seeded E2E run. Add them to the Files list.
+
+7. **Task 4 Step 1's E2E selectors do not match the UI, and nothing in Step 3 changes it.** `getByRole('radio', {name:'Cups'})` targets buttons (`TestOfFate.svelte:49`); `getByLabel('Attribute value')` should be "Attribute" (`:56`); `'Draw test card'` should be "Draw & test" (`:64`). Also, `seed=e2e-failure` is merely *named* a failure — assert the drawn value rather than trusting the seed's name, or pin the expected card.
+
+8. **`resolveSpentForFavor` is inert as specified.** Step 3's snippet never reads it, yet Step 1 asks for coverage of "conflicting `resolveSpentForFavor: true` with no Resolve-favor request", and Task 4's component collapses the state with `favor: favor || spendResolveForFavor`, making the conflict unconstructable. Either give the field behavior in the reducer or drop it and the test.
+
 ## Global Constraints
 
 - Reuse and refactor `src/lib/engine/tarot-deck.ts` and `src/lib/engine/tarot-resolution.ts`; do not duplicate card values or thresholds.

@@ -8,6 +8,38 @@
 
 **Tech Stack:** TypeScript pure engine, Zod, SvelteKit endpoints, Drizzle/SQLite/D1, Svelte 5, Vitest, Playwright multi-context testing.
 
+## Amendments — read before starting
+
+**Conform to the roadmap's frozen contracts.** Four of this plan's definitions drifted from the specification before any code was written. The roadmap's Cross-Increment Contract Freeze now carries the amended forms; adopt them:
+
+1. **Command envelope.** Replace the single `observedVersion` (`:412`) with the specification §10.2 three-field form: `observedSessionVersion` (advisory), `expectedStructuralVersion?` (the hard precondition, structural intents only), `observedCharacterVersion?` (resource spends only). Step 4 item 5 currently does `observedVersion === currentVersion` for structural commands, collapsing an advisory hint into a lock — that reintroduces the `409` storm the design review's B3 removed. Structural commands check `expectedStructuralVersion`; nothing else pins a version.
+
+2. **`ReduceResult` stays generic.** `:175-177` declares it non-generic, hardcoding `SessionEngineStateV1`/`SessionEvent[]`/`SessionRejection`. Keep the frozen `ReduceResult<S, E, R>` and alias it locally instead.
+
+3. **Sync route.** `:453` and `:470` create `/api/campaigns/[id]/events?since=<cursor>`. Specification §10.1 says `GET /api/campaigns/[campaignId]/sync?after=<cursor>&version=<version>`. Adopt the specification's route and parameters. Note this also fixes a guaranteed 404: `:524`'s relative `fetch(\`events?since=…\`)` resolves against `/campaigns/[id]/table` to `/campaigns/[id]/events`, not the `/api/...` route it creates. Use a root-relative URL.
+
+4. **`sessionCommands` stores both versions.** Task 3 stores only `expectedVersion`/`resultingVersion`; specification §6.5 requires both the client-observed version and the optional structural precondition, so a rejected structural command is auditable.
+
+**Fix these internal contradictions before Task 1:**
+
+5. **`reduceSession` has two incompatible signatures in this plan.** `:162` calls `reduceSession(state, actorA, command, runtime)` (4 positional args); `:185-189` defines `reduceSession(state, command, context)` with `ReduceContext {actor, runtime, rng}`. Same defect for `assertSessionInvariants`: called with 1 arg at `:51`, specified with 2 (`state, catalog`) at `:118` and `:223`. This is caught, not silent — `.svelte-kit/tsconfig.json` includes `../tests/**/*.ts`, so `npm run check` typechecks tests and Task 1 Step 6 / Task 5 Step 7 will fail. Settle on the context form.
+
+6. **Private zones have no `id`.** `OwnedPrivateZone` (`:86-105`) omits it while `publicZones`/`pendingZones` have one, yet commands address zones by ID (`destinationZoneId: 'hand:a'` at `:381`) and Increment 3 uses `cardZoneId` (`:99`). Private zones are unaddressable as specified.
+
+7. **The major-card invariant test at `:58-64` is a trap.** "Rejects a major card in a player-only zone" invites `card.kind === 'major'`, but the Fool is a major card that legitimately lives in `playerDraw` (`tarot-deck.ts:64-68`), so the 78-card fixture in the preceding test would throw. The invariant is deck-membership, not card kind. Say so in the test name.
+
+8. **Undefined types.** `SessionModifierDefinition` (`:335`), `TarotCardCatalog` (`:206`, `:334`), `SessionActor`, `SessionEvent`, `SessionRejection`, and `ProcedureState` are used but defined nowhere in the plan set. Increment 0b's `modifierIds: string[]` is free-form with no catalog resource behind it, so `modifiers: SessionModifierDefinition[]` has no content source. Define the modifier catalog in this increment's runtime snapshot, or add it to Increment 0b's contract before starting.
+
+9. **This increment owns `tests/unit/session/import-boundaries.test.ts`**, shown in the roadmap as the architectural-boundary enforcement but created by no task. Add it alongside the first `src/lib/engine/session/` module.
+
+10. **Undeclared and misfiled files.** `:127` git-adds `tests/fixtures/session.ts` (imported at `:41`) which no Files list declares. Task 1 declares `tests/unit/session/zones.test.ts` but never gives its body while Step 2 expects it to fail. `:311` lists `src/lib/types/session.ts` as "Modify" when Task 1 (`:29`) creates it. `:292` runs bare `npm run db:generate` while Task 3 names the output `0003_shared_table_core.sql` — use `--name shared_table_core`.
+
+11. **`playerHandCounts` is public information** (§8.2:324) but `:158` places it under `projection.private` for the GM.
+
+12. **No D1 test harness exists.** `tests/` has no DB-touching test today and there is no `@cloudflare/vitest-pool-workers`. `:429`/`:297` require "representative first/middle/last failures against local D1" with no mechanism. Increment 1 `:322` at least acknowledges this ("add `scripts/test-d1-constraints.mjs` only if Vitest cannot access the local Miniflare D1 binding"); this plan assumes it is solved. Establish the harness in Increment 1 and depend on it here.
+
+13. **The load script's auth path conflicts with the Playwright webserver.** `:574` authenticates fixture users "through a local test-only credential setup", but the Credentials provider needs `NODE_ENV=development` + `AUTH_DEV_LOGIN=true` (`auth.ts:73`) while `playwright.config.ts:4` boots a production build. Same conflict as Increment 1 amendment 9; resolve once, in Increment 1.
+
 ## Global Constraints
 
 - The browser sends intent only; it never supplies a resulting card identity, draw order, computed result, or destination state.

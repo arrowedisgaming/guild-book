@@ -35,15 +35,17 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
-		"content:build": "node scripts/content-import/md-inject.mjs && node scripts/content-import/md-rules.mjs && node scripts/content-import/md-spells.mjs",
-		"content:verify": "node scripts/content-import/md-inject.mjs --check && node scripts/content-import/md-rules.mjs --check && node scripts/content-import/md-spells.mjs --check",
+		"content:build": "node scripts/content-import/md-inject.mjs && node scripts/content-import/md-rules.mjs && node scripts/content-import/md-spells.mjs && node scripts/content-import/md-procedures.mjs",
+		"content:verify": "node scripts/content-import/md-inject.mjs --check && node scripts/content-import/md-rules.mjs --check && node scripts/content-import/md-spells.mjs --check && node scripts/content-import/md-procedures.mjs --check && node scripts/content-import/verify-pack-version.mjs",
 		"content:inject": "node scripts/content-import/md-inject.mjs",
 		"content:rules": "node scripts/content-import/md-rules.mjs",
 		"content:spells": "node scripts/content-import/md-spells.mjs",
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate:d1:local": "npx wrangler d1 migrations apply guild-book-db --local",
-		"db:migrate:d1:remote": "npx wrangler d1 migrations apply guild-book-db --remote"
+		"db:migrate:d1:remote": "npx wrangler d1 migrations apply guild-book-db --remote",
+		"content:verify:ci": "node scripts/content-import/md-procedures.mjs --check-generated && node scripts/content-import/verify-pack-version.mjs && npm test -- tests/unit/content-pack.test.ts tests/unit/tarot-procedure-audit.test.ts tests/unit/tarot-procedures.test.ts tests/unit/content-build.test.ts tests/unit/rules-coverage.test.ts",
+		"content:procedures": "node scripts/content-import/md-procedures.mjs"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.59.1",

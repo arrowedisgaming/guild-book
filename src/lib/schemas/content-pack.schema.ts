@@ -98,6 +98,7 @@ export const contentPackSchema = z.object({
 	system: z.literal('hmtw'),
 	license: z.string(),
 	authors: z.array(z.string()),
+	contentDigest: z.string().regex(/^[0-9a-f]{64}$/),
 	files: contentPackFilesSchema,
 	attributes: z.array(attributeDefinitionSchema),
 	tarot: tarotConfigSchema,

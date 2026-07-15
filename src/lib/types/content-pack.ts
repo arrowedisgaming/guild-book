@@ -15,6 +15,13 @@ export interface GuildBookContentPack {
 	/** Licence marker — "placeholder" until real (licensed) data replaces it. */
 	license: string;
 	authors: string[];
+	/**
+	 * SHA-256 over every generated content file in manifest-key order. CI uses it
+	 * to prove committed output was not hand-edited, and to require a version bump
+	 * whenever content changes — a session pins its pack version, so generated
+	 * content must never change under a version it already served.
+	 */
+	contentDigest: string;
 	files: ContentPackFiles;
 	/** The four suit-attributes (Swords/Pentacles/Cups/Wands). */
 	attributes: AttributeDefinition[];

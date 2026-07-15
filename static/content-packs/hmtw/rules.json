@@ -114,5 +114,142 @@
 			"effects",
 			"conditions"
 		]
+	},
+	{
+		"id": "crawl-sequence",
+		"section": "crawl-phase",
+		"title": "The Flow of the Crawl Phase",
+		"body": "A new game of *His Majesty the Worm* starts at the gates to the Underworld. The Crawl begins with the guild taking their first steps into those lightless depths.\n\nThe Crawl is the phase of the game centered on exploring the Underworld. When the guild leaves the safety of civilization to pursue their quests, negotiating with strange creatures, avoiding traps, and excavating ancient treasures, they are Crawling. Most of the game is focused on this phase.\n\nThe Underworld is what is called a megadungeon. A megadungeon is inherently strange. It does not need to conform to the players’ conceptions and expectations. It does benefit from having internal logic, however. Learning the “rules” of the Underworld is fun, and having internally consistent logic allows players to make meaningful choices (which is the point of the game).\n\nA megadungeon is composed of smaller, constituent dungeons. Each dungeon is a thematic level, section, or subsection. For example, your Underworld might be composed of five dungeon levels, which are called the Spires, the Castle of Crossed Destinies, the Inverted Castle, the City of Ruin, and the Necropolis of Ot.\n\nDungeons are separated into different rooms. A room can be any discrete space: a chamber, a feasting hall, a natural cavern, an underground river, etc. Each room should have something interesting for the players to interact with. For example, one room in the Castle of Crossed Destinies could have a giant throne constructed of a titan’s bones, another room could be the lair of a reverse sphinx who needs to hear riddles to survive, and so on.\n\nAs the guild explores each room, random events called the Meatgrinder create tension. The Meatgrinder represents the passage of time: torches burning low, patrolling monsters, and other hazards.\n\n**Each dungeon level has both a map and a Meatgrinder table, both full of interesting things to discover.** When players travel into a new room, the GM looks at the room description. Simultaneously, the GM draws a random card from the major arcana and consults the Meatgrinder table. They then describe the newly-entered room in the context of the random Meatgrinder encounter.\n\nThis chapter details what players need to know about the Crawl Phase. Advice for the GM for running the Crawl Phase is found. Procedures for the GM to create the Underworld are found in Appendix E: Underworld Creation see Origins of the Underworld.\n\nPlay happens through a combination of what the GM describes and the decisions the players make. It’s not a preplanned story.\n\nDuring the Crawl, the players tell the GM where they want to go. They use an in-character map to make sure everybody is on the same page about where the guild currently is.\n\nThe GM describes what the guild encounters as they travel. The GM describes the contents of each room within the context of a random Meatgrinder event.\n\nWhen the guild encounters dangers—crushing walls, minotaurs, anti-life fields, swindling merchants—the players and the GM engage in a dialogue.\n\n- The GM describes the situation, the players ask questions about the scene, and the GM clarifies.\n\n- The players describe what their adventurers attempt, the GM asks questions about their actions and their intentions, and the players clarify.\n\n- The GM describes what happens as a result of the adventurer’s actions. If there’s risk or doubt about the adventurer’s ability to accomplish their goals, the GM calls for a test of fate.\n\nDespite the presence of otherworldly and strange beings, very few creatures attack on sight and fight to the death. (Well, perhaps skeletons. They want to free their boney brethren from the flesh prisons that you’re cruelly keeping them in.) Almost everything can be talked to, negotiated with, or at least avoided. See “Disposition” see Social Encounters & Disposition for an overview of negotiating with the GM’s characters.\n\nWhen combat cannot be avoided, the Crawl Phase transitions into the Challenge Phase. Once the Challenge is resolved, the Challenge Phase transitions back to the Crawl.\n\nMysteriously, the Underworld has a property that preserves life. When a mortal blow is dealt, the victim lingers at Death’s Door before dying. This property has prolonged the life of many adventurers who have run afoul of the Underworld’s treachery.\n\nThose who *do* die in the Underworld rise again as undead…",
+		"tags": [
+			"crawl",
+			"structure",
+			"session"
+		]
+	},
+	{
+		"id": "crawl-watches",
+		"section": "crawl-phase",
+		"title": "Watches",
+		"body": "Travel time is measured in watches. A watch isn't a concrete period of time; it might be an hour or ten minutes or all night. It’s hard to tell how much time is *actually* passing in the Underworld. Time moves weirdly— happy moments burn away quickly, whereas tense moments stretch like lengthening shadows. Watches are just a way to talk about how quickly, quietly, and carefully you're moving.\n\nA watch passes:\n\n- Each time the guild passes into a new room on the map;\n\n- Whenever the guild spends a long time performing a task (such as taking a door off of its hinges, repairing a broken machine, counting the jelly beans in a jar); and\n\n- Each Camp and Challenge Phase.\n\nWhen a watch passes, the GM draws a card from the major arcana deck and compares the result to the Meatgrinder table for that dungeon. The GM then describes the Meatgrinder event in the context of the new or current scene.",
+		"tags": [
+			"crawl",
+			"time",
+			"structure"
+		]
+	},
+	{
+		"id": "crawl-meatgrinder",
+		"section": "crawl-phase",
+		"title": "Meatgrinder",
+		"body": "The Meatgrinder is a collection of impermanent events—things like monster patrols, weather, or bumping into a rival guild. Importantly, the rate at which your light sources flicker and go out is controlled by the Meatgrinder.\n\nAs you travel, the GM will describe scenes that combine the contents of each room and the results of the Meatgrinder. For example, if the room you enter is a dragon’s lair and the GM randomly pulls a patrol of goblins from the Meatgrinder table, you might find goblins attempting to sneak into the dragon’s lair for treasure—and making entirely too much noise in the process.\n\nWhen a Meatgrinder event is triggered, the GM should mark it off. If the cards are shuffled and the GM draws the same event twice, nothing happens and the guild has a watch of respite. The GM repopulates their Meatgrinder tables after each City Phase.\n\nThe full procedure to create a Meatgrinder for a dungeon level is detailed in Appendix E. Here are the basics.\n\nIn general, Meatgrinder tables follow this formula:\n\n- **Torches gutter (I–V):** *Torches guttering* represents time passing as your light sources grow dim. When torches gutter, all light sources flicker.\n\n- Torches gutter events are not marked off from the Meatgrinder. They can occur multiple times.\n\n- **Curiosities (VI–X):** *Curiosities* are moments of serendipity. “Nothing happens” is a boring result for a random table. Curiosities are an opportunity for a GM to interject color into the black depths of the Underworld. They can serve as inspiration for role-playing exchanges or provide hints about the local environment.\n\n- **Travel events (XI–XV):** *Travel events* represent things that go wrong during the journey. They might require you to make a hard choice about resource management or ask you to test fate to avoid a hardship. Travel events might prompt Challenges.\n\n- **Random encounters (XVI–XX):** *Random encounters* are chance meetings with the denizens of the Underworld. These might be friendly encounters with would-be allies, hazardous encounters with hungry animals, or murderous encounters with monsters. Interesting random encounters don’t simply list “monster type.” The best random encounters paint a small scenario that the GM can use as inspiration for a Challenge.\n\n- Q**uest rumor (XXI):** *Quest rumors* lead you one step closer to your current quest. Quest rumors provide hints or directions towards your quest goal. If you’ve already made significant progress on your current quest, this result might even feature the object of your quest.",
+		"tags": [
+			"crawl",
+			"tarot",
+			"oracle",
+			"random-events"
+		]
+	},
+	{
+		"id": "crawl-loud-noises",
+		"section": "crawl-phase",
+		"title": "Loud Noises",
+		"body": "Every time the guild makes a loud noise or otherwise draws attention to themselves, the GM should pull on the Meatgrinder table. If the draw results in a random encounter (results XVI–XX), the GM describes an encounter with the wandering creature drawn to the noise. Otherwise, nothing happens.",
+		"tags": [
+			"crawl",
+			"tarot",
+			"meatgrinder"
+		]
+	},
+	{
+		"id": "crawl-moving-carefully",
+		"section": "crawl-phase",
+		"title": "Moving Carefully",
+		"body": "If the guild is proceeding very slowly or methodically, tapping in front of them with their ten-foot pole, the GM should pull again on the Meatgrinder table after resolving potential encounters. If the second draw results in torches guttering (results I–V), the GM keeps the result to represent additional time passing. Otherwise, nothing happens.",
+		"tags": [
+			"crawl",
+			"tarot",
+			"meatgrinder"
+		]
+	},
+	{
+		"id": "crawl-darkness",
+		"section": "crawl-phase",
+		"title": "Darkness",
+		"body": "No matter how accomplished an adventurer is, darkness is crippling. You are Blind while in darkness. Most activities are simply impossible to accomplish in the dark—others may be attempted but suffer disfavor.\n\nCrawling in the dark is a futile pursuit. The guild is at risk of every pitfall and every trap, and creatures accustomed to darkness will find them easy prey.",
+		"tags": [
+			"crawl",
+			"light",
+			"darkness"
+		]
+	},
+	{
+		"id": "crawl-flickers",
+		"section": "crawl-phase",
+		"title": "Flickers",
+		"body": "The Omphalic Market lists candles, torches, and lanterns for purchase. Each type of light source can flicker a certain number of times before it is extinguished.\n\nYour light source flickers when the Meatgrinder says torches gutter. Candles can flicker 2 times. Torches can flicker 3 times. Lanterns can flicker 4 times.\n\nCandles, torches, and lanterns are not designed for violence. Your light source automatically breaks and is extinguished if:\n\n- It is hit in combat\n\n- You use it as a weapon in combat\n\nYou can tie your lantern to your belt, but if you suffer a Wound, your lantern is also Destroyed, covering you in oil.\n\nDropping your light source might cause it to go out.\n\n- Torches have a 50% chance of staying lit or being extinguished when dropped. Extinguished torches can’t be relit.\n\n- Candles are extinguished when dropped. Candles may be relit.\n\n- Lanterns are Destroyed when dropped.",
+		"tags": [
+			"crawl",
+			"light",
+			"torches"
+		]
+	},
+	{
+		"id": "crawl-were-doomed",
+		"section": "crawl-phase",
+		"title": "We’re Doomed!",
+		"body": "If the guild is *completely* out of light sources, each player draws on the table below.\n\n| Card | Doom |\n|:---:|---|\n| I–VII | You are eaten by a grue. |\n| VIII | You are captured by monsters. The GM chooses an appropriate monster based on the Meatgrinder table. Escaping guild members know your general location and the type of monster. |\n| IX | You are held for ransom by the bird-faced Olu Gang. It takes 1,000 gold per guild Fame to buy your freedom. |\n| X | You are lost in the Underworld. The GM places your adventurer as an encounter on the Meatgrinder table. That character may reenter play if you are encountered. Make a new adventurer for the time being. |\n| Page | You make it back to the surface, but only after making solemn oaths to forsake the adventuring life. You retire. The GM controls your character in the City. |\n| Knight | You scramble back to the surface naked and shivering. You lose all of your equipment, both from your belt and backpack. |\n| Queen | You limp back to the surface, shaken to your core. You have a 50% chance to have lost each item carried, tested individually. |\n| King | You limp back to the surface, mostly unscathed but raving about the twelve different flavors of darkness. |",
+		"tags": [
+			"crawl",
+			"tarot",
+			"oracle",
+			"darkness"
+		]
+	},
+	{
+		"id": "crawl-black-honey",
+		"section": "crawl-phase",
+		"title": "Black Honey",
+		"body": "A thick molasses that tastes so, so sweet. It’s like meth and speed had a terrifying demon baby. You act preternaturally fast while on the honey.\n\nEach time you take black honey, you are re-exposed to the affliction. If you’ve previously cured stage 2, erase the marking in the stage 2 section.\n\nStage 1: If you’ve recently taken black honey, you may choose to draw 5 cards during an encounter instead of 4. If you do so, you spit out 1–4 teeth.\n\nRequires 5 charges to quit.\n\nStage 2: You’re jittery and sweaty. Your Cups score equals 1 and you suffer disfavor on all tests of fate that require fine motor control.\n\nRequires 1 charge to calm down to stage 1.",
+		"tags": [
+			"crawl",
+			"afflictions",
+			"challenge",
+			"tarot"
+		]
+	},
+	{
+		"id": "crawl-social-encounters-disposition",
+		"section": "crawl-phase",
+		"title": "Social Encounters & Disposition",
+		"body": "In the Underworld, you’ll encounter the bizarre denizens of the dungeons and the adventurers trying their best to slay them (or you).\n\nRole-playing the characters you encounter is one of the GM’s many jobs. The GM is provided with guidelines for role-playing called Disposition. Advice for GMs creating characters with interesting personalities and running social encounters is provided in Creating interesting characters.\n\nEach Disposition has three steps of severity: mild, basic, and intense. Mild emotions are on the inside of the circle; intense emotions are on the outside of the circle. Related emotions are grouped near each other.",
+		"tags": [
+			"crawl",
+			"social",
+			"disposition"
+		]
+	},
+	{
+		"id": "crawl-starting-disposition",
+		"section": "crawl-phase",
+		"title": "Starting Disposition",
+		"body": "A character’s starting Disposition informs the GM how that creature should initially act, how hostile or friendly it is to the guild, and what they’re likely to demand in a parlay.\n\nSometimes a character’s starting Disposition will be obvious based on the scenario in which the guild encounters them. If there is any question, or if randomness is desired, the GM should look at the top card in the discard pile of the minor arcana.\n\n| Card | Disposition |\n|:---:|---|\n| I–II | Anger |\n| III–IV | Distaste |\n| V–VI | Sadness |\n| VII–VIII | Joy |\n| IX–X | Surprise |\n| Page–Knight | Trust |\n| Queen–King | Fear |\n\nCharacters with positive Dispositions (e.g., joy, trust) negotiate in good faith. They will acquiesce to reasonable requests in exchange for a reasonable exchange from the guild. Characters with intense positive Dispositions might even provide extra aid and advice.\n\nCharacters with negative Dispositions (e.g., angry, distaste) want to bring the conversation to an end. They don’t have any interest in exchanging goods or services with the guild. If the encounter continues at all, it will be in a combative capacity—transition to the Challenge Phase.",
+		"tags": [
+			"crawl",
+			"social",
+			"disposition",
+			"tarot",
+			"oracle"
+		]
+	},
+	{
+		"id": "crawl-influencing-disposition",
+		"section": "crawl-phase",
+		"title": "Influencing Disposition",
+		"body": "As you role-play with a GM character, their Dispositions change based on how your actions interact with their personality. All intelligent creatures can be negotiated with (assuming a shared language). When role-playing with the GM’s characters, you don’t have to speak in a silly voice or use faux Shakespearean language. You don’t even have to say exactly what your character is saying, word for word. You do have to say what you want and how you are approaching the conversation.\n\n- You might flatter the vain countess.\n\n- You might make pious platitudes to the unctuous priest.\n\n- You might offer rare trash to the goblin trash merchant.\n\nThese strategies only make sense when applied towards that particular character; offering trash to the vain countess would be unwise.\n\nThe GM judges the results of a negotiation based on how what you said aligns or conflicts with their character’s personality. Depending on the outcome of the role-playing exchange, the GM character’s Disposition either increases/decreases in severity or shifts to a related emotion.\n\n- Good ideas and strong bargaining chips that appeal to a character’s likes and wants will automatically create positive Dispositions.\n\n- Approaches that conflict with the character’s dislikes will automatically create negative Dispositions.\n\n- When the situation is risky and there’s something at stake, the GM will call for a test of Wands.\n\n- Success on this test moves the character’s Disposition to an adjacent, beneficial emotion or increases their current emotion’s severity.\n\n- Failure moves the character’s Disposition towards a negative emotion.",
+		"tags": [
+			"crawl",
+			"social",
+			"disposition"
+		]
 	}
 ]

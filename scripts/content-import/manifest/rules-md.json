@@ -86,5 +86,103 @@
 		"file": "01 - Chapter 1 - The Basics.md",
 		"heading": "Effects",
 		"tags": ["core", "effects", "conditions"]
+	},
+	{
+		"id": "crawl-sequence",
+		"section": "crawl-phase",
+		"title": "The Flow of the Crawl Phase",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "The Flow of the Crawl Phase",
+		"tags": ["crawl", "structure", "session"]
+	},
+	{
+		"id": "crawl-watches",
+		"section": "crawl-phase",
+		"title": "Watches",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Watches",
+		"tags": ["crawl", "time", "structure"]
+	},
+	{
+		"id": "crawl-meatgrinder",
+		"section": "crawl-phase",
+		"title": "Meatgrinder",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Meatgrinder",
+		"until": "Loud noises",
+		"tags": ["crawl", "tarot", "oracle", "random-events"]
+	},
+	{
+		"id": "crawl-loud-noises",
+		"section": "crawl-phase",
+		"title": "Loud Noises",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Loud noises",
+		"tags": ["crawl", "tarot", "meatgrinder"]
+	},
+	{
+		"id": "crawl-moving-carefully",
+		"section": "crawl-phase",
+		"title": "Moving Carefully",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Moving carefully",
+		"tags": ["crawl", "tarot", "meatgrinder"]
+	},
+	{
+		"id": "crawl-darkness",
+		"section": "crawl-phase",
+		"title": "Darkness",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Darkness",
+		"tags": ["crawl", "light", "darkness"]
+	},
+	{
+		"id": "crawl-flickers",
+		"section": "crawl-phase",
+		"title": "Flickers",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Flickers",
+		"tags": ["crawl", "light", "torches"]
+	},
+	{
+		"id": "crawl-were-doomed",
+		"section": "crawl-phase",
+		"title": "We’re Doomed!",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "We’re doomed!",
+		"tags": ["crawl", "tarot", "oracle", "darkness"]
+	},
+	{
+		"id": "crawl-black-honey",
+		"section": "crawl-phase",
+		"title": "Black Honey",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Black honey",
+		"tags": ["crawl", "afflictions", "challenge", "tarot"]
+	},
+	{
+		"id": "crawl-social-encounters-disposition",
+		"section": "crawl-phase",
+		"title": "Social Encounters & Disposition",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Social Encounters & Disposition",
+		"until": "Starting Disposition",
+		"tags": ["crawl", "social", "disposition"]
+	},
+	{
+		"id": "crawl-starting-disposition",
+		"section": "crawl-phase",
+		"title": "Starting Disposition",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Starting Disposition",
+		"tags": ["crawl", "social", "disposition", "tarot", "oracle"]
+	},
+	{
+		"id": "crawl-influencing-disposition",
+		"section": "crawl-phase",
+		"title": "Influencing Disposition",
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"heading": "Influencing Disposition",
+		"tags": ["crawl", "social", "disposition"]
 	}
 ]

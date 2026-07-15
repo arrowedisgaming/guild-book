@@ -24,7 +24,11 @@
 
 4. **Use the frozen command envelope.** Task 5's Resolve-spend command carries `observedCharacterVersion`, which exists in specification §10.2 and in the roadmap's amended freeze, but was absent from the roadmap's original and from Increment 2. Confirm Increment 2 adopted the three-field envelope before starting.
 
-5. **`doomTier` comes from content.** Global Constraint 3 states the I–XIV / XV–XXI boundary as a literal. Increment 0.5 amendment 5 moves that boundary into a `tarot.doomTiers` content block cited against Increment 0a's `challenge-dooms` entry. Read it from config; do not re-hardcode 14 here.
+5. **`doomTier` comes from content.** Global Constraint 3 states the I–XIV / XV–XXI boundary as a literal. Increment 0.5 amendment 5 moves that boundary into a `tarot.doomTiers` content block, now citeable against Increment 0a's `challenge-lesser-dooms` / `challenge-greater-dooms` entries — which state the boundary explicitly ("Lesser doom cards have values of 1–14", "Greater doom cards have values of 15–21"). Read it from config; do not re-hardcode 14 here.
+
+6. **`shield-initiative` is removed — the rulebook has no such mechanic.** Verified during Increment 0a: `### Shield` (`09 - Chapter 9 …:683`) governs Notch absorption and hand slots, and the only Initiative-adjacent shield rule is a tie-break — "Ties go to the attacker unless the defender has a shield" (`07 - Chapter 7 …:263`, `:415`, `:431`) — which decides whether a Wound lands. Wound application is outside v1 by specification §8.6. The specification was amended on 2026-07-15 to drop it. Do not add `shield-initiative` to `modifierIds`, do not implement `replace-initiative-with-shield`, and do not write a test asserting either.
+
+7. **`Aim` stays, but it is bow equipment.** It is a real mechanic sourced from `09 - Chapter 9 …:760-762`, not a Chapter 7 heading — a Swords action played face-down against a declared target, revealed on a later Attack to add its value. Increment 0b reaches it with a bullet anchor and it cites no rules entry. Keep `aim-prepare`; its content definition just comes from a different chapter than the rest of the Challenge module.
 
 ## Global Constraints
 
@@ -34,7 +38,7 @@
 - GM play and discard budgets are separate. A discard does not consume a play and rules may allow multiple discards up to held cards.
 - Fool Challenge play is an interrupt paired with another card, resolves first, grants an extra turn, and grants no minor actions for that extra turn.
 - Fool draw schedules both eligible deck reshuffles at the Challenge round boundary; it does not return held/in-play cards.
-- Stun, black honey, Brainfever, Counsel, Guardian Angel, Aim, and shield initiative receive typed engine behavior.
+- Stun, black honey, Brainfever, Counsel, Guardian Angel, and Aim receive typed engine behavior. Shield does not — see amendment 6.
 - Denizen card abilities use generic typed predicates; wounds, monster health, status application, and fictional consequences remain manually logged.
 - A replacement after death may enter only at the next legal deal/round boundary.
 
@@ -56,15 +60,16 @@
 const challenge = getTarotProcedures().procedures.find((p) => p.id === 'challenge-round');
 expect(challenge).toBeDefined();
 expect(challenge?.modifierIds).toEqual(expect.arrayContaining([
-  'black-honey',
-  'stun',
-  'brainfever',
-  'counsel',
-  'guardian-angel',
-  'aim',
-  'shield-initiative'
+  'challenge-black-honey',
+  'challenge-stun',
+  'challenge-brainfever',
+  'challenge-counsel',
+  'challenge-guardian-angel',
+  'challenge-aim'
 ]));
 ```
+
+Note the namespaced IDs (amendment 2) and the absence of `shield-initiative` (amendment 6).
 
 - [ ] **Step 2: Add the validated Challenge config**
 
@@ -287,7 +292,6 @@ Required assertions:
 - `counsel`: transfers an owned private card to an authorized recipient without public identity.
 - `guardian-angel`: performs its audited private/public move as specified by content.
 - `aim`: creates and consumes the typed prepared/face-down zone.
-- `shield-initiative`: replaces initiative using only legal shield-source state and correct discard destinations.
 
 - [ ] **Step 2: Define modifier commands as strict variants**
 
@@ -298,8 +302,7 @@ export type ChallengeModifierCommand =
   | { type: 'apply-brainfever'; targetTenureId: string }
   | { type: 'counsel-transfer'; recipientUserId: string; cardId: string }
   | { type: 'guardian-angel'; targetTenureId: string; cardId: string }
-  | { type: 'aim-prepare'; cardId: string }
-  | { type: 'replace-initiative-with-shield'; initiativeCardId: string };
+  | { type: 'aim-prepare'; cardId: string };
 ```
 
 The visible command set is derived from actor ownership, current Challenge stage, and active content modifiers. Server validation rejects a syntactically valid but unprojected command.

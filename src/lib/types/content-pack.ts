@@ -521,12 +521,17 @@ export interface TarotProcedureDefinition {
 	modifierIds: string[];
 }
 
+/**
+ * Where a rule lives in the book. At least one of `heading`/`anchor` is always
+ * present — several rules (the Appendix D Special City Actions) are bullet items
+ * with no heading of their own, so `heading` cannot be required.
+ */
 export interface TarotSourceRef {
 	file: string;
-	heading: string;
+	heading?: string;
 	/** Disambiguates a heading that recurs; see md-lib's `after`. */
 	after?: string;
-	/** Exact leading text of a bullet item, for rules with no heading of their own. */
+	/** Exact leading text of a bullet item. Takes precedence over `heading`. */
 	anchor?: string;
 }
 

@@ -313,6 +313,25 @@ export function extractRuleBody(file, heading, until, after, options = {}) {
  *  the minor arcana discard pile." */
 const TOKEN_RE = /\[(value|suit|odd|even|discard|adventurers)\]/g;
 
+/**
+ * The book names the four minor court ranks two ways: by name in most tables
+ * (Maleficence, Malediction, Random Totem, We're Doomed …) and as Roman numerals
+ * XI–XIV in Signs and Portents, consistent with Ch7's "the minor arcana … are
+ * also rated from 1–14". Keys are structured data, not prose, so they are
+ * normalized to one notation; the cell text stays verbatim and `source` still
+ * points at the original.
+ */
+const MINOR_COURT_BY_NUMERAL = new Map([
+	['XI', 'Page'],
+	['XII', 'Knight'],
+	['XIII', 'Queen'],
+	['XIV', 'King']
+]);
+
+function normalizeMinorKey(key) {
+	return MINOR_COURT_BY_NUMERAL.get(key) ?? key;
+}
+
 /** `I–VII` (en-dash) or `I-VII` -> {from:'I',to:'VII'}; `I` -> {from:'I',to:'I'}. */
 export function parseCardKey(raw) {
 	const text = raw
@@ -463,7 +482,13 @@ export function extractTable(file, heading, after, options = {}) {
 	}
 	let last = first;
 	while (last + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[last + 1])) last++;
-	const block = lines.slice(first, last + 1);
+	// The export baked a running page header into the end of at least one table
+	// row ("… APPENDIX A | SORCERY |" on Malediction's King). normalizeMarkdown
+	// strips it for the rules path; do the same here, before splitting on pipes,
+	// or it becomes a phantom extra cell.
+	const block = lines
+		.slice(first, last + 1)
+		.map((l) => l.replace(/[ \t]*APPENDIX [A-E]\s*\|\s*[A-Z ]+\s*\|[ \t]*$/i, ' |'));
 
 	const header = splitRow(block[0]).map(headerLabel);
 	const bodyRows = block.slice(1).filter((l) => !splitRow(l).every((c) => DELIMITER_CELL.test(c)));
@@ -480,11 +505,18 @@ export function extractTable(file, heading, after, options = {}) {
 		label
 	}));
 
+	const deck = options.deck;
 	const rows = bodyRows.map((line) => {
 		const cells = splitRow(line);
-		const key = keyIsSuit
-			? { kind: 'suit', suit: SUIT_BY_LABEL.get(headerLabel(cells[0]).toLowerCase()) }
-			: parseCardKey(cells[0]);
+		let key;
+		if (keyIsSuit) {
+			key = { kind: 'suit', suit: SUIT_BY_LABEL.get(headerLabel(cells[0]).toLowerCase()) };
+		} else {
+			key = parseCardKey(cells[0]);
+			if (deck === 'minor') {
+				key = { ...key, from: normalizeMinorKey(key.from), to: normalizeMinorKey(key.to) };
+			}
+		}
 		return {
 			key,
 			cells: cells.slice(1).map((cell, i) => ({

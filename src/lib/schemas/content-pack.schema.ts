@@ -325,12 +325,18 @@ export const spellsFileSchema = z.array(spellDefinitionSchema);
 // In-session tarot procedures + oracle lookup tables
 // ---------------------------------------------------------------------------
 
-const tarotSourceRefSchema = z.object({
-	file: z.string(),
-	heading: z.string(),
-	after: z.string().optional(),
-	anchor: z.string().optional()
-});
+/** At least one of heading/anchor: the Appendix D Special City Actions are
+ *  bullet items with no heading of their own. */
+const tarotSourceRefSchema = z
+	.object({
+		file: z.string(),
+		heading: z.string().optional(),
+		after: z.string().optional(),
+		anchor: z.string().optional()
+	})
+	.refine((s) => Boolean(s.heading || s.anchor), {
+		message: 'source needs a heading or an anchor'
+	});
 
 const tarotDeckIdEnum = z.enum(['major', 'minor']);
 

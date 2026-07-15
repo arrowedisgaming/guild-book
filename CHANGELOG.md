@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The complete test-of-fate resolution engine: favor/disfavor, spending Resolve
+  for favor, pushing fate, all three Fool rules, and group tests. `/deck` is now
+  its reference client, with favor/disfavor/Resolve controls and a result panel
+  that explains the ruling rather than only showing a total. `/deck?seed=` pins
+  the shuffle for a reproducible run.
+- Doom tiers, the favor modifier, and the group-test hit table are content
+  (`index.json`), each citing the rules entry it came from, so no game rule is
+  hardcoded in the engine. Schema refinements reject a malformed major arcana
+  (22 cards, one Fool at 0, I–XXI once each) and group bands that fail to
+  partition every reachable hit total.
+
 - An audited catalog of every in-session tarot procedure
   (`tarot-procedures.json`), generated from a committed manifest and the
   rulebook rather than hand-authored: 30 procedures, 14 verbatim oracle lookup

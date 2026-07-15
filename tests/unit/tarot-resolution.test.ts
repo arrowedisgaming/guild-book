@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveTestOfFate, resolveGroupTest } from '$lib/engine/tarot-resolution';
+import { resolveTestOfFate } from '$lib/engine/tarot-resolution';
 import { getContentPack } from '$lib/server/content/loader';
 
 const config = getContentPack().tarot;
@@ -168,36 +168,5 @@ describe('the Fool', () => {
 			).foolDrawn
 		).toBe(true);
 		expect(resolveTestOfFate(config, input()).foolDrawn).toBe(false);
-	});
-});
-
-describe('group tests', () => {
-	// Ch1: success=1 hit, great success=2, failure=0, great failure=-1.
-	it.each([
-		{ outcomes: ['great-success', 'great-success'], hits: 4, id: 'success' },
-		{ outcomes: ['great-success', 'success'], hits: 3, id: 'success' },
-		{ outcomes: ['success', 'success'], hits: 2, id: 'success' },
-		{ outcomes: ['success', 'failure'], hits: 1, id: 'tight-spot' },
-		{ outcomes: ['failure', 'failure'], hits: 0, id: 'failure' },
-		{ outcomes: ['success', 'great-failure'], hits: 0, id: 'failure' },
-		{ outcomes: ['failure', 'great-failure'], hits: -1, id: 'disaster' },
-		{ outcomes: ['great-failure', 'great-failure'], hits: -2, id: 'disaster' }
-	] as const)('totals $outcomes to $hits hits -> $id', ({ outcomes, hits, id }) => {
-		const r = resolveGroupTest(config, [...outcomes]);
-		expect(r.hits).toBe(hits);
-		expect(r.outcome.id).toBe(id);
-	});
-
-	it('reads the hit table from content rather than hardcoding it', () => {
-		const shifted = {
-			...config,
-			resolution: {
-				...config.resolution,
-				groupOutcomes: config.resolution.groupOutcomes.map((o) =>
-					o.id === 'success' ? { ...o, from: 3 } : o.id === 'tight-spot' ? { ...o, to: 2 } : o
-				)
-			}
-		};
-		expect(resolveGroupTest(shifted, ['success', 'success']).outcome.id).toBe('tight-spot');
 	});
 });

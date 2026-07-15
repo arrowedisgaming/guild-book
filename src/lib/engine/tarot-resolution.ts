@@ -12,7 +12,7 @@
  *   • Great failure — the player pushed fate and the total is STILL ≤ 13.
  */
 
-import type { TarotConfig, GroupOutcomeBand } from '$lib/types/content-pack';
+import type { TarotConfig } from '$lib/types/content-pack';
 import type { SuitId } from '$lib/types/common';
 
 export type OutcomeId = 'great-success' | 'success' | 'failure' | 'great-failure';
@@ -168,33 +168,6 @@ export function resolveTestOfFate(config: TarotConfig, input: TestOfFateInput): 
 		automaticGreatFailure,
 		foolDrawn
 	};
-}
-
-/** Ch1: success gives 1 hit, great success 2, failure 0, great failure -1. */
-const GROUP_HITS: Record<OutcomeId, number> = {
-	'great-success': 2,
-	success: 1,
-	failure: 0,
-	'great-failure': -1
-};
-
-export interface GroupTestResult {
-	hits: number;
-	outcome: GroupOutcomeBand;
-}
-
-/**
- * Classify a group test. Ch1: the most- and least-qualified adventurers each
- * test; the GM totals the hits. The band table is content, not code — passing
- * `config` is what lets it be.
- */
-export function resolveGroupTest(config: TarotConfig, outcomes: OutcomeId[]): GroupTestResult {
-	const hits = outcomes.reduce((sum, outcome) => sum + GROUP_HITS[outcome], 0);
-	const band = config.resolution.groupOutcomes.find((o) => hits >= o.from && hits <= o.to);
-	if (!band) {
-		throw new Error(`no group outcome band covers ${hits} hits`);
-	}
-	return { hits, outcome: band };
 }
 
 /** Run a full test of fate: sum the cards + attribute and classify. */

@@ -58,7 +58,9 @@ function build() {
 	const rules = [];
 	for (const entry of manifest) {
 		const body = omitRange(
-			extractRuleBody(entry.file, entry.heading, entry.until, entry.after),
+			extractRuleBody(entry.file, entry.heading, entry.until, entry.after, {
+				keepCallouts: entry.keepCallouts
+			}),
 			entry.omitRange
 		);
 		const problems = lintBody(body, entry);

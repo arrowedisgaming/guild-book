@@ -103,4 +103,28 @@ describe('rules reference coverage', () => {
 	it('has unique ids', () => {
 		expect(new Set(rules.map((r) => r.id)).size).toBe(rules.length);
 	});
+
+	/**
+	 * The campaign privacy model's rulebook citation. §8.2 of the campaigns spec
+	 * rests on this sentence, but it lives in an Obsidian sidebar callout, which
+	 * the pipeline strips by default. `challenge-facedown-cards` opts in via
+	 * `keepCallouts` so the reference actually contains the rule it is cited for.
+	 */
+	it('retains the facedown privacy rule the campaign privacy model cites', () => {
+		const rule = byId.get('challenge-facedown-cards');
+		expect(rule?.body).toContain('Nobody but the player can look at the facedown card');
+		expect(rule?.body).toContain('No peeking!');
+	});
+
+	/**
+	 * `keepCallouts` must convert a callout into the renderer's dialect, not
+	 * preserve its blockquote syntax: src/lib/utils/markdown.ts has no blockquote
+	 * branch and escapes `>` to `&gt;`, so a leaked `>` renders literally.
+	 */
+	it('never emits syntax the rules renderer cannot handle', () => {
+		for (const rule of rules) {
+			expect(rule.body, `${rule.id} leaks a blockquote`).not.toMatch(/^\s*>/m);
+			expect(rule.body, `${rule.id} leaks a callout marker`).not.toContain('[!');
+		}
+	});
 });

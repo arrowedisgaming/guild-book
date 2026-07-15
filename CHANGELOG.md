@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stat blocks; a manifest sentinel now fails the build if the clause ever drops
   out of extraction.
 
+- Rules entries may opt into `keepCallouts`, which converts an Obsidian callout
+  into the reference's markdown dialect (title becomes a sub-heading, body
+  becomes paragraphs) rather than dropping it. Callouts are still stripped by
+  default, since most are flavour sidebars; `challenge-facedown-cards` is the
+  only entry that opts in, because Chapter 7 states the facedown-card privacy
+  rule — "Nobody but the player can look at the facedown card" — in a sidebar
+  rather than in body prose.
+
 ### Fixed
 
 - `md-rules.mjs` ignored a manifest entry's `after` anchor, so an entry

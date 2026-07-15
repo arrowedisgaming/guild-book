@@ -236,7 +236,11 @@
 		"title": "Facedown Cards",
 		"file": "07 - Chapter 7 - The Challenge Phase.md",
 		"heading": "Facedown cards",
-		"mustContain": ["only have one facedown action at a time"],
+		"keepCallouts": true,
+		"mustContain": [
+			"only have one facedown action at a time",
+			"Nobody but the player can look at the facedown card"
+		],
 		"tags": ["challenge", "tarot", "privacy", "facedown"]
 	},
 	{

@@ -77,6 +77,52 @@ export function extractSection(file, heading, until, after) {
 	return { level, lines: body };
 }
 
+/**
+ * Converts Obsidian callout blocks into the app's markdown dialect instead of
+ * dropping them. Opt-in per manifest entry via `keepCallouts`, because most
+ * callouts are flavor sidebars that the rules reference deliberately excludes —
+ * but a few carry actual rules (Ch7's "No peeking!" is the rulebook's statement
+ * of the facedown-card privacy rule).
+ *
+ * The callout's title becomes a `###` sub-heading and its body becomes plain
+ * paragraphs. The blockquote syntax must not survive: `renderMarkdown` in
+ * src/lib/utils/markdown.ts has no blockquote branch and escapes `>` to `&gt;`,
+ * so a retained `>` would render literally on the page.
+ */
+export function convertCallouts(lines) {
+	const out = [];
+	let inCallout = false;
+	for (const line of lines) {
+		const opener = /^\s*>\s*\[!\w+\]\s*(.*)$/.exec(line);
+		if (opener) {
+			inCallout = true;
+			const title = opener[1].trim();
+			if (out.length && out[out.length - 1].trim() !== '') out.push('');
+			if (title) out.push(`### ${title}`, '');
+			continue;
+		}
+		if (inCallout) {
+			if (/^\s*>/.test(line)) {
+				out.push(line.replace(/^\s*>\s?/, ''));
+				continue;
+			}
+			if (line.trim() === '') {
+				out.push('');
+				continue;
+			}
+			inCallout = false;
+		}
+		// A stray blockquote outside a recognized callout: unquote rather than
+		// leak `>` into the body.
+		if (/^\s*>/.test(line)) {
+			out.push(line.replace(/^\s*>\s?/, ''));
+			continue;
+		}
+		out.push(line);
+	}
+	return out;
+}
+
 /** Drops Obsidian callout blocks (`> [!type] …` and their `>`-quoted continuation). */
 export function stripCallouts(lines) {
 	const out = [];
@@ -236,9 +282,16 @@ export function normalizeMarkdown(lines) {
 	return text;
 }
 
-/** Full pipeline: extract a section and return clean body markdown for a rule entry. */
-export function extractRuleBody(file, heading, until, after) {
+/**
+ * Full pipeline: extract a section and return clean body markdown for a rule entry.
+ *
+ * @param {object} [options]
+ * @param {boolean} [options.keepCallouts] convert callouts into headings/paragraphs
+ *   rather than dropping them (see {@link convertCallouts})
+ */
+export function extractRuleBody(file, heading, until, after, options = {}) {
 	const { lines } = extractSection(file, heading, until, after);
-	const clean = normalizeMarkdown(stripExampleSubsections(stripCallouts(lines)));
+	const decallouted = options.keepCallouts ? convertCallouts(lines) : stripCallouts(lines);
+	const clean = normalizeMarkdown(stripExampleSubsections(decallouted));
 	return clean;
 }

@@ -17,28 +17,7 @@ import type { SuitId } from '$lib/types/common';
 
 export type OutcomeId = 'great-success' | 'success' | 'failure' | 'great-failure';
 
-export interface DrawnValue {
-	value: number;
-	suit?: SuitId;
-}
 
-export interface TestContext {
-	/** The tested attribute's value (1–4). */
-	attribute: number;
-	/** Cards drawn, initial first. Pushing fate appends more. */
-	cards: DrawnValue[];
-	/** The suit being tested. */
-	testedSuit: SuitId;
-	/** Whether the player pushed fate (drew beyond the initial card). */
-	pushedFate: boolean;
-}
-
-export interface TestResult {
-	total: number;
-	outcome: OutcomeId;
-	outcomeLabel: string;
-	initialDrawMatchedTestedSuit: boolean;
-}
 
 /**
  * Classify a test-of-fate outcome from its computed facts.
@@ -168,24 +147,4 @@ export function resolveTestOfFate(config: TarotConfig, input: TestOfFateInput): 
 		automaticGreatFailure,
 		foolDrawn
 	};
-}
-
-/** Run a full test of fate: sum the cards + attribute and classify. */
-export function testOfFate(config: TarotConfig, ctx: TestContext): TestResult {
-	const cardTotal = ctx.cards.reduce((sum, c) => sum + c.value, 0);
-	const total = ctx.attribute + cardTotal;
-	const initialDrawMatchedTestedSuit = ctx.cards[0]?.suit === ctx.testedSuit;
-
-	const outcome = classifyOutcome({
-		total,
-		successThreshold: config.resolution.successThreshold,
-		greatSuccessOnMatchingSuit: config.resolution.greatSuccessOnMatchingSuit,
-		initialDrawMatchedTestedSuit,
-		pushedFate: ctx.pushedFate
-	});
-
-	const outcomeLabel =
-		config.resolution.outcomes.find((o) => o.id === outcome)?.label ?? outcome;
-
-	return { total, outcome, outcomeLabel, initialDrawMatchedTestedSuit };
 }

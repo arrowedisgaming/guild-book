@@ -28,7 +28,7 @@
 	{#if mode === 'table'}
 		<TarotTable config={data.tarot} />
 	{:else}
-		<TestOfFate config={data.tarot} />
+		<TestOfFate config={data.tarot} seed={data.seed} />
 	{/if}
 </section>
 

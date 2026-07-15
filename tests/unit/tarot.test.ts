@@ -8,7 +8,7 @@ import {
 	draw,
 	drawWithReshuffle
 } from '$lib/engine/tarot-deck';
-import { testOfFate, classifyOutcome } from '$lib/engine/tarot-resolution';
+import { resolveTestOfFate, classifyOutcome } from '$lib/engine/tarot-resolution';
 import { makeRng } from '$lib/engine/rng';
 import { getContentPack } from '$lib/server/content/loader';
 
@@ -72,33 +72,42 @@ describe('tarot deck', () => {
 
 describe('test of fate', () => {
 	it('Knight of Wands (12) + Pentacles 2 = 14 → success', () => {
-		const r = testOfFate(config, {
+		const r = resolveTestOfFate(config, {
 			attribute: 2,
-			cards: [{ value: 12, suit: 'wands' }],
+			initialCard: { id: 'wands-knight', value: 12, suit: 'wands' },
+			pushCard: null,
 			testedSuit: 'pentacles',
-			pushedFate: false
+			favor: false,
+			disfavor: false,
+			resolveSpentForFavor: false
 		});
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('success');
 	});
 
 	it('tested suit on the initial draw + 14 → great success', () => {
-		const r = testOfFate(config, {
+		const r = resolveTestOfFate(config, {
 			attribute: 4,
-			cards: [{ value: 10, suit: 'swords' }],
+			initialCard: { id: 'swords-x', value: 10, suit: 'swords' },
+			pushCard: null,
 			testedSuit: 'swords',
-			pushedFate: false
+			favor: false,
+			disfavor: false,
+			resolveSpentForFavor: false
 		});
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('great-success');
 	});
 
 	it('total ≤ 13 with no push → failure', () => {
-		const r = testOfFate(config, {
+		const r = resolveTestOfFate(config, {
 			attribute: 1,
-			cards: [{ value: 2, suit: 'cups' }],
+			initialCard: { id: 'cups-ii', value: 2, suit: 'cups' },
+			pushCard: null,
 			testedSuit: 'wands',
-			pushedFate: false
+			favor: false,
+			disfavor: false,
+			resolveSpentForFavor: false
 		});
 		expect(r.outcome).toBe('failure');
 	});

@@ -24,15 +24,23 @@ export interface TableState {
 	reshuffled: boolean;
 }
 
-export function createTarotTable(config: TarotConfig) {
+/**
+ * @param seed pins the shuffle so a run is reproducible — used by `/deck?seed=`
+ *   and by E2E, which cannot assert an outcome against a random deck. Omitted,
+ *   the client seeds randomly.
+ */
+export function createTarotTable(config: TarotConfig, seed?: string) {
 	const full = buildPlayerDeck(config);
-	// Random seed on the client; deterministic on the server so SSR and hydration
-	// agree (only the face-down count is rendered, never the order).
-	let rng: Rng = makeRng(browser ? `${Math.random()}` : 'ssr');
+	// Random seed on the client unless one is pinned; deterministic on the server
+	// so SSR and hydration agree (only the face-down count is rendered, never the
+	// order).
+	let rng: Rng = makeRng(seed ?? (browser ? `${Math.random()}` : 'ssr'));
 
 	function fresh(): TableState {
 		return {
-			drawPile: browser ? shuffleDeck(full, rng) : full.slice(),
+			// A pinned seed must shuffle on the server too, or a seeded SSR render
+			// would show an unshuffled deck and then change on hydration.
+			drawPile: browser || seed ? shuffleDeck(full, rng) : full.slice(),
 			discard: [],
 			hand: [],
 			reshuffled: false

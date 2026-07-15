@@ -2,29 +2,41 @@
 	import { untrack } from 'svelte';
 	import { createTarotTable } from '$lib/stores/tarot-deck';
 	import { toDrawnCard } from '$lib/tarot/protocol';
-	import { testOfFate } from '$lib/engine/tarot-resolution';
+	import { resolveTestOfFate } from '$lib/engine/tarot-resolution';
 	import { isMinor } from '$lib/engine/tarot-deck';
 	import { SUIT_IDS, SUIT_LABELS, type SuitId } from '$lib/types/common';
 	import TarotCard from './TarotCard.svelte';
 	import type { TarotConfig } from '$lib/types/content-pack';
 
-	let { config }: { config: TarotConfig } = $props();
+	let { config, seed }: { config: TarotConfig; seed?: string | null } = $props();
 
-	const table = untrack(() => createTarotTable(config));
+	const table = untrack(() => createTarotTable(config, seed ?? undefined));
 
 	let testedSuit = $state<SuitId | null>(null);
 	let attribute = $state(2);
+	let favor = $state(false);
+	let disfavor = $state(false);
+	let resolveSpentForFavor = $state(false);
 
 	let hand = $derived($table.hand);
-	let pushed = $derived(hand.length > 1);
 
+	/** The engine takes the cards actually drawn; the UI never infers a push. */
 	let result = $derived.by(() => {
 		if (!testedSuit || hand.length === 0) return null;
-		return testOfFate(config, {
+		const [initial, pushCard] = hand;
+		const toCard = (c: (typeof hand)[number]) => ({
+			id: c.id,
+			value: c.value,
+			suit: isMinor(c) ? c.suit : undefined
+		});
+		return resolveTestOfFate(config, {
 			attribute,
-			cards: hand.map((c) => ({ value: c.value, suit: isMinor(c) ? c.suit : undefined })),
 			testedSuit,
-			pushedFate: pushed
+			initialCard: toCard(initial),
+			pushCard: pushCard ? toCard(pushCard) : null,
+			favor,
+			disfavor,
+			resolveSpentForFavor
 		});
 	});
 
@@ -58,13 +70,32 @@
 				{#each [1, 2, 3, 4] as v}<option value={v}>{v}</option>{/each}
 			</select>
 		</div>
+		<div class="group">
+			<span class="lbl">Circumstance</span>
+			<div class="checks">
+				<label><input type="checkbox" bind:checked={favor} /> Favor</label>
+				<label><input type="checkbox" bind:checked={disfavor} /> Disfavor</label>
+				<label title="Spent before the draw to gain favor. Pushing fate is free.">
+					<input type="checkbox" bind:checked={resolveSpentForFavor} /> Spend 1 Resolve for favor
+				</label>
+			</div>
+		</div>
 	</div>
 
 	<div class="actions">
 		<button type="button" class="primary" disabled={!testedSuit} onclick={drawInitial}>
 			Draw &amp; test
 		</button>
-		<button type="button" disabled={hand.length === 0} onclick={push}>Push fate (+1 card)</button>
+		<button
+			type="button"
+			disabled={!result?.canPush}
+			title={result && !result.canPush && !result.pushed
+				? 'You may only push a failed test'
+				: undefined}
+			onclick={push}
+		>
+			Push fate (+1 card)
+		</button>
 		<button type="button" class="ghost" disabled={hand.length === 0} onclick={reset}>Clear</button>
 	</div>
 
@@ -80,14 +111,30 @@
 	{/if}
 
 	{#if result}
-		<div class="result outcome-{result.outcome}">
+		<div
+			class="result outcome-{result.outcome}"
+			data-outcome={result.outcome}
+			data-total={result.total}
+			data-modifier={result.modifier}
+		>
 			<span class="total">{result.total}</span>
 			<span class="label">{result.outcomeLabel}</span>
 			<span class="detail">
 				{attribute} ({testedSuit}) + {hand.map((c) => c.value).join(' + ')} card{hand.length > 1
 					? 's'
-					: ''}
+					: ''}{#if result.modifier}
+					{result.modifier > 0 ? '+' : '−'}{Math.abs(result.modifier)}
+					{result.modifier > 0 ? 'favor' : 'disfavor'}{#if result.favorSources.includes('resolve')}
+						&nbsp;(1 Resolve){/if}{/if}
 			</span>
+			{#if result.automaticGreatFailure}
+				<span class="note">The Fool on a push is an automatic great failure.</span>
+			{:else if result.favorSources.length === 2}
+				<span class="note">Favor is not cumulative — one source is enough.</span>
+			{/if}
+			{#if result.foolDrawn}
+				<span class="note">The Fool was drawn: shuffle both decks.</span>
+			{/if}
 		</div>
 	{:else if !testedSuit}
 		<p class="hint">Pick a suit to test, set your attribute, then draw.</p>
@@ -197,6 +244,24 @@
 	.result .detail {
 		font-size: 0.8rem;
 		color: var(--ink-soft);
+	}
+	.result .note {
+		font-size: 0.75rem;
+		color: var(--ink-soft);
+		font-style: italic;
+		margin-top: 0.3rem;
+	}
+	.checks {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	.checks label {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.85rem;
+		cursor: pointer;
 	}
 	.outcome-great-success {
 		background: color-mix(in oklab, #3d6141 16%, var(--parchment));

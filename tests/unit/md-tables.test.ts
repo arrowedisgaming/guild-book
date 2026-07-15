@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-// @ts-expect-error — plain ESM script, no types
 import { MD_DIR, extractTable, parseCardKey } from '../../scripts/content-import/md-lib.mjs';
 
 /**

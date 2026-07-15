@@ -1,6 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import manifest from '../../scripts/content-import/manifest/tarot-procedures-md.json';
+import manifestJson from '../../scripts/content-import/manifest/tarot-procedures-md.json';
+
+/**
+ * The manifest is the authoring surface, not the runtime contract: entries carry
+ * an audit-only `rationale`, and unsupported entries have no steps. TypeScript
+ * infers a wide union from the JSON, so it is read through the shape the audit
+ * actually asserts on. The runtime shape is validated by Zod in
+ * tarot-procedures.test.ts.
+ */
+type ManifestStep = { id: string; operation: string; lookupTableId?: string };
+type ManifestEntry = {
+	id: string;
+	title: string;
+	scope: string;
+	source: { file: string; heading?: string; anchor?: string };
+	rationale?: string;
+	ruleEntryIds: string[];
+	steps: ManifestStep[];
+};
+const manifest = manifestJson as unknown as {
+	entries: ManifestEntry[];
+	lookupTables: { id: string }[];
+};
 
 /**
  * The audit manifest is the scope contract: every in-session tarot rule is

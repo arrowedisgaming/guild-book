@@ -404,13 +404,31 @@ const SUIT_BY_LABEL = new Map([
 	['wands', 'wands']
 ]);
 
-/** Major tables run I–XXI; minor tables top out at the court ranks. */
-function inferDeck(rows, axis) {
-	if (axis === 'suit-by-step') return 'minor';
+/**
+ * Verifies a manifest-declared deck against the table's keys. Inference alone is
+ * unsafe: the book writes minor values as Roman numerals in some tables (Ch7 —
+ * "the minor arcana … are also rated from 1–14"), so keys I–XIV are consistent
+ * with *either* deck. Only two signals are decisive, and each is checked rather
+ * than guessed:
+ *   - a court rank (Page/Knight/Queen/King) can only be minor
+ *   - XV–XXI can only be major
+ * Anything else is undecidable from the keys, so the manifest's declaration
+ * stands and the lookup-coverage test is what proves it right.
+ */
+function verifyDeck(rows, axis, declared) {
+	if (axis === 'suit-by-step') return declared;
 	const keys = rows.flatMap((r) => (r.key.kind === 'card-range' ? [r.key.from, r.key.to] : []));
-	if (keys.some((k) => /^(Page|Knight|Queen|King)$/i.test(k))) return 'minor';
-	if (keys.some((k) => /^(XI|XII|XIII|XIV|XV|XVI|XVII|XVIII|XIX|XX|XXI)$/.test(k))) return 'major';
-	throw new Error(`cannot infer deck from keys: ${keys.join(', ')} — pass options.deck`);
+	const court = keys.find((k) => /^(Page|Knight|Queen|King)$/i.test(k));
+	const highMajor = keys.find((k) => /^(XV|XVI|XVII|XVIII|XIX|XX|XXI)$/.test(k));
+	if (court && declared !== 'minor') {
+		throw new Error(`declared deck "${declared}" but key ${JSON.stringify(court)} is minor-only`);
+	}
+	if (highMajor && declared !== 'major') {
+		throw new Error(
+			`declared deck "${declared}" but key ${JSON.stringify(highMajor)} is major-only`
+		);
+	}
+	return declared;
 }
 
 /**
@@ -423,7 +441,7 @@ function inferDeck(rows, axis) {
  * @param {object} [options]
  * @param {string} [options.anchor] exact leading text of a bullet item — for the
  *   Appendix D Special City Actions, which have no heading of their own
- * @param {'major'|'minor'} [options.deck] overrides deck inference
+ * @param {'major'|'minor'} options.deck required; verified against the keys
  */
 export function extractTable(file, heading, after, options = {}) {
 	let lines;
@@ -476,5 +494,8 @@ export function extractTable(file, heading, after, options = {}) {
 		};
 	});
 
-	return { deck: options.deck ?? inferDeck(rows, axis), axis, columns, rows };
+	if (!options.deck) {
+		throw new Error(`extractTable requires options.deck for ${JSON.stringify(heading ?? options.anchor)}`);
+	}
+	return { deck: verifyDeck(rows, axis, options.deck), axis, columns, rows };
 }

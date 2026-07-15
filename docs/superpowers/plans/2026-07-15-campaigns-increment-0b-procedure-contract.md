@@ -301,7 +301,16 @@ Add required `tarotProcedures: string` to `ContentPackFiles`, mirror every union
 
 Run: `npm run check`
 
-Expected: PASS after all TypeScript/Zod definitions agree. The unit test still fails because no generated file or loader exists.
+Expected: **FAIL with ~9 errors, all in `tests/unit/tarot-procedures.test.ts`** — "has no exported member 'getTarotProcedures'" plus the implicit-`any` errors that cascade from it. `.svelte-kit/tsconfig.json` includes `../tests/**/*.ts`, so `check` typechecks tests, and the Step 1 test forward-references a loader export that Task 4 adds. The contract, the generated JSON, and the loader must land together before `check` can be green; it goes green at Task 4 Step 4.
+
+Do not "fix" this by deleting the test or stubbing the loader against a JSON file that does not exist yet — the import would fail too. Prove the contract independently instead:
+
+```bash
+npx tsx -e "import { tarotProceduresFileSchema } from './src/lib/schemas/content-pack.schema';
+  console.log(tarotProceduresFileSchema.safeParse(/* a representative record */).success)"
+```
+
+A representative record means one with a `card-range` key, a bracket token, and a denizen reference — the parts most likely to be mis-specified.
 
 - [ ] **Step 5: Commit the contract**
 

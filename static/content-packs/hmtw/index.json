@@ -20,7 +20,8 @@
 		"afflictions": "afflictions.json",
 		"rules": "rules.json",
 		"spells": "spells.json",
-		"denizens": "denizens.json"
+		"denizens": "denizens.json",
+		"tarotProcedures": "tarot-procedures.json"
 	},
 	"attributes": [
 		{

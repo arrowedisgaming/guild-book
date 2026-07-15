@@ -18,6 +18,7 @@ import type {
 	RuleEntry,
 	SpellDefinition,
 	DenizensFile,
+	TarotProceduresFile,
 	DenizenThemeDefinition,
 	DenizenThreatDefinition,
 	DenizenDefinition
@@ -35,6 +36,7 @@ import {
 	rulesFileSchema,
 	spellsFileSchema,
 	denizensFileSchema,
+	tarotProceduresFileSchema,
 	parseOrThrow
 } from '$lib/schemas/content-pack.schema';
 
@@ -50,6 +52,7 @@ import afflictionsJson from '../../../../static/content-packs/hmtw/afflictions.j
 import rulesJson from '../../../../static/content-packs/hmtw/rules.json';
 import spellsJson from '../../../../static/content-packs/hmtw/spells.json';
 import denizensJson from '../../../../static/content-packs/hmtw/denizens.json';
+import tarotProceduresJson from '../../../../static/content-packs/hmtw/tarot-procedures.json';
 
 // Singleton caches.
 let cachedPack: GuildBookContentPack | null = null;
@@ -153,3 +156,22 @@ export function loadWizardData() {
 }
 
 export type WizardData = ReturnType<typeof loadWizardData>;
+
+let cachedTarotProcedures: TarotProceduresFile | null = null;
+
+/**
+ * The in-session tarot procedure catalog and its oracle lookup tables.
+ *
+ * Server-side only, and deliberately not part of the wizard payload: it is
+ * needed at session start, not during character creation.
+ */
+export function getTarotProcedures(): TarotProceduresFile {
+	if (!cachedTarotProcedures) {
+		cachedTarotProcedures = parseOrThrow(
+			tarotProceduresFileSchema,
+			tarotProceduresJson,
+			'tarot-procedures.json'
+		);
+	}
+	return cachedTarotProcedures;
+}

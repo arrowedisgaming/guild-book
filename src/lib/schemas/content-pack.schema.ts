@@ -79,7 +79,8 @@ export const contentPackFilesSchema = z.object({
 	afflictions: z.string().optional(),
 	rules: z.string().optional(),
 	spells: z.string().optional(),
-	denizens: z.string().optional()
+	denizens: z.string().optional(),
+	tarotProcedures: z.string()
 });
 
 export const encumbranceConfigSchema = z.object({
@@ -97,6 +98,7 @@ export const contentPackSchema = z.object({
 	system: z.literal('hmtw'),
 	license: z.string(),
 	authors: z.array(z.string()),
+	contentDigest: z.string().regex(/^[0-9a-f]{64}$/),
 	files: contentPackFilesSchema,
 	attributes: z.array(attributeDefinitionSchema),
 	tarot: tarotConfigSchema,
@@ -319,6 +321,139 @@ export const conditionsFileSchema = z.array(namedEntrySchema);
 export const afflictionsFileSchema = z.array(afflictionDefinitionSchema);
 export const rulesFileSchema = z.array(ruleEntrySchema);
 export const spellsFileSchema = z.array(spellDefinitionSchema);
+
+// ---------------------------------------------------------------------------
+// In-session tarot procedures + oracle lookup tables
+// ---------------------------------------------------------------------------
+
+/** At least one of heading/anchor: the Appendix D Special City Actions are
+ *  bullet items with no heading of their own. */
+const tarotSourceRefSchema = z
+	.object({
+		file: z.string(),
+		heading: z.string().optional(),
+		after: z.string().optional(),
+		anchor: z.string().optional()
+	})
+	.refine((s) => Boolean(s.heading || s.anchor), {
+		message: 'source needs a heading or an anchor'
+	});
+
+const tarotDeckIdEnum = z.enum(['major', 'minor']);
+
+/** `fresh` draws a newly shuffled deck unrelated to the campaign decks: outside
+ *  card conservation, never exhausts, cannot trigger a Fool reshuffle. */
+const tarotDeckScopeEnum = z.enum(['session', 'fresh']);
+
+const tarotProcedurePhaseEnum = z.enum(['crawl', 'challenge', 'camp', 'city', 'cross-phase']);
+
+const tarotProcedureScopeEnum = z.enum([
+	'supported-v1',
+	'deferred-preparation',
+	'not-applicable-non-tarot'
+]);
+
+const tarotOperationEnum = z.enum([
+	'draw',
+	'deal',
+	'play',
+	'place-facedown',
+	'reveal',
+	'discard',
+	'transfer',
+	'select-from-discard',
+	'reorder-top',
+	'mulligan',
+	'consult-discard-top',
+	'manual-choice'
+]);
+
+const tarotDrawSpecSchema = z.union([
+	z.object({ kind: z.literal('fixed'), count: z.number().int().positive() }),
+	z.object({ kind: z.literal('formula'), formulaId: z.string() })
+]);
+
+const tarotProcedureStepDefinitionSchema = z.object({
+	id: z.string(),
+	actor: z.enum(['gm', 'player', 'system']),
+	operation: tarotOperationEnum,
+	deck: tarotDeckIdEnum.optional(),
+	deckScope: tarotDeckScopeEnum.optional(),
+	draw: tarotDrawSpecSchema.optional(),
+	lookupTableId: z.string().optional(),
+	visibility: z.enum(['public', 'actor-private', 'recipient-private']),
+	resultVisibility: z.enum(['public', 'actor-private', 'gm-private']),
+	completion: z.enum(['automatic', 'actor-confirmed', 'gm-confirmed']),
+	recovery: z.enum(['discard-pending', 'return-to-draw', 'retain-pending'])
+});
+
+export const tarotProcedureDefinitionSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	phase: tarotProcedurePhaseEnum,
+	scope: tarotProcedureScopeEnum,
+	source: tarotSourceRefSchema,
+	ruleEntryIds: z.array(z.string()),
+	steps: z.array(tarotProcedureStepDefinitionSchema),
+	modifierIds: z.array(z.string())
+});
+
+const tarotLookupKeySchema = z.union([
+	z.object({ kind: z.literal('card-range'), from: z.string(), to: z.string() }),
+	z.object({ kind: z.literal('suit'), suit: suitEnum })
+]);
+
+const tarotLookupTokenEnum = z.enum(['value', 'suit', 'odd', 'even', 'discard', 'adventurers']);
+
+const tarotLookupCellSchema = z.object({
+	columnId: z.string(),
+	text: z.string().min(1),
+	tokens: z.array(tarotLookupTokenEnum),
+	references: z.array(
+		z.object({
+			collection: z.enum(['denizens', 'alchemy', 'rules']),
+			entryId: z.string(),
+			label: z.string()
+		})
+	)
+});
+
+export const tarotLookupTableSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	deck: tarotDeckIdEnum,
+	deckScope: tarotDeckScopeEnum.optional(),
+	axis: z.enum(['card', 'card-by-suit', 'suit-by-step']),
+	columns: z.array(z.object({ id: z.string(), label: z.string() })).min(1),
+	rows: z.array(z.object({ key: tarotLookupKeySchema, cells: z.array(tarotLookupCellSchema) })).min(1),
+	source: tarotSourceRefSchema
+});
+
+export const sessionModifierDefinitionSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	phase: tarotProcedurePhaseEnum,
+	source: tarotSourceRefSchema,
+	ruleEntryIds: z.array(z.string()),
+	behaviorId: z.string(),
+	params: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()]))
+});
+
+export const tarotFormulaDefinitionSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	source: tarotSourceRefSchema,
+	ruleEntryIds: z.array(z.string()),
+	params: z.record(z.string(), z.number())
+});
+
+export const tarotProceduresFileSchema = z.object({
+	schemaVersion: z.literal(1),
+	procedures: z.array(tarotProcedureDefinitionSchema),
+	lookupTables: z.array(tarotLookupTableSchema),
+	modifiers: z.array(sessionModifierDefinitionSchema),
+	formulas: z.array(tarotFormulaDefinitionSchema)
+});
 
 /**
  * Parse `value` against `schema`, throwing a labelled error on failure.

@@ -301,7 +301,16 @@ Add required `tarotProcedures: string` to `ContentPackFiles`, mirror every union
 
 Run: `npm run check`
 
-Expected: PASS after all TypeScript/Zod definitions agree. The unit test still fails because no generated file or loader exists.
+Expected: **FAIL with ~9 errors, all in `tests/unit/tarot-procedures.test.ts`** — "has no exported member 'getTarotProcedures'" plus the implicit-`any` errors that cascade from it. `.svelte-kit/tsconfig.json` includes `../tests/**/*.ts`, so `check` typechecks tests, and the Step 1 test forward-references a loader export that Task 4 adds. The contract, the generated JSON, and the loader must land together before `check` can be green; it goes green at Task 4 Step 4.
+
+Do not "fix" this by deleting the test or stubbing the loader against a JSON file that does not exist yet — the import would fail too. Prove the contract independently instead:
+
+```bash
+npx tsx -e "import { tarotProceduresFileSchema } from './src/lib/schemas/content-pack.schema';
+  console.log(tarotProceduresFileSchema.safeParse(/* a representative record */).success)"
+```
+
+A representative record means one with a `card-range` key, a bracket token, and a denizen reference — the parts most likely to be mis-specified.
 
 - [ ] **Step 5: Commit the contract**
 
@@ -833,7 +842,38 @@ git add package.json scripts/content-import/verify-pack-version.mjs src/lib/type
 git commit -m "build(content): enforce deterministic procedure imports"
 ```
 
-## Increment 0b Completion Record
+## Increment 0b Completion Record — executed 2026-07-15
+
+**Status: complete. Gate A2 passes.**
+
+| Measure | Result |
+|---|---|
+| Audit entries | **34** — 30 `supported-v1`, 3 `deferred-preparation`, 1 `not-applicable-non-tarot` |
+| Runtime catalog | 30 procedures, 14 lookup tables (**194 rows**), 7 modifiers, 3 formulas |
+| Size | 115 KB — well inside D1's 2 MB row limit |
+| `md-procedures --check` | `30 procedures, 14 tables (194 rows), 0 drifted` |
+| `md-rules --check` | `54 rules, 0 drifted` — the rules path was not disturbed |
+| `npm run content:verify` | all collections 0 drifted; digest OK |
+| `npm run check` | 0 errors |
+| `npm test` | 186 passed |
+| Pack version | 1.0.0 → **2.0.0**, digest `8746a1af…` |
+
+**Found by tests, not review.** Each of these would have shipped silently:
+
+- **`splitRow` shattered every wikilink cell.** The vault writes `[[13 - Appendix C - Dungeon Denizens#Imp|imp]]` *unescaped* inside table cells, so splitting on `|` dropped the reference. Maleficence row I extracted with zero references.
+- **`inferDeck` guessed wrong on Signs and Portents**, silently returning `major` and leaving XV–XXI uncovered. Replaced with declare-and-verify (see D6).
+- **A running page header became a phantom cell.** Malediction's King row ends `… APPENDIX A | SORCERY |` in the export. `normalizeMarkdown` already strips this for the rules path; the table path now does too.
+- **Signs keys minor ranks as Roman XI–XIV** while every other minor table uses `Page/Knight/Queen/King`. Keys normalize to one notation; cell text stays verbatim.
+- **`TarotSourceRef` required a `heading`** the Appendix D Special City Actions do not have.
+- **The typecheck graph regressed 0 → 49 errors.** `md-tables.test.ts` importing `md-lib.mjs` dragged the plain-ESM build scripts into `svelte-check` under `checkJs`. `scripts/` is outside tsconfig's `include`, so `@ts-nocheck` restores that boundary explicitly.
+
+**Verified, not assumed:** both drift guards were made to fail on purpose — a hand-edited generated cell is rejected, and a content change under an unchanged version is rejected. `ADAPTER=cloudflare npm run build` fails with `ETIMEDOUT` in this sandbox, but **fails identically at the 0a merge commit**, so it is environmental (no network egress), not a regression.
+
+**Deferred to the audit, with rationale:** `city-job-board` (Ch9 `Example Contracts` — "Draw ~5 cards to create a job board", a preparation generator §9 defers by name), `city-creation-districts`, `underworld-creation`, and the flat-50% rules (`not-applicable-non-tarot`, modelled as a `manual-choice` step and never simulated with a draw).
+
+**Open for a later spec amendment:** `deckScope` is a contract addition §8.4 does not describe — that section covers exhaustion and the Fool for the session decks only. Fold it in alongside the D6 decision.
+
+## Original Completion Record (plan)
 
 Record the content-pack version, digest, generated procedure count, lookup-table count and per-table row count, each classification count, runtime JSON byte size, and verification command output in the implementation PR. Explicitly record:
 

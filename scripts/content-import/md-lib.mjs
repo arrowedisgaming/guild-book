@@ -1,3 +1,7 @@
+// @ts-nocheck — plain ESM build script, not part of the typed app surface.
+// `scripts/` is outside tsconfig's `include`, so these were never typechecked; a
+// test importing this module would otherwise drag the whole script tree into
+// svelte-check under checkJs and report dozens of implicit-any errors.
 // Markdown-source extraction for the rules reference. The book also exists as a
 // clean per-chapter Markdown vault (gitignored, copyrighted) at
 // assets-src/HMTW_md/ — proper heading structure, contiguous paragraphs,
@@ -294,4 +298,240 @@ export function extractRuleBody(file, heading, until, after, options = {}) {
 	const decallouted = options.keepCallouts ? convertCallouts(lines) : stripCallouts(lines);
 	const clean = normalizeMarkdown(stripExampleSubsections(decallouted));
 	return clean;
+}
+
+// ---------------------------------------------------------------------------
+// Oracle table extraction (campaigns / tarot-procedures.json)
+// ---------------------------------------------------------------------------
+//
+// A separate path from extractRuleBody, for two reasons the rules reference is
+// right about and this importer is not:
+//   1. stripExampleSubsections drops "Example …" sub-sections — which is where
+//      the Meatgrinder and City Events tables live. Extracting them via the
+//      rules path yields zero rows.
+//   2. stripWikilinks flattens `[[…#Imp|imp]]` to `imp`, destroying the
+//      reference target. Here the cross-reference *is* data.
+// Neither behaviour is changed; this path simply does not use them.
+
+/** Bracket convention (Ch9): "Anything in brackets [ ] refers to the top card of
+ *  the minor arcana discard pile." */
+const TOKEN_RE = /\[(value|suit|odd|even|discard|adventurers)\]/g;
+
+/**
+ * The book names the four minor court ranks two ways: by name in most tables
+ * (Maleficence, Malediction, Random Totem, We're Doomed …) and as Roman numerals
+ * XI–XIV in Signs and Portents, consistent with Ch7's "the minor arcana … are
+ * also rated from 1–14". Keys are structured data, not prose, so they are
+ * normalized to one notation; the cell text stays verbatim and `source` still
+ * points at the original.
+ */
+const MINOR_COURT_BY_NUMERAL = new Map([
+	['XI', 'Page'],
+	['XII', 'Knight'],
+	['XIII', 'Queen'],
+	['XIV', 'King']
+]);
+
+function normalizeMinorKey(key) {
+	return MINOR_COURT_BY_NUMERAL.get(key) ?? key;
+}
+
+/** `I–VII` (en-dash) or `I-VII` -> {from:'I',to:'VII'}; `I` -> {from:'I',to:'I'}. */
+export function parseCardKey(raw) {
+	const text = raw
+		.replace(/<[^>]+>/g, '')
+		.replace(/[*_`]/g, '')
+		.trim();
+	const m = /^(\S+)\s*[–—-]\s*(\S+)$/.exec(text);
+	return m
+		? { kind: 'card-range', from: m[1], to: m[2] }
+		: { kind: 'card-range', from: text, to: text };
+}
+
+/** Header cells carry the suit as `<img alt="swords">` followed by the label. */
+function headerLabel(cell) {
+	const alt = /<img\b[^>]*\balt="([^"]*)"/i.exec(cell);
+	const text = cell
+		.replace(/<[^>]+>/g, '')
+		.replace(/[*_`]/g, '')
+		.trim();
+	if (text) return text;
+	return alt ? alt[1].trim() : '';
+}
+
+/**
+ * Splits a table row on `|`, ignoring pipes inside a wikilink. The vault writes
+ * `[[13 - Appendix C - Dungeon Denizens#Imp|imp]]` unescaped inside table cells,
+ * so a naive split on `|` shatters the cell and loses the reference.
+ */
+function splitRow(line) {
+	const inner = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+	const cells = [];
+	let current = '';
+	let depth = 0;
+	for (let i = 0; i < inner.length; i++) {
+		if (inner.startsWith('[[', i)) depth++;
+		else if (inner.startsWith(']]', i) && depth > 0) depth--;
+		if (inner[i] === '|' && depth === 0) {
+			cells.push(current);
+			current = '';
+			continue;
+		}
+		current += inner[i];
+	}
+	cells.push(current);
+	return cells;
+}
+
+const DELIMITER_CELL = /^\s*:?-{3,}:?\s*$/;
+
+/** Content ids are kebab-cased headings, matching the pack's existing convention. */
+function slugify(text) {
+	return text
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
+}
+
+/** Parses `[[<file>#<anchor>|<label>]]` into a typed reference plus its label. */
+function parseCellText(raw) {
+	const references = [];
+	let text = raw.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
+		const [target, label] = inner.split('|');
+		const shown = (label ?? target).trim();
+		const hash = target.indexOf('#');
+		const entry = hash === -1 ? target : target.slice(hash + 1);
+		const collection = /Dungeon Denizens/i.test(target)
+			? 'denizens'
+			: /Alchemy/i.test(target)
+				? 'alchemy'
+				: 'rules';
+		references.push({ collection, entryId: slugify(entry), label: shown });
+		return shown;
+	});
+	text = text
+		.replace(/<[^>]+>/g, '')
+		.replace(/\\([[\]|])/g, '$1')
+		.replace(/_([^_\n]+)_/g, '*$1*')
+		.replace(/\s+/g, ' ')
+		.trim();
+	const tokens = [...text.matchAll(TOKEN_RE)].map((m) => m[1]);
+	return { text, tokens, references };
+}
+
+const SUIT_BY_LABEL = new Map([
+	['swords', 'swords'],
+	['cups', 'cups'],
+	['pentacles', 'pentacles'],
+	['wands', 'wands']
+]);
+
+/**
+ * Verifies a manifest-declared deck against the table's keys. Inference alone is
+ * unsafe: the book writes minor values as Roman numerals in some tables (Ch7 —
+ * "the minor arcana … are also rated from 1–14"), so keys I–XIV are consistent
+ * with *either* deck. Only two signals are decisive, and each is checked rather
+ * than guessed:
+ *   - a court rank (Page/Knight/Queen/King) can only be minor
+ *   - XV–XXI can only be major
+ * Anything else is undecidable from the keys, so the manifest's declaration
+ * stands and the lookup-coverage test is what proves it right.
+ */
+function verifyDeck(rows, axis, declared) {
+	if (axis === 'suit-by-step') return declared;
+	const keys = rows.flatMap((r) => (r.key.kind === 'card-range' ? [r.key.from, r.key.to] : []));
+	const court = keys.find((k) => /^(Page|Knight|Queen|King)$/i.test(k));
+	const highMajor = keys.find((k) => /^(XV|XVI|XVII|XVIII|XIX|XX|XXI)$/.test(k));
+	if (court && declared !== 'minor') {
+		throw new Error(`declared deck "${declared}" but key ${JSON.stringify(court)} is minor-only`);
+	}
+	if (highMajor && declared !== 'major') {
+		throw new Error(
+			`declared deck "${declared}" but key ${JSON.stringify(highMajor)} is major-only`
+		);
+	}
+	return declared;
+}
+
+/**
+ * Extracts the first pipe table inside a section (or after a bullet anchor) as
+ * structured rows. Source order is the table's order; nothing is sorted.
+ *
+ * @param {string} file chapter filename under MD_DIR
+ * @param {string} [heading] section heading; omit when using `options.anchor`
+ * @param {string} [after] landmark heading, to disambiguate a repeated `heading`
+ * @param {object} [options]
+ * @param {string} [options.anchor] exact leading text of a bullet item — for the
+ *   Appendix D Special City Actions, which have no heading of their own
+ * @param {'major'|'minor'} options.deck required; verified against the keys
+ */
+export function extractTable(file, heading, after, options = {}) {
+	let lines;
+	if (options.anchor) {
+		const raw = readFileSync(join(MD_DIR, file), 'utf8').split('\n');
+		const start = raw.findIndex((l) => l.trimStart().startsWith(options.anchor));
+		if (start === -1) {
+			throw new Error(`anchor not found in ${file}: ${JSON.stringify(options.anchor)}`);
+		}
+		const end = raw.findIndex((l, i) => i > start && /^#{1,6}\s/.test(l));
+		lines = raw.slice(start, end === -1 ? raw.length : end);
+	} else {
+		lines = extractSection(file, heading, undefined, after).lines;
+	}
+
+	const first = lines.findIndex((l) => /^\s*\|.*\|\s*$/.test(l));
+	if (first === -1) {
+		throw new Error(`no table found in ${file} at ${JSON.stringify(options.anchor ?? heading)}`);
+	}
+	let last = first;
+	while (last + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[last + 1])) last++;
+	// The export baked a running page header into the end of at least one table
+	// row ("… APPENDIX A | SORCERY |" on Malediction's King). normalizeMarkdown
+	// strips it for the rules path; do the same here, before splitting on pipes,
+	// or it becomes a phantom extra cell.
+	const block = lines
+		.slice(first, last + 1)
+		.map((l) => l.replace(/[ \t]*APPENDIX [A-E]\s*\|\s*[A-Z ]+\s*\|[ \t]*$/i, ' |'));
+
+	const header = splitRow(block[0]).map(headerLabel);
+	const bodyRows = block.slice(1).filter((l) => !splitRow(l).every((c) => DELIMITER_CELL.test(c)));
+
+	// Column 0 is the key; the rest are value columns.
+	const valueLabels = header.slice(1);
+	const suitColumns =
+		valueLabels.length > 1 && valueLabels.every((l) => SUIT_BY_LABEL.has(l.toLowerCase()));
+	const keyIsSuit = /^suit$/i.test(header[0]);
+	const axis = keyIsSuit ? 'suit-by-step' : suitColumns ? 'card-by-suit' : 'card';
+
+	const columns = valueLabels.map((label, i) => ({
+		id: suitColumns ? SUIT_BY_LABEL.get(label.toLowerCase()) : keyIsSuit ? `step-${i + 1}` : 'result',
+		label
+	}));
+
+	const deck = options.deck;
+	const rows = bodyRows.map((line) => {
+		const cells = splitRow(line);
+		let key;
+		if (keyIsSuit) {
+			key = { kind: 'suit', suit: SUIT_BY_LABEL.get(headerLabel(cells[0]).toLowerCase()) };
+		} else {
+			key = parseCardKey(cells[0]);
+			if (deck === 'minor') {
+				key = { ...key, from: normalizeMinorKey(key.from), to: normalizeMinorKey(key.to) };
+			}
+		}
+		return {
+			key,
+			cells: cells.slice(1).map((cell, i) => ({
+				columnId: columns[i]?.id ?? `col-${i}`,
+				...parseCellText(cell)
+			}))
+		};
+	});
+
+	if (!options.deck) {
+		throw new Error(`extractTable requires options.deck for ${JSON.stringify(heading ?? options.anchor)}`);
+	}
+	return { deck: verifyDeck(rows, axis, options.deck), axis, columns, rows };
 }

@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- An audited catalog of every in-session tarot procedure
+  (`tarot-procedures.json`), generated from a committed manifest and the
+  rulebook rather than hand-authored: 30 procedures, 14 verbatim oracle lookup
+  tables (194 rows — Meatgrinder, City Events, Signs and Portents, Hangover, the
+  four Maleficence tables, Malediction, Random Totem, Doomsaying, and the rest),
+  7 typed modifiers, and 3 formulas. Tables carry inclusive card ranges, live
+  `[value]`-style tokens, and cross-references to real bestiary entries. Every
+  card-keyed table is proven to claim each card of its deck exactly once.
+- `docs/rules/tarot-procedure-audit.md` — the scope contract. Every tarot-bearing
+  rule in the book, enumerated once and classified `supported-v1`,
+  `deferred-preparation`, or `not-applicable-non-tarot`, each with a source and a
+  rationale. Preparation generators (the Job Board, City and Underworld creation)
+  are deferred by name; flat "50% chance" rules stay manual and are never
+  simulated with a card draw.
+- Content-pack integrity and version enforcement (`verify-pack-version.mjs`,
+  wired into CI): a SHA-256 digest over every generated file rejects hand-edited
+  output, and a content change under an unchanged pack version fails the build. A
+  play session pins its pack version at start, so generated content must never
+  change under a version it already served. Pack version is now 2.0.0.
+
 - The rules reference now covers the four phase chapters and the in-session
   rules they lean on: Crawl (Meatgrinder, light and We're Doomed, Disposition),
   Challenge (the round sequence, Initiative, facedown cards, the Fool, Dooms,

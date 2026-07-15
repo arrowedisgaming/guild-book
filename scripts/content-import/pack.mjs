@@ -1,3 +1,7 @@
+// @ts-nocheck — plain ESM build script, not part of the typed app surface.
+// `scripts/` is outside tsconfig's `include`, so these were never typechecked; a
+// test importing this module would otherwise drag the whole script tree into
+// svelte-check under checkJs and report dozens of implicit-any errors.
 // Shared paths + JSON field-path helpers for the content-import scripts.
 // The whole pack is now sourced from the Markdown vault (assets-src/HMTW_md/);
 // the earlier PDF pipeline has been retired.

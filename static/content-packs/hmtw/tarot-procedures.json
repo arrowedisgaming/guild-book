@@ -1,0 +1,4807 @@
+{
+	"schemaVersion": 1,
+	"procedures": [
+		{
+			"id": "camp-high-chant",
+			"title": "High Chant",
+			"phase": "camp",
+			"scope": "supported-v1",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"modifierIds": [
+				"camp-high-chant"
+			],
+			"steps": [
+				{
+					"id": "select-inspiration",
+					"actor": "player",
+					"operation": "select-from-discard",
+					"deck": "minor",
+					"draw": {
+						"kind": "formula",
+						"formulaId": "high-chant-selection"
+					},
+					"visibility": "actor-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "distribute-inspiration",
+					"actor": "player",
+					"operation": "transfer",
+					"deck": "minor",
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "camp-leeches",
+			"title": "Leeches",
+			"phase": "camp",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Leeches"
+			},
+			"ruleEntryIds": [
+				"city-leeches"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-and-classify",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "camp-patrol",
+			"title": "Patrol",
+			"phase": "camp",
+			"scope": "supported-v1",
+			"source": {
+				"file": "08 - Chapter 8 - The Camp Phase.md",
+				"heading": "Patrol"
+			},
+			"ruleEntryIds": [
+				"camp-patrol"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-twice",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 2
+					},
+					"lookupTableId": "meatgrinder",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "camp-watch",
+			"title": "No Rest for the Wicked",
+			"phase": "camp",
+			"scope": "supported-v1",
+			"source": {
+				"file": "08 - Chapter 8 - The Camp Phase.md",
+				"heading": "3. No rest for the wicked",
+				"after": "Use a Talent"
+			},
+			"ruleEntryIds": [
+				"camp-no-rest-for-the-wicked"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "who-is-on-watch",
+					"actor": "gm",
+					"operation": "consult-discard-top",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "watch-cups-test",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "challenge-aim",
+			"title": "Aim",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Bow",
+				"anchor": "- Aim is a Swords action."
+			},
+			"ruleEntryIds": [],
+			"modifierIds": [
+				"challenge-aim"
+			],
+			"steps": [
+				{
+					"id": "aim-prepare",
+					"actor": "player",
+					"operation": "place-facedown",
+					"deck": "minor",
+					"visibility": "actor-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "aim-reveal",
+					"actor": "player",
+					"operation": "reveal",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "challenge-black-honey",
+			"title": "Black Honey",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Black honey"
+			},
+			"ruleEntryIds": [
+				"crawl-black-honey"
+			],
+			"modifierIds": [
+				"challenge-black-honey"
+			],
+			"steps": [
+				{
+					"id": "modified-deal",
+					"actor": "system",
+					"operation": "deal",
+					"deck": "minor",
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "automatic",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "challenge-brainfever",
+			"title": "Brainfever",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Brainfever"
+			},
+			"ruleEntryIds": [
+				"sorcery-brainfever"
+			],
+			"modifierIds": [
+				"challenge-brainfever"
+			],
+			"steps": [
+				{
+					"id": "forced-initiative",
+					"actor": "system",
+					"operation": "place-facedown",
+					"deck": "minor",
+					"visibility": "actor-private",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "challenge-counsel",
+			"title": "Counsel",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "Counsel"
+			},
+			"ruleEntryIds": [
+				"paths-counsel"
+			],
+			"modifierIds": [
+				"challenge-counsel"
+			],
+			"steps": [
+				{
+					"id": "transfer-card",
+					"actor": "player",
+					"operation": "transfer",
+					"deck": "minor",
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "challenge-guardian-angel",
+			"title": "Guardian Angel",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Guardian Angel"
+			},
+			"ruleEntryIds": [
+				"sorcery-guardian-angel"
+			],
+			"modifierIds": [
+				"challenge-guardian-angel"
+			],
+			"steps": [
+				{
+					"id": "transfer-card",
+					"actor": "player",
+					"operation": "transfer",
+					"deck": "minor",
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "challenge-round",
+			"title": "Challenge Round",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "The Flow of the Challenge Phase"
+			},
+			"ruleEntryIds": [
+				"challenge-sequence",
+				"challenge-draw-cards",
+				"challenge-play-initiative",
+				"challenge-take-turns",
+				"challenge-minor-actions",
+				"challenge-end-the-round",
+				"challenge-the-fool",
+				"challenge-facedown-cards",
+				"challenge-interrupt-actions",
+				"challenge-gm-hand-size",
+				"challenge-lesser-dooms",
+				"challenge-greater-dooms"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "deal-players",
+					"actor": "system",
+					"operation": "deal",
+					"deck": "minor",
+					"draw": {
+						"kind": "formula",
+						"formulaId": "player-hand-size"
+					},
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "automatic",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "deal-gm",
+					"actor": "system",
+					"operation": "deal",
+					"deck": "major",
+					"draw": {
+						"kind": "formula",
+						"formulaId": "gm-hand-size"
+					},
+					"visibility": "actor-private",
+					"resultVisibility": "gm-private",
+					"completion": "automatic",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "play-initiative",
+					"actor": "player",
+					"operation": "place-facedown",
+					"deck": "minor",
+					"visibility": "actor-private",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "reveal-initiative",
+					"actor": "system",
+					"operation": "reveal",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "play-action",
+					"actor": "player",
+					"operation": "play",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "gm-play-doom",
+					"actor": "gm",
+					"operation": "play",
+					"deck": "major",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "gm-mulligan",
+					"actor": "gm",
+					"operation": "mulligan",
+					"deck": "major",
+					"visibility": "actor-private",
+					"resultVisibility": "gm-private",
+					"completion": "gm-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "end-round",
+					"actor": "gm",
+					"operation": "discard",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "challenge-stun",
+			"title": "Stun",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Effects"
+			},
+			"ruleEntryIds": [
+				"effects"
+			],
+			"modifierIds": [
+				"challenge-stun"
+			],
+			"steps": [
+				{
+					"id": "forced-discard",
+					"actor": "system",
+					"operation": "discard",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-as-above-so-below",
+			"title": "As Above, So Below",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "14 - Appendix D - City Creation.md",
+				"anchor": "- As above so below:"
+			},
+			"ruleEntryIds": [],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "reorder-top-three",
+					"actor": "player",
+					"operation": "reorder-top",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 3
+					},
+					"visibility": "actor-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "city-beg-and-busk",
+			"title": "Beg and Busk",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Beg and Busk"
+			},
+			"ruleEntryIds": [
+				"city-beg-and-busk"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-earnings",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-carouse",
+			"title": "Carouse",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Carouse"
+			},
+			"ruleEntryIds": [
+				"city-carouse"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-hangover",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "hangover",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-doomsaying",
+			"title": "Doomsaying",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "14 - Appendix D - City Creation.md",
+				"anchor": "- **Doomsaying:**"
+			},
+			"ruleEntryIds": [],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-prophecy",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 4
+					},
+					"lookupTableId": "doomsaying",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-events",
+			"title": "City Events",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Example City Events"
+			},
+			"ruleEntryIds": [
+				"city-events"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-event",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "city-events",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-signs-and-portents",
+			"title": "Signs and Portents",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Signs and Portents"
+			},
+			"ruleEntryIds": [
+				"city-signs-and-portents"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-sign",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"deckScope": "fresh",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "signs-and-portents",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "city-strange-communions",
+			"title": "Strange Communions",
+			"phase": "city",
+			"scope": "supported-v1",
+			"source": {
+				"file": "14 - Appendix D - City Creation.md",
+				"anchor": "- Strange communions:"
+			},
+			"ruleEntryIds": [],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "choose-source",
+					"actor": "player",
+					"operation": "select-from-discard",
+					"deck": "minor",
+					"visibility": "recipient-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				}
+			]
+		},
+		{
+			"id": "crawl-area-sense",
+			"title": "Area Sense",
+			"phase": "crawl",
+			"scope": "supported-v1",
+			"source": {
+				"file": "04 - Chapter 4 - Kith and Kin.md",
+				"heading": "Wood elf arête talent: Area Sense"
+			},
+			"ruleEntryIds": [
+				"kith-area-sense"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-impression",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "crawl-meatgrinder",
+			"title": "Meatgrinder",
+			"phase": "crawl",
+			"scope": "supported-v1",
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Example Meatgrinder table"
+			},
+			"ruleEntryIds": [
+				"crawl-meatgrinder",
+				"crawl-loud-noises",
+				"crawl-moving-carefully"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-event",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "meatgrinder",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "crawl-were-doomed",
+			"title": "We’re Doomed!",
+			"phase": "crawl",
+			"scope": "supported-v1",
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "We’re doomed!"
+			},
+			"ruleEntryIds": [
+				"crawl-were-doomed",
+				"crawl-darkness"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-doom",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "were-doomed",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "denizen-disposition",
+			"title": "Starting Disposition",
+			"phase": "crawl",
+			"scope": "supported-v1",
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Starting Disposition"
+			},
+			"ruleEntryIds": [
+				"crawl-starting-disposition",
+				"crawl-social-encounters-disposition"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "consult-discard-top",
+					"actor": "gm",
+					"operation": "consult-discard-top",
+					"deck": "minor",
+					"lookupTableId": "starting-disposition",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				}
+			]
+		},
+		{
+			"id": "gm-twist",
+			"title": "GM Twist",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
+				"heading": "Creating surprises"
+			},
+			"ruleEntryIds": [
+				"gm-creating-surprises"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-twist",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "gm-twist",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "group-test",
+			"title": "Group Test",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Group tests"
+			},
+			"ruleEntryIds": [
+				"group-tests"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-most-qualified",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "draw-least-qualified",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "oracle-malediction",
+			"title": "Malediction",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Malediction"
+			},
+			"ruleEntryIds": [
+				"sorcery-malediction"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-curse",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "malediction",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "flat-fifty-percent-choice",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				}
+			]
+		},
+		{
+			"id": "oracle-maleficence",
+			"title": "Maleficence",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence"
+			},
+			"ruleEntryIds": [
+				"sorcery-maleficence"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-wastes",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "maleficence-wastes",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "draw-weald",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "maleficence-weald",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "draw-weird",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "maleficence-weird",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "draw-welkin",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "maleficence-welkin",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "oracle-random-totem",
+			"title": "Random Totem",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Random Totem"
+			},
+			"ruleEntryIds": [
+				"sorcery-totem"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw-totem",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "random-totem",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "overland-travel",
+			"title": "Overland Travel",
+			"phase": "camp",
+			"scope": "supported-v1",
+			"source": {
+				"file": "08 - Chapter 8 - The Camp Phase.md",
+				"heading": "Overland Travel"
+			},
+			"ruleEntryIds": [
+				"camp-overland-travel"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "travel-meatgrinder",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableId": "meatgrinder",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "test-augury",
+			"title": "Augury",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Augury"
+			},
+			"ruleEntryIds": [
+				"sorcery-augury"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "private-draw",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "actor-private",
+					"resultVisibility": "gm-private",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "reveal-parable",
+					"actor": "gm",
+					"operation": "reveal",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
+			"id": "test-of-fate",
+			"title": "Test of Fate",
+			"phase": "cross-phase",
+			"scope": "supported-v1",
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Tests of Fate"
+			},
+			"ruleEntryIds": [
+				"tests-of-fate",
+				"favor-and-disfavor",
+				"pushing-fate"
+			],
+			"modifierIds": [],
+			"steps": [
+				{
+					"id": "draw",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "push",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				}
+			]
+		}
+	],
+	"lookupTables": [
+		{
+			"id": "city-events",
+			"title": "City Events",
+			"deck": "major",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "City Event"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Gross: A bucket of night soil is emptied onto a random adventurer from a high-up window.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Doggy: A starving dog trails behind the guild, whining. Its ribs stick out and its pink skin is clearly visible through its mangy fur. It licks your hands with a dry, grey tongue. If you feed it, it may follow you.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] An Execution: A crowd gathers to watch a hanging. A tonsured Mythric cultist of middling initiation pronounces a sentence of death on a hooded man for the crime of punching a noble and subsequently loosening the noble’s tooth. To loud applause, the man drops and jerks on the gibbet.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Stylite: From his high pillar, a naked stylite pronounces doom down on the adventurer with the highest Wands score. The stylite loudly decries their vices and denounces their escapades as lecherous and murderous. He seems to know a lot about the adventurer, honestly. It would be impressive if it wasn’t so mean and truthful.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Lick Lick Lick: An old woman, drunk as a skunk, sits in the gutter singing an old- fashioned tune. She doesn’t seem to notice the bloated rat licking her ankles.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Happening] Famine: A long winter has left the granaries empty. Food is scarce. You can only buy rations if you maintain a luxurious lifestyle during step 5 (Upkeep).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Happening] The Ecstasy of St. Naos: By far the biggest party day of the year: like St. Patrick’s and Mardi Gras had a baby. The City is shut down. The only City Action the adventurers can perform during step 6 (City Actions) is Carousing.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Happening] The Coronation of Maiden Wisdom: One of the highest holy days in the Mythric calendar, charity is given generously during this time. Rates for upkeep are reduced: impoverished is 15g, common is 25g, and luxurious is 50g.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Happening] The Feast of the Constellations: During the Feast of the Constellations, the pious of the Cult fast. By custom and law, all taverns are closed and the drinking of alcohol is punished by use of a scold’s bridle. Carousing cannot be performed during this phase.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Happening] The King is Dead, Long Live the King!: The old ruler is gone (assassinated? death faked? exiled?). The GM must determine who now sits the throne over the City. The players should expect changes from the new regime.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XI",
+						"to": "XI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Rumor] The Sporehulk’s Wife: The Sporehulk is the dungeon lord of the Sepulcher. It is said that inside one of the chambers lies the barrow of his wife, around which is arranged four canopic jars containing her brains, her liver, her lungs, and her ovaries. If you eat any part of the Sporehulk’s wife, it’s said you’ll undergo a terrible and awesome transformation.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XII",
+						"to": "XII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Rumor] The Star’s Daughter: A fallen star dwells on an island in the Boundless Moat, and his daughter came with him into exile. Both star-beings struggle adorably with human culture. The star wishes for someone to marry his daughter. As a dowry, the star will grant a wish to anybody who marries her. However, the daughter will interpret the wish. It would be wise to keep her happy unless you want the wish to go sour.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIII",
+						"to": "XIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Rumor] Medusa’s Abortion: A gorgon was recently slain in the Underworld, yet somehow its premature fetus survived. The awful, crawling, half-serpentine thing is gnawing its way through the Castle of Crossed Destinies. Even glancing at it turns you into stone. That’s why there are so many more statues in the Castle as of late.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIV",
+						"to": "XIV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Rumor] The Strangler’s Palm: Inside a hidden room in the Castle of Crossed Destinies is a tavern—a haven for adventurers in the middle of the Worm’s own realm. If you can find it, 10g will purchase a safe place to encamp and some of the most exotic foods you’ve ever eaten. The password this month is “pickle juice.”",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XV",
+						"to": "XV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Rumor] The Tomb of the First Dead: Inside the City of Ruin is a graveyard. The first graveyard, in fact. It is called the Tomb of the First Dead, and it holds a mausoleum for the first human to ever succumb to the doom of old age and death. Inside this tomb is a treasure that will make you immune to the mental control of the three immortal nymphs that live within the Underworld.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVI",
+						"to": "XVI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] A Theft: The adventurer in back of the marching order is bumped into by a louse- ridden orphan. Later, as they round a corner, they see a piece of gear that looks suspiciously like their own at a merchant’s stall. Several interested buyers are already taking notice.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVII",
+						"to": "XVII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] A Challenge: A pair of bravos sitting outside of a wine sink make snide remarks about the clothes of the adventurer with the highest Pentacles score. They’re spoiling for a fight, though they’re more into humiliation than actual harm.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVIII",
+						"to": "XVIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] A Proposition: Several whores call down compliments about the adventurer with the highest Wands score. They claim they’ll give them a discount, if the adventurer is so inclined.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIX",
+						"to": "XIX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] An Inheritance: The adventurer with the lowest Cups score receives a letter from their family. A distant uncle has died and bequeathed them a townhouse by the Grey River, complete with a snooty butler named Aethelred that hates them. Though initially a boon, this townhouse will soon become the center of a web of intrigue that will haunt the guild.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XX",
+						"to": "XX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] A Disaster: Fire! After step 6 (City Actions), the inn the guild is staying at catches fire. This prompts a test of Pentacles to escape quickly. If anybody fails, they leave behind the two items in the very bottom of their pack and begin the next Crawl with the Stressed condition.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XXI",
+						"to": "XXI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Signs and Portents] Strange Days: The GM notes the top card on the minor arcana discard pile and describes something from the Signs and Portents table (facing page).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Example City Events"
+			}
+		},
+		{
+			"id": "doomsaying",
+			"title": "Doomsaying Prophecy",
+			"deck": "minor",
+			"axis": "suit-by-step",
+			"columns": [
+				{
+					"id": "step-1",
+					"label": "Step 1"
+				},
+				{
+					"id": "step-2",
+					"label": "Step 2"
+				},
+				{
+					"id": "step-3",
+					"label": "Step 3"
+				},
+				{
+					"id": "step-4",
+					"label": "Step 4"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "suit",
+						"suit": "swords"
+					},
+					"cells": [
+						{
+							"columnId": "step-1",
+							"text": "When the Constellation of the Beast is in the First House...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-2",
+							"text": "...hunger will be loosed and given leave to come among you.",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-3",
+							"text": "The moon will die, unless...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-4",
+							"text": "...you hear my command: “Ascend the stairs of Heaven and devour whatever you find there.”",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "suit",
+						"suit": "pentacles"
+					},
+					"cells": [
+						{
+							"columnId": "step-1",
+							"text": "As grey turns to red...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-2",
+							"text": "...the Last Queen will blind herself with the brooch of her cloak.",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-3",
+							"text": "A new river will rise from your tears once...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-4",
+							"text": "...the seven crowns are stolen from the severed heads of the seven dragons.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "suit",
+						"suit": "cups"
+					},
+					"cells": [
+						{
+							"columnId": "step-1",
+							"text": "After the fall of the eldest...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-2",
+							"text": "...I open my second mouth and begin to sing.",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-3",
+							"text": "A new star is kindled if...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-4",
+							"text": "...the Blood Blasphemy is sung once again.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "suit",
+						"suit": "wands"
+					},
+					"cells": [
+						{
+							"columnId": "step-1",
+							"text": "When the sun rises in the west and sets in the east...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-2",
+							"text": "...the Earth will groan with the pains of childbirth.",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-3",
+							"text": "His Majesty the Worm arises when...",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "step-4",
+							"text": "...you wind the Clarion of Altheia.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "14 - Appendix D - City Creation.md",
+				"anchor": "- **Doomsaying:**"
+			}
+		},
+		{
+			"id": "gm-twist",
+			"title": "GM Twist",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Twist"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The current conflict smashes down a nearby wall, connecting the current room to an adjacent one. What dwells in that room, and how will it interact with the current scene?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A wandering monster wanders into the scene.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "An infantile wandering monster wanders into the scene. It imprints onto a random adventurer.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A rival adventuring party, currently struggling with problems of their own, crash onto the scene.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Something in the current scene is revealed to only be an illusion.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Something in the scene is revealed, with further investigation, to be something completely different. The orc is just three goblins in a trench coat. The gargoyle is just a statue.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A secret passage is revealed, leading to hidden treasure or danger.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A chance blow rips open a backpack, causing two alchemical potions to crash onto the ground. As the two reagents mix, a terrible ooze begins to form, farting out magical clouds as it does.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Disembodied spirits climb inside the bodies of nearby slain foes and reanimate them as flesh puppets. The spirits have their own agendas. What do they want?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A dropped torch or knocked over brazier starts a fire which quickly becomes a hazard as the area is filled with smoke and flames.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The area becomes suddenly flooded with water/wine/sludge/something else. What is the source of this deluge?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The next time an adventurer is dealt a Wound, they are dazed. When they come to their senses, they distinctly remember a preternatural voice speaking to them. What is this divine revelation? Is it real? Or is there something going wrong in the unknowable space behind their eyes that’s undiagnosed?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Death shows up and stands quietly in the corner. He’s a few minutes early, but is willing to wait.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A stampede of doppelgangers barrels down the passage and accidentally bumps into the guild. They get all tangled up, tripping over each other. After the confusion, the party is substantially larger. Each player has at least two, but maybe as many as four new adventurers. Not even the players are sure who is who. Give them new adventurer sheets for their clones until things are sorted out.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
+				"heading": "Creating surprises"
+			}
+		},
+		{
+			"id": "hangover",
+			"title": "Hangover",
+			"deck": "major",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Hangover"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken with a headache and [value] new gold coins in your pocket.",
+							"tokens": [
+								"value"
+							],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken in the stocks, having been left there to sober up. A little bruised, but no worse for wear. Your guild has a chance to make fun of you and throw tomatoes before you’re let out.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A cowbell has been hung around your neck by a steel chain. The chain is too small to remove over your head, and you don’t have the key to the lock. You clang while you walk until you solve this problem.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken with a marriage ring on your finger, but no memory of who you married.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken in a strange room, heavy pounding on the door. The people on the other side are very angrily demanding their money back.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken with a marriage ring on a finger. The finger isn’t yours.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken next to a [even] High Priest / [odd] High Priestess. They thank you for helping them break their vows, and showing them what it means to be happy.",
+							"tokens": [
+								"even",
+								"odd"
+							],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are thrown through the window of your usual watering hole. “And stay out!” the proprietor adds. You are banned from your favorite tavern.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken with a new tattoo. • The tattoo is on your: [Swords] arm, [Pentacles] leg, [Cups] backside, [Wands] face.• It is: [1–2] horribly offensive, [3–8] cringe and misspelled, [9–King] pretty sweet.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken in an alley. Hobos around you seem to be wearing your clothes and armor. But you’re wearing theirs, so… even trade?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XI",
+						"to": "XI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A letter is delivered to your room. It’s from a local aristocrat and they have accepted your invitation to a duel. The duel is in [value] days.",
+							"tokens": [
+								"value"
+							],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XII",
+						"to": "XII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken in the muck of a cistern wearing only your smallclothes. All the other items you had on you are missing as well.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIII",
+						"to": "XIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You don’t remember exactly what you did, but by the wanted posters lining the streets you can guess it wasn’t good. Choose based on the card’s suit: [Swords] armed robbery, [Pentacles] attempted pick-pocketing, [Cups] lewd acts, [Wands] consorting with dark entities.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIV",
+						"to": "XIV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You find an invoice in your pouch: “Sold: One (1) soul for one (1) beer.” Your signature and an infernal symbol seal the contract.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XV",
+						"to": "XV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You awaken to the sounds of sobbing. There seems to be a nobleman hogtied and gagged on your floor. How strange.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVI",
+						"to": "XVI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Why are you naked and wearing a fake bull’s head? Why does this shop have nothing but broken plates and smashed glass? Why are the shopkeeper and constables so angry and yelling?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVII",
+						"to": "XVII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Luckily, it only burns when you pass water.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVIII",
+						"to": "XVIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You back your way out of a blackout wrapped in a warm snuggly robe standing in a candle lit room. It’s nice. “The dark pact is complete,” a deep baritone voice says, “Go forth, my brothers, and see that our lord’s will be done.” ... Wait, what?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIX",
+						"to": "XIX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Where the hells is your hand? Why can you feel it crawling?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XX",
+						"to": "XX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You remember agreeing to a dare. It had something to do with a candle and flatulence. • You find that: [Swords] a district is burnt down[Pentacles] two districts are burnt down[Cups] three districts are burnt down[Wands] as Cups, but a fire spirit is still roaming the City, and the sorcerers are pissed.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XXI",
+						"to": "XXI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Did you always have those circular puncture marks on your neck? I’m sure it’ll be fiiiine.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Carouse"
+			}
+		},
+		{
+			"id": "malediction",
+			"title": "Malediction Curse",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Malediction Curse"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Dogs hate you. Any dog you meet will automatically try and attack you, and prioritizes you over all other targets. At the end of the City Phase, you become either Staggered (from being savaged) or Stressed (because you spent the entire time hiding from dogs)—50/50 chance either way.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You’re afflicted with bad dreams. You have a 50% chance to wake from sleep Stressed due to your nightmares.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Food has a 50% chance of becoming ash when you eat it. If this happens, you waste that ration.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are doomed. You become Exhausted.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You gain the appearance of a desiccated corpse. Most GM characters will be hostile towards you. Nobody wants to sleep with you. On the plus side, most undead will ignore you.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You’re cursed to speak in rhymes. Everything you say in-character must rhyme.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Your weapons rust and break easily. Any time you play a card of 10 or higher to Attack, your weapon suffers a Notch. Wooden weapons can suffer 1 Notch, iron weapons can suffer 2, and steel weapons can suffer 3 before breaking.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Your sexual anatomy changes. It’s weird (but maybe exciting?).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Rats and other vermin fall in love with you. They follow you around everywhere. They want to sleep in your mouth. Every night, there is a 50% chance they’ll relieve you of something in your pack that they know you don’t want and replace it with garbage. Nice garbage.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Every footstep you take rings an ethereal, unseen bell that accompanies a voice that says “SHAME.” Stealth is impossible.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You grow sick and infirm. You must burn two charged Bonds to clear Wounded talents and the Injured condition instead of one. You are (regrettably) immune to the Heal effect.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You grow old for the duration of the curse—like a withered crone. You are ugly and unattractive. You cannot see more than 30’ in front of you through your cataracts and you cannot use the Dash action.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You can only speak Tylwyth. Is that a language you understand? No? Then you sound like you’re just speaking gibberish.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "When you enter a stressful situation (like combat), test Wands. If you fail, you turn into a chicken for one round (or equivalent).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Malediction"
+			}
+		},
+		{
+			"id": "maleficence-wastes",
+			"title": "Maleficence of the Wastes",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Result"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A number of imps appear equal to the value of the top card in the minor arcana’s discard pile.",
+							"tokens": [],
+							"references": [
+								{
+									"collection": "denizens",
+									"entryId": "imp",
+									"label": "imp"
+								}
+							]
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer vomits a pregnant rat, which falls to the ground and explodes as a surfeit of baby rats spill bloodily from her belly. Disease oozes from the undulating mass.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The putrid stink of a mass grave fills the area. If the adventurers stay in the area, they all become Stressed due to the smell.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A chill, green fog rises. All exposed metal items the guild carries suffer two Notches as the fog rusts and corrupts the metal.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Demonic flies fill this room. All perishable items will soon be consumed as the flies swarm into their packs, leaving behind demonic maggots.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Wounds stop closing. The guild cannot heal Wounded talents or the Injured condition until the Fool causes the decks to be reshuffled.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer begins to uncontrollably weep blood. It’s hard to see anything through bloody tears (disfavor in combat or any vision-based activities). And, of course, it ruins their robes. This persists until the Fool causes the decks to be reshuffled.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "An invisible mark appears on the sorcerer’s forehead. The sorcerer becomes the primary target of all undead creatures. They wish to talk to them, to touch them, to kiss them, to hurt them, to make them understand. This lasts until the mark is cleansed (per GM’s discretion).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s shadow departs to perform some mischief. It will return once it’s gotten into some sort of trouble. Until then, the sorcerer lacks a shadow.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer immediately begins vomiting up a parasitic twin in chunks: little hands, eyes, hair, teeth. They can do very little until the whole thing is out. In a Challenge, this gives the sorcerer the Stunned effect. This maleficence lasts for an entire watch.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s irises become golden, like a wolf’s. This change is permanent.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer grows black, goat-like horns. These are permanent, but can be sawed off without any pain. Just the stumps will remain.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s reflection (in mirrors and other reflective surfaces) begins to rapidly decompose. Eventually, they’ll only see their bleached white skull when they look into a mirror. This is permanent.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The entire region is blighted. Plants wither and die. Mothers yield only stillbirths. If the sorcerer is near civilization, there will be consequences.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Wastes"
+			}
+		},
+		{
+			"id": "maleficence-weald",
+			"title": "Maleficence of the Weald",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Result"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A hairless ape crawls into reality. It disembowels itself, presenting its intestines to the sorcerer with an ingratiating smile. It then dies, smiling all the while.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Shrieker mushrooms quickly bloom around the sorcerer. Any movement through the area raises a mighty ruckus that provokes a random encounter draw on the Meatgrinder table.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Thorns sprout and fill the sorcerer’s zone, Rooting everybody. Everyone must untangle themselves. During a Challenge, this requires the Recover action.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Evil weather manifests physically in the Underworld— the caverns fill with torrential rains, blizzards, or simooms.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Any potions carried by the sorcerer explode. The bottles are Destroyed. This causes any items written adjacent to them on the adventurer sheet to be ruined.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Lightning arcs out of the sorcerer’s body and Wounds everybody carrying metal in the room, friend or foe.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Every animal on the Meatgrinder table for this region is drawn towards the sorcerer. The next watch is automatically an encounter with every animal in the area.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "All wooden objects (wands, doors, chests, staffs, torches, bows, etc.) near the sorcerer warp and twist, as if bent by a giant’s hands. All wooden objects in the room are Destroyed. Traps on wooden doors or chests are triggered and affect whatever’s nearest them, as applicable.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "An earthquake shakes the area within one mile of the sorcerer. Structures not built to last are destroyed.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s clothes and gear catch on fire. They immediately take a Wound. The sorcerer must put themselves out or they will continue to burn; this is a Recover action during a Challenge. The GM should arbitrate how this is done, and potential consequences.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s legs turn backwards and grow fur, reminiscent of a goat’s. This is permanent.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer buds a thick, meaty fungus that grows like an insipid cancer on their skin. This is permanent until the disease can be cured. Eating it is addictive.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer is Cursed with lycanthropy. When the moon shines, they undergo a change: it is messy, uncontrolled, and violent. Lycanthropy is permanent unless a cure is discovered.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The guild is now the subject of a Wild Hunt. A gnome politely informs the guild that they now have a one- day head start before an army of wood elves does their very best to try and kill them. Good luck.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Weald"
+			}
+		},
+		{
+			"id": "maleficence-weird",
+			"title": "Maleficence of the Weird",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Result"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer loses their voice. They are Silenced until the Fool causes the decks to be reshuffled. Later, the sorcerer’s relatives swear they heard the sorcerer calling to them from the darkness.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Nightmarish idols of Jungian manifestations are rapidly built by invisible hands out of any available material near the sorcerer.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Everybody in the room (including the sorcerer) must immediately test Wands. Any who fail suffer the Knockout effect and fall into a deep sleep.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Everybody in the sorcerer’s zone (including the sorcerer) is immediately Inspired with a random Disposition (Social Encounters & Disposition). Roleplay as appropriate.",
+							"tokens": [],
+							"references": [
+								{
+									"collection": "rules",
+									"entryId": "social-encounters-disposition",
+									"label": "Social Encounters & Disposition"
+								}
+							]
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A mouth opens on the back of the sorcerer’s skull. It babbles in Tylwyth. The GM immediately delivers a rumor to anybody who can understand it. The mouth, drooling, remains until the Fool reshuffles the decks.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer begins weeping gooey, saline-tasting tears. They also weep out several small oozes that crawl away to eat and get big.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s skin, organs, and muscles become invisible. Until the Fool shuffles the decks, the sorcerer appears to be an animate skeleton with an interwoven system of nerves and veins. It’s creepy as fuck. GM characters are horrified.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer becomes a living illusion. An illusion is nothing but a hologram. They cannot interact with the plane of Flesh or cast spells, but can see and be seen. However, anything illusory is real to the sorcerer. An illusory sword can cut them, an illusory dragon can eat them. This persists until the Fool shuffles the decks.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer is no longer able to speak except in rhyme. Everything they say in character must be in the form of rhyming couplets. This lasts until after the next Camp Phase.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s worst nightmare physically manifests in the realm of Flesh during step 3 of the next Camp Phase. The GM and the sorcerer’s player should talk beforehand about what this is.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s coloring pales. Their hair, skin, and irises become milky white. This is permanent.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer grows a third eye in the center of their forehead. Whenever they use Dwimmercraft, this eye opens. Otherwise, it’s unnoticeable. This is permanent.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A hekatephage—a Shrouded and intangible spirit that devours magic—begins following the sorcerer. The sorcerer must find some way to banish or defeat it or any non-concentration spell is ended prematurely.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer is permanently Cursed with Silence. However, illusory text hovers over their head for a few moments when they speak, like speech balloons. Luckily, they can still cast spells.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Weird"
+			}
+		},
+		{
+			"id": "maleficence-welkin",
+			"title": "Maleficence of the Welkin",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Result"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The players that sit to the left and the right of the sorcerer have all of their adventurers’ conditions Healed. The sorcerer suffers an equal number of Wounds. (If this kills the sorcerer, they are canonized.)",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Painful boils rise on the sorcerer’s skin, a side effect from undiluted celestial radiation. The sorcerer takes a Wound and becomes Stressed.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Rations in the current room become strangely tainted: water turns to blood and dried meat becomes pulsing flesh. Only purely vegan rations are unaffected.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Divine locusts, with hard, golden, metallic shells and human faces, swarm. They destroy all foliage and plant life in the entire dungeon level.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "An angelic chant manifests around the sorcerer. The music is beautiful, but loud. Stealth is impossible. The chanting subsides the next time the Fool causes the decks to be reshuffled.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer manifests the piteous stigmata of Mythrys. They are Exhausted until they use a City Action to pray at a mythraeum.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "All weapons (except those explicitly made of iron) in the sorcerer’s current room are permanently transformed into tools of similar sizes or shapes. For example, a sword might be transformed into a plowshare or a spear into a pruning hook.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer’s brow is lit with a halo. Everybody is suitably impressed, except for spirits. All spirits have an automatic negative reaction to the sorcerer and, in combat, will target them above all others. This halo lasts until the sorcerer uses a City Action to pray at a mythraeum.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A ghostly hand manifests nearby and begins scribing a prophecy in Vetus on a nearby surface, foretelling doom unless very specific (and unlikely) set of requirements is fulfilled.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Upon their return to the City, any guild members who are parents are informed that their firstborn child has died. It is reported that the sorcerer’s name is written in runes across their deceased child’s forehead.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Greed is a vile sin. Precious coins and gems on the sorcerer’s person permanently become scarabs.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "An animate statue emerges from stone. It looks almost exactly like a stony twin of the sorcerer. Its mission is to kill and replace the sorcerer.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The sorcerer becomes 8 months pregnant, regardless of whether they have the normal equipment required. While pregnant, they are Exhausted. If carried to term, a semi-divine child is brought into the world.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "A discharge-brown star appears in the sky. At the end of the third night, a tremendous meteor destroys a random district of the City, which makes the City uninhabitable for weeks and weeks.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Maleficence of the Welkin"
+			}
+		},
+		{
+			"id": "meatgrinder",
+			"title": "Meatgrinder",
+			"deck": "major",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Meatgrinder Event"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Torches gutter",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Torches gutter",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Torches gutter",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Torches gutter",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Torches gutter",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Local Fauna: The guild startles up a flock of luminescent cave butterflies. They flutter away quickly.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Cockatrice Call: The guild hears a cockatrice’s peacock-like shriek, distantly.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Orcish Graffiti: The guild notices some graffiti in Vetus chalked onto the cavern wall. It reads: “Ulf is no true orc. If he wishes to win my hand in marriage, he must defeat me in combat.” (The GM can accept lore bids on this curiosity as appropriate.)",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Blind Fish Pool: The guild wanders by a shallow pool. The water looks clear, but the pool is full of toothy, blind fish.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Curiosity] Nearby Flowers: The air is full of a heady floral scent. If the guild searches around a little, they’ll find a bunch of pale blue and purple lilies sprouting nearby. Appropriate lore bids will show that they are normal flowers with few (if any) meaningful alchemical properties, but they are quite lovely and might make a nice bouquet for someone.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XI",
+						"to": "XI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] Droppings: The first person in the marching order accidentally steps in some droppings. If they can’t find a way to get clean soon, they’ll become Stressed. If the guild investigates, they realize that the droppings are from an ogre. It looks no more than a day old.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XII",
+						"to": "XII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] Rushing River: The guild encounters a rushing river which has risen past its banks. It’s impossible to ford without getting soaked. The guild can either turn back and try and find an alternate route or attempt to cross. Swimming across the river requires a test of Swords. If successful, they make it across safely. If the test fails, they suffer a Wound from almost drowning. Whether successful or not, anybody who braved the cold waters becomes Stressed. If no precautions were taken, fragile items in backpacks (scrolls, provisions) are soaked and Destroyed.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIII",
+						"to": "XIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] Hole in Pack: While traveling, a random adventurer discovers that their pack has a hole in it. The last listed item in their pack has fallen out and disappeared. (Backtracking and performing a thorough search will prompt additional watches to pass.)",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIV",
+						"to": "XIV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] Bad Scene: The guild comes upon a field of faintly glowing green mushrooms sporadically sending up little clouds of dust. In the middle of the field is a corpse in rusted armor. A cracked chest lies near the corpse. (It’s all bad news. Mushrooms are poisonous. Corpse is a zombie. Chest? Probably bad too. But there’s also gold in the chest and that’s good.)",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XV",
+						"to": "XV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Travel event] Webs: The guild’s path forward is blocked by thick layers of web. However, they can see several hanging sacks dangling from the cavern ceiling. Are these other adventurers who met a grim fate? Could they be rescued?",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVI",
+						"to": "XVI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Random encounter] Red Herring Tavern: The guild happens upon a squat but cozy-looking tavern. A wooden sign depicts a red fish leaping from the water (a herring, if anybody bids lore). Inside is a tapped barrel of ale and a cauldron full of stew, but no innkeeper to be seen. In fact, the tavern is a giant mimic occupied by several smaller mimics. Sleeping in the mimic tavern is a notably bad idea.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVII",
+						"to": "XVII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Random encounter] Cockatrice: A cockatrice has taken its chicks out to teach them how to hunt.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XVIII",
+						"to": "XVIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Random encounter] Ogre Courting Ritual: An amorous ogre is trying to impress a she-ogre with increasingly ridiculous feats of strength. They are both making a terrible racket.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XIX",
+						"to": "XIX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Random encounter] Orc Hooligans: A gang of three orc youths accompanied by a random number of goblins are on a quest to make a name for themselves before returning to their clan. They might see the guild as an appropriate challenge or be convinced to join with the guild against some greater foe.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XX",
+						"to": "XX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Random encounter] Gentle Simon: An owlbear has treed Gentle Simon of Heartsbane, a notoriously shrimpy sorcerer. All of Gentle Simon’s Resolve has been expended trying to rescue himself, and he’s now beginning to weep.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "XXI",
+						"to": "XXI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "[Quest rumor] Victims of Geralt Mourn: The adventurers find a rival guild crucified. They are still alive, though grievously injured and dehydrated. If the adventurers can provide aid, healing, and food, the rival party gasps about their recent encounter with the vampire Geralt Mourn, who the guild has sworn to slay. It was this dread vampire who crucified them as a warning to others. They have news of his current whereabouts, but would be loath to tangle with him again.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Example Meatgrinder table"
+			}
+		},
+		{
+			"id": "random-totem",
+			"title": "Random Totem",
+			"deck": "minor",
+			"axis": "card-by-suit",
+			"columns": [
+				{
+					"id": "swords",
+					"label": "Swords"
+				},
+				{
+					"id": "cups",
+					"label": "Cups"
+				},
+				{
+					"id": "pentacles",
+					"label": "Pentacles"
+				},
+				{
+					"id": "wands",
+					"label": "Wands"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Ape",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Rat",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Frog",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Bonnacon",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Armadillo",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Pelican",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Goat",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Capricorn",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Badger",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Peacock",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Hedgehog",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Centipede, Dire",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Bat",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Rabbit",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Hog",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Coatl",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Bear",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Raccoon",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Hyena",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Grasshopper, Dire",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Cat",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Seal",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Jackdaw",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Griffin",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Cattle",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Snake",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Kangaroo",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Hippogriff",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Crab",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Stoat",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Leopard",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Mammoth",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Crocodile",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Swan",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Lion",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Owlbear",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Deer",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Tiger",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Mouse",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Rat, Dire",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Dog",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Turtle",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Mule",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Roc",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Eagle",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Vulture",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Opossum",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Snail, Dire",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Elk",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Walrus",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Otter",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Spider, Dire",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "swords",
+							"text": "Fox",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "cups",
+							"text": "Wolf",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "pentacles",
+							"text": "Owl",
+							"tokens": [],
+							"references": []
+						},
+						{
+							"columnId": "wands",
+							"text": "Thunder Lizard",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Random Totem"
+			}
+		},
+		{
+			"id": "signs-and-portents",
+			"title": "Signs and Portents",
+			"deck": "minor",
+			"deckScope": "fresh",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Signs and Portents"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "I"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Mushroom Forest: Yellow mushrooms with pink gills erupt from the flagstones of a random district. They stand as tall as columns, choking off traffic and commerce. That district’s special City Action cannot be used this City Phase.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "II",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Blood-Red Star: A comet hangs over the City: a menstrual smear across the sky in both night and day. Its sickly red-brown light causes sleeplessness in the City. Everyone you meet is haggard and bleary eyed, barely holding onto sanity. You can’t sleep either. Begin the next Crawl Phase Stressed.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "III"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Mists: Emerald-colored fog rises out of the mouths to the Underworld, blotting out the sun. This phase takes place in an unnatural, unending night.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IV",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Ancient Quarter: A district of the City that hasn’t existed in centuries reappears from the mists of the ages. Its residents are antique and deeply confused about where they are and how they got here. Draw an additional district, per the rules in Appendix D: City Creation. This district becomes a part of the present City.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "V"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Honey Cult: An adventurer brought black honey to the City. All who eat of it profess to see terrible and wonderful visions of a pregnant woman. They rave about the Nascent Horde. Something about their ravings causes a deep anxiety inside of you.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VI",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Dreams: Dreams begin wandering through the City. A husband begins having the dreams of his wife. A hay merchant suddenly begins having the dreams of his neighbor, a clothier. The archbishop begins having dreams of the inbred princess locked in the Tower of Forbiddance. Each player must tell one secret to another player, which their adventurer dreams about.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Slime Catastrophe: Some thoughtless adventurer brought a baby green slime back into the City. It quickly grew in size, swallowing the food of the inn, the horses, the stables, and entire city blocks. Before it was vanquished with a fire, it ate an entire district. Remove one random district from the City.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Rip Van Winkle: Time moves strangely in the Underworld. You return to the City a full 100 years after you left. Your children are old and your lovers are dead.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Thing in the Water: Fishermen pull forth the corpse of some stupendous white thing from the waters of the Grey. The ocean sings a pitiful song for the next week. The song elicits a feeling of devastating ennui. Several named GM characters walk into the ocean and are never seen again.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Dog Suicide: All the dogs of the City commit suicide overnight: they throw themselves off of bridges, smash themselves through glass windows, drown themselves in the Grey.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Black Miracle of the Statues: Every graven image in the City begins speaking terrible blasphemies. In a fit of iconoclasm, the Cult begins smashing all representative art. Statues, paintings, idols, mosaics, figureheads, children’s toys, etc., are all fuel for their holy bonfires. Religious fervor is increased in the near term.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Blood Rain: Red clouds, swollen like pustules, begin raining blood. The blood flows in rivulets down the streets, pollutes cisterns, stains everything. It’s gross.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "The Child of Silence: A giant infant crawls down the streets. The thing is surrounded with an aura of impenetrable silence: no sound whatsoever carries in its presence. It seems to be hunting the guild. The guild can hide and forestall this doom, though the Child of Silence will doubtless cause some terrible harm if left unchecked.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "What Is Dead May Never Die: The dead haunt the City. Until the guild finds the source of the undead in the Underworld and quells it, no City Actions can be performed. If the plague of the dead is allowed to continue, the Underworld will breach onto the surface, devouring the City (as it has devoured so many cities before).",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Signs and Portents"
+			}
+		},
+		{
+			"id": "starting-disposition",
+			"title": "Starting Disposition",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Disposition"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "II"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Anger",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "III",
+						"to": "IV"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Distaste",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "V",
+						"to": "VI"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Sadness",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Joy",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Surprise",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Trust",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "Fear",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Starting Disposition"
+			}
+		},
+		{
+			"id": "were-doomed",
+			"title": "We’re Doomed!",
+			"deck": "minor",
+			"axis": "card",
+			"columns": [
+				{
+					"id": "result",
+					"label": "Doom"
+				}
+			],
+			"rows": [
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "I",
+						"to": "VII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are eaten by a grue.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "VIII",
+						"to": "VIII"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are captured by monsters. The GM chooses an appropriate monster based on the Meatgrinder table. Escaping guild members know your general location and the type of monster.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "IX",
+						"to": "IX"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are held for ransom by the bird-faced Olu Gang. It takes 1,000 gold per guild Fame (Deeds and Fame) to buy your freedom.",
+							"tokens": [],
+							"references": [
+								{
+									"collection": "rules",
+									"entryId": "7-deeds-and-fame",
+									"label": "Deeds and Fame"
+								}
+							]
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "X",
+						"to": "X"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You are lost in the Underworld. The GM places your adventurer as an encounter on the Meatgrinder table. That character may reenter play if you are encountered. Make a new adventurer for the time being.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Page",
+						"to": "Page"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You make it back to the surface, but only after making solemn oaths to forsake the adventuring life. You retire. The GM controls your character in the City.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Knight",
+						"to": "Knight"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You scramble back to the surface naked and shivering. You lose all of your equipment, both from your belt and backpack.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "Queen",
+						"to": "Queen"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You limp back to the surface, shaken to your core. You have a 50% chance to have lost each item carried, tested individually.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				},
+				{
+					"key": {
+						"kind": "card-range",
+						"from": "King",
+						"to": "King"
+					},
+					"cells": [
+						{
+							"columnId": "result",
+							"text": "You limp back to the surface, mostly unscathed but raving about the twelve different flavors of darkness.",
+							"tokens": [],
+							"references": []
+						}
+					]
+				}
+			],
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "We’re doomed!"
+			}
+		}
+	],
+	"modifiers": [
+		{
+			"id": "camp-high-chant",
+			"title": "High Chant",
+			"phase": "camp",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"behaviorId": "inspiration-distribution",
+			"params": {
+				"maxPerPlayer": 1
+			}
+		},
+		{
+			"id": "challenge-aim",
+			"title": "Aim",
+			"phase": "challenge",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Bow",
+				"anchor": "- Aim is a Swords action."
+			},
+			"ruleEntryIds": [],
+			"behaviorId": "prepared-facedown-bonus",
+			"params": {
+				"suit": "swords"
+			}
+		},
+		{
+			"id": "challenge-black-honey",
+			"title": "Black Honey",
+			"phase": "challenge",
+			"source": {
+				"file": "06 - Chapter 6 - The Crawl Phase.md",
+				"heading": "Black honey"
+			},
+			"ruleEntryIds": [
+				"crawl-black-honey"
+			],
+			"behaviorId": "deal-size-delta",
+			"params": {
+				"cards": 1
+			}
+		},
+		{
+			"id": "challenge-brainfever",
+			"title": "Brainfever",
+			"phase": "challenge",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Brainfever"
+			},
+			"ruleEntryIds": [
+				"sorcery-brainfever"
+			],
+			"behaviorId": "forced-initiative-selection",
+			"params": {
+				"select": "lowest-value"
+			}
+		},
+		{
+			"id": "challenge-counsel",
+			"title": "Counsel",
+			"phase": "challenge",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "Counsel"
+			},
+			"ruleEntryIds": [
+				"paths-counsel"
+			],
+			"behaviorId": "private-transfer",
+			"params": {
+				"suitMustMatchAction": true
+			}
+		},
+		{
+			"id": "challenge-guardian-angel",
+			"title": "Guardian Angel",
+			"phase": "challenge",
+			"source": {
+				"file": "11 - Appendix A - Sorcery.md",
+				"heading": "Guardian Angel"
+			},
+			"ruleEntryIds": [
+				"sorcery-guardian-angel"
+			],
+			"behaviorId": "private-transfer",
+			"params": {
+				"suitMustMatchAction": false
+			}
+		},
+		{
+			"id": "challenge-stun",
+			"title": "Stun",
+			"phase": "challenge",
+			"source": {
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Effects"
+			},
+			"ruleEntryIds": [
+				"effects"
+			],
+			"behaviorId": "forced-hand-discard",
+			"params": {
+				"immediate": true
+			}
+		}
+	],
+	"formulas": [
+		{
+			"id": "gm-hand-size",
+			"title": "GM Challenge hand size",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "1. Draw Challenge cards",
+				"after": "GMing the Challenge"
+			},
+			"ruleEntryIds": [
+				"challenge-gm-hand-size"
+			],
+			"params": {
+				"base": 3,
+				"perEnemyType": 1,
+				"enemiesOutnumberAdventurers": 1,
+				"enemiesDoubleAdventurers": 1,
+				"perLargerThanHumanEnemy": 1,
+				"eliteEnemyPresent": 2,
+				"dungeonLordPresent": 3
+			}
+		},
+		{
+			"id": "high-chant-selection",
+			"title": "High Chant inspiration count",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"params": {
+				"perCups": 1
+			}
+		},
+		{
+			"id": "player-hand-size",
+			"title": "Player Challenge hand size",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "1. Draw Challenge cards",
+				"after": "Special rules"
+			},
+			"ruleEntryIds": [
+				"challenge-draw-cards"
+			],
+			"params": {
+				"base": 4
+			}
+		}
+	]
+}

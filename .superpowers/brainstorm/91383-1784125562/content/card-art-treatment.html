@@ -1,0 +1,63 @@
+<style>
+	.art-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+	.art-choice { background:var(--bg-secondary); border:2px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:all .15s ease; }
+	.art-choice:hover { border-color:var(--accent); transform:translateY(-2px); }
+	.art-choice.selected { border-color:var(--selected-border); background:var(--selected-bg); }
+	.art-stage { min-height:390px; display:flex; align-items:center; justify-content:center; gap:1rem; padding:1.5rem; background:var(--bg-tertiary); border-bottom:1px solid var(--border); }
+	.art-copy { padding:1rem; }
+	.art-copy p { color:var(--text-secondary); font-size:.85rem; }
+	.tarot { position:relative; width:142px; aspect-ratio:0.58; background:var(--bg-secondary); overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+	.tarot img { width:100%; height:100%; display:block; object-fit:cover; }
+	.archival { border:1px solid var(--border); border-radius:7px; padding:5px 5px 30px; }
+	.archival img { object-fit:contain; background:var(--bg-secondary); }
+	.archival .meta { position:absolute; left:6px; right:6px; bottom:5px; height:21px; display:flex; align-items:center; justify-content:space-between; color:var(--text-primary); font-size:.65rem; }
+	.fullbleed { border-radius:9px; }
+	.fullbleed img { transform:scale(1.12); }
+	.corner { position:absolute; top:7px; left:7px; min-width:27px; padding:4px 5px; border-radius:5px; background:var(--bg-secondary); color:var(--text-primary); font-size:.63rem; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+	.full-name { position:absolute; left:0; right:0; bottom:0; padding:8px 7px; background:linear-gradient(transparent,rgba(0,0,0,.85)); color:white; font-size:.68rem; text-align:center; }
+	.bookplate { border:8px double var(--border); border-radius:3px; padding:8px 8px 34px; }
+	.bookplate::before,.bookplate::after { content:'❦'; position:absolute; bottom:6px; color:var(--text-secondary); font-size:.75rem; }
+	.bookplate::before { left:9px; }
+	.bookplate::after { right:9px; transform:scaleX(-1); }
+	.bookplate img { object-fit:contain; }
+	.bookplate .plate { position:absolute; bottom:7px; left:28px; right:28px; text-align:center; color:var(--text-primary); font-family:serif; font-size:.68rem; letter-spacing:.04em; }
+	.zoom-note { width:84px; color:var(--text-secondary); font-size:.7rem; line-height:1.35; }
+	@media (max-width:700px) { .art-options { grid-template-columns:1fr; } }
+</style>
+
+<h2>How should the Rider–Waite–Smith artwork sit on each card?</h2>
+<p class="subtitle">The same approved scan is shown three ways. This choice affects legibility, fidelity to the original border, and how strongly Guild Book styles the deck.</p>
+
+<div class="art-options">
+	<div class="art-choice" data-choice="archival" onclick="toggleSelect(this)">
+		<div class="art-stage">
+			<div class="tarot archival">
+				<img src="https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" alt="The Fool card artwork">
+				<div class="meta"><strong>The Fool</strong><span>0</span></div>
+			</div>
+			<div class="zoom-note">Full scan remains uncropped. Focus or tap opens a larger inspection view.</div>
+		</div>
+		<div class="art-copy"><h3>A. Archival Frame <span style="color:var(--accent)">— recommended</span></h3><p>Preserves the complete original card and border. A slim app-owned footer supplies consistent HMTW name and numeric value without painting over the artwork.</p></div>
+	</div>
+
+	<div class="art-choice" data-choice="full-bleed" onclick="toggleSelect(this)">
+		<div class="art-stage">
+			<div class="tarot fullbleed">
+				<img src="https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" alt="The Fool card artwork cropped full bleed">
+				<div class="corner"><strong>0</strong><br>Fool</div>
+				<div class="full-name">THE FOOL · INTERRUPT</div>
+			</div>
+		</div>
+		<div class="art-copy"><h3>B. Full Bleed</h3><p>Most dramatic at small sizes, with corner metadata over the image. It crops the historical border and can obscure details in visually busy cards.</p></div>
+	</div>
+
+	<div class="art-choice" data-choice="bookplate" onclick="toggleSelect(this)">
+		<div class="art-stage">
+			<div class="tarot bookplate">
+				<img src="https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" alt="The Fool card artwork in an ornamental frame">
+				<div class="plate">THE FOOL · 0</div>
+			</div>
+		</div>
+		<div class="art-copy"><h3>C. Guild Bookplate</h3><p>Places the scan inside a distinctive original Guild Book frame. Strong visual identity, but adds weight and makes each card slightly smaller on crowded Challenge tables.</p></div>
+	</div>
+</div>

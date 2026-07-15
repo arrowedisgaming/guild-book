@@ -118,10 +118,24 @@ export function resolveTestOfFate(config: TarotConfig, input: TestOfFateInput): 
 	const modifier = hasFavor === input.disfavor ? 0 : hasFavor ? step : -step;
 
 	const pushed = input.pushCard !== null;
+	const initialDrawMatchedTestedSuit = input.initialCard.suit === input.testedSuit;
+
+	// Ch1: "If the result of the test is a failure, the player may opt to push
+	// fate." A push is only legal off a failure, so reject an illegal one rather
+	// than resolving it. `canPush` is an output hint for the UI; it cannot guard
+	// a caller that never reads it, and without this an initial success could be
+	// pushed into an automatic great failure by supplying a Fool.
+	if (pushed) {
+		const initialTotal = input.attribute + input.initialCard.value + modifier;
+		if (initialTotal >= config.resolution.successThreshold) {
+			throw new Error(
+				`illegal push: the initial draw totalled ${initialTotal}, which already succeeded`
+			);
+		}
+	}
+
 	const cardTotal = input.initialCard.value + (input.pushCard?.value ?? 0);
 	const total = input.attribute + cardTotal + modifier;
-
-	const initialDrawMatchedTestedSuit = input.initialCard.suit === input.testedSuit;
 	const automaticGreatFailure = input.pushCard?.id === FOOL_ID;
 	const foolDrawn = input.initialCard.id === FOOL_ID || input.pushCard?.id === FOOL_ID;
 

@@ -394,10 +394,6 @@ const tarotSourceRefSchema = z
 
 const tarotDeckIdEnum = z.enum(['major', 'minor']);
 
-/** `fresh` draws a newly shuffled deck unrelated to the campaign decks: outside
- *  card conservation, never exhausts, cannot trigger a Fool reshuffle. */
-const tarotDeckScopeEnum = z.enum(['session', 'fresh']);
-
 const tarotProcedurePhaseEnum = z.enum(['crawl', 'challenge', 'camp', 'city', 'cross-phase']);
 
 const tarotProcedureScopeEnum = z.enum([
@@ -431,8 +427,8 @@ const tarotProcedureStepDefinitionSchema = z.object({
 	actor: z.enum(['gm', 'player', 'system']),
 	operation: tarotOperationEnum,
 	deck: tarotDeckIdEnum.optional(),
-	deckScope: tarotDeckScopeEnum.optional(),
 	draw: tarotDrawSpecSchema.optional(),
+	precondition: z.enum(['previous-step-failed']).optional(),
 	lookupTableId: z.string().optional(),
 	visibility: z.enum(['public', 'actor-private', 'recipient-private']),
 	resultVisibility: z.enum(['public', 'actor-private', 'gm-private']),
@@ -456,12 +452,18 @@ const tarotLookupKeySchema = z.union([
 	z.object({ kind: z.literal('suit'), suit: suitEnum })
 ]);
 
-const tarotLookupTokenEnum = z.enum(['value', 'suit', 'odd', 'even', 'discard', 'adventurers']);
+/** Typed discard-top references; see TarotLookupToken. */
+const tarotLookupTokenSchema = z.union([
+	z.object({ kind: z.literal('value') }),
+	z.object({ kind: z.literal('parity'), parity: z.enum(['odd', 'even']) }),
+	z.object({ kind: z.literal('suit'), suit: suitEnum }),
+	z.object({ kind: z.literal('range'), from: z.string(), to: z.string() })
+]);
 
 const tarotLookupCellSchema = z.object({
 	columnId: z.string(),
 	text: z.string().min(1),
-	tokens: z.array(tarotLookupTokenEnum),
+	tokens: z.array(tarotLookupTokenSchema),
 	references: z.array(
 		z.object({
 			collection: z.enum(['denizens', 'alchemy', 'rules']),
@@ -475,7 +477,7 @@ export const tarotLookupTableSchema = z.object({
 	id: z.string(),
 	title: z.string(),
 	deck: tarotDeckIdEnum,
-	deckScope: tarotDeckScopeEnum.optional(),
+	bracketConvention: z.literal('minor-discard-top').optional(),
 	axis: z.enum(['card', 'card-by-suit', 'suit-by-step']),
 	columns: z.array(z.object({ id: z.string(), label: z.string() })).min(1),
 	rows: z.array(z.object({ key: tarotLookupKeySchema, cells: z.array(tarotLookupCellSchema) })).min(1),

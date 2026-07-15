@@ -313,9 +313,35 @@ export function extractRuleBody(file, heading, until, after, options = {}) {
 //      reference target. Here the cross-reference *is* data.
 // Neither behaviour is changed; this path simply does not use them.
 
-/** Bracket convention (Ch9): "Anything in brackets [ ] refers to the top card of
- *  the minor arcana discard pile." */
-const TOKEN_RE = /\[(value|suit|odd|even|discard|adventurers)\]/g;
+/**
+ * The bracket convention, stated in Ch9's Carouse section (`:275`): "Anything in
+ * brackets [ ] refers to the top card of the minor arcana discard pile.
+ * Sometimes brackets provide numerical values … Sometimes brackets provide a
+ * random result within the table's entry based on the suit of the card."
+ *
+ * It is **table-scoped**, not global: Meatgrinder and City Events also use
+ * brackets, but as category labels ([Curiosity], [Rumor], [Travel event]) keyed
+ * to card ranges — nothing to do with the discard pile. A table opts in via the
+ * manifest's `bracketConvention`, so a label is never mistyped as a selector.
+ */
+const BRACKET_RE = /\[([^\]]{1,14})\]/g;
+const SUIT_TOKENS = new Set(['swords', 'pentacles', 'cups', 'wands']);
+
+/** Classify one bracket into a typed reference to the minor discard top. */
+function parseToken(raw) {
+	const text = raw.trim();
+	const lower = text.toLowerCase();
+	if (lower === 'value') return { kind: 'value' };
+	if (lower === 'odd' || lower === 'even') return { kind: 'parity', parity: lower };
+	if (SUIT_TOKENS.has(lower)) return { kind: 'suit', suit: lower };
+	const range = /^(\S+)\s*[–—-]\s*(\S+)$/.exec(text);
+	if (range) return { kind: 'range', from: range[1], to: range[2] };
+	// A bare numeral/court rank is a one-card range.
+	if (/^(?:[IVXL]+|\d+|Page|Knight|Queen|King)$/i.test(text)) {
+		return { kind: 'range', from: text, to: text };
+	}
+	return null;
+}
 
 /**
  * The book names the four minor court ranks two ways: by name in most tables
@@ -394,8 +420,15 @@ function slugify(text) {
 		.replace(/^-|-$/g, '');
 }
 
-/** Parses `[[<file>#<anchor>|<label>]]` into a typed reference plus its label. */
-function parseCellText(raw) {
+/**
+ * Parses one cell: wikilinks become typed references, `<br>` becomes a space,
+ * and brackets become typed discard-top tokens when the table opts in.
+ *
+ * @param {boolean} bracketsAreTokens whether this table declares the Ch9
+ *   discard-top bracket convention. When false, brackets are left as prose —
+ *   City Events' `[Curiosity]` is a category label, not a selector.
+ */
+function parseCellText(raw, bracketsAreTokens) {
 	const references = [];
 	let text = raw.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
 		const [target, label] = inner.split('|');
@@ -411,12 +444,27 @@ function parseCellText(raw) {
 		return shown;
 	});
 	text = text
+		// `<br>` separates clauses in the source ("… on your face.<br>• It is: …").
+		// Dropping it without a space welds the clauses together.
+		.replace(/<br\s*\/?>/gi, ' ')
 		.replace(/<[^>]+>/g, '')
 		.replace(/\\([[\]|])/g, '$1')
 		.replace(/_([^_\n]+)_/g, '*$1*')
 		.replace(/\s+/g, ' ')
 		.trim();
-	const tokens = [...text.matchAll(TOKEN_RE)].map((m) => m[1]);
+
+	const tokens = [];
+	if (bracketsAreTokens) {
+		for (const m of text.matchAll(BRACKET_RE)) {
+			const token = parseToken(m[1]);
+			if (!token) {
+				throw new Error(
+					`unrecognized bracket ${JSON.stringify(m[0])} in a table declaring the discard-top convention`
+				);
+			}
+			tokens.push(token);
+		}
+	}
 	return { text, tokens, references };
 }
 
@@ -465,6 +513,8 @@ function verifyDeck(rows, axis, declared) {
  * @param {string} [options.anchor] exact leading text of a bullet item — for the
  *   Appendix D Special City Actions, which have no heading of their own
  * @param {'major'|'minor'} options.deck required; verified against the keys
+ * @param {boolean} [options.bracketConvention] the table declares Ch9's
+ *   discard-top bracket convention, so brackets parse into typed tokens
  */
 export function extractTable(file, heading, after, options = {}) {
 	let lines;
@@ -525,7 +575,7 @@ export function extractTable(file, heading, after, options = {}) {
 			key,
 			cells: cells.slice(1).map((cell, i) => ({
 				columnId: columns[i]?.id ?? `col-${i}`,
-				...parseCellText(cell)
+				...parseCellText(cell, Boolean(options.bracketConvention))
 			}))
 		};
 	});

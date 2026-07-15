@@ -173,12 +173,47 @@ describe('oracle lookup tables', () => {
 		}
 	});
 
-	it('leaves no unparsed bracket token in cell text', () => {
+	/**
+	 * Every bracket in a convention-declaring table must be typed. The earlier
+	 * version of this test matched cell text against the same narrow enum the
+	 * parser used, so it asserted the implementation back at itself and could
+	 * never catch [Swords] or [1–2] going untyped — which is exactly what had
+	 * happened.
+	 */
+	it('types every bracket in a table declaring the discard-top convention', () => {
+		const declaring = getTarotProcedures().lookupTables.filter(
+			(t) => t.bracketConvention === 'minor-discard-top'
+		);
+		expect(declaring.length).toBeGreaterThan(0);
+		for (const table of declaring) {
+			for (const row of table.rows) {
+				for (const cell of row.cells) {
+					const brackets = cell.text.match(/\[[^\]]{1,14}\]/g) ?? [];
+					expect(brackets.length, `${table.id} "${cell.text.slice(0, 40)}"`).toBe(
+						cell.tokens.length
+					);
+				}
+			}
+		}
+	});
+
+	it('does not invent tokens in tables without the convention', () => {
+		for (const table of getTarotProcedures().lookupTables) {
+			if (table.bracketConvention) continue;
+			for (const row of table.rows) {
+				for (const cell of row.cells) {
+					expect(cell.tokens, `${table.id} should have no tokens`).toEqual([]);
+				}
+			}
+		}
+	});
+
+	/** Codex review: the <br> strip welded clauses together without a space. */
+	it('never welds two clauses together where the source had a line break', () => {
 		for (const table of getTarotProcedures().lookupTables) {
 			for (const row of table.rows) {
 				for (const cell of row.cells) {
-					const brackets = cell.text.match(/\[(value|suit|odd|even|discard|adventurers)\]/g) ?? [];
-					expect(brackets.length, `${table.id} cell has untyped tokens`).toBe(cell.tokens.length);
+					expect(cell.text, `${table.id} welded clause`).not.toMatch(/\S•/);
 				}
 			}
 		}

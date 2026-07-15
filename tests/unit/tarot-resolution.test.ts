@@ -133,19 +133,26 @@ describe('the Fool', () => {
 	});
 
 	// Ch1: "If you pull the Fool when pushing fate, your result automatically
-	// becomes a great failure." Note the total here would otherwise succeed.
+	// becomes a great failure."
+	//
+	// The initial draw must genuinely fail, or the push itself is illegal. An
+	// earlier version of this test pushed a 17 — an initial success — and only
+	// passed because the engine did not yet reject that.
 	it('makes a Fool on the push an automatic great failure', () => {
 		const r = resolveTestOfFate(
 			config,
 			input({
 				attribute: 4,
 				testedSuit: 'swords',
-				initialCard: { id: 'swords-x', value: 10, suit: 'swords' },
+				initialCard: { id: 'swords-ii', value: 2, suit: 'swords' },
 				pushCard: { id: 'fool', value: 0 },
 				favor: true,
 				resolveSpentForFavor: true
 			})
 		);
+		// 4 + 2 + 3 favor = 9 → a real failure, so the push is legal. The Fool
+		// then overrides the total entirely.
+		expect(r.total).toBe(9);
 		expect(r.outcome).toBe('great-failure');
 		expect(r.automaticGreatFailure).toBe(true);
 	});
@@ -168,5 +175,67 @@ describe('the Fool', () => {
 			).foolDrawn
 		).toBe(true);
 		expect(resolveTestOfFate(config, input()).foolDrawn).toBe(false);
+	});
+});
+
+describe('push legality', () => {
+	/**
+	 * Ch1: "If the result of the test is a failure, the player may opt to push
+	 * fate." canPush is an output hint for the UI and cannot guard a caller that
+	 * ignores it, so the engine rejects an illegal push rather than resolving it.
+	 */
+	it('rejects a push when the initial draw already succeeded', () => {
+		expect(() =>
+			resolveTestOfFate(
+				config,
+				input({
+					attribute: 4,
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
+					pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+				})
+			)
+		).toThrow(/illegal push/);
+	});
+
+	it('rejects pushing a success into a Fool great failure', () => {
+		expect(() =>
+			resolveTestOfFate(
+				config,
+				input({
+					attribute: 4,
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
+					pushCard: { id: 'fool', value: 0 }
+				})
+			)
+		).toThrow(/illegal push/);
+	});
+
+	it('allows a push when favor was not enough to succeed', () => {
+		const r = resolveTestOfFate(
+			config,
+			input({
+				attribute: 1,
+				initialCard: { id: 'cups-v', value: 5, suit: 'cups' },
+				favor: true,
+				pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+			})
+		);
+		expect(r.total).toBe(11);
+		expect(r.outcome).toBe('great-failure');
+	});
+
+	it('counts the modifier when judging push legality', () => {
+		// 10 + 1 = 11 fails alone, but favor makes it 14 — so the push is illegal.
+		expect(() =>
+			resolveTestOfFate(
+				config,
+				input({
+					attribute: 1,
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
+					favor: true,
+					pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+				})
+			)
+		).toThrow(/illegal push/);
 	});
 });

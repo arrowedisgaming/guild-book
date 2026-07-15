@@ -1,0 +1,85 @@
+<style>
+	.layout-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1rem; }
+	.layout-choice { background:var(--bg-secondary); border:2px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:all .15s ease; }
+	.layout-choice:hover { border-color:var(--accent); transform:translateY(-2px); }
+	.layout-choice.selected { border-color:var(--selected-border); background:var(--selected-bg); }
+	.layout-copy { padding:1rem; }
+	.layout-copy p { color:var(--text-secondary); font-size:.85rem; }
+	.preview { min-height:310px; background:var(--bg-primary); border-bottom:1px solid var(--border); padding:.65rem; display:flex; flex-direction:column; gap:.5rem; }
+	.preview-bar { display:flex; justify-content:space-between; align-items:center; padding:.45rem .6rem; background:var(--bg-secondary); border:1px solid var(--border); border-radius:7px; font-size:.68rem; color:var(--text-secondary); }
+	.preview-bar strong { color:var(--text-primary); font-size:.75rem; }
+	.workspace { display:grid; gap:.5rem; flex:1; }
+	.table-first { grid-template-columns:72px 1fr 86px; }
+	.phase-first { grid-template-columns:1fr 90px; }
+	.dashboard-first { grid-template-columns:1fr 1fr; grid-template-rows:84px 1fr; }
+	.panel { background:var(--bg-secondary); border:1px solid var(--border); border-radius:7px; padding:.5rem; min-width:0; }
+	.panel-title { text-transform:uppercase; letter-spacing:.04em; font-size:.58rem; color:var(--text-secondary); margin-bottom:.35rem; }
+	.rail-item { padding:.3rem .25rem; border-bottom:1px solid var(--border); font-size:.6rem; }
+	.rail-item.active { color:var(--accent); font-weight:600; }
+	.card-table { display:flex; flex-direction:column; justify-content:space-between; background:var(--bg-tertiary); border-radius:6px; padding:.45rem; height:100%; }
+	.piles { display:flex; justify-content:center; gap:.4rem; }
+	.tarot-card { width:28px; height:46px; border-radius:3px; border:1px solid var(--border); background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; text-align:center; font-size:.48rem; color:var(--text-secondary); }
+	.tarot-card.back { background:var(--accent); color:white; }
+	.tarot-card.face { background:var(--bg-secondary); color:var(--text-primary); }
+	.center-play { display:flex; justify-content:center; gap:.35rem; align-items:center; }
+	.hand { display:flex; justify-content:center; gap:.2rem; }
+	.hand .tarot-card { width:24px; height:40px; }
+	.log-line { font-size:.55rem; padding:.25rem 0; border-bottom:1px solid var(--border); color:var(--text-secondary); }
+	.log-line strong { color:var(--text-primary); }
+	.phase-tabs { display:flex; gap:.25rem; }
+	.phase-tab { padding:.25rem .4rem; background:var(--bg-tertiary); border-radius:4px; font-size:.58rem; }
+	.phase-tab.active { background:var(--accent); color:white; }
+	.guide { display:flex; flex-direction:column; gap:.4rem; justify-content:center; height:100%; }
+	.guide-step { padding:.45rem; background:var(--bg-tertiary); border-radius:5px; font-size:.6rem; }
+	.guide-step.active { border-left:3px solid var(--accent); }
+	.roster-row { display:flex; align-items:center; justify-content:space-between; font-size:.58rem; padding:.25rem 0; }
+	.portrait { width:18px; height:18px; border-radius:50%; background:var(--bg-tertiary); display:inline-flex; align-items:center; justify-content:center; margin-right:.25rem; }
+	@media (max-width:700px) { .layout-grid { grid-template-columns:1fr; } }
+</style>
+
+<h2>Which campaign-table layout feels right?</h2>
+<p class="subtitle">Each option keeps private hands private and uses the approved Rider–Waite–Smith art. The difference is what dominates the screen during play.</p>
+
+<div class="layout-grid">
+	<div class="layout-choice" data-choice="table-first" onclick="toggleSelect(this)">
+		<div class="preview">
+			<div class="preview-bar"><strong>The Lantern Guild</strong><span>Crawl · Watch 7 · Synced</span></div>
+			<div class="workspace table-first">
+				<div class="panel">
+					<div class="panel-title">Session</div>
+					<div class="rail-item active">Crawl</div><div class="rail-item">Challenge</div><div class="rail-item">Camp</div><div class="rail-item">City</div>
+				</div>
+				<div class="card-table">
+					<div class="piles"><div class="tarot-card back">GM<br>17</div><div class="tarot-card face">XIV</div><div class="tarot-card back">Guild<br>43</div><div class="tarot-card face">VII<br>Cups</div></div>
+					<div class="center-play"><div class="tarot-card face">IX<br>Wands</div><div class="tarot-card back">Hidden<br>action</div></div>
+					<div><div class="panel-title" style="text-align:center">Your private hand</div><div class="hand"><div class="tarot-card face">II<br>Swords</div><div class="tarot-card face">King<br>Cups</div><div class="tarot-card face">V<br>Wands</div><div class="tarot-card face">Fool</div></div></div>
+				</div>
+				<div class="panel"><div class="panel-title">Table log</div><div class="log-line"><strong>GM</strong> drew Meatgrinder</div><div class="log-line"><strong>Mara</strong> tested Cups</div><div class="log-line"><strong>Fool</strong> pending</div></div>
+			</div>
+		</div>
+		<div class="layout-copy"><h3>A. Table First <span style="color:var(--accent)">— recommended</span></h3><p>The shared card table is always central. Phase controls stay narrow, the activity log stays visible, and your private hand anchors the bottom.</p></div>
+	</div>
+
+	<div class="layout-choice" data-choice="phase-workspace" onclick="toggleSelect(this)">
+		<div class="preview">
+			<div class="preview-bar"><strong>The Lantern Guild</strong><div class="phase-tabs"><span class="phase-tab active">Crawl</span><span class="phase-tab">Challenge</span><span class="phase-tab">Camp</span></div></div>
+			<div class="workspace phase-first">
+				<div class="panel guide"><div class="panel-title">Meatgrinder procedure</div><div class="guide-step">1 · Choose the reason: New room</div><div class="guide-step active">2 · Draw from major arcana</div><div class="piles"><div class="tarot-card back">GM<br>17</div><button class="mock-button">Draw</button><div class="tarot-card face">XIV</div></div><div class="guide-step">3 · Add result note</div></div>
+				<div class="panel"><div class="panel-title">Quick tools</div><div class="rail-item active">Test fate</div><div class="rail-item">Discard oracle</div><div class="rail-item">Free draw</div><div class="panel-title" style="margin-top:.6rem">Your hand</div><div class="hand" style="flex-wrap:wrap"><div class="tarot-card face">II</div><div class="tarot-card face">K</div><div class="tarot-card face">V</div></div></div>
+			</div>
+		</div>
+		<div class="layout-copy"><h3>B. Phase Workspace</h3><p>The current guided procedure dominates. Excellent for learning the rules, but the physical-table feeling and simultaneous Challenge state are less visible.</p></div>
+	</div>
+
+	<div class="layout-choice" data-choice="campaign-dashboard" onclick="toggleSelect(this)">
+		<div class="preview">
+			<div class="preview-bar"><strong>The Lantern Guild</strong><span>Campaign overview</span></div>
+			<div class="workspace dashboard-first">
+				<div class="panel"><div class="panel-title">Active roster</div><div class="roster-row"><span><span class="portrait">M</span>Mara · Swords</span><span>4 cards</span></div><div class="roster-row"><span><span class="portrait">D</span>Dorian · Cups</span><span>4 cards</span></div></div>
+				<div class="panel"><div class="panel-title">Session</div><div class="roster-row"><span>Crawl · Watch 7</span><button class="mock-button">Open table</button></div><div class="log-line">Next: New room Meatgrinder</div></div>
+				<div class="panel" style="grid-column:1 / -1"><div class="card-table"><div class="piles"><div class="tarot-card back">GM</div><div class="tarot-card face">XIV</div><div class="tarot-card back">Guild</div><div class="tarot-card face">VII</div></div><div class="hand"><div class="tarot-card face">II</div><div class="tarot-card face">K</div><div class="tarot-card face">V</div></div></div></div>
+			</div>
+		</div>
+		<div class="layout-copy"><h3>C. Campaign Dashboard</h3><p>Roster, status, and session summary share equal weight. Useful between sessions, but dense and less focused when cards are moving quickly.</p></div>
+	</div>
+</div>

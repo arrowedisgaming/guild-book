@@ -601,20 +601,15 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-sign",
+					"id": "consult-discard-top",
 					"actor": "gm",
-					"operation": "draw",
+					"operation": "consult-discard-top",
 					"deck": "minor",
-					"deckScope": "fresh",
-					"draw": {
-						"kind": "fixed",
-						"count": 1
-					},
 					"lookupTableId": "signs-and-portents",
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -780,19 +775,15 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-twist",
+					"id": "consult-discard-top",
 					"actor": "gm",
-					"operation": "draw",
+					"operation": "consult-discard-top",
 					"deck": "minor",
-					"draw": {
-						"kind": "fixed",
-						"count": 1
-					},
 					"lookupTableId": "gm-twist",
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -1100,7 +1091,8 @@
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
-					"recovery": "discard-pending"
+					"recovery": "discard-pending",
+					"precondition": "previous-step-failed"
 				}
 			]
 		}
@@ -1829,6 +1821,7 @@
 			"id": "hangover",
 			"title": "Hangover",
 			"deck": "major",
+			"bracketConvention": "minor-discard-top",
 			"axis": "card",
 			"columns": [
 				{
@@ -1848,7 +1841,9 @@
 							"columnId": "result",
 							"text": "You awaken with a headache and [value] new gold coins in your pocket.",
 							"tokens": [
-								"value"
+								{
+									"kind": "value"
+								}
 							],
 							"references": []
 						}
@@ -1940,8 +1935,14 @@
 							"columnId": "result",
 							"text": "You awaken next to a [even] High Priest / [odd] High Priestess. They thank you for helping them break their vows, and showing them what it means to be happy.",
 							"tokens": [
-								"even",
-								"odd"
+								{
+									"kind": "parity",
+									"parity": "even"
+								},
+								{
+									"kind": "parity",
+									"parity": "odd"
+								}
 							],
 							"references": []
 						}
@@ -1971,8 +1972,40 @@
 					"cells": [
 						{
 							"columnId": "result",
-							"text": "You awaken with a new tattoo. • The tattoo is on your: [Swords] arm, [Pentacles] leg, [Cups] backside, [Wands] face.• It is: [1–2] horribly offensive, [3–8] cringe and misspelled, [9–King] pretty sweet.",
-							"tokens": [],
+							"text": "You awaken with a new tattoo. • The tattoo is on your: [Swords] arm, [Pentacles] leg, [Cups] backside, [Wands] face. • It is: [1–2] horribly offensive, [3–8] cringe and misspelled, [9–King] pretty sweet.",
+							"tokens": [
+								{
+									"kind": "suit",
+									"suit": "swords"
+								},
+								{
+									"kind": "suit",
+									"suit": "pentacles"
+								},
+								{
+									"kind": "suit",
+									"suit": "cups"
+								},
+								{
+									"kind": "suit",
+									"suit": "wands"
+								},
+								{
+									"kind": "range",
+									"from": "1",
+									"to": "2"
+								},
+								{
+									"kind": "range",
+									"from": "3",
+									"to": "8"
+								},
+								{
+									"kind": "range",
+									"from": "9",
+									"to": "King"
+								}
+							],
 							"references": []
 						}
 					]
@@ -2003,7 +2036,9 @@
 							"columnId": "result",
 							"text": "A letter is delivered to your room. It’s from a local aristocrat and they have accepted your invitation to a duel. The duel is in [value] days.",
 							"tokens": [
-								"value"
+								{
+									"kind": "value"
+								}
 							],
 							"references": []
 						}
@@ -2034,7 +2069,24 @@
 						{
 							"columnId": "result",
 							"text": "You don’t remember exactly what you did, but by the wanted posters lining the streets you can guess it wasn’t good. Choose based on the card’s suit: [Swords] armed robbery, [Pentacles] attempted pick-pocketing, [Cups] lewd acts, [Wands] consorting with dark entities.",
-							"tokens": [],
+							"tokens": [
+								{
+									"kind": "suit",
+									"suit": "swords"
+								},
+								{
+									"kind": "suit",
+									"suit": "pentacles"
+								},
+								{
+									"kind": "suit",
+									"suit": "cups"
+								},
+								{
+									"kind": "suit",
+									"suit": "wands"
+								}
+							],
 							"references": []
 						}
 					]
@@ -2138,8 +2190,25 @@
 					"cells": [
 						{
 							"columnId": "result",
-							"text": "You remember agreeing to a dare. It had something to do with a candle and flatulence. • You find that: [Swords] a district is burnt down[Pentacles] two districts are burnt down[Cups] three districts are burnt down[Wands] as Cups, but a fire spirit is still roaming the City, and the sorcerers are pissed.",
-							"tokens": [],
+							"text": "You remember agreeing to a dare. It had something to do with a candle and flatulence. • You find that: [Swords] a district is burnt down [Pentacles] two districts are burnt down [Cups] three districts are burnt down [Wands] as Cups, but a fire spirit is still roaming the City, and the sorcerers are pissed.",
+							"tokens": [
+								{
+									"kind": "suit",
+									"suit": "swords"
+								},
+								{
+									"kind": "suit",
+									"suit": "pentacles"
+								},
+								{
+									"kind": "suit",
+									"suit": "cups"
+								},
+								{
+									"kind": "suit",
+									"suit": "wands"
+								}
+							],
 							"references": []
 						}
 					]
@@ -4146,7 +4215,6 @@
 			"id": "signs-and-portents",
 			"title": "Signs and Portents",
 			"deck": "minor",
-			"deckScope": "fresh",
 			"axis": "card",
 			"columns": [
 				{

@@ -67,13 +67,48 @@ describe.skipIf(!existsSync(MD_DIR))('oracle table extraction', () => {
 		expect(first.text).not.toContain('[[');
 	});
 
-	it('types bracket tokens', () => {
-		const table = extractTable('09 - Chapter 9 - The City Phase.md', 'Carouse', undefined, { deck: 'major' });
-		const withValue = table.rows.find((r: { cells: { tokens: string[] }[] }) =>
-			r.cells[0].tokens.includes('value')
+	it('types every bracket form the discard-top convention uses', () => {
+		const table = extractTable('09 - Chapter 9 - The City Phase.md', 'Carouse', undefined, {
+			deck: 'major',
+			bracketConvention: true
+		});
+		const tokens = table.rows.flatMap((r: { cells: { tokens: unknown[] }[] }) =>
+			r.cells.flatMap((c) => c.tokens)
 		);
-		expect(withValue).toBeDefined();
-		expect(table.deck).toBe('major');
+		// Ch9:275 — value, parity, suit-branch and value-range all refer to the
+		// top card of the minor arcana discard pile.
+		expect(tokens).toContainEqual({ kind: 'value' });
+		expect(tokens).toContainEqual({ kind: 'parity', parity: 'odd' });
+		expect(tokens).toContainEqual({ kind: 'suit', suit: 'swords' });
+		expect(tokens).toContainEqual({ kind: 'range', from: '1', to: '2' });
+		expect(tokens).toContainEqual({ kind: 'range', from: '9', to: 'King' });
+	});
+
+	it('leaves category labels alone in tables without the convention', () => {
+		// City Events' [Curiosity]/[Rumor] are labels keyed to card ranges
+		// (Ch9:126-130), not references to the discard pile.
+		const table = extractTable('09 - Chapter 9 - The City Phase.md', 'Example City Events', undefined, {
+			deck: 'major'
+		});
+		const tokens = table.rows.flatMap((r: { cells: { tokens: unknown[] }[] }) =>
+			r.cells.flatMap((c) => c.tokens)
+		);
+		expect(tokens).toEqual([]);
+		expect(table.rows.some((r: { cells: { text: string }[] }) => r.cells[0].text.includes('[Curiosity]'))).toBe(true);
+	});
+
+	it('keeps clauses separated where the source used <br>', () => {
+		const table = extractTable('09 - Chapter 9 - The City Phase.md', 'Carouse', undefined, {
+			deck: 'major',
+			bracketConvention: true
+		});
+		const tattoo = table.rows.find((r: { cells: { text: string }[] }) =>
+			r.cells[0].text.includes('new tattoo')
+		);
+		expect(tattoo, 'the Hangover tattoo row').toBeDefined();
+		// Without a space for <br>, this welds to "…face.• It is:".
+		expect(tattoo!.cells[0].text).not.toMatch(/\S•/);
+		expect(tattoo!.cells[0].text).toContain('face. •');
 	});
 
 	it('emits no HTML in cell text', () => {

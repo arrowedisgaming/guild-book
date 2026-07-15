@@ -99,9 +99,14 @@ it prints.
 ## Ongoing
 
 - **Deploy** = `git push` to `main`. Nothing else.
-- **Schema changes**: `npm run db:generate` locally, commit the migration, then
-  `npm run db:migrate:d1:remote` before (or right after) pushing the code that
-  needs it.
+- **Schema changes**: `npm run db:generate` locally and commit the migration.
+  Apply every required remote migration **before** pushing or merging code that
+  depends on it; pushes to `main` deploy immediately and CI does not migrate D1.
+- **Auth account-linking migrations**: before merging this release, run
+  `npm run db:auth:preflight:d1:remote`, confirm both result sets are empty,
+  then run `npm run db:migrate:d1:remote`. Do not deploy the adapter-backed auth
+  code until every migration succeeds. Rotate `AUTH_SECRET` during the rollout
+  to sign out legacy sessions.
 - **Rollback**: Pages → Deployments → ⋯ → Rollback to this deployment.
 - Logs: Pages project → the deployment → **Functions** tab (real-time tail:
   `npx wrangler pages deployment tail --project-name guild-book`).

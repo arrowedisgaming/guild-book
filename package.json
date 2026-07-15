@@ -43,7 +43,9 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate:d1:local": "npx wrangler d1 migrations apply guild-book-db --local",
-		"db:migrate:d1:remote": "npx wrangler d1 migrations apply guild-book-db --remote"
+		"db:migrate:d1:remote": "npx wrangler d1 migrations apply guild-book-db --remote",
+		"db:auth:preflight:d1:local": "npx wrangler d1 execute guild-book-db --local --file=scripts/auth-account-preflight.sql",
+		"db:auth:preflight:d1:remote": "npx wrangler d1 execute guild-book-db --remote --file=scripts/auth-account-preflight.sql"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.59.1",

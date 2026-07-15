@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Anonymous adventurer exports on the wizard review step; PDF and Markdown downloads no
+  longer require saving or signing in. Denizen creation and exports remain anonymous.
+- An Account page showing linked Google and Discord providers, with explicit linking for
+  signed-in users.
+
+### Security
+
+- Replaced automatic same-email OAuth merging with Auth.js adapter-managed account
+  linking. Signed-out provider collisions are rejected; linking a second provider now
+  requires an authenticated session.
+- Added database uniqueness constraints for provider identities and normalized emails,
+  omission of unverified provider emails without denying sign-in, legacy/deleted-user
+  session invalidation, and OAuth token minimization.
+- Added a read-only rollout preflight for duplicate provider identities and normalized
+  email collisions; the migration preserves existing users and adventurers.
+
 ### Removed
 
 - `/licensing`: the per-typeface licence tracker table. The page now carries a

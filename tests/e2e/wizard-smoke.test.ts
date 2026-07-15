@@ -32,3 +32,27 @@ test('wizard assigns unique attributes and exposes standard theme controls', asy
 	await page.goto('/licensing');
 	await expect(page.getByAltText('Adherent of His Majesty the Worm')).toHaveCount(1);
 });
+
+test('anonymous wizard review downloads the local draft without signing in', async ({ page }) => {
+	await page.addInitScript(() => {
+		localStorage.setItem(
+			'guildbook-wizard-state',
+			JSON.stringify({
+				version: 1,
+				active: true,
+				currentStep: 7,
+				completedSteps: [0, 1, 2, 3, 4, 5, 6],
+				nonce: 0,
+				character: { name: 'Anonymous Knight' }
+			})
+		);
+	});
+
+	await page.goto('/create/hmtw/review');
+	await expect(page.getByText('These downloads work without an account.')).toBeVisible();
+
+	const markdownDownload = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Download Markdown' }).click();
+	expect((await markdownDownload).suggestedFilename()).toBe('anonymous-knight.md');
+	await expect(page).toHaveURL(/\/create\/hmtw\/review$/);
+});

@@ -9,6 +9,21 @@
 	let devName = $state('Dev User');
 
 	const redirectTo = $derived(page.url.searchParams.get('callbackUrl') ?? '/characters');
+	const authErrorMessage = $derived.by(() => {
+		const authError = page.url.searchParams.get('error');
+		if (!authError) return null;
+		if (authError === 'OAuthAccountNotLinked' && data.user) {
+			return 'That provider identity is already linked to a different Guild Book account and cannot be linked here.';
+		}
+		if (authError === 'OAuthAccountNotLinked') {
+			return 'That provider is not linked yet. Sign in with your original provider, then link the other one from Account.';
+		}
+		if (authError === 'AccountNotLinked') {
+			return 'That identity is already linked to a different Guild Book account.';
+		}
+		if (authError === 'SessionRequired') return 'Please sign in to manage your account.';
+		return 'Sign-in could not be completed. Please try again.';
+	});
 </script>
 
 <svelte:head>
@@ -18,6 +33,9 @@
 <section class="login">
 	<h1>Sign In</h1>
 	<p class="lede">Save your adventurers and reach them from any device.</p>
+	{#if authErrorMessage}
+		<p class="auth-error" role="alert">{authErrorMessage}</p>
+	{/if}
 
 	<div class="providers">
 		<button type="button" class="provider" onclick={() => signIn('google', { redirectTo })}>
@@ -77,6 +95,15 @@
 		margin: 0 0 1.5rem;
 		color: var(--ink-soft);
 		font-size: 0.95rem;
+	}
+	.auth-error {
+		margin: 0 0 1rem;
+		padding: 0.65rem 0.75rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
+		border-radius: 4px;
+		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+		font-size: 0.85rem;
+		text-align: left;
 	}
 	.providers {
 		display: flex;

@@ -26,7 +26,20 @@ import { PACK_DIR } from './pack.mjs';
 
 const INDEX_PATH = join(PACK_DIR, 'index.json');
 
-/** SHA-256 over each generated file, keyed and ordered so it cannot drift. */
+/**
+ * SHA-256 over the pack's whole content surface, keyed and ordered so it cannot
+ * drift: every generated collection file, plus index.json itself.
+ *
+ * index.json must be included because it is not merely a manifest — it carries
+ * real game rules (the tarot config, doom tiers, favor modifier, group-outcome
+ * bands, attributes, creation rules), and a session's runtime snapshot compiles
+ * from them. Hashing only `files` would let someone change `favorModifier` from
+ * 3 to 5 without a version bump and serve different rules under a version a live
+ * session had already pinned.
+ *
+ * `contentDigest` is excluded from its own input, which would otherwise be
+ * circular.
+ */
 function computeDigest(index) {
 	const hash = createHash('sha256');
 	const orderedFiles = Object.entries(index.files).sort(([a], [b]) => a.localeCompare(b));
@@ -36,6 +49,11 @@ function computeDigest(index) {
 		hash.update(readFileSync(join(PACK_DIR, file)));
 		hash.update('\0');
 	}
+	const { contentDigest: _excluded, ...indexContent } = index;
+	hash.update('index');
+	hash.update('\0');
+	hash.update(JSON.stringify(indexContent));
+	hash.update('\0');
 	return hash.digest('hex');
 }
 

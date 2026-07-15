@@ -359,10 +359,28 @@ export interface TarotConfig {
 	suits: SuitId[];
 	ranks: TarotRank[];
 	majorArcana: MajorArcanaCard[];
+	/** Which major values are lesser vs greater Dooms. Ch7 states the boundary. */
+	doomTiers: DoomTierConfig;
 	/** Cards drawn into a starting hand where the rules call for one. */
 	handSize: number;
 	/** Test-of-fate thresholds (card value + attribute). */
 	resolution: ResolutionRules;
+}
+
+/**
+ * Doom tiers, keyed by major-arcana value. The boundary is a game rule, not an
+ * engine constant: Ch7 — "Lesser doom cards have values of 1–14" / "Greater doom
+ * cards have values of 15–21". `ruleEntryId` cites the rules entry it came from.
+ */
+export interface DoomTierConfig {
+	lesser: DoomTierBand;
+	greater: DoomTierBand;
+}
+
+export interface DoomTierBand {
+	from: number;
+	to: number;
+	ruleEntryId: string;
 }
 
 export interface TarotRank {
@@ -386,11 +404,28 @@ export interface MajorArcanaCard {
  * not code. HMTW: total 14+ is a success, 13- is a failure, with great
  * success/failure edge cases.
  */
+/** One band of the group-test hit table (Ch1 "Group tests"). */
+export interface GroupOutcomeBand {
+	id: string;
+	label: string;
+	/** Inclusive hit range. Two tests can total -2..4. */
+	from: number;
+	to: number;
+	description: string;
+}
+
 export interface ResolutionRules {
 	successThreshold: number;
 	/** Drawing the tested suit on the initial draw upgrades to a great success. */
 	greatSuccessOnMatchingSuit: boolean;
 	outcomes: ResolutionOutcome[];
+	/**
+	 * What favor adds and disfavor subtracts. Ch1: "Favor grants +3 to the total
+	 * value"; each is non-cumulative and one cancels the other.
+	 */
+	favorModifier: number;
+	/** The group-test hit table. Bands must partition -2..4 with no overlap. */
+	groupOutcomes: GroupOutcomeBand[];
 }
 
 export interface ResolutionOutcome {

@@ -43,15 +43,68 @@ export const resolutionOutcomeSchema = z.object({
 	description: z.string()
 });
 
+const doomTierBandSchema = z.object({
+	from: z.number().int(),
+	to: z.number().int(),
+	ruleEntryId: z.string()
+});
+
+const groupOutcomeBandSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	from: z.number().int(),
+	to: z.number().int(),
+	description: z.string()
+});
+
+/**
+ * The 22 major arcana: exactly one Fool at 0, and I–XXI exactly once each. A
+ * duplicate or missing number would silently corrupt the GM deck, so it fails
+ * at load rather than at the table.
+ */
+function requireCompleteMajorArcana(cards: { id: string; number: number }[], ctx: z.RefinementCtx) {
+	if (new Set(cards.map((c) => c.id)).size !== cards.length) {
+		ctx.addIssue({ code: 'custom', message: 'major arcana ids must be unique' });
+	}
+	const fools = cards.filter((c) => c.id === 'fool');
+	if (fools.length !== 1 || fools[0].number !== 0) {
+		ctx.addIssue({ code: 'custom', message: 'expected exactly one `fool` with number 0' });
+	}
+	const numbered = cards.filter((c) => c.id !== 'fool').map((c) => c.number);
+	const expected = Array.from({ length: 21 }, (_, i) => i + 1);
+	if (numbered.length !== 21 || expected.some((n) => !numbered.includes(n))) {
+		ctx.addIssue({ code: 'custom', message: 'expected majors numbered 1–21 exactly once each' });
+	}
+}
+
+/** Two tests yield -2..4 hits; every reachable total needs exactly one band. */
+function requireTotalGroupCoverage(
+	bands: { id: string; from: number; to: number }[],
+	ctx: z.RefinementCtx
+) {
+	for (let hits = -2; hits <= 4; hits++) {
+		const matches = bands.filter((b) => hits >= b.from && hits <= b.to);
+		if (matches.length !== 1) {
+			ctx.addIssue({
+				code: 'custom',
+				message: `group hit total ${hits} matches ${matches.length} outcome bands, expected exactly 1`
+			});
+		}
+	}
+}
+
 export const tarotConfigSchema = z.object({
 	suits: z.array(suitEnum),
 	ranks: z.array(tarotRankSchema),
-	majorArcana: z.array(majorArcanaCardSchema),
+	majorArcana: z.array(majorArcanaCardSchema).superRefine(requireCompleteMajorArcana),
+	doomTiers: z.object({ lesser: doomTierBandSchema, greater: doomTierBandSchema }),
 	handSize: z.number(),
 	resolution: z.object({
 		successThreshold: z.number(),
 		greatSuccessOnMatchingSuit: z.boolean(),
-		outcomes: z.array(resolutionOutcomeSchema)
+		outcomes: z.array(resolutionOutcomeSchema),
+		favorModifier: z.number().int().positive(),
+		groupOutcomes: z.array(groupOutcomeBandSchema).superRefine(requireTotalGroupCoverage)
 	})
 });
 

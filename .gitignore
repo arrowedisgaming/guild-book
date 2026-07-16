@@ -39,6 +39,7 @@ CLAUDE.md
 AGENTS.md
 .agents/
 .codex/
+.worktrees/
 
 # Personal task list (not documentation)
 TODO.md
@@ -61,4 +62,3 @@ Adherent of the Worm Template/
 
 # Locally-supplied credentials — never commit
 secrets.*
-

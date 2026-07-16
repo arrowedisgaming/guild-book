@@ -34,6 +34,8 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "test-draw" },
+					"reshuffle": { "trigger": "fool-drawn", "decks": ["minor", "major"], "boundary": "test-resolution" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -48,6 +50,8 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "test-draw" },
+					"reshuffle": { "trigger": "fool-drawn", "decks": ["minor", "major"], "boundary": "test-resolution" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -83,6 +87,8 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "test-draw" },
+					"reshuffle": { "trigger": "fool-drawn", "decks": ["minor", "major"], "boundary": "test-resolution" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -97,6 +103,8 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "test-draw" },
+					"reshuffle": { "trigger": "fool-drawn", "decks": ["minor", "major"], "boundary": "test-resolution" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -130,16 +138,49 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
 					"visibility": "actor-private",
 					"resultVisibility": "gm-private",
 					"completion": "gm-confirmed",
 					"recovery": "retain-pending"
 				},
 				{
-					"id": "reveal-parable",
+					"id": "describe-parable",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "gm-private",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "choose-course",
+					"actor": "player",
+					"operation": "manual-choice",
+					"choice": { "kind": "accept-or-decline", "acceptStepId": "accept-card", "declineStepId": "decline-card" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "accept-card",
 					"actor": "gm",
 					"operation": "reveal",
 					"deck": "minor",
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "supplied" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "decline-card",
+					"actor": "gm",
+					"operation": "discard",
+					"deck": "minor",
+					"effects": [{ "kind": "bound-by-fate" }],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -759,6 +800,7 @@
 						"kind": "formula",
 						"formulaId": "high-chant-selection"
 					},
+					"cardSource": { "kind": "discard-selection", "deck": "minor" },
 					"visibility": "actor-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
@@ -769,6 +811,10 @@
 					"actor": "player",
 					"operation": "transfer",
 					"deck": "minor",
+					"cardSource": { "kind": "discard-selection", "deck": "minor" },
+					"effects": [{ "kind": "card-movement", "from": "discard", "to": "inspiration" }],
+					"limits": [{ "kind": "max-held", "count": 1 }],
+					"duration": { "kind": "until", "boundary": "session-end" },
 					"visibility": "recipient-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",

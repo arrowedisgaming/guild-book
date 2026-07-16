@@ -49,6 +49,18 @@ const validSemanticStep = () => ({
 	recovery: 'discard-pending'
 });
 
+const procedure = (id: string) => {
+	const value = getTarotProcedures().procedures.find((candidate) => candidate.id === id);
+	expect(value, `missing procedure ${id}`).toBeDefined();
+	return value!;
+};
+
+const step = (procedureId: string, stepId: string) => {
+	const value = procedure(procedureId).steps.find((candidate) => candidate.id === stepId);
+	expect(value, `missing step ${procedureId}/${stepId}`).toBeDefined();
+	return value!;
+};
+
 describe('tarot procedure semantic schema', () => {
 	it('retains every typed semantic field', () => {
 		const result = tarotProcedureDefinitionSchema.safeParse(validProcedure(validSemanticStep()));
@@ -125,6 +137,56 @@ describe('tarot procedure catalog', () => {
 			.procedures.flatMap((procedure) => procedure.steps)
 			.find((step) => step.id === 'flat-fifty-percent-choice');
 		expect(manual?.operation).toBe('manual-choice');
+	});
+
+	it('records test-draw provenance, exact group draws, and the Fool trigger', () => {
+		expect(step('test-of-fate', 'draw')).toMatchObject({
+			cardSource: { kind: 'draw-pile', deck: 'minor', provenance: 'test-draw' },
+			reshuffle: {
+				trigger: 'fool-drawn',
+				decks: ['minor', 'major'],
+				boundary: 'test-resolution'
+			}
+		});
+		expect(procedure('group-test').steps.filter((candidate) => candidate.operation === 'draw')).toHaveLength(
+			2
+		);
+	});
+
+	it('models both Augury decisions without granting supplied cards draw provenance', () => {
+		const augury = procedure('test-augury');
+		expect(augury.steps.map((candidate) => candidate.id)).toEqual([
+			'private-draw',
+			'describe-parable',
+			'choose-course',
+			'accept-card',
+			'decline-card'
+		]);
+		expect(step('test-augury', 'choose-course').choice).toEqual({
+			kind: 'accept-or-decline',
+			acceptStepId: 'accept-card',
+			declineStepId: 'decline-card'
+		});
+		expect(step('test-augury', 'accept-card').cardSource).toEqual({
+			kind: 'draw-pile',
+			deck: 'minor',
+			provenance: 'supplied'
+		});
+		expect(step('test-augury', 'decline-card').effects).toContainEqual({ kind: 'bound-by-fate' });
+	});
+
+	it('keeps High Chant inspiration supplied, bounded, and expiring', () => {
+		const highChant = procedure('camp-high-chant');
+		expect(highChant.steps.flatMap((candidate) => candidate.limits ?? [])).toContainEqual({
+			kind: 'max-held',
+			count: 1
+		});
+		expect(highChant.steps.some((candidate) => candidate.duration?.boundary === 'session-end')).toBe(
+			true
+		);
+		expect(
+			highChant.steps.some((candidate) => candidate.cardSource?.kind === 'discard-selection')
+		).toBe(true);
 	});
 });
 

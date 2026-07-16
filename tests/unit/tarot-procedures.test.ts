@@ -10,10 +10,13 @@ import { getTarotProcedures, getBestiary, getRules } from '$lib/server/content/l
 describe('tarot procedure catalog', () => {
 	it('loads a unique, versioned catalog', () => {
 		const file = getTarotProcedures();
-		expect(file.schemaVersion).toBe(1);
+		expect(file.schemaVersion).toBe(2);
 		expect(file.procedures.length).toBeGreaterThan(0);
 		expect(new Set(file.procedures.map((p) => p.id)).size).toBe(file.procedures.length);
 		expect(file.procedures.every((p) => p.steps.length > 0)).toBe(true);
+		for (const procedure of file.procedures) {
+			expect(procedure.invokedFrom.length, procedure.id).toBeGreaterThan(0);
+		}
 	});
 
 	it('contains only supported-v1 runtime entries with unique step ids', () => {

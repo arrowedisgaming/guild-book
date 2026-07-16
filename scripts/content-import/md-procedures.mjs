@@ -34,7 +34,7 @@ const MANIFEST = join(__dirname, 'manifest', 'tarot-procedures-md.json');
 const PROCEDURES_JSON = join(PACK_DIR, 'tarot-procedures.json');
 const AUDIT_MD = join(ROOT, 'docs', 'rules', 'tarot-procedure-audit.md');
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /** Proves a declared source still resolves, so a renamed heading fails locally. */
 function assertSourceResolves(source, label) {
@@ -46,6 +46,27 @@ function assertSourceResolves(source, label) {
 		return;
 	}
 	extractSection(source.file, source.heading, undefined, source.after);
+}
+
+const sourceKey = (source) =>
+	JSON.stringify([source.file, source.heading ?? null, source.after ?? null, source.anchor ?? null]);
+
+/** Validate definition and invocation evidence against the local rulebook vault. */
+export function validateProcedureManifestSources(manifest) {
+	for (const entry of manifest.entries) {
+		assertSourceResolves(entry.source, `${entry.id}.source`);
+		if (entry.scope !== 'supported-v1') continue;
+		if (!Array.isArray(entry.invokedFrom) || entry.invokedFrom.length === 0) {
+			throw new Error(`[${entry.id}] supported-v1 needs invokedFrom`);
+		}
+		const keys = entry.invokedFrom.map(sourceKey);
+		if (new Set(keys).size !== keys.length) {
+			throw new Error(`[${entry.id}] duplicate invokedFrom citation`);
+		}
+		entry.invokedFrom.forEach((source, index) =>
+			assertSourceResolves(source, `${entry.id}.invokedFrom[${index}]`)
+		);
+	}
 }
 
 /** Runtime catalog: supported entries only, deterministically ordered. */
@@ -76,8 +97,12 @@ export function renderAudit(manifest) {
 				a.id.localeCompare(b.id)
 		)
 		.map((entry) => {
-			const where = entry.source.heading ?? `(bullet) ${entry.source.anchor}`;
-			return `| ${entry.id} | ${escapePipes(entry.title)} | ${entry.scope} | ${escapePipes(entry.source.file)} — ${escapePipes(where)} | ${escapePipes(entry.rationale ?? '')} |`;
+			const formatSource = (source) => {
+				const where = source.heading ?? `(bullet) ${source.anchor}`;
+				return `${escapePipes(source.file)} — ${escapePipes(where)}`;
+			};
+			const invoked = entry.invokedFrom?.map(formatSource).join('<br>') ?? '';
+			return `| ${entry.id} | ${escapePipes(entry.title)} | ${entry.scope} | ${formatSource(entry.source)} | ${invoked} | ${escapePipes(entry.rationale ?? '')} |`;
 		});
 
 	const counts = manifest.entries.reduce((acc, e) => {
@@ -99,8 +124,8 @@ export function renderAudit(manifest) {
 		`- \`deferred-preparation\`: ${counts['deferred-preparation'] ?? 0}`,
 		`- \`not-applicable-non-tarot\`: ${counts['not-applicable-non-tarot'] ?? 0}`,
 		'',
-		'| ID | Procedure | Scope | Source | Rationale |',
-		'|---|---|---|---|---|',
+		'| ID | Procedure | Scope | Defined at | Invoked from | Rationale |',
+		'|---|---|---|---|---|---|',
 		...rows,
 		''
 	].join('\n');
@@ -218,7 +243,7 @@ function main() {
 		);
 	}
 
-	for (const entry of manifest.entries) assertSourceResolves(entry.source, entry.id);
+	validateProcedureManifestSources(manifest);
 	for (const modifier of manifest.modifiers) assertSourceResolves(modifier.source, modifier.id);
 	for (const formula of manifest.formulas) assertSourceResolves(formula.source, formula.id);
 

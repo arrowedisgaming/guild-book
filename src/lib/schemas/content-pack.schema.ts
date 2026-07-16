@@ -396,12 +396,6 @@ const tarotDeckIdEnum = z.enum(['major', 'minor']);
 
 const tarotProcedurePhaseEnum = z.enum(['crawl', 'challenge', 'camp', 'city', 'cross-phase']);
 
-const tarotProcedureScopeEnum = z.enum([
-	'supported-v1',
-	'deferred-preparation',
-	'not-applicable-non-tarot'
-]);
-
 const tarotOperationEnum = z.enum([
 	'draw',
 	'deal',
@@ -440,8 +434,9 @@ export const tarotProcedureDefinitionSchema = z.object({
 	id: z.string(),
 	title: z.string(),
 	phase: tarotProcedurePhaseEnum,
-	scope: tarotProcedureScopeEnum,
+	scope: z.literal('supported-v1'),
 	source: tarotSourceRefSchema,
+	invokedFrom: z.tuple([tarotSourceRefSchema]).rest(tarotSourceRefSchema),
 	ruleEntryIds: z.array(z.string()),
 	steps: z.array(tarotProcedureStepDefinitionSchema),
 	modifierIds: z.array(z.string())
@@ -503,7 +498,7 @@ export const tarotFormulaDefinitionSchema = z.object({
 });
 
 export const tarotProceduresFileSchema = z.object({
-	schemaVersion: z.literal(1),
+	schemaVersion: z.literal(2),
 	procedures: z.array(tarotProcedureDefinitionSchema),
 	lookupTables: z.array(tarotLookupTableSchema),
 	modifiers: z.array(sessionModifierDefinitionSchema),

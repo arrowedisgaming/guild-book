@@ -1,5 +1,5 @@
 {
-	"schemaVersion": 1,
+	"schemaVersion": 2,
 	"procedures": [
 		{
 			"id": "camp-high-chant",
@@ -10,6 +10,12 @@
 				"file": "05 - Chapter 5 - The Four Paths.md",
 				"heading": "High Chant"
 			},
+			"invokedFrom": [
+				{
+					"file": "05 - Chapter 5 - The Four Paths.md",
+					"heading": "High Chant"
+				}
+			],
 			"ruleEntryIds": [
 				"paths-high-chant"
 			],
@@ -52,6 +58,16 @@
 				"file": "09 - Chapter 9 - The City Phase.md",
 				"heading": "Leeches"
 			},
+			"invokedFrom": [
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "Use an Item"
+				},
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Leeches"
+				}
+			],
 			"ruleEntryIds": [
 				"city-leeches"
 			],
@@ -82,6 +98,17 @@
 				"file": "08 - Chapter 8 - The Camp Phase.md",
 				"heading": "Patrol"
 			},
+			"invokedFrom": [
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "Patrol"
+				},
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "3. No rest for the wicked",
+					"after": "Use a Talent"
+				}
+			],
 			"ruleEntryIds": [
 				"camp-patrol"
 			],
@@ -114,6 +141,13 @@
 				"heading": "3. No rest for the wicked",
 				"after": "Use a Talent"
 			},
+			"invokedFrom": [
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "3. No rest for the wicked",
+					"after": "Use a Talent"
+				}
+			],
 			"ruleEntryIds": [
 				"camp-no-rest-for-the-wicked"
 			],
@@ -155,6 +189,13 @@
 				"heading": "Bow",
 				"anchor": "- Aim is a Swords action."
 			},
+			"invokedFrom": [
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Bow",
+					"anchor": "- Aim is a Swords action."
+				}
+			],
 			"ruleEntryIds": [],
 			"modifierIds": [
 				"challenge-aim"
@@ -191,6 +232,12 @@
 				"file": "06 - Chapter 6 - The Crawl Phase.md",
 				"heading": "Black honey"
 			},
+			"invokedFrom": [
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Black honey"
+				}
+			],
 			"ruleEntryIds": [
 				"crawl-black-honey"
 			],
@@ -219,6 +266,12 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Brainfever"
 			},
+			"invokedFrom": [
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Brainfever"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-brainfever"
 			],
@@ -247,6 +300,12 @@
 				"file": "05 - Chapter 5 - The Four Paths.md",
 				"heading": "Counsel"
 			},
+			"invokedFrom": [
+				{
+					"file": "05 - Chapter 5 - The Four Paths.md",
+					"heading": "Counsel"
+				}
+			],
 			"ruleEntryIds": [
 				"paths-counsel"
 			],
@@ -275,6 +334,16 @@
 				"file": "07 - Chapter 7 - The Challenge Phase.md",
 				"heading": "Guard"
 			},
+			"invokedFrom": [
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "Guard"
+				},
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Shield"
+				}
+			],
 			"ruleEntryIds": [
 				"challenge-guard"
 			],
@@ -313,6 +382,12 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Guardian Angel"
 			},
+			"invokedFrom": [
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Guardian Angel"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-guardian-angel"
 			],
@@ -341,6 +416,46 @@
 				"file": "07 - Chapter 7 - The Challenge Phase.md",
 				"heading": "The Flow of the Challenge Phase"
 			},
+			"invokedFrom": [
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "The Flow of the Challenge Phase"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "1. Draw Challenge cards"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "2. Play Initiative"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "3. Take turns"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "5. End the round"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "The Fool"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "1. Draw Challenge cards",
+					"after": "GMing the Challenge"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "2. Play Initiative for each significant enemy"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "5. End the round",
+					"after": "GMing the Challenge"
+				}
+			],
 			"ruleEntryIds": [
 				"challenge-sequence",
 				"challenge-draw-cards",
@@ -456,6 +571,12 @@
 				"file": "01 - Chapter 1 - The Basics.md",
 				"heading": "Effects"
 			},
+			"invokedFrom": [
+				{
+					"file": "01 - Chapter 1 - The Basics.md",
+					"heading": "Effects"
+				}
+			],
 			"ruleEntryIds": [
 				"effects"
 			],
@@ -484,6 +605,12 @@
 				"file": "14 - Appendix D - City Creation.md",
 				"anchor": "- As above so below:"
 			},
+			"invokedFrom": [
+				{
+					"file": "14 - Appendix D - City Creation.md",
+					"anchor": "- As above so below:"
+				}
+			],
 			"ruleEntryIds": [],
 			"modifierIds": [],
 			"steps": [
@@ -512,6 +639,12 @@
 				"file": "09 - Chapter 9 - The City Phase.md",
 				"heading": "Beg and Busk"
 			},
+			"invokedFrom": [
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Beg and Busk"
+				}
+			],
 			"ruleEntryIds": [
 				"city-beg-and-busk"
 			],
@@ -542,6 +675,12 @@
 				"file": "09 - Chapter 9 - The City Phase.md",
 				"heading": "Carouse"
 			},
+			"invokedFrom": [
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Carouse"
+				}
+			],
 			"ruleEntryIds": [
 				"city-carouse"
 			],
@@ -573,6 +712,12 @@
 				"file": "14 - Appendix D - City Creation.md",
 				"anchor": "- **Doomsaying:**"
 			},
+			"invokedFrom": [
+				{
+					"file": "14 - Appendix D - City Creation.md",
+					"anchor": "- **Doomsaying:**"
+				}
+			],
 			"ruleEntryIds": [],
 			"modifierIds": [],
 			"steps": [
@@ -602,6 +747,16 @@
 				"file": "09 - Chapter 9 - The City Phase.md",
 				"heading": "Example City Events"
 			},
+			"invokedFrom": [
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "3. City Events"
+				},
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "8. Restock the Underworld"
+				}
+			],
 			"ruleEntryIds": [
 				"city-events"
 			],
@@ -633,6 +788,16 @@
 				"file": "09 - Chapter 9 - The City Phase.md",
 				"heading": "Signs and Portents"
 			},
+			"invokedFrom": [
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "3. City Events"
+				},
+				{
+					"file": "09 - Chapter 9 - The City Phase.md",
+					"heading": "Signs and Portents"
+				}
+			],
 			"ruleEntryIds": [
 				"city-signs-and-portents"
 			],
@@ -660,6 +825,12 @@
 				"file": "14 - Appendix D - City Creation.md",
 				"anchor": "- Strange communions:"
 			},
+			"invokedFrom": [
+				{
+					"file": "14 - Appendix D - City Creation.md",
+					"anchor": "- Strange communions:"
+				}
+			],
 			"ruleEntryIds": [],
 			"modifierIds": [],
 			"steps": [
@@ -684,6 +855,12 @@
 				"file": "04 - Chapter 4 - Kith and Kin.md",
 				"heading": "Wood elf arête talent: Area Sense"
 			},
+			"invokedFrom": [
+				{
+					"file": "04 - Chapter 4 - Kith and Kin.md",
+					"heading": "Wood elf arête talent: Area Sense"
+				}
+			],
 			"ruleEntryIds": [
 				"kith-area-sense"
 			],
@@ -714,6 +891,33 @@
 				"file": "06 - Chapter 6 - The Crawl Phase.md",
 				"heading": "Example Meatgrinder table"
 			},
+			"invokedFrom": [
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Watches"
+				},
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Meatgrinder"
+				},
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Loud noises"
+				},
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Moving carefully"
+				},
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "3. No rest for the wicked",
+					"after": "Use a Talent"
+				},
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "Overland Travel"
+				}
+			],
 			"ruleEntryIds": [
 				"crawl-meatgrinder",
 				"crawl-loud-noises",
@@ -747,6 +951,16 @@
 				"file": "06 - Chapter 6 - The Crawl Phase.md",
 				"heading": "We’re doomed!"
 			},
+			"invokedFrom": [
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Darkness"
+				},
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "We’re doomed!"
+				}
+			],
 			"ruleEntryIds": [
 				"crawl-were-doomed",
 				"crawl-darkness"
@@ -779,6 +993,16 @@
 				"file": "06 - Chapter 6 - The Crawl Phase.md",
 				"heading": "Starting Disposition"
 			},
+			"invokedFrom": [
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Social Encounters & Disposition"
+				},
+				{
+					"file": "06 - Chapter 6 - The Crawl Phase.md",
+					"heading": "Starting Disposition"
+				}
+			],
 			"ruleEntryIds": [
 				"crawl-starting-disposition",
 				"crawl-social-encounters-disposition"
@@ -807,6 +1031,12 @@
 				"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
 				"heading": "Creating surprises"
 			},
+			"invokedFrom": [
+				{
+					"file": "10 - Chapter 10 - The Worm Turns - Gamemastering.md",
+					"heading": "Creating surprises"
+				}
+			],
 			"ruleEntryIds": [
 				"gm-creating-surprises"
 			],
@@ -834,6 +1064,16 @@
 				"file": "01 - Chapter 1 - The Basics.md",
 				"heading": "Group tests"
 			},
+			"invokedFrom": [
+				{
+					"file": "01 - Chapter 1 - The Basics.md",
+					"heading": "Group tests"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "Retreating"
+				}
+			],
 			"ruleEntryIds": [
 				"group-tests"
 			],
@@ -878,6 +1118,12 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Malediction"
 			},
+			"invokedFrom": [
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Malediction"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-malediction"
 			],
@@ -918,6 +1164,20 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Maleficence"
 			},
+			"invokedFrom": [
+				{
+					"file": "05 - Chapter 5 - The Four Paths.md",
+					"heading": "Counter-spell"
+				},
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Casting Spells"
+				},
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Maleficence"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-maleficence"
 			],
@@ -994,6 +1254,16 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Random Totem"
 			},
+			"invokedFrom": [
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Totem"
+				},
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Random Totem"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-totem"
 			],
@@ -1025,6 +1295,16 @@
 				"file": "08 - Chapter 8 - The Camp Phase.md",
 				"heading": "Overland Travel"
 			},
+			"invokedFrom": [
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "Overland Travel"
+				},
+				{
+					"file": "08 - Chapter 8 - The Camp Phase.md",
+					"heading": "2. Meatgrinder"
+				}
+			],
 			"ruleEntryIds": [
 				"camp-overland-travel"
 			],
@@ -1056,6 +1336,12 @@
 				"file": "11 - Appendix A - Sorcery.md",
 				"heading": "Augury"
 			},
+			"invokedFrom": [
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Augury"
+				}
+			],
 			"ruleEntryIds": [
 				"sorcery-augury"
 			],
@@ -1096,6 +1382,32 @@
 				"file": "01 - Chapter 1 - The Basics.md",
 				"heading": "Tests of Fate"
 			},
+			"invokedFrom": [
+				{
+					"file": "01 - Chapter 1 - The Basics.md",
+					"heading": "Tests of Fate"
+				},
+				{
+					"file": "01 - Chapter 1 - The Basics.md",
+					"heading": "Pushing fate"
+				},
+				{
+					"file": "01 - Chapter 1 - The Basics.md",
+					"heading": "Pushing fate with the Fool"
+				},
+				{
+					"file": "05 - Chapter 5 - The Four Paths.md",
+					"heading": "High Chant"
+				},
+				{
+					"file": "07 - Chapter 7 - The Challenge Phase.md",
+					"heading": "Test Fate"
+				},
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Augury"
+				}
+			],
 			"ruleEntryIds": [
 				"tests-of-fate",
 				"favor-and-disfavor",

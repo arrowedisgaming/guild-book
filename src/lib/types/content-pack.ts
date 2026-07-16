@@ -473,7 +473,7 @@ export interface CreationRules {
  * without tarot stay manual and are recorded as `not-applicable-non-tarot`.
  */
 export interface TarotProceduresFile {
-	schemaVersion: 1;
+	schemaVersion: 2;
 	procedures: TarotProcedureDefinition[];
 	lookupTables: TarotLookupTable[];
 	modifiers: SessionModifierDefinition[];
@@ -542,9 +542,11 @@ export interface TarotProcedureDefinition {
 	id: string;
 	title: string;
 	phase: TarotProcedurePhase;
-	scope: TarotProcedureScope;
+	scope: 'supported-v1';
 	/** Exact rule source. `anchor` addresses a bullet item with no heading. */
 	source: TarotSourceRef;
+	/** Every call site that materially changes how or when this rule is invoked. */
+	invokedFrom: [TarotSourceRef, ...TarotSourceRef[]];
 	/** Rules-reference entry ids. Empty when the source is a bullet with no entry. */
 	ruleEntryIds: string[];
 	steps: TarotProcedureStepDefinition[];

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import manifestJson from '../../scripts/content-import/manifest/tarot-procedures-md.json';
+import type { TarotSourceRef } from '$lib/types/content-pack';
 
 /**
  * The manifest is the authoring surface, not the runtime contract: entries carry
@@ -14,7 +15,8 @@ type ManifestEntry = {
 	id: string;
 	title: string;
 	scope: string;
-	source: { file: string; heading?: string; anchor?: string };
+	source: TarotSourceRef;
+	invokedFrom?: TarotSourceRef[];
 	rationale?: string;
 	ruleEntryIds: string[];
 	steps: ManifestStep[];
@@ -65,6 +67,9 @@ const REQUIRED_V1 = [
 
 const SCOPES = ['supported-v1', 'deferred-preparation', 'not-applicable-non-tarot'];
 
+const sourceKey = (source: TarotSourceRef) =>
+	JSON.stringify([source.file, source.heading ?? null, source.after ?? null, source.anchor ?? null]);
+
 describe('tarot procedure audit manifest', () => {
 	const ids = manifest.entries.map((e) => e.id);
 
@@ -92,6 +97,19 @@ describe('tarot procedure audit manifest', () => {
 			expect(entry.source.file, entry.id).toMatch(/\.md$/);
 			// A rule with no heading of its own must name a bullet anchor instead.
 			expect(Boolean(entry.source.heading || entry.source.anchor), entry.id).toBe(true);
+		}
+	});
+
+	it('gives every supported procedure non-empty, unique invocation evidence', () => {
+		for (const entry of manifest.entries) {
+			if (entry.scope !== 'supported-v1') continue;
+			expect(entry.invokedFrom?.length ?? 0, entry.id).toBeGreaterThan(0);
+			const keys = entry.invokedFrom!.map(sourceKey);
+			expect(new Set(keys).size, `${entry.id} duplicate invokedFrom`).toBe(keys.length);
+			for (const ref of entry.invokedFrom!) {
+				expect(ref.file, entry.id).toMatch(/\.md$/);
+				expect(Boolean(ref.heading || ref.anchor), entry.id).toBe(true);
+			}
 		}
 	});
 

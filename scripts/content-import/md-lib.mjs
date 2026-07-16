@@ -246,6 +246,11 @@ export function normalizeMarkdown(lines) {
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
 	text = text.replace(/<img\b[^>]*>/gi, '');
+	// `<br>` separates clauses in the source ("…on your face.<br>• It is: …").
+	// Dropping it without a space welds them: "face.• It is:". The table path has
+	// the same rule; both pipelines must agree or the same row reads differently
+	// in the rules reference and the oracle catalog.
+	text = text.replace(/<br\s*\/?>/gi, ' ');
 	text = text.replace(/<[^>]+>/g, '');
 	text = text.replace(/\\([[\]|])/g, '$1'); // unescape \[ \] \|
 	text = text.replace(SUIT_GLYPHS, '');

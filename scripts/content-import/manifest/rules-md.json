@@ -26,7 +26,10 @@
 			"from": "- “OK, you grab the portcullis before it slams down.",
 			"to": "### “No, you can’t do that”"
 		},
-		"mustContain": ["### “No, you can’t do that”", "bits of wire just lying around your jail cell"],
+		"mustContain": [
+			"### “No, you can’t do that”",
+			"bits of wire just lying around your jail cell"
+		],
 		"mustNotContain": ["mechanism’s gears"],
 		"tags": ["gm", "adjudication"]
 	},
@@ -311,6 +314,30 @@
 		"file": "07 - Chapter 7 - The Challenge Phase.md",
 		"heading": "Greater dooms",
 		"tags": ["challenge", "tarot", "gm", "dooms"]
+	},
+	{
+		"id": "challenge-guard",
+		"section": "challenge-phase",
+		"title": "Guard",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Guard",
+		"mustContain": ["replace your Initiative"],
+		"tags": [
+			"challenge",
+			"tarot",
+			"initiative",
+			"shield",
+			"miscellaneous-action"
+		]
+	},
+	{
+		"id": "challenge-miscellaneous-actions",
+		"section": "challenge-phase",
+		"title": "Miscellaneous Actions",
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"heading": "Miscellaneous actions (Any Suit)",
+		"until": "Bid Lore",
+		"tags": ["challenge", "actions"]
 	},
 	{
 		"id": "camp-patrol",

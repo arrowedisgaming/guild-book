@@ -65,7 +65,7 @@ Four things surfaced while importing the rules prose. Each changes this incremen
 | §9 / §8.7 claim | Source reality | Consequence |
 |---|---|---|
 | `Aim` is a Challenge modifier owned by the Challenge module (§8.7) | `Aim` appears **twice in the entire vault**, both in `09 - Chapter 9 …:760-762`, as a bullet inside the **Bows equipment** entry. There is no Chapter 7 heading. | The mechanic is real ("play your card facedown… reveal the card and add its value to your total Attack") and belongs in v1, but it is an equipment-granted action with no heading. `challenge-aim` needs a bullet anchor and cites no rules entry. |
-| ~~"shield **Initiative replacement**" (§8.6, §8.7)~~ — **resolved, removed** | **No such mechanic exists.** `### Shield` (`09 - Chapter 9 …:683`) is about absorbing Notches. The only Initiative-adjacent shield rule is a **tie-break**: "Ties go to the attacker unless the defender has a shield" (`07 - Chapter 7 …:263`, `:415`, `:431`), which decides whether a Wound lands — and §8.6 excludes wound application from v1. | The specification was amended on 2026-07-15 to drop it, and Increment 3's `shield-initiative` modifier and `replace-initiative-with-shield` command were removed. **Do not author a manifest entry for it.** Both the described mechanic and the real one are out of scope. |
+| Shield **Initiative replacement** (§8.6, §8.7) — **corrected and restored 2026-07-16** | Ch7's `### Guard` (`07 - Chapter 7 …:552-554`) says a character with a shield may replace Initiative with any card from their hand as a miscellaneous action; the old Initiative is discarded. The earlier audit searched the Chapter 9 Shield equipment entry and attack tie-breaks but missed this call site. | Author `challenge-guard` as both a supported procedure and typed modifier, cite rules entry `challenge-guard`, accept any suit, require a shield, consume the miscellaneous-action budget, and discard the old Initiative. Preserve the false deletion only as correction history. |
 | Doomsaying, Strange Communions, As Above So Below are Appendix D Special City Actions (§9:444) | **Correct.** All three are bullets: `:806`, `:1050`, `:1066`. Beware `### As Above, So Below` at `10 - Chapter 10 …:594` — it is a *movie* in the Inspirational Media list. | All three need bullet anchors. `city-as-above-so-below` is a `reorder-top` over the minor deck's top three. |
 
 **2. The privacy model's rulebook citation — resolved in 0a.** "No peeking!" — the design review's primary justification for hidden hands, and what §8.2 leans on — lives in an Obsidian **sidebar callout** (`07 - Chapter 7 …:338-340`), which `stripCallouts` removed by design, so `challenge-facedown-cards` did not contain the rule it is cited for.
@@ -453,7 +453,7 @@ import manifest from '../../scripts/content-import/manifest/tarot-procedures-md.
 const required = [
 	'test-of-fate', 'group-test', 'challenge-round', 'challenge-black-honey',
 	'challenge-stun', 'challenge-brainfever', 'challenge-counsel',
-	'challenge-guardian-angel', 'challenge-aim',
+	'challenge-guardian-angel', 'challenge-aim', 'challenge-guard',
 	'camp-high-chant', 'camp-leeches', 'camp-watch', 'crawl-area-sense',
 	'overland-travel', 'test-augury', 'city-doomsaying', 'city-strange-communions',
 	'city-as-above-so-below', 'oracle-maleficence', 'oracle-malediction',
@@ -858,17 +858,17 @@ git add package.json scripts/content-import/verify-pack-version.mjs src/lib/type
 git commit -m "build(content): enforce deterministic procedure imports"
 ```
 
-## Increment 0b Completion Record — executed 2026-07-15
+## Increment 0b Completion Record — executed 2026-07-15, Guard coverage restored 2026-07-16
 
 **Status: complete. Gate A2 passes.**
 
 | Measure | Result |
 |---|---|
-| Audit entries | **34** — 30 `supported-v1`, 3 `deferred-preparation`, 1 `not-applicable-non-tarot` |
-| Runtime catalog | 30 procedures, 14 lookup tables (**194 rows**), 7 modifiers, 3 formulas |
+| Audit entries | **35** — 31 `supported-v1`, 3 `deferred-preparation`, 1 `not-applicable-non-tarot` |
+| Runtime catalog | 31 procedures, 14 lookup tables (**194 rows**), 8 modifiers, 3 formulas |
 | Size | 115 KB — well inside D1's 2 MB row limit |
-| `md-procedures --check` | `30 procedures, 14 tables (194 rows), 0 drifted` |
-| `md-rules --check` | `54 rules, 0 drifted` — the rules path was not disturbed |
+| `md-procedures --check` | `31 procedures, 14 tables (194 rows), 0 drifted` |
+| `md-rules --check` | `56 rules, 0 drifted` — Guard restoration added `challenge-guard` and `challenge-miscellaneous-actions` |
 | `npm run content:verify` | all collections 0 drifted; digest OK |
 | `npm run check` | 0 errors |
 | `npm test` | 186 passed |

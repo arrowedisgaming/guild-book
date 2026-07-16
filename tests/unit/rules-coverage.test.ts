@@ -41,6 +41,8 @@ const REQUIRED_IDS = [
 	'challenge-enemy-actions',
 	'challenge-lesser-dooms',
 	'challenge-greater-dooms',
+	'challenge-guard',
+	'challenge-miscellaneous-actions',
 
 	// Chapter 8 — The Camp Phase
 	// No `camp-sequence`: `# The Flow of the Camp Phase` runs to the next `#`
@@ -114,6 +116,20 @@ describe('rules reference coverage', () => {
 		const rule = byId.get('challenge-facedown-cards');
 		expect(rule?.body).toContain('Nobody but the player can look at the facedown card');
 		expect(rule?.body).toContain('No peeking!');
+	});
+
+	/**
+	 * Both import pipelines strip `<br>`; both must replace it with a space. The
+	 * table path was fixed first and the prose path was missed, so Carouse shipped
+	 * with "face.• It is:" welded together. This guards the prose path.
+	 */
+	it('never welds two clauses together where the source had a line break', () => {
+		for (const rule of rules) {
+			expect(rule.body, `${rule.id} welded clause`).not.toMatch(/\S•/);
+		}
+		const carouse = byId.get('city-carouse');
+		expect(carouse?.body).toContain('face. • It is:');
+		expect(carouse?.body).toContain('burnt down [Pentacles]');
 	});
 
 	/**

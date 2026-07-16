@@ -40,6 +40,7 @@ const REQUIRED_V1 = [
 	'challenge-counsel',
 	'challenge-guardian-angel',
 	'challenge-aim',
+	'challenge-guard',
 	'crawl-meatgrinder',
 	'crawl-were-doomed',
 	'crawl-area-sense',

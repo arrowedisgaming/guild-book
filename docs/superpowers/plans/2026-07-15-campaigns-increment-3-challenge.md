@@ -26,7 +26,9 @@
 
 5. **`doomTier` comes from content.** Global Constraint 3 states the I–XIV / XV–XXI boundary as a literal. Increment 0.5 amendment 5 moves that boundary into a `tarot.doomTiers` content block, now citeable against Increment 0a's `challenge-lesser-dooms` / `challenge-greater-dooms` entries — which state the boundary explicitly ("Lesser doom cards have values of 1–14", "Greater doom cards have values of 15–21"). Read it from config; do not re-hardcode 14 here.
 
-6. **`shield-initiative` is removed — the rulebook has no such mechanic.** Verified during Increment 0a: `### Shield` (`09 - Chapter 9 …:683`) governs Notch absorption and hand slots, and the only Initiative-adjacent shield rule is a tie-break — "Ties go to the attacker unless the defender has a shield" (`07 - Chapter 7 …:263`, `:415`, `:431`) — which decides whether a Wound lands. Wound application is outside v1 by specification §8.6. The specification was amended on 2026-07-15 to drop it. Do not add `shield-initiative` to `modifierIds`, do not implement `replace-initiative-with-shield`, and do not write a test asserting either.
+6. **Shield Initiative is REAL — an earlier amendment wrongly deleted it.** It is the **Guard** miscellaneous action, `07 - Chapter 7 …:552-554`: "If you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded." Cited by rules entry `challenge-guard` (added to Increment 0a). Keep `challenge-guard` in `modifierIds` and implement `replace-initiative-with-shield`.
+
+   The deletion happened because the author searched Chapter 9's `Shield` equipment entry and Chapter 7's attack tie-breaks, and never opened `### Guard` — the third instance of decision **D7**. Note the shape of the rule: it is a *miscellaneous action*, so it consumes the turn's action budget and takes any card regardless of suit; the discarded old Initiative is a real card movement the reducer must conserve.
 
 7. **`Aim` stays, but it is bow equipment.** It is a real mechanic sourced from `09 - Chapter 9 …:760-762`, not a Chapter 7 heading — a Swords action played face-down against a declared target, revealed on a later Attack to add its value. Increment 0b reaches it with a bullet anchor and it cites no rules entry. Keep `aim-prepare`; its content definition just comes from a different chapter than the rest of the Challenge module.
 
@@ -38,7 +40,7 @@
 - GM play and discard budgets are separate. A discard does not consume a play and rules may allow multiple discards up to held cards.
 - Fool Challenge play is an interrupt paired with another card, resolves first, grants an extra turn, and grants no minor actions for that extra turn.
 - Fool draw schedules both eligible deck reshuffles at the Challenge round boundary; it does not return held/in-play cards.
-- Stun, black honey, Brainfever, Counsel, Guardian Angel, and Aim receive typed engine behavior. Shield does not — see amendment 6.
+- Stun, black honey, Brainfever, Counsel, Guardian Angel, Aim, and shield Initiative (the Guard action) receive typed engine behavior.
 - Denizen card abilities use generic typed predicates; wounds, monster health, status application, and fictional consequences remain manually logged.
 - A replacement after death may enter only at the next legal deal/round boundary.
 
@@ -65,11 +67,12 @@ expect(challenge?.modifierIds).toEqual(expect.arrayContaining([
   'challenge-brainfever',
   'challenge-counsel',
   'challenge-guardian-angel',
-  'challenge-aim'
+  'challenge-aim',
+  'challenge-guard'
 ]));
 ```
 
-Note the namespaced IDs (amendment 2) and the absence of `shield-initiative` (amendment 6).
+Note the namespaced IDs (amendment 2) and the restored `challenge-guard` modifier (amendment 6).
 
 - [ ] **Step 2: Add the validated Challenge config**
 
@@ -79,7 +82,7 @@ export interface ChallengeConfig {
   playerBaseHandSize: number;
   gmHandFormula: {
     base: number;
-    perEnemy: number;
+    perEnemyType: number;
     sizeAdjustments: Record<string, number>;
     threatAdjustments: Record<string, number>;
   };
@@ -167,10 +170,12 @@ expect(projectForActor(dealt, gmActor, catalog).private).not.toHaveProperty('pla
 
 ```ts
 export function calculateGmHandSize(config: ChallengeConfig, enemies: ChallengeStateV1['enemyFacts']): number {
+  const enemyTypeCount = new Set(enemies.flatMap((enemy) => enemy.typeIds)).size;
+
   return Math.max(
     0,
     config.gmHandFormula.base +
-      enemies.length * config.gmHandFormula.perEnemy +
+      enemyTypeCount * config.gmHandFormula.perEnemyType +
       enemies.reduce(
         (sum, enemy) =>
           sum +
@@ -292,6 +297,7 @@ Required assertions:
 - `counsel`: transfers an owned private card to an authorized recipient without public identity.
 - `guardian-angel`: performs its audited private/public move as specified by content.
 - `aim`: creates and consumes the typed prepared/face-down zone.
+- `guard`: replaces the actor's public Initiative with any card from their private hand and discards the old Initiative. Requires a shield, consumes a miscellaneous action, and accepts any suit or value (Ch7:552).
 
 - [ ] **Step 2: Define modifier commands as strict variants**
 
@@ -302,7 +308,8 @@ export type ChallengeModifierCommand =
   | { type: 'apply-brainfever'; targetTenureId: string }
   | { type: 'counsel-transfer'; recipientUserId: string; cardId: string }
   | { type: 'guardian-angel'; targetTenureId: string; cardId: string }
-  | { type: 'aim-prepare'; cardId: string };
+  | { type: 'aim-prepare'; cardId: string }
+  | { type: 'replace-initiative-with-shield'; cardId: string };
 ```
 
 The visible command set is derived from actor ownership, current Challenge stage, and active content modifiers. Server validation rejects a syntactically valid but unprojected command.

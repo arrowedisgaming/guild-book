@@ -20,6 +20,18 @@
 
 	let hand = $derived($table.hand);
 
+	/**
+	 * Everything the test is declared against is frozen once a card is visible.
+	 *
+	 * Ch1 makes these pre-draw decisions — Resolve is spent "*prior* to a test of
+	 * fate", and great success requires the tested suit on the *initial* draw. If
+	 * the suit stayed editable you could see a Cups card, switch to Cups, and
+	 * manufacture a great success; if favor stayed editable you could buy it
+	 * retroactively. The engine cannot catch this: it only ever sees the final
+	 * declaration, which is self-consistent.
+	 */
+	let locked = $derived(hand.length > 0);
+
 	/** The engine takes the cards actually drawn; the UI never infers a push. */
 	let result = $derived.by(() => {
 		if (!testedSuit || hand.length === 0) return null;
@@ -41,6 +53,7 @@
 	});
 
 	function drawInitial() {
+		if (locked) return;
 		table.discardHand();
 		table.drawCards(1);
 	}
@@ -58,7 +71,12 @@
 			<span class="lbl">Test</span>
 			<div class="suits">
 				{#each SUIT_IDS as s (s)}
-					<button type="button" class:sel={testedSuit === s} onclick={() => (testedSuit = s)}>
+					<button
+						type="button"
+						class:sel={testedSuit === s}
+						disabled={locked}
+						onclick={() => (testedSuit = s)}
+					>
 						{SUIT_LABELS[s]}
 					</button>
 				{/each}
@@ -66,24 +84,25 @@
 		</div>
 		<div class="group">
 			<label class="lbl" for="attr">Attribute</label>
-			<select id="attr" bind:value={attribute}>
+			<select id="attr" bind:value={attribute} disabled={locked}>
 				{#each [1, 2, 3, 4] as v}<option value={v}>{v}</option>{/each}
 			</select>
 		</div>
 		<div class="group">
 			<span class="lbl">Circumstance</span>
 			<div class="checks">
-				<label><input type="checkbox" bind:checked={favor} /> Favor</label>
-				<label><input type="checkbox" bind:checked={disfavor} /> Disfavor</label>
+				<label><input type="checkbox" bind:checked={favor} disabled={locked} /> Favor</label>
+				<label><input type="checkbox" bind:checked={disfavor} disabled={locked} /> Disfavor</label>
 				<label title="Spent before the draw to gain favor. Pushing fate is free.">
-					<input type="checkbox" bind:checked={resolveSpentForFavor} /> Spend 1 Resolve for favor
+					<input type="checkbox" bind:checked={resolveSpentForFavor} disabled={locked} /> Spend 1 Resolve
+					for favor
 				</label>
 			</div>
 		</div>
 	</div>
 
 	<div class="actions">
-		<button type="button" class="primary" disabled={!testedSuit} onclick={drawInitial}>
+		<button type="button" class="primary" disabled={!testedSuit || locked} onclick={drawInitial}>
 			Draw &amp; test
 		</button>
 		<button
@@ -255,6 +274,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+	}
+	.checks label:has(input:disabled) {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 	.checks label {
 		display: flex;

@@ -31,34 +31,64 @@ test.describe('test of fate', () => {
 		await expect(page.getByRole('button', { name: 'Push fate (+1 card)' })).toBeEnabled();
 	});
 
-	test('favor adds +3 and disfavor cancels it', async ({ page }) => {
+	test('favor adds +3 and disfavor cancels it, declared before the draw', async ({ page }) => {
+		await openTestOfFate(page, 'e2e-0');
+		await page.getByRole('button', { name: 'Cups' }).click();
+		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByLabel('Favor', { exact: true }).check();
+		await page.getByRole('button', { name: 'Draw & test' }).click();
+
+		// Wands III (3) + attribute 1 + 3 favor = 7.
+		await expect(page.locator('.result')).toHaveAttribute('data-total', '7');
+
+		// Ch1: favor and disfavor cancel. Both declared up front.
+		await page.getByRole('button', { name: 'Clear' }).click();
+		await page.getByLabel('Disfavor', { exact: true }).check();
+		await page.getByRole('button', { name: 'Draw & test' }).click();
+		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
+	});
+
+	/**
+	 * The declaration is frozen once a card is visible. An earlier version of this
+	 * suite checked Favor *after* drawing — codifying a sequence Ch1 forbids, and
+	 * one that lets a player switch to the drawn suit to manufacture a great
+	 * success. The engine cannot catch it; it only sees the final declaration.
+	 */
+	test('locks the declaration once a card is visible', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-0');
 		await page.getByRole('button', { name: 'Cups' }).click();
 		await page.getByLabel('Attribute').selectOption('1');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
-		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
 
-		await page.getByLabel('Favor', { exact: true }).check();
-		await expect(page.locator('.result')).toHaveAttribute('data-total', '7');
+		await expect(page.getByRole('button', { name: 'Wands' })).toBeDisabled();
+		await expect(page.getByLabel('Attribute')).toBeDisabled();
+		await expect(page.getByLabel('Favor', { exact: true })).toBeDisabled();
+		await expect(page.getByLabel('Disfavor', { exact: true })).toBeDisabled();
+		await expect(page.getByLabel('Spend 1 Resolve for favor')).toBeDisabled();
+		await expect(page.getByRole('button', { name: 'Draw & test' })).toBeDisabled();
 
-		// Ch1: favor and disfavor cancel each other out.
-		await page.getByLabel('Disfavor', { exact: true }).check();
-		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
+		// Clearing starts a fresh declaration.
+		await page.getByRole('button', { name: 'Clear' }).click();
+		await expect(page.getByRole('button', { name: 'Wands' })).toBeEnabled();
+		await expect(page.getByLabel('Attribute')).toBeEnabled();
+		await expect(page.getByLabel('Favor', { exact: true })).toBeEnabled();
+		await expect(page.getByLabel('Disfavor', { exact: true })).toBeEnabled();
+		await expect(page.getByLabel('Spend 1 Resolve for favor')).toBeEnabled();
+		await expect(page.getByRole('button', { name: 'Draw & test' })).toBeEnabled();
 	});
 
 	test('spending Resolve buys favor and does not stack with it', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-0');
 		await page.getByRole('button', { name: 'Cups' }).click();
 		await page.getByLabel('Attribute').selectOption('1');
+		// Ch1: Resolve is spent *prior* to the test, so it is declared up front.
+		await page.getByLabel('Spend 1 Resolve for favor').check();
+		await page.getByLabel('Favor', { exact: true }).check();
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
-		await page.getByLabel('Spend 1 Resolve for favor').check();
+		// Non-cumulative: two sources of favor still yield one +3.
 		await expect(page.locator('.result')).toHaveAttribute('data-total', '7');
 		await expect(page.locator('.result')).toContainText('1 Resolve');
-
-		// Non-cumulative: a second source of favor changes nothing.
-		await page.getByLabel('Favor', { exact: true }).check();
-		await expect(page.locator('.result')).toHaveAttribute('data-total', '7');
 		await expect(page.locator('.result')).toContainText('not cumulative');
 	});
 

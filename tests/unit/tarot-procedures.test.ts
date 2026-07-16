@@ -63,6 +63,27 @@ describe('tarot procedure references', () => {
 		}
 	});
 
+	it('defines Guard as an any-suit shield-gated Initiative replacement', () => {
+		const file = getTarotProcedures();
+		const procedure = file.procedures.find((p) => p.id === 'challenge-guard');
+		const modifier = file.modifiers.find((m) => m.id === 'challenge-guard');
+
+		expect(procedure?.ruleEntryIds).toContain('challenge-guard');
+		expect(procedure?.modifierIds).toContain('challenge-guard');
+		expect(procedure?.steps.map((step) => step.id)).toEqual([
+			'replace-initiative',
+			'discard-old-initiative'
+		]);
+		expect(modifier).toMatchObject({
+			behaviorId: 'replace-initiative',
+			params: {
+				requiresShield: true,
+				anySuit: true,
+				discardsOldInitiative: true
+			}
+		});
+	});
+
 	it('resolves every draw formulaId', () => {
 		const file = getTarotProcedures();
 		const formulaIds = new Set(file.formulas.map((f) => f.id));

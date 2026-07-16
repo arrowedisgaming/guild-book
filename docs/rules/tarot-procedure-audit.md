@@ -7,7 +7,7 @@ Review of this finite list is what "v1 completeness" means: the product makes no
 claim over unenumerated prose. `supported-v1` entries reach the runtime catalog;
 the rest are audit-only and carry a rationale.
 
-- `supported-v1`: 30
+- `supported-v1`: 31
 - `deferred-preparation`: 3
 - `not-applicable-non-tarot`: 1
 
@@ -23,6 +23,7 @@ the rest are audit-only and carry a rationale.
 | crawl-meatgrinder | Meatgrinder | supported-v1 | 06 - Chapter 6 - The Crawl Phase.md — Example Meatgrinder table |  |
 | denizen-disposition | Starting Disposition | supported-v1 | 06 - Chapter 6 - The Crawl Phase.md — Starting Disposition |  |
 | crawl-were-doomed | We’re Doomed! | supported-v1 | 06 - Chapter 6 - The Crawl Phase.md — We’re doomed! |  |
+| challenge-guard | Guard | supported-v1 | 07 - Chapter 7 - The Challenge Phase.md — Guard |  |
 | challenge-round | Challenge Round | supported-v1 | 07 - Chapter 7 - The Challenge Phase.md — The Flow of the Challenge Phase |  |
 | camp-watch | No Rest for the Wicked | supported-v1 | 08 - Chapter 8 - The Camp Phase.md — 3. No rest for the wicked |  |
 | overland-travel | Overland Travel | supported-v1 | 08 - Chapter 8 - The Camp Phase.md — Overland Travel |  |

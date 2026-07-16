@@ -1,7 +1,7 @@
 {
 	"id": "hmtw",
 	"name": "His Majesty the Worm",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the full Omphalic Market, conditions, afflictions, languages, and dungeon denizens. Game text reproduced verbatim from the core rulebook under the Adherent of the Worm open licence.",
 	"system": "hmtw",
 	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license): \"the mechanics and game text of His Majesty the Worm may be reused freely.\" His Majesty the Worm is copyright Joshua McCrowell. Game text reproduced verbatim; no book artwork, logos, or trade dress reproduced.",
@@ -359,5 +359,5 @@
 		"beltSlots": 4,
 		"packSlots": 21
 	},
-	"contentDigest": "5b196f972bb6fe71dd82d50e4604ed0c7e80b7466b239a91d656d2a6f83ff1d7"
+	"contentDigest": "640208584baea80eb89b580ea87ad793248ec25109fff2252a7e01c942ace4c9"
 }

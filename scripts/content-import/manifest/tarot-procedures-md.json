@@ -425,6 +425,44 @@
 			]
 		},
 		{
+			"id": "challenge-guard",
+			"title": "Guard",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "Guard"
+			},
+			"ruleEntryIds": [
+				"challenge-guard"
+			],
+			"modifierIds": [
+				"challenge-guard"
+			],
+			"steps": [
+				{
+					"id": "replace-initiative",
+					"actor": "player",
+					"operation": "play",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "discard-old-initiative",
+					"actor": "system",
+					"operation": "discard",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
 			"id": "crawl-meatgrinder",
 			"title": "Meatgrinder",
 			"phase": "crawl",
@@ -1285,6 +1323,37 @@
 	],
 	"modifiers": [
 		{
+			"id": "camp-high-chant",
+			"title": "High Chant",
+			"phase": "camp",
+			"source": {
+				"file": "05 - Chapter 5 - The Four Paths.md",
+				"heading": "High Chant"
+			},
+			"ruleEntryIds": [
+				"paths-high-chant"
+			],
+			"behaviorId": "inspiration-distribution",
+			"params": {
+				"maxPerPlayer": 1
+			}
+		},
+		{
+			"id": "challenge-aim",
+			"title": "Aim",
+			"phase": "challenge",
+			"source": {
+				"file": "09 - Chapter 9 - The City Phase.md",
+				"heading": "Bow",
+				"anchor": "- Aim is a Swords action."
+			},
+			"ruleEntryIds": [],
+			"behaviorId": "prepared-facedown-bonus",
+			"params": {
+				"suit": "swords"
+			}
+		},
+		{
 			"id": "challenge-black-honey",
 			"title": "Black Honey",
 			"phase": "challenge",
@@ -1298,22 +1367,6 @@
 			"behaviorId": "deal-size-delta",
 			"params": {
 				"cards": 1
-			}
-		},
-		{
-			"id": "challenge-stun",
-			"title": "Stun",
-			"phase": "challenge",
-			"source": {
-				"file": "01 - Chapter 1 - The Basics.md",
-				"heading": "Effects"
-			},
-			"ruleEntryIds": [
-				"effects"
-			],
-			"behaviorId": "forced-hand-discard",
-			"params": {
-				"immediate": true
 			}
 		},
 		{
@@ -1349,6 +1402,24 @@
 			}
 		},
 		{
+			"id": "challenge-guard",
+			"title": "Guard",
+			"phase": "challenge",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "Guard"
+			},
+			"ruleEntryIds": [
+				"challenge-guard"
+			],
+			"behaviorId": "replace-initiative",
+			"params": {
+				"requiresShield": true,
+				"anySuit": true,
+				"discardsOldInitiative": true
+			}
+		},
+		{
 			"id": "challenge-guardian-angel",
 			"title": "Guardian Angel",
 			"phase": "challenge",
@@ -1365,34 +1436,19 @@
 			}
 		},
 		{
-			"id": "challenge-aim",
-			"title": "Aim",
+			"id": "challenge-stun",
+			"title": "Stun",
 			"phase": "challenge",
 			"source": {
-				"file": "09 - Chapter 9 - The City Phase.md",
-				"heading": "Bow",
-				"anchor": "- Aim is a Swords action."
-			},
-			"ruleEntryIds": [],
-			"behaviorId": "prepared-facedown-bonus",
-			"params": {
-				"suit": "swords"
-			}
-		},
-		{
-			"id": "camp-high-chant",
-			"title": "High Chant",
-			"phase": "camp",
-			"source": {
-				"file": "05 - Chapter 5 - The Four Paths.md",
-				"heading": "High Chant"
+				"file": "01 - Chapter 1 - The Basics.md",
+				"heading": "Effects"
 			},
 			"ruleEntryIds": [
-				"paths-high-chant"
+				"effects"
 			],
-			"behaviorId": "inspiration-distribution",
+			"behaviorId": "forced-hand-discard",
 			"params": {
-				"maxPerPlayer": 1
+				"immediate": true
 			}
 		}
 	],

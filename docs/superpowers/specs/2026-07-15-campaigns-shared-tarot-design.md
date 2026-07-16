@@ -400,11 +400,13 @@ The guided Challenge procedure owns:
 
 The GM advances phases and rounds. Players control only their own allowed hand and face-down commands. The application calculates card and hand totals where rules require them, but the GM records the fictional target and outcome. It does not model a battle map, range, movement, wounds, monster health, or status application.
 
-Challenge-adjacent rules with distinct card movement or privacy receive typed modifiers rather than free-text instructions. The Challenge module includes Counsel transfer, Guardian Angel, and Aim. It does not own Camp, Crawl, or test-of-fate procedures.
+Challenge-adjacent rules with distinct card movement or privacy receive typed modifiers rather than free-text instructions. The Challenge module includes Counsel transfer, Guardian Angel, Aim, and shield Initiative replacement. It does not own Camp, Crawl, or test-of-fate procedures.
 
 Aim is granted by bow equipment rather than by the Challenge chapter (`09 - Chapter 9 …:760-762`): it is a Swords action played face-down against a declared target, revealed on a later Attack to add its value. It is a Challenge card operation and is therefore owned here despite its source.
 
-**Amended 2026-07-15 — "shield Initiative replacement" removed.** Earlier revisions listed it as a Challenge modifier. No such mechanic exists in the rulebook. `### Shield` (`09 - Chapter 9 …:683`) governs Notch absorption and hand slots, and the only Initiative-adjacent shield rule is a tie-break — "Ties go to the attacker unless the defender has a shield" (`07 - Chapter 7 …:263`, `:415`, `:431`) — which decides whether a Wound lands. Wound application is outside this release by the paragraph above, so the real rule is out of scope and the described one never existed. Do not add either to the content pack or the engine.
+Shield Initiative replacement is the **Guard** miscellaneous action (`07 - Chapter 7 …:552-554`): "If you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded." It is a card movement between a private hand and the public Initiative zone plus a discard, so it belongs to the Challenge module.
+
+> **Amendment history — read before editing this paragraph.** A 2026-07-15 revision *removed* shield Initiative replacement, asserting no such mechanic existed. That was wrong and is reverted. The error: the author searched Chapter 9's `Shield` equipment entry (Notch absorption) and Chapter 7's attack tie-breaks, and never opened `### Guard` in Chapter 7's miscellaneous-actions list. This is the third instance of roadmap decision **D7** — reading where a rule is *printed* rather than where it is *used* — and the second time it destroyed correct content. Do not remove a mechanic from this specification on the grounds that it "does not exist" without grepping the rulebook for the mechanic's **effect** (here: `Initiative`), not just its noun (`shield`).
 
 Denizen abilities use generic typed predicates over `doomTier`, `valueParity`, and operation type whenever the rule is “play/discard a qualifying card.” The engine enforces one normal card play per turn and the separate unlimited-discard allowance; the GM still adjudicates the ability's fictional target and consequence.
 
@@ -415,7 +417,7 @@ Rules are filed under the procedure they actually modify and compose through the
 - **Camp:** High Chant selects from discard and distributes private inspiration cards; leeches draw and classify by suit.
 - **Crawl:** Area Sense draws after its watch/Resolve requirements are confirmed.
 - **Tests of fate:** Augury gives the GM a private draw, a public parable state, and a later reveal/discard decision without exposing the card early.
-- **Challenge:** Counsel, Guardian Angel, Aim, Stun, black honey, and Brainfever use Challenge hooks.
+- **Challenge:** Counsel, Guardian Angel, Aim, shield Initiative (Guard), Stun, black honey, and Brainfever use Challenge hooks.
 - **Oracle/table:** Maleficence, Malediction, Random Totem, the GM twist table, disposition variants, and other lookups use generated procedure definitions.
 
 ### 8.8 Corrections
@@ -438,7 +440,7 @@ All draw counts, deck choices, value tables, Fool behavior, selection rules, mod
 | Crawl and GM oracles | Disposition including per-denizen variants, random target, belt/pack equipment target, and other discard-top lookups | Read the configured discard top or draw, show the lookup result, and log the public outcome |
 | Challenge core | Deal, private hands, Initiative, turns, actions, interrupts, facedown/prepared cards, cleanup, mulligan, deck exhaustion, and Fool | Full guided Challenge state machine |
 | GM card economy | Per-round hand formula, lesser/greater dooms, parity, play-vs-discard budgets, minor actions, and denizen predicates | Typed GM-hand rules plus generic qualifying-card commands |
-| Challenge modifiers | Counsel, Guardian Angel, Aim, Stun, black honey, Brainfever, and the GM twist oracle | Typed hooks sharing the Challenge and oracle commands |
+| Challenge modifiers | Counsel, Guardian Angel, Aim, shield Initiative (Guard), Stun, black honey, Brainfever, and the GM twist oracle | Typed hooks sharing the Challenge and oracle commands |
 | Camp | Meatgrinder/Patrol draw-twice choice, watch-person discard oracle and Cups test, High Chant, and leeches | Guided Camp procedures sharing test, selection, transfer, and draw operations |
 | Core City during play | City Events and Signs, Beg & Busk, and Carouse | Reusable guided draw and lookup procedures |
 | Sample-City actions used during play | Doomsaying, Strange Communions, and As above so below | Draw, mixed draw/discard selection, and top-three reorder procedures |

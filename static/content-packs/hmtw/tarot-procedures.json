@@ -267,6 +267,44 @@
 			]
 		},
 		{
+			"id": "challenge-guard",
+			"title": "Guard",
+			"phase": "challenge",
+			"scope": "supported-v1",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "Guard"
+			},
+			"ruleEntryIds": [
+				"challenge-guard"
+			],
+			"modifierIds": [
+				"challenge-guard"
+			],
+			"steps": [
+				{
+					"id": "replace-initiative",
+					"actor": "player",
+					"operation": "play",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "return-to-draw"
+				},
+				{
+					"id": "discard-old-initiative",
+					"actor": "system",
+					"operation": "discard",
+					"deck": "minor",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "discard-pending"
+				}
+			]
+		},
+		{
 			"id": "challenge-guardian-angel",
 			"title": "Guardian Angel",
 			"phase": "challenge",
@@ -4785,6 +4823,24 @@
 			"behaviorId": "private-transfer",
 			"params": {
 				"suitMustMatchAction": true
+			}
+		},
+		{
+			"id": "challenge-guard",
+			"title": "Guard",
+			"phase": "challenge",
+			"source": {
+				"file": "07 - Chapter 7 - The Challenge Phase.md",
+				"heading": "Guard"
+			},
+			"ruleEntryIds": [
+				"challenge-guard"
+			],
+			"behaviorId": "replace-initiative",
+			"params": {
+				"requiresShield": true,
+				"anySuit": true,
+				"discardsOldInitiative": true
 			}
 		},
 		{

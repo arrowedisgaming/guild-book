@@ -490,7 +490,6 @@ export type TarotProcedureScope =
 
 export type TarotDeckId = 'major' | 'minor';
 
-
 export type TarotOperation =
 	| 'draw'
 	| 'deal'
@@ -519,9 +518,124 @@ export type TarotStepPrecondition = 'previous-step-failed';
 /** What happens to a partially-resolved step when a session is recovered or ended. */
 export type TarotRecovery = 'discard-pending' | 'return-to-draw' | 'retain-pending';
 
+export type TarotCardProvenance = 'procedure-draw' | 'test-draw' | 'supplied';
+
+export type TarotCardSourceRule =
+	| { kind: 'draw-pile'; deck: TarotDeckId; provenance: TarotCardProvenance }
+	| { kind: 'discard-top'; deck: TarotDeckId; consume: boolean }
+	| { kind: 'discard-selection'; deck: TarotDeckId }
+	| { kind: 'mixed'; deck: TarotDeckId; sources: ['draw-pile', 'discard-top'] };
+
+export type TarotStepCondition =
+	| { kind: 'lookup-key'; tableId: string; keys: [string, ...string[]] }
+	| { kind: 'card-suit'; suits: [SuitId, ...SuitId[]] }
+	| { kind: 'value-range'; from: string; to: string; include: boolean }
+	| { kind: 'entry-state'; state: 'unused' | 'used' }
+	| { kind: 'game-state'; state: 'guild-out-of-light' }
+	| { kind: 'percent-chance'; percent: number }
+	| {
+			kind: 'previous-result';
+			result: 'success' | 'failure' | 'random-encounter' | 'non-encounter';
+	  };
+
+export type TarotStepChoice =
+	| { kind: 'accept-or-decline'; acceptStepId: string; declineStepId: string }
+	| {
+			kind: 'choose-one';
+			fromStepId: string;
+			count: number;
+			rejectConditions?: TarotStepCondition[];
+	  }
+	| {
+			kind: 'choose-lookup-table';
+			selector: 'far-realm';
+			tableIds: [string, ...string[]];
+	  }
+	| { kind: 'mixed-source'; sources: ['draw-pile', 'discard-top'] };
+
+export type TarotAmount =
+	| { kind: 'fixed'; value: number }
+	| { kind: 'card-value' }
+	| { kind: 'card-value-plus-attribute'; attribute: SuitId }
+	| { kind: 'formula'; formulaId: string }
+	| { kind: 'full' };
+
+export type TarotCardZone =
+	| 'draw-pile'
+	| 'discard'
+	| 'hand'
+	| 'initiative'
+	| 'facedown'
+	| 'inspiration'
+	| 'table';
+
+export type TarotStepEffect =
+	| {
+			kind: 'resource';
+			resource: 'gold' | 'resolve' | 'charges' | 'visions';
+			amount: TarotAmount;
+	  }
+	| {
+			kind: 'test-modifier';
+			modifier: 'favor' | 'disfavor';
+			appliesTo: 'attack' | 'test-of-fate';
+	  }
+	| {
+			kind: 'test-bonus';
+			amount: number;
+			appliesTo: 'known-action' | 'attack' | 'test-of-fate';
+	  }
+	| { kind: 'affliction-cure'; charges: number }
+	| { kind: 'teeth-loss'; from: number; to: number }
+	| { kind: 'bound-by-fate' }
+	| { kind: 'mark-entry-used' }
+	| { kind: 'no-op' }
+	| { kind: 'card-movement'; from: TarotCardZone; to: TarotCardZone };
+
+export type TarotStepCost =
+	| {
+			kind: 'resource';
+			resource: 'gold' | 'resolve' | 'charges';
+			amount: number;
+			timing: 'before-step' | 'per-use' | 'per-watch';
+	  }
+	| { kind: 'action-budget'; budget: 'challenge' | 'miscellaneous' };
+
+export type TarotUsageLimit =
+	| { kind: 'per-round'; count: number }
+	| { kind: 'per-session'; count: number }
+	| { kind: 'per-watch'; count: number }
+	| { kind: 'max-held'; count: number }
+	| { kind: 'single-instance'; count: 1 }
+	| { kind: 'once-next-expedition'; count: 1 };
+
+export type TarotStepTiming =
+	| { kind: 'immediate' }
+	| {
+			kind: 'event';
+			event: 'city-phase-end' | 'waking' | 'eating' | 'nightly' | 'prophecy-fulfilled';
+	  };
+
+export type TarotDurationRule = {
+	kind: 'until';
+	boundary:
+		| 'used'
+		| 'round-end'
+		| 'session-end'
+		| 'next-attack'
+		| 'next-expedition-end'
+		| 'spell-dismissed-or-countered';
+};
+
+export type TarotReshuffleRule = {
+	trigger: 'fool-drawn';
+	decks: ['minor', 'major'];
+	boundary: 'test-resolution' | 'challenge-round-end';
+};
+
 export interface TarotProcedureStepDefinition {
 	id: string;
-	actor: 'gm' | 'player' | 'system';
+	actor: 'gm' | 'player' | 'each-player' | 'system';
 	operation: TarotOperation;
 	deck?: TarotDeckId;
 	draw?: TarotDrawSpec;
@@ -532,6 +646,16 @@ export interface TarotProcedureStepDefinition {
 	precondition?: TarotStepPrecondition;
 	/** Set when this step resolves its drawn card(s) against an oracle table. */
 	lookupTableId?: string;
+	lookupTableIds?: [string, ...string[]];
+	cardSource?: TarotCardSourceRule;
+	conditions?: TarotStepCondition[];
+	choice?: TarotStepChoice;
+	effects?: TarotStepEffect[];
+	costs?: TarotStepCost[];
+	limits?: TarotUsageLimit[];
+	timing?: TarotStepTiming;
+	duration?: TarotDurationRule;
+	reshuffle?: TarotReshuffleRule;
 	visibility: 'public' | 'actor-private' | 'recipient-private';
 	resultVisibility: TarotResultVisibility;
 	completion: 'automatic' | 'actor-confirmed' | 'gm-confirmed';

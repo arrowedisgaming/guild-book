@@ -1,5 +1,99 @@
 import { describe, expect, it } from 'vitest';
 import { getTarotProcedures, getBestiary, getRules } from '$lib/server/content/loader';
+import { tarotProcedureDefinitionSchema } from '$lib/schemas/content-pack.schema';
+
+const validProcedure = (step: Record<string, unknown>) => ({
+	id: 'schema-example',
+	title: 'Schema example',
+	phase: 'cross-phase',
+	scope: 'supported-v1',
+	source: { file: 'example.md', heading: 'Definition' },
+	invokedFrom: [{ file: 'example.md', heading: 'Invocation' }],
+	ruleEntryIds: [],
+	modifierIds: [],
+	steps: [step]
+});
+
+const validSemanticStep = () => ({
+	id: 'example',
+	actor: 'gm',
+	operation: 'draw',
+	deck: 'minor',
+	draw: { kind: 'fixed', count: 1 },
+	cardSource: { kind: 'draw-pile', deck: 'minor', provenance: 'test-draw' },
+	conditions: [{ kind: 'lookup-key', tableId: 'malediction', keys: ['I'] }],
+	choice: {
+		kind: 'choose-lookup-table',
+		selector: 'far-realm',
+		tableIds: ['maleficence-wastes', 'maleficence-weald']
+	},
+	effects: [
+		{
+			kind: 'resource',
+			resource: 'gold',
+			amount: { kind: 'card-value-plus-attribute', attribute: 'wands' }
+		}
+	],
+	costs: [{ kind: 'resource', resource: 'resolve', amount: 2, timing: 'per-watch' }],
+	limits: [{ kind: 'per-round', count: 1 }],
+	timing: { kind: 'event', event: 'city-phase-end' },
+	duration: { kind: 'until', boundary: 'used' },
+	reshuffle: {
+		trigger: 'fool-drawn',
+		decks: ['minor', 'major'],
+		boundary: 'test-resolution'
+	},
+	visibility: 'public',
+	resultVisibility: 'public',
+	completion: 'gm-confirmed',
+	recovery: 'discard-pending'
+});
+
+describe('tarot procedure semantic schema', () => {
+	it('retains every typed semantic field', () => {
+		const result = tarotProcedureDefinitionSchema.safeParse(validProcedure(validSemanticStep()));
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+		expect(result.data.steps[0]).toMatchObject({
+			cardSource: { kind: 'draw-pile', deck: 'minor', provenance: 'test-draw' },
+			conditions: [{ kind: 'lookup-key', tableId: 'malediction', keys: ['I'] }],
+			costs: [{ kind: 'resource', resource: 'resolve', amount: 2, timing: 'per-watch' }],
+			limits: [{ kind: 'per-round', count: 1 }],
+			timing: { kind: 'event', event: 'city-phase-end' },
+			duration: { kind: 'until', boundary: 'used' },
+			reshuffle: {
+				trigger: 'fool-drawn',
+				decks: ['minor', 'major'],
+				boundary: 'test-resolution'
+			}
+		});
+	});
+
+	it.each([
+		['empty lookup-table choice', (step: any) => (step.choice.tableIds = [])],
+		['empty lookup condition keys', (step: any) => (step.conditions[0].keys = [])],
+		['non-positive cost', (step: any) => (step.costs[0].amount = 0)],
+		['non-positive limit', (step: any) => (step.limits[0].count = 0)],
+		['incomplete Fool deck list', (step: any) => (step.reshuffle.decks = ['minor'])],
+		['mismatched card-source deck', (step: any) => (step.cardSource.deck = 'major')],
+		[
+			'singular and plural lookup fields',
+			(step: any) => {
+				step.lookupTableId = 'malediction';
+				step.lookupTableIds = ['malediction'];
+			}
+		]
+	])('rejects %s', (_label, mutate) => {
+		const step = validSemanticStep();
+		mutate(step);
+		expect(tarotProcedureDefinitionSchema.safeParse(validProcedure(step)).success).toBe(false);
+	});
+
+	it('accepts an each-player actor for all-player procedures', () => {
+		const step = { ...validSemanticStep(), actor: 'each-player' };
+		expect(tarotProcedureDefinitionSchema.safeParse(validProcedure(step)).success).toBe(true);
+	});
+});
 
 /**
  * The tarot procedure catalog: every in-session tarot procedure the campaign

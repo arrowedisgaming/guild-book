@@ -416,19 +416,208 @@ const tarotDrawSpecSchema = z.union([
 	z.object({ kind: z.literal('formula'), formulaId: z.string() })
 ]);
 
-const tarotProcedureStepDefinitionSchema = z.object({
-	id: z.string(),
-	actor: z.enum(['gm', 'player', 'system']),
-	operation: tarotOperationEnum,
-	deck: tarotDeckIdEnum.optional(),
-	draw: tarotDrawSpecSchema.optional(),
-	precondition: z.enum(['previous-step-failed']).optional(),
-	lookupTableId: z.string().optional(),
-	visibility: z.enum(['public', 'actor-private', 'recipient-private']),
-	resultVisibility: z.enum(['public', 'actor-private', 'gm-private']),
-	completion: z.enum(['automatic', 'actor-confirmed', 'gm-confirmed']),
-	recovery: z.enum(['discard-pending', 'return-to-draw', 'retain-pending'])
+const tarotCardProvenanceEnum = z.enum(['procedure-draw', 'test-draw', 'supplied']);
+
+const tarotCardSourceRuleSchema = z.discriminatedUnion('kind', [
+	z.object({
+		kind: z.literal('draw-pile'),
+		deck: tarotDeckIdEnum,
+		provenance: tarotCardProvenanceEnum
+	}),
+	z.object({ kind: z.literal('discard-top'), deck: tarotDeckIdEnum, consume: z.boolean() }),
+	z.object({ kind: z.literal('discard-selection'), deck: tarotDeckIdEnum }),
+	z.object({
+		kind: z.literal('mixed'),
+		deck: tarotDeckIdEnum,
+		sources: z.tuple([z.literal('draw-pile'), z.literal('discard-top')])
+	})
+]);
+
+const tarotStepConditionSchema = z.discriminatedUnion('kind', [
+	z.object({
+		kind: z.literal('lookup-key'),
+		tableId: z.string(),
+		keys: z.tuple([z.string()]).rest(z.string())
+	}),
+	z.object({
+		kind: z.literal('card-suit'),
+		suits: z.tuple([suitEnum]).rest(suitEnum)
+	}),
+	z.object({
+		kind: z.literal('value-range'),
+		from: z.string(),
+		to: z.string(),
+		include: z.boolean()
+	}),
+	z.object({ kind: z.literal('entry-state'), state: z.enum(['unused', 'used']) }),
+	z.object({ kind: z.literal('game-state'), state: z.literal('guild-out-of-light') }),
+	z.object({
+		kind: z.literal('percent-chance'),
+		percent: z.number().int().min(1).max(99)
+	}),
+	z.object({
+		kind: z.literal('previous-result'),
+		result: z.enum(['success', 'failure', 'random-encounter', 'non-encounter'])
+	})
+]);
+
+const tarotStepChoiceSchema = z.discriminatedUnion('kind', [
+	z.object({
+		kind: z.literal('accept-or-decline'),
+		acceptStepId: z.string(),
+		declineStepId: z.string()
+	}),
+	z.object({
+		kind: z.literal('choose-one'),
+		fromStepId: z.string(),
+		count: z.number().int().positive(),
+		rejectConditions: z.array(tarotStepConditionSchema).optional()
+	}),
+	z.object({
+		kind: z.literal('choose-lookup-table'),
+		selector: z.literal('far-realm'),
+		tableIds: z.tuple([z.string()]).rest(z.string())
+	}),
+	z.object({
+		kind: z.literal('mixed-source'),
+		sources: z.tuple([z.literal('draw-pile'), z.literal('discard-top')])
+	})
+]);
+
+const tarotAmountSchema = z.discriminatedUnion('kind', [
+	z.object({ kind: z.literal('fixed'), value: z.number() }),
+	z.object({ kind: z.literal('card-value') }),
+	z.object({ kind: z.literal('card-value-plus-attribute'), attribute: suitEnum }),
+	z.object({ kind: z.literal('formula'), formulaId: z.string() }),
+	z.object({ kind: z.literal('full') })
+]);
+
+const tarotCardZoneEnum = z.enum([
+	'draw-pile',
+	'discard',
+	'hand',
+	'initiative',
+	'facedown',
+	'inspiration',
+	'table'
+]);
+
+const tarotStepEffectSchema = z.discriminatedUnion('kind', [
+	z.object({
+		kind: z.literal('resource'),
+		resource: z.enum(['gold', 'resolve', 'charges', 'visions']),
+		amount: tarotAmountSchema
+	}),
+	z.object({
+		kind: z.literal('test-modifier'),
+		modifier: z.enum(['favor', 'disfavor']),
+		appliesTo: z.enum(['attack', 'test-of-fate'])
+	}),
+	z.object({
+		kind: z.literal('test-bonus'),
+		amount: z.number().int(),
+		appliesTo: z.enum(['known-action', 'attack', 'test-of-fate'])
+	}),
+	z.object({ kind: z.literal('affliction-cure'), charges: z.number().int().positive() }),
+	z.object({
+		kind: z.literal('teeth-loss'),
+		from: z.number().int().positive(),
+		to: z.number().int().positive()
+	}),
+	z.object({ kind: z.literal('bound-by-fate') }),
+	z.object({ kind: z.literal('mark-entry-used') }),
+	z.object({ kind: z.literal('no-op') }),
+	z.object({ kind: z.literal('card-movement'), from: tarotCardZoneEnum, to: tarotCardZoneEnum })
+]);
+
+const tarotStepCostSchema = z.discriminatedUnion('kind', [
+	z.object({
+		kind: z.literal('resource'),
+		resource: z.enum(['gold', 'resolve', 'charges']),
+		amount: z.number().int().positive(),
+		timing: z.enum(['before-step', 'per-use', 'per-watch'])
+	}),
+	z.object({
+		kind: z.literal('action-budget'),
+		budget: z.enum(['challenge', 'miscellaneous'])
+	})
+]);
+
+const tarotUsageLimitSchema = z.discriminatedUnion('kind', [
+	z.object({ kind: z.literal('per-round'), count: z.number().int().positive() }),
+	z.object({ kind: z.literal('per-session'), count: z.number().int().positive() }),
+	z.object({ kind: z.literal('per-watch'), count: z.number().int().positive() }),
+	z.object({ kind: z.literal('max-held'), count: z.number().int().positive() }),
+	z.object({ kind: z.literal('single-instance'), count: z.literal(1) }),
+	z.object({ kind: z.literal('once-next-expedition'), count: z.literal(1) })
+]);
+
+const tarotStepTimingSchema = z.discriminatedUnion('kind', [
+	z.object({ kind: z.literal('immediate') }),
+	z.object({
+		kind: z.literal('event'),
+		event: z.enum(['city-phase-end', 'waking', 'eating', 'nightly', 'prophecy-fulfilled'])
+	})
+]);
+
+const tarotDurationRuleSchema = z.object({
+	kind: z.literal('until'),
+	boundary: z.enum([
+		'used',
+		'round-end',
+		'session-end',
+		'next-attack',
+		'next-expedition-end',
+		'spell-dismissed-or-countered'
+	])
 });
+
+const tarotReshuffleRuleSchema = z.object({
+	trigger: z.literal('fool-drawn'),
+	decks: z.tuple([z.literal('minor'), z.literal('major')]),
+	boundary: z.enum(['test-resolution', 'challenge-round-end'])
+});
+
+const tarotProcedureStepDefinitionSchema = z
+	.object({
+		id: z.string(),
+		actor: z.enum(['gm', 'player', 'each-player', 'system']),
+		operation: tarotOperationEnum,
+		deck: tarotDeckIdEnum.optional(),
+		draw: tarotDrawSpecSchema.optional(),
+		precondition: z.enum(['previous-step-failed']).optional(),
+		lookupTableId: z.string().optional(),
+		lookupTableIds: z.tuple([z.string()]).rest(z.string()).optional(),
+		cardSource: tarotCardSourceRuleSchema.optional(),
+		conditions: z.array(tarotStepConditionSchema).optional(),
+		choice: tarotStepChoiceSchema.optional(),
+		effects: z.array(tarotStepEffectSchema).optional(),
+		costs: z.array(tarotStepCostSchema).optional(),
+		limits: z.array(tarotUsageLimitSchema).optional(),
+		timing: tarotStepTimingSchema.optional(),
+		duration: tarotDurationRuleSchema.optional(),
+		reshuffle: tarotReshuffleRuleSchema.optional(),
+		visibility: z.enum(['public', 'actor-private', 'recipient-private']),
+		resultVisibility: z.enum(['public', 'actor-private', 'gm-private']),
+		completion: z.enum(['automatic', 'actor-confirmed', 'gm-confirmed']),
+		recovery: z.enum(['discard-pending', 'return-to-draw', 'retain-pending'])
+	})
+	.superRefine((step, context) => {
+		if (step.lookupTableId && step.lookupTableIds) {
+			context.addIssue({
+				code: 'custom',
+				message: 'a step cannot use both lookupTableId and lookupTableIds',
+				path: ['lookupTableIds']
+			});
+		}
+		if (step.deck && step.cardSource && step.deck !== step.cardSource.deck) {
+			context.addIssue({
+				code: 'custom',
+				message: 'cardSource deck must match step deck',
+				path: ['cardSource', 'deck']
+			});
+		}
+	});
 
 export const tarotProcedureDefinitionSchema = z.object({
 	id: z.string(),

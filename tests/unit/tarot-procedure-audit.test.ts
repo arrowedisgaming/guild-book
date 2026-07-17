@@ -145,10 +145,10 @@ describe('tarot procedure audit manifest', () => {
 		}
 	});
 
-	it('keeps the manual 50 percent choice manual', () => {
+	it('keeps the delayed 50 percent checks manual', () => {
 		const manual = manifest.entries
 			.flatMap((e) => e.steps)
-			.filter((s) => s.id === 'flat-fifty-percent-choice');
+			.filter((s) => s.id.startsWith('delayed-'));
 		expect(manual.length).toBeGreaterThan(0);
 		for (const step of manual) expect(step.operation).toBe('manual-choice');
 	});

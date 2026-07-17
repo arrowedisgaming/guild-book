@@ -1438,7 +1438,7 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-wastes",
+					"id": "draw-maleficence",
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
@@ -1446,52 +1446,23 @@
 						"kind": "fixed",
 						"count": 1
 					},
-					"lookupTableId": "maleficence-wastes",
-					"visibility": "public",
-					"resultVisibility": "public",
-					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
-				},
-				{
-					"id": "draw-weald",
-					"actor": "gm",
-					"operation": "draw",
-					"deck": "minor",
-					"draw": {
-						"kind": "fixed",
-						"count": 1
+					"lookupTableIds": [
+						"maleficence-wastes",
+						"maleficence-weald",
+						"maleficence-weird",
+						"maleficence-welkin"
+					],
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
+					"choice": {
+						"kind": "choose-lookup-table",
+						"selector": "far-realm",
+						"tableIds": [
+							"maleficence-wastes",
+							"maleficence-weald",
+							"maleficence-weird",
+							"maleficence-welkin"
+						]
 					},
-					"lookupTableId": "maleficence-weald",
-					"visibility": "public",
-					"resultVisibility": "public",
-					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
-				},
-				{
-					"id": "draw-weird",
-					"actor": "gm",
-					"operation": "draw",
-					"deck": "minor",
-					"draw": {
-						"kind": "fixed",
-						"count": 1
-					},
-					"lookupTableId": "maleficence-weird",
-					"visibility": "public",
-					"resultVisibility": "public",
-					"completion": "gm-confirmed",
-					"recovery": "discard-pending"
-				},
-				{
-					"id": "draw-welkin",
-					"actor": "gm",
-					"operation": "draw",
-					"deck": "minor",
-					"draw": {
-						"kind": "fixed",
-						"count": 1
-					},
-					"lookupTableId": "maleficence-welkin",
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -1526,15 +1497,64 @@
 						"count": 1
 					},
 					"lookupTableId": "malediction",
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
+					"duration": { "kind": "until", "boundary": "spell-dismissed-or-countered" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
 				},
 				{
-					"id": "flat-fifty-percent-choice",
+					"id": "delayed-city-dogs",
 					"actor": "gm",
 					"operation": "manual-choice",
+					"conditions": [
+						{ "kind": "lookup-key", "tableId": "malediction", "keys": ["I"] },
+						{ "kind": "percent-chance", "percent": 50 }
+					],
+					"timing": { "kind": "event", "event": "city-phase-end" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "delayed-waking-dreams",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"conditions": [
+						{ "kind": "lookup-key", "tableId": "malediction", "keys": ["II"] },
+						{ "kind": "percent-chance", "percent": 50 }
+					],
+					"timing": { "kind": "event", "event": "waking" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "delayed-eating-ash",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"conditions": [
+						{ "kind": "lookup-key", "tableId": "malediction", "keys": ["III"] },
+						{ "kind": "percent-chance", "percent": 50 }
+					],
+					"timing": { "kind": "event", "event": "eating" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "delayed-nightly-vermin",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"conditions": [
+						{ "kind": "lookup-key", "tableId": "malediction", "keys": ["IX"] },
+						{ "kind": "percent-chance", "percent": 50 }
+					],
+					"timing": { "kind": "event", "event": "nightly" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -1570,10 +1590,21 @@
 						"count": 1
 					},
 					"lookupTableId": "random-totem",
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "apply-known-action-bonus",
+					"actor": "system",
+					"operation": "manual-choice",
+					"effects": [{ "kind": "test-bonus", "amount": 5, "appliesTo": "known-action" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -1600,6 +1631,7 @@
 					"operation": "consult-discard-top",
 					"deck": "minor",
 					"lookupTableId": "gm-twist",
+					"cardSource": { "kind": "discard-top", "deck": "minor", "consume": false },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",

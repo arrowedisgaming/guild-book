@@ -138,11 +138,14 @@ describe('tarot procedure catalog', () => {
 		}
 	});
 
-	it('does not replace the manual 50 percent choice with a draw', () => {
+	it('does not replace manual percent checks with draws', () => {
 		const manual = getTarotProcedures()
 			.procedures.flatMap((procedure) => procedure.steps)
-			.find((step) => step.id === 'flat-fifty-percent-choice');
-		expect(manual?.operation).toBe('manual-choice');
+			.filter((candidate) =>
+				candidate.conditions?.some((condition) => condition.kind === 'percent-chance')
+			);
+		expect(manual.length).toBeGreaterThan(0);
+		for (const candidate of manual) expect(candidate.operation).toBe('manual-choice');
 	});
 
 	it('records test-draw provenance, exact group draws, and the Fool trigger', () => {
@@ -481,6 +484,68 @@ describe('tarot procedure catalog', () => {
 			visibility: 'actor-private',
 			resultVisibility: 'actor-private',
 			recovery: 'return-to-draw'
+		});
+	});
+
+	it('chooses one Maleficence realm and draws once', () => {
+		const maleficence = procedure('oracle-maleficence');
+		expect(maleficence.steps.filter((candidate) => candidate.operation === 'draw')).toHaveLength(1);
+		expect(step('oracle-maleficence', 'draw-maleficence').choice).toMatchObject({
+			kind: 'choose-lookup-table',
+			selector: 'far-realm'
+		});
+		expect(step('oracle-maleficence', 'draw-maleficence').lookupTableIds).toEqual([
+			'maleficence-wastes',
+			'maleficence-weald',
+			'maleficence-weird',
+			'maleficence-welkin'
+		]);
+	});
+
+	it('scopes Malediction checks to the four actual delayed results', () => {
+		const checks = procedure('oracle-malediction').steps.filter((candidate) =>
+			candidate.id.startsWith('delayed-')
+		);
+		expect(checks.map((candidate) => candidate.id)).toEqual([
+			'delayed-city-dogs',
+			'delayed-waking-dreams',
+			'delayed-eating-ash',
+			'delayed-nightly-vermin'
+		]);
+		expect(checks.map((candidate) => candidate.conditions?.[0])).toEqual([
+			{ kind: 'lookup-key', tableId: 'malediction', keys: ['I'] },
+			{ kind: 'lookup-key', tableId: 'malediction', keys: ['II'] },
+			{ kind: 'lookup-key', tableId: 'malediction', keys: ['III'] },
+			{ kind: 'lookup-key', tableId: 'malediction', keys: ['IX'] }
+		]);
+		expect(checks.map((candidate) => candidate.timing)).toEqual([
+			{ kind: 'event', event: 'city-phase-end' },
+			{ kind: 'event', event: 'waking' },
+			{ kind: 'event', event: 'eating' },
+			{ kind: 'event', event: 'nightly' }
+		]);
+		for (const check of checks) {
+			expect(check.conditions).toContainEqual({ kind: 'percent-chance', percent: 50 });
+		}
+		expect(step('oracle-malediction', 'draw-curse').duration).toEqual({
+			kind: 'until',
+			boundary: 'spell-dismissed-or-countered'
+		});
+	});
+
+	it("records Random Totem's known-action bonus", () => {
+		expect(step('oracle-random-totem', 'apply-known-action-bonus').effects).toContainEqual({
+			kind: 'test-bonus',
+			amount: 5,
+			appliesTo: 'known-action'
+		});
+	});
+
+	it('keeps GM Twist as a non-consuming discard-top glance', () => {
+		expect(step('gm-twist', 'consult-discard-top').cardSource).toEqual({
+			kind: 'discard-top',
+			deck: 'minor',
+			consume: false
 		});
 	});
 });

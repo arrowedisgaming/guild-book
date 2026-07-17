@@ -532,10 +532,14 @@ export type TarotStepCondition =
 	| { kind: 'value-range'; from: string; to: string; include: boolean }
 	| { kind: 'entry-state'; state: 'unused' | 'used' }
 	| { kind: 'game-state'; state: 'guild-out-of-light' }
+	| { kind: 'invocation-mode'; mode: 'appropriate-realm' | 'random-realm' }
 	| { kind: 'percent-chance'; percent: number }
 	| {
 			kind: 'previous-result';
 			result: 'success' | 'failure' | 'random-encounter' | 'non-encounter';
+			fromStepId?: string;
+			match?: 'any' | 'all';
+			count?: number;
 	  };
 
 export type TarotStepChoice =
@@ -548,7 +552,7 @@ export type TarotStepChoice =
 	  }
 	| {
 			kind: 'choose-lookup-table';
-			selector: 'far-realm';
+			selector: 'far-realm' | 'random';
 			tableIds: [string, ...string[]];
 	  }
 	| { kind: 'mixed-source'; sources: ['draw-pile', 'discard-top'] };
@@ -590,6 +594,8 @@ export type TarotStepEffect =
 	| { kind: 'bound-by-fate' }
 	| { kind: 'mark-entry-used' }
 	| { kind: 'no-op' }
+	| { kind: 'attract-random-encounters'; destination: 'affected-area' }
+	| { kind: 'center-maleficence-on'; target: 'invocation-target' }
 	| { kind: 'card-movement'; from: TarotCardZone; to: TarotCardZone };
 
 export type TarotStepCost =
@@ -623,6 +629,7 @@ export type TarotDurationRule = {
 		| 'round-end'
 		| 'session-end'
 		| 'next-attack'
+		| 'watch-end'
 		| 'next-expedition-end'
 		| 'spell-dismissed-or-countered';
 };

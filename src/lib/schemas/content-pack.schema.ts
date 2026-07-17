@@ -452,12 +452,19 @@ const tarotStepConditionSchema = z.discriminatedUnion('kind', [
 	z.object({ kind: z.literal('entry-state'), state: z.enum(['unused', 'used']) }),
 	z.object({ kind: z.literal('game-state'), state: z.literal('guild-out-of-light') }),
 	z.object({
+		kind: z.literal('invocation-mode'),
+		mode: z.enum(['appropriate-realm', 'random-realm'])
+	}),
+	z.object({
 		kind: z.literal('percent-chance'),
 		percent: z.number().int().min(1).max(99)
 	}),
 	z.object({
 		kind: z.literal('previous-result'),
-		result: z.enum(['success', 'failure', 'random-encounter', 'non-encounter'])
+		result: z.enum(['success', 'failure', 'random-encounter', 'non-encounter']),
+		fromStepId: z.string().optional(),
+		match: z.enum(['any', 'all']).optional(),
+		count: z.number().int().positive().optional()
 	})
 ]);
 
@@ -475,7 +482,7 @@ const tarotStepChoiceSchema = z.discriminatedUnion('kind', [
 	}),
 	z.object({
 		kind: z.literal('choose-lookup-table'),
-		selector: z.literal('far-realm'),
+		selector: z.enum(['far-realm', 'random']),
 		tableIds: z.tuple([z.string()]).rest(z.string())
 	}),
 	z.object({
@@ -527,6 +534,14 @@ const tarotStepEffectSchema = z.discriminatedUnion('kind', [
 	z.object({ kind: z.literal('bound-by-fate') }),
 	z.object({ kind: z.literal('mark-entry-used') }),
 	z.object({ kind: z.literal('no-op') }),
+	z.object({
+		kind: z.literal('attract-random-encounters'),
+		destination: z.literal('affected-area')
+	}),
+	z.object({
+		kind: z.literal('center-maleficence-on'),
+		target: z.literal('invocation-target')
+	}),
 	z.object({ kind: z.literal('card-movement'), from: tarotCardZoneEnum, to: tarotCardZoneEnum })
 ]);
 
@@ -567,6 +582,7 @@ const tarotDurationRuleSchema = z.object({
 		'round-end',
 		'session-end',
 		'next-attack',
+		'watch-end',
 		'next-expedition-end',
 		'spell-dismissed-or-countered'
 	])
@@ -617,6 +633,18 @@ const tarotProcedureStepDefinitionSchema = z
 				path: ['cardSource', 'deck']
 			});
 		}
+		step.conditions?.forEach((condition, conditionIndex) => {
+			if (condition.kind !== 'previous-result') return;
+			const aggregateFields = [condition.fromStepId, condition.match, condition.count];
+			const present = aggregateFields.filter((value) => value !== undefined).length;
+			if (present !== 0 && present !== aggregateFields.length) {
+				context.addIssue({
+					code: 'custom',
+					message: 'aggregate previous-result needs fromStepId, match, and count',
+					path: ['conditions', conditionIndex]
+				});
+			}
+		});
 	});
 
 export const tarotProcedureDefinitionSchema = z.object({
@@ -789,13 +817,113 @@ export const tarotFormulaDefinitionSchema = z.object({
 	params: z.record(z.string(), z.number())
 });
 
-export const tarotProceduresFileSchema = z.object({
-	schemaVersion: z.literal(2),
-	procedures: z.array(tarotProcedureDefinitionSchema),
-	lookupTables: z.array(tarotLookupTableSchema),
-	modifiers: z.array(sessionModifierDefinitionSchema),
-	formulas: z.array(tarotFormulaDefinitionSchema)
-});
+export const tarotProceduresFileSchema = z
+	.object({
+		schemaVersion: z.literal(2),
+		procedures: z.array(tarotProcedureDefinitionSchema),
+		lookupTables: z.array(tarotLookupTableSchema),
+		modifiers: z.array(sessionModifierDefinitionSchema),
+		formulas: z.array(tarotFormulaDefinitionSchema)
+	})
+	.superRefine((file, context) => {
+		const tableIds = new Set(file.lookupTables.map((table) => table.id));
+		const modifierIds = new Set(file.modifiers.map((modifier) => modifier.id));
+		const formulaIds = new Set(file.formulas.map((formula) => formula.id));
+		const requireId = (known: Set<string>, id: string, path: (string | number)[], label: string) => {
+			if (known.has(id)) return;
+			context.addIssue({ code: 'custom', message: `unknown ${label} ${id}`, path });
+		};
+
+		file.procedures.forEach((procedure, procedureIndex) => {
+			const stepIds = new Set(procedure.steps.map((step) => step.id));
+			procedure.modifierIds.forEach((id, modifierIndex) =>
+				requireId(
+					modifierIds,
+					id,
+					['procedures', procedureIndex, 'modifierIds', modifierIndex],
+					'modifier'
+				)
+			);
+
+			procedure.steps.forEach((step, stepIndex) => {
+				const stepPath = ['procedures', procedureIndex, 'steps', stepIndex] as (string | number)[];
+				if (step.lookupTableId) {
+					requireId(tableIds, step.lookupTableId, [...stepPath, 'lookupTableId'], 'lookup table');
+				}
+				step.lookupTableIds?.forEach((id, tableIndex) =>
+					requireId(
+						tableIds,
+						id,
+						[...stepPath, 'lookupTableIds', tableIndex],
+						'lookup table'
+					)
+				);
+				if (step.draw?.kind === 'formula') {
+					requireId(formulaIds, step.draw.formulaId, [...stepPath, 'draw', 'formulaId'], 'formula');
+				}
+				step.conditions?.forEach((condition, conditionIndex) => {
+					if (condition.kind === 'lookup-key') {
+						requireId(
+							tableIds,
+							condition.tableId,
+							[...stepPath, 'conditions', conditionIndex, 'tableId'],
+							'lookup table'
+						);
+					}
+					if (condition.kind === 'previous-result' && condition.fromStepId) {
+						requireId(
+							stepIds,
+							condition.fromStepId,
+							[...stepPath, 'conditions', conditionIndex, 'fromStepId'],
+							'step'
+						);
+					}
+				});
+				if (step.choice?.kind === 'choose-lookup-table') {
+					step.choice.tableIds.forEach((id, tableIndex) =>
+						requireId(
+							tableIds,
+							id,
+							[...stepPath, 'choice', 'tableIds', tableIndex],
+							'lookup table'
+						)
+					);
+				}
+				if (step.choice?.kind === 'accept-or-decline') {
+					requireId(
+						stepIds,
+						step.choice.acceptStepId,
+						[...stepPath, 'choice', 'acceptStepId'],
+						'step'
+					);
+					requireId(
+						stepIds,
+						step.choice.declineStepId,
+						[...stepPath, 'choice', 'declineStepId'],
+						'step'
+					);
+				}
+				if (step.choice?.kind === 'choose-one') {
+					requireId(
+						stepIds,
+						step.choice.fromStepId,
+						[...stepPath, 'choice', 'fromStepId'],
+						'step'
+					);
+				}
+				step.effects?.forEach((effect, effectIndex) => {
+					if (effect.kind === 'resource' && effect.amount.kind === 'formula') {
+						requireId(
+							formulaIds,
+							effect.amount.formulaId,
+							[...stepPath, 'effects', effectIndex, 'amount', 'formulaId'],
+							'formula'
+						);
+					}
+				});
+			});
+		});
+	});
 
 /**
  * Parse `value` against `schema`, throwing a labelled error on failure.

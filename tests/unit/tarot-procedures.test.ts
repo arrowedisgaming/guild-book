@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getTarotProcedures, getBestiary, getRules } from '$lib/server/content/loader';
-import { tarotProcedureDefinitionSchema } from '$lib/schemas/content-pack.schema';
+import {
+	tarotProcedureDefinitionSchema,
+	tarotProceduresFileSchema
+} from '$lib/schemas/content-pack.schema';
+import type { TarotProceduresFile } from '$lib/types/content-pack';
 
 const validProcedure = (step: Record<string, unknown>) => ({
 	id: 'schema-example',
@@ -319,6 +323,14 @@ describe('tarot procedure catalog', () => {
 			conditions: [{ kind: 'entry-state', state: 'used' }],
 			effects: [{ kind: 'no-op' }]
 		});
+		expect(step('crawl-meatgrinder', 'questing-beast-oil')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			draw: { kind: 'fixed', count: 2 },
+			lookupTableId: 'meatgrinder',
+			effects: [{ kind: 'attract-random-encounters', destination: 'affected-area' }],
+			duration: { kind: 'until', boundary: 'watch-end' }
+		});
 	});
 
 	it('branches Camp watch and Patrol only after Meatgrinder results are known', () => {
@@ -354,7 +366,13 @@ describe('tarot procedure catalog', () => {
 			rejectConditions: [{ kind: 'previous-result', result: 'random-encounter' }]
 		});
 		expect(step('camp-patrol', 'challenge-if-both-encounters').conditions).toEqual([
-			{ kind: 'previous-result', result: 'random-encounter' }
+			{
+				kind: 'previous-result',
+				result: 'random-encounter',
+				fromStepId: 'draw-patrol-options',
+				match: 'all',
+				count: 2
+			}
 		]);
 	});
 
@@ -487,14 +505,34 @@ describe('tarot procedure catalog', () => {
 		});
 	});
 
-	it('chooses one Maleficence realm and draws once', () => {
+	it('models applicable and random Maleficence as mutually exclusive one-card draws', () => {
 		const maleficence = procedure('oracle-maleficence');
-		expect(maleficence.steps.filter((candidate) => candidate.operation === 'draw')).toHaveLength(1);
-		expect(step('oracle-maleficence', 'draw-maleficence').choice).toMatchObject({
+		const draws = maleficence.steps.filter((candidate) => candidate.operation === 'draw');
+		expect(draws.map((candidate) => candidate.id)).toEqual([
+			'draw-applicable-maleficence',
+			'draw-random-maleficence'
+		]);
+		for (const draw of draws) expect(draw.draw).toEqual({ kind: 'fixed', count: 1 });
+		expect(step('oracle-maleficence', 'draw-applicable-maleficence')).toMatchObject({
+			conditions: [{ kind: 'invocation-mode', mode: 'appropriate-realm' }],
+			choice: {
+				kind: 'choose-lookup-table',
+				selector: 'far-realm'
+			}
+		});
+		expect(step('oracle-maleficence', 'draw-random-maleficence')).toMatchObject({
+			conditions: [{ kind: 'invocation-mode', mode: 'random-realm' }],
+			choice: {
+				kind: 'choose-lookup-table',
+				selector: 'random'
+			},
+			effects: [{ kind: 'center-maleficence-on', target: 'invocation-target' }]
+		});
+		expect(step('oracle-maleficence', 'draw-applicable-maleficence').choice).toMatchObject({
 			kind: 'choose-lookup-table',
 			selector: 'far-realm'
 		});
-		expect(step('oracle-maleficence', 'draw-maleficence').lookupTableIds).toEqual([
+		expect(step('oracle-maleficence', 'draw-applicable-maleficence').lookupTableIds).toEqual([
 			'maleficence-wastes',
 			'maleficence-weald',
 			'maleficence-weird',
@@ -551,6 +589,41 @@ describe('tarot procedure catalog', () => {
 });
 
 describe('tarot procedure references', () => {
+	const expectDanglingReferenceRejected = (mutate: (file: TarotProceduresFile) => void) => {
+		const file = structuredClone(getTarotProcedures());
+		mutate(file);
+		expect(tarotProceduresFileSchema.safeParse(file).success).toBe(false);
+	};
+
+	it('rejects every dangling table and step reference', () => {
+		expectDanglingReferenceRejected((file) => {
+			procedureFrom(file, 'crawl-meatgrinder').steps[0].lookupTableId = 'missing-table';
+		});
+		expectDanglingReferenceRejected((file) => {
+			procedureFrom(file, 'oracle-maleficence').steps[0].lookupTableIds = ['missing-table'];
+		});
+		expectDanglingReferenceRejected((file) => {
+			const choice = procedureFrom(file, 'oracle-maleficence').steps[0].choice;
+			if (choice?.kind === 'choose-lookup-table') choice.tableIds = ['missing-table'];
+		});
+		expectDanglingReferenceRejected((file) => {
+			const condition = procedureFrom(file, 'oracle-malediction').steps[1].conditions?.[0];
+			if (condition?.kind === 'lookup-key') condition.tableId = 'missing-table';
+		});
+		expectDanglingReferenceRejected((file) => {
+			const choice = procedureFrom(file, 'test-augury').steps.find(
+				(candidate) => candidate.id === 'choose-course'
+			)?.choice;
+			if (choice?.kind === 'accept-or-decline') choice.acceptStepId = 'missing-step';
+		});
+		expectDanglingReferenceRejected((file) => {
+			const choice = procedureFrom(file, 'camp-patrol').steps.find(
+				(candidate) => candidate.id === 'choose-non-encounter'
+			)?.choice;
+			if (choice?.kind === 'choose-one') choice.fromStepId = 'missing-step';
+		});
+	});
+
 	it('resolves every lookupTableId', () => {
 		const file = getTarotProcedures();
 		const tableIds = new Set(file.lookupTables.map((t) => t.id));
@@ -615,6 +688,12 @@ describe('tarot procedure references', () => {
 		}
 	});
 });
+
+function procedureFrom(file: TarotProceduresFile, id: string) {
+	const value = file.procedures.find((candidate) => candidate.id === id);
+	if (!value) throw new Error(`missing procedure ${id}`);
+	return value;
+}
 
 /** Ordered key lists per deck; a row's range is inclusive of both ends. */
 const MINOR_KEYS = [

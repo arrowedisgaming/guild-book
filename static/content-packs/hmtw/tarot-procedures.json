@@ -247,7 +247,10 @@
 					"conditions": [
 						{
 							"kind": "previous-result",
-							"result": "random-encounter"
+							"result": "random-encounter",
+							"fromStepId": "draw-patrol-options",
+							"match": "all",
+							"count": 2
 						}
 					],
 					"visibility": "public",
@@ -1364,6 +1367,10 @@
 				{
 					"file": "08 - Chapter 8 - The Camp Phase.md",
 					"heading": "Overland Travel"
+				},
+				{
+					"file": "12 - Appendix B - Alchemy.md",
+					"heading": "Questing beast"
 				}
 			],
 			"ruleEntryIds": [
@@ -1444,6 +1451,36 @@
 							"include": true
 						}
 					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "questing-beast-oil",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": {
+						"kind": "fixed",
+						"count": 2
+					},
+					"lookupTableId": "meatgrinder",
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "major",
+						"provenance": "procedure-draw"
+					},
+					"effects": [
+						{
+							"kind": "attract-random-encounters",
+							"destination": "affected-area"
+						}
+					],
+					"duration": {
+						"kind": "until",
+						"boundary": "watch-end"
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -1876,12 +1913,28 @@
 					"heading": "Counter-spell"
 				},
 				{
+					"file": "05 - Chapter 5 - The Four Paths.md",
+					"heading": "Pacts"
+				},
+				{
 					"file": "11 - Appendix A - Sorcery.md",
-					"heading": "Casting Spells"
+					"heading": "Concentration"
 				},
 				{
 					"file": "11 - Appendix A - Sorcery.md",
 					"heading": "Maleficence"
+				},
+				{
+					"file": "11 - Appendix A - Sorcery.md",
+					"heading": "Binding"
+				},
+				{
+					"file": "12 - Appendix B - Alchemy.md",
+					"heading": "Ungoat"
+				},
+				{
+					"file": "13 - Appendix C - Dungeon Denizens.md",
+					"heading": "Ungoat"
 				}
 			],
 			"ruleEntryIds": [
@@ -1890,7 +1943,7 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-maleficence",
+					"id": "draw-applicable-maleficence",
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "minor",
@@ -1909,6 +1962,12 @@
 						"deck": "minor",
 						"provenance": "procedure-draw"
 					},
+					"conditions": [
+						{
+							"kind": "invocation-mode",
+							"mode": "appropriate-realm"
+						}
+					],
 					"choice": {
 						"kind": "choose-lookup-table",
 						"selector": "far-realm",
@@ -1922,6 +1981,53 @@
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "draw-random-maleficence",
+					"actor": "player",
+					"operation": "draw",
+					"deck": "minor",
+					"draw": {
+						"kind": "fixed",
+						"count": 1
+					},
+					"lookupTableIds": [
+						"maleficence-wastes",
+						"maleficence-weald",
+						"maleficence-weird",
+						"maleficence-welkin"
+					],
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "minor",
+						"provenance": "procedure-draw"
+					},
+					"conditions": [
+						{
+							"kind": "invocation-mode",
+							"mode": "random-realm"
+						}
+					],
+					"choice": {
+						"kind": "choose-lookup-table",
+						"selector": "random",
+						"tableIds": [
+							"maleficence-wastes",
+							"maleficence-weald",
+							"maleficence-weird",
+							"maleficence-welkin"
+						]
+					},
+					"effects": [
+						{
+							"kind": "center-maleficence-on",
+							"target": "invocation-target"
+						}
+					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
 				}
 			]

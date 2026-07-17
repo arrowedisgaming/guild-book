@@ -201,6 +201,28 @@ describe('the Fool', () => {
 		).toBe(true);
 		expect(resolveTestOfFate(config, input()).foolDrawn).toBe(false);
 	});
+
+	it('does not reshuffle for a Fool supplied instead of drawn', () => {
+		const result = resolveTestOfFate(
+			config,
+			input({ initialCard: { id: 'fool', value: 0, origin: 'supplied' } })
+		);
+		expect(result.foolDrawn).toBe(false);
+	});
+
+	it('does not mark a supplied push Fool as an automatic great failure', () => {
+		const result = resolveTestOfFate(
+			config,
+			input({
+				attribute: 2,
+				initialCard: { id: 'cups-v', value: 5, suit: 'cups', origin: 'test-draw' },
+				pushCard: { id: 'fool', value: 0, origin: 'supplied' }
+			})
+		);
+		expect(result.outcome).toBe('great-failure');
+		expect(result.automaticGreatFailure).toBe(false);
+		expect(result.foolDrawn).toBe(false);
+	});
 });
 
 describe('push legality', () => {

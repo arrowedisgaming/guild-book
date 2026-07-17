@@ -113,6 +113,31 @@ describe('tarot procedure audit manifest', () => {
 		}
 	});
 
+	it('records the Questing Beast Oil Meatgrinder invocation', () => {
+		const meatgrinder = manifest.entries.find((entry) => entry.id === 'crawl-meatgrinder');
+		expect(meatgrinder?.invokedFrom).toContainEqual({
+			file: '12 - Appendix B - Alchemy.md',
+			heading: 'Questing beast'
+		});
+	});
+
+	it('records every material Maleficence invocation family', () => {
+		const maleficence = manifest.entries.find((entry) => entry.id === 'oracle-maleficence');
+		expect(maleficence?.invokedFrom).toEqual(
+			expect.arrayContaining([
+				{ file: '05 - Chapter 5 - The Four Paths.md', heading: 'Pacts' },
+				{ file: '11 - Appendix A - Sorcery.md', heading: 'Concentration' },
+				{ file: '11 - Appendix A - Sorcery.md', heading: 'Binding' },
+				{ file: '12 - Appendix B - Alchemy.md', heading: 'Ungoat' },
+				{ file: '13 - Appendix C - Dungeon Denizens.md', heading: 'Ungoat' }
+			])
+		);
+		expect(maleficence?.invokedFrom).not.toContainEqual({
+			file: '11 - Appendix A - Sorcery.md',
+			heading: 'Casting Spells'
+		});
+	});
+
 	it('gives every non-supported entry a rationale', () => {
 		for (const entry of manifest.entries) {
 			if (entry.scope === 'supported-v1') continue;

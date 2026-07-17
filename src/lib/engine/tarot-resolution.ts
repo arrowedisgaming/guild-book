@@ -138,8 +138,11 @@ export function resolveTestOfFate(config: TarotConfig, input: TestOfFateInput): 
 
 	const cardTotal = input.initialCard.value + (input.pushCard?.value ?? 0);
 	const total = input.attribute + cardTotal + modifier;
-	const automaticGreatFailure = input.pushCard?.id === FOOL_ID;
-	const foolDrawn = input.initialCard.id === FOOL_ID || input.pushCard?.id === FOOL_ID;
+	const automaticGreatFailure =
+		input.pushCard?.id === FOOL_ID && input.pushCard.origin === 'test-draw';
+	const foolDrawn =
+		(input.initialCard.id === FOOL_ID && input.initialCard.origin === 'test-draw') ||
+		(input.pushCard?.id === FOOL_ID && input.pushCard.origin === 'test-draw');
 
 	const outcome: OutcomeId = automaticGreatFailure
 		? 'great-failure'

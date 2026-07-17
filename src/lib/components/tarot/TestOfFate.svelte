@@ -53,6 +53,10 @@
 		});
 	});
 
+	$effect(() => {
+		if (result?.foolDrawn && !$table.foolReshuffled) table.reshuffleForFool();
+	});
+
 	function drawInitial() {
 		if (locked) return;
 		table.discardHand();
@@ -152,8 +156,8 @@
 			{:else if result.favorSources.length === 2}
 				<span class="note">Favor is not cumulative — one source is enough.</span>
 			{/if}
-			{#if result.foolDrawn}
-				<span class="note">The Fool was drawn: shuffle both decks.</span>
+			{#if result.foolDrawn && $table.foolReshuffled}
+				<span class="note">The Fool was drawn. Both decks reshuffled.</span>
 			{/if}
 		</div>
 	{:else if !testedSuit}

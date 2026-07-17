@@ -118,6 +118,34 @@ export function isMinor(card: TarotCard): card is MinorCard {
 	return card.kind === 'minor';
 }
 
+export interface DeckZones<T extends TarotCard> {
+	drawPile: T[];
+	discard: T[];
+	held: T[];
+}
+
+const reshuffleRemaining = <T extends TarotCard>(zones: DeckZones<T>, rng: Rng): DeckZones<T> => ({
+	drawPile: shuffle([...zones.drawPile, ...zones.discard], rng),
+	discard: [],
+	held: zones.held.slice()
+});
+
+/**
+ * Ch1's Fool rule reshuffles both decks while leaving every visible/held card
+ * in place. The two RNGs keep the hidden GM shuffle from changing player draws.
+ */
+export function reshuffleAfterFool<P extends TarotCard, M extends TarotCard>(
+	player: DeckZones<P>,
+	major: DeckZones<M>,
+	playerRng: Rng,
+	majorRng: Rng
+) {
+	return {
+		player: reshuffleRemaining(player, playerRng),
+		major: reshuffleRemaining(major, majorRng)
+	};
+}
+
 /**
  * Draw `count` cards, auto-reshuffling the discard pile back into the draw pile
  * when it runs dry (Arrowed ruling: reshuffle automatically). Cards already in

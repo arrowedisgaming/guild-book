@@ -45,7 +45,8 @@ test.describe('test of fate', () => {
 		await page.getByRole('button', { name: 'Clear' }).click();
 		await page.getByLabel('Disfavor', { exact: true }).check();
 		await page.getByRole('button', { name: 'Draw & test' }).click();
-		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
+		// Clear advances the seeded deck to Cups VII: 7 + attribute 1 + 0 = 8.
+		await expect(page.locator('.result')).toHaveAttribute('data-total', '8');
 	});
 
 	/**
@@ -102,7 +103,8 @@ test.describe('test of fate', () => {
 		await page.getByRole('button', { name: 'Push fate (+1 card)' }).click();
 		await expect(page.locator('.result')).toHaveAttribute('data-outcome', 'great-failure');
 		await expect(page.locator('.result')).toContainText('automatic great failure');
-		await expect(page.locator('.result')).toContainText('shuffle both decks');
+		await expect(page.locator('.result')).toContainText('Both decks reshuffled');
+		await expect(page.getByLabel('The Fool')).toBeVisible();
 	});
 
 	test('an initial Fool fails at 0 but remains pushable', async ({ page }) => {
@@ -114,8 +116,14 @@ test.describe('test of fate', () => {
 		// The Fool is 0, so the total is the attribute alone.
 		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
 		await expect(page.locator('.result')).toHaveAttribute('data-outcome', 'failure');
-		await expect(page.locator('.result')).toContainText('shuffle both decks');
+		await expect(page.locator('.result')).toContainText('Both decks reshuffled');
+		await expect(page.getByLabel('The Fool')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Push fate (+1 card)' })).toBeEnabled();
+
+		await page.getByRole('button', { name: 'Clear' }).click();
+		await page.getByRole('button', { name: 'Draw & test' }).click();
+		await expect(page.getByLabel('II of Pentacles')).toBeVisible();
+		await expect(page.getByLabel('VIII of Swords')).toHaveCount(0);
 	});
 
 	test('a matching initial suit great-succeeds and cannot be pushed', async ({ page }) => {

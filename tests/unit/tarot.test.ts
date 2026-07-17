@@ -6,7 +6,8 @@ import {
 	buildFool,
 	shuffleDeck,
 	draw,
-	drawWithReshuffle
+	drawWithReshuffle,
+	reshuffleAfterFool
 } from '$lib/engine/tarot-deck';
 import { resolveTestOfFate, classifyOutcome } from '$lib/engine/tarot-resolution';
 import { makeRng } from '$lib/engine/rng';
@@ -67,6 +68,28 @@ describe('tarot deck', () => {
 		const res = drawWithReshuffle([], [], 5, rng);
 		expect(res.drawn).toHaveLength(0);
 		expect(res.reshuffled).toBe(false);
+	});
+
+	it('reshuffles both remaining decks while preserving visible cards', () => {
+		const player = buildPlayerDeck(config);
+		const major = buildMajorDeck(config);
+		const result = reshuffleAfterFool(
+			{ drawPile: player.slice(2), discard: [player[1]], held: [player[0]] },
+			{ drawPile: major.slice(2), discard: [major[1]], held: [major[0]] },
+			makeRng('player-fool'),
+			makeRng('major-fool')
+		);
+
+		expect(result.player.held).toEqual([player[0]]);
+		expect(result.major.held).toEqual([major[0]]);
+		expect(result.player.discard).toEqual([]);
+		expect(result.major.discard).toEqual([]);
+		expect(new Set([...result.player.drawPile, ...result.player.held].map((card) => card.id)).size).toBe(
+			57
+		);
+		expect(new Set([...result.major.drawPile, ...result.major.held].map((card) => card.id)).size).toBe(
+			21
+		);
 	});
 });
 

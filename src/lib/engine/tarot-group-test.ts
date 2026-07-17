@@ -37,8 +37,8 @@ export interface GroupTestSelection {
  * reported so the UI can ask the table.
  */
 export function selectGroupTestActors(candidates: GroupTestCandidate[]): GroupTestSelection {
-	if (candidates.length === 0) {
-		throw new Error('a group test needs at least one adventurer');
+	if (new Set(candidates.map((candidate) => candidate.id)).size < 2) {
+		throw new Error('a group test needs at least two distinct adventurers');
 	}
 	const byRoster = [...candidates].sort((a, b) => a.rosterOrder - b.rosterOrder);
 	const highest = Math.max(...byRoster.map((c) => c.attribute));
@@ -47,18 +47,17 @@ export function selectGroupTestActors(candidates: GroupTestCandidate[]): GroupTe
 	const tiedForMost = byRoster.filter((c) => c.attribute === highest);
 	const tiedForLeast = byRoster.filter((c) => c.attribute === lowest);
 
-	// A solo roster is the same adventurer at both ends, which is not a tie to
-	// talk out — there is nobody to talk about.
-	const solo = byRoster.length === 1;
+	const mostQualified = tiedForMost[0];
+	const leastQualified =
+		tiedForLeast.find((candidate) => candidate.id !== mostQualified.id) ??
+		byRoster.find((candidate) => candidate.id !== mostQualified.id)!;
 
-	// Both ends default to the first tied candidate in roster order, so the
-	// proposal is consistent and stable at either end.
 	return {
-		mostQualified: tiedForMost[0],
-		leastQualified: tiedForLeast[0],
+		mostQualified,
+		leastQualified,
 		tiedForMost,
 		tiedForLeast,
-		requiresTableDecision: !solo && (tiedForMost.length > 1 || tiedForLeast.length > 1)
+		requiresTableDecision: tiedForMost.length > 1 || tiedForLeast.length > 1
 	};
 }
 
@@ -80,6 +79,9 @@ export interface GroupTestResult {
  * why `config` is a parameter rather than an import.
  */
 export function resolveGroupTest(config: TarotConfig, outcomes: OutcomeId[]): GroupTestResult {
+	if (outcomes.length !== 2) {
+		throw new Error(`a group test requires exactly two outcomes; received ${outcomes.length}`);
+	}
 	const hits = outcomes.reduce((sum, outcome) => sum + GROUP_HITS[outcome], 0);
 	const band = config.resolution.groupOutcomes.find((o) => hits >= o.from && hits <= o.to);
 	if (!band) {

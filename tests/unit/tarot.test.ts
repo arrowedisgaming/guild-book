@@ -74,7 +74,7 @@ describe('test of fate', () => {
 	it('Knight of Wands (12) + Pentacles 2 = 14 → success', () => {
 		const r = resolveTestOfFate(config, {
 			attribute: 2,
-			initialCard: { id: 'wands-knight', value: 12, suit: 'wands' },
+			initialCard: { id: 'wands-knight', value: 12, suit: 'wands', origin: 'test-draw' },
 			pushCard: null,
 			testedSuit: 'pentacles',
 			favor: false,
@@ -88,7 +88,7 @@ describe('test of fate', () => {
 	it('tested suit on the initial draw + 14 → great success', () => {
 		const r = resolveTestOfFate(config, {
 			attribute: 4,
-			initialCard: { id: 'swords-x', value: 10, suit: 'swords' },
+			initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' },
 			pushCard: null,
 			testedSuit: 'swords',
 			favor: false,
@@ -102,7 +102,7 @@ describe('test of fate', () => {
 	it('total ≤ 13 with no push → failure', () => {
 		const r = resolveTestOfFate(config, {
 			attribute: 1,
-			initialCard: { id: 'cups-ii', value: 2, suit: 'cups' },
+			initialCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' },
 			pushCard: null,
 			testedSuit: 'wands',
 			favor: false,

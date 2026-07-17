@@ -9,7 +9,7 @@ function input(over: Partial<Parameters<typeof resolveTestOfFate>[1]> = {}) {
 	return {
 		attribute: 2,
 		testedSuit: 'cups' as const,
-		initialCard: { id: 'cups-x', value: 10, suit: 'cups' as const },
+		initialCard: { id: 'cups-x', value: 10, suit: 'cups' as const, origin: 'test-draw' as const },
 		pushCard: null,
 		favor: false,
 		disfavor: false,
@@ -57,14 +57,14 @@ describe('favor and disfavor', () => {
 
 describe('thresholds', () => {
 	it('fails on a total of 13', () => {
-		const r = resolveTestOfFate(config, input({ attribute: 3, initialCard: { id: 'swords-x', value: 10, suit: 'swords' } }));
+		const r = resolveTestOfFate(config, input({ attribute: 3, initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' } }));
 		expect(r.total).toBe(13);
 		expect(r.outcome).toBe('failure');
 		expect(r.canPush).toBe(true);
 	});
 
 	it('succeeds on a total of 14', () => {
-		const r = resolveTestOfFate(config, input({ attribute: 4, initialCard: { id: 'swords-x', value: 10, suit: 'swords' } }));
+		const r = resolveTestOfFate(config, input({ attribute: 4, initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' } }));
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('success');
 		expect(r.canPush).toBe(false);
@@ -75,10 +75,35 @@ describe('thresholds', () => {
 		expect(r.outcome).toBe('great-success');
 	});
 
+	it('does not great-succeed with a matching card supplied by another source', () => {
+		const result = resolveTestOfFate(
+			config,
+			input({
+				attribute: 4,
+				testedSuit: 'swords',
+				initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'supplied' }
+			})
+		);
+		expect(result.outcome).toBe('success');
+		expect(result.initialDrawMatchedTestedSuit).toBe(false);
+	});
+
+	it('still great-succeeds with a genuine matching initial test draw', () => {
+		const result = resolveTestOfFate(
+			config,
+			input({
+				attribute: 4,
+				testedSuit: 'swords',
+				initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' }
+			})
+		);
+		expect(result.outcome).toBe('great-success');
+	});
+
 	it('only succeeds on a non-matching initial suit', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 4, initialCard: { id: 'swords-x', value: 10, suit: 'swords' } })
+			input({ attribute: 4, initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' } })
 		);
 		expect(r.outcome).toBe('success');
 	});
@@ -86,7 +111,7 @@ describe('thresholds', () => {
 	it('counts favor toward the threshold', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 1, initialCard: { id: 'swords-x', value: 10, suit: 'swords' }, favor: true })
+			input({ attribute: 1, initialCard: { id: 'swords-x', value: 10, suit: 'swords', origin: 'test-draw' }, favor: true })
 		);
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('success');
@@ -98,7 +123,7 @@ describe('pushing fate', () => {
 	it('succeeds after a push but never greatly', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 2, initialCard: { id: 'cups-v', value: 5, suit: 'cups' }, pushCard: { id: 'cups-vii', value: 7, suit: 'cups' } })
+			input({ attribute: 2, initialCard: { id: 'cups-v', value: 5, suit: 'cups', origin: 'test-draw' }, pushCard: { id: 'cups-vii', value: 7, suit: 'cups', origin: 'test-draw' } })
 		);
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('success');
@@ -109,7 +134,7 @@ describe('pushing fate', () => {
 	it('makes a failed push a great failure', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 2, initialCard: { id: 'cups-v', value: 5, suit: 'cups' }, pushCard: { id: 'cups-ii', value: 2, suit: 'cups' } })
+			input({ attribute: 2, initialCard: { id: 'cups-v', value: 5, suit: 'cups', origin: 'test-draw' }, pushCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' } })
 		);
 		expect(r.total).toBe(9);
 		expect(r.outcome).toBe('great-failure');
@@ -125,7 +150,7 @@ describe('the Fool', () => {
 	it('allows an initial Fool to fail normally and remain pushable', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 4, testedSuit: 'wands', initialCard: { id: 'fool', value: 0 } })
+			input({ attribute: 4, testedSuit: 'wands', initialCard: { id: 'fool', value: 0, origin: 'test-draw' } })
 		);
 		expect(r.total).toBe(4);
 		expect(r.outcome).toBe('failure');
@@ -144,8 +169,8 @@ describe('the Fool', () => {
 			input({
 				attribute: 4,
 				testedSuit: 'swords',
-				initialCard: { id: 'swords-ii', value: 2, suit: 'swords' },
-				pushCard: { id: 'fool', value: 0 },
+				initialCard: { id: 'swords-ii', value: 2, suit: 'swords', origin: 'test-draw' },
+				pushCard: { id: 'fool', value: 0, origin: 'test-draw' },
 				favor: true,
 				resolveSpentForFavor: true
 			})
@@ -160,18 +185,18 @@ describe('the Fool', () => {
 	it('an initial Fool pushed to 14+ still succeeds', () => {
 		const r = resolveTestOfFate(
 			config,
-			input({ attribute: 4, initialCard: { id: 'fool', value: 0 }, pushCard: { id: 'cups-x', value: 10, suit: 'cups' } })
+			input({ attribute: 4, initialCard: { id: 'fool', value: 0, origin: 'test-draw' }, pushCard: { id: 'cups-x', value: 10, suit: 'cups', origin: 'test-draw' } })
 		);
 		expect(r.total).toBe(14);
 		expect(r.outcome).toBe('success');
 	});
 
 	it('flags a reshuffle whenever the Fool is drawn, on either draw', () => {
-		expect(resolveTestOfFate(config, input({ initialCard: { id: 'fool', value: 0 } })).foolDrawn).toBe(true);
+		expect(resolveTestOfFate(config, input({ initialCard: { id: 'fool', value: 0, origin: 'test-draw' } })).foolDrawn).toBe(true);
 		expect(
 			resolveTestOfFate(
 				config,
-				input({ attribute: 1, initialCard: { id: 'cups-ii', value: 2, suit: 'cups' }, pushCard: { id: 'fool', value: 0 } })
+				input({ attribute: 1, initialCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' }, pushCard: { id: 'fool', value: 0, origin: 'test-draw' } })
 			).foolDrawn
 		).toBe(true);
 		expect(resolveTestOfFate(config, input()).foolDrawn).toBe(false);
@@ -190,8 +215,8 @@ describe('push legality', () => {
 				config,
 				input({
 					attribute: 4,
-					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
-					pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups', origin: 'test-draw' },
+					pushCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' }
 				})
 			)
 		).toThrow(/illegal push/);
@@ -203,8 +228,8 @@ describe('push legality', () => {
 				config,
 				input({
 					attribute: 4,
-					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
-					pushCard: { id: 'fool', value: 0 }
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups', origin: 'test-draw' },
+					pushCard: { id: 'fool', value: 0, origin: 'test-draw' }
 				})
 			)
 		).toThrow(/illegal push/);
@@ -215,9 +240,9 @@ describe('push legality', () => {
 			config,
 			input({
 				attribute: 1,
-				initialCard: { id: 'cups-v', value: 5, suit: 'cups' },
+				initialCard: { id: 'cups-v', value: 5, suit: 'cups', origin: 'test-draw' },
 				favor: true,
-				pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+				pushCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' }
 			})
 		);
 		expect(r.total).toBe(11);
@@ -231,9 +256,9 @@ describe('push legality', () => {
 				config,
 				input({
 					attribute: 1,
-					initialCard: { id: 'cups-x', value: 10, suit: 'cups' },
+					initialCard: { id: 'cups-x', value: 10, suit: 'cups', origin: 'test-draw' },
 					favor: true,
-					pushCard: { id: 'cups-ii', value: 2, suit: 'cups' }
+					pushCard: { id: 'cups-ii', value: 2, suit: 'cups', origin: 'test-draw' }
 				})
 			)
 		).toThrow(/illegal push/);

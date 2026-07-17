@@ -48,11 +48,23 @@ describe('selecting who tests', () => {
 		expect(selectGroupTestActors(shuffled).mostQualified.id).toBe('a');
 	});
 
-	it('uses one adventurer for both ends of a solo roster', () => {
-		const s = selectGroupTestActors(roster(3));
-		expect(s.mostQualified.id).toBe('a');
-		expect(s.leastQualified.id).toBe('a');
-		expect(s.requiresTableDecision).toBe(false);
+	it('rejects a solo roster', () => {
+		expect(() => selectGroupTestActors(roster(3))).toThrow(/at least two distinct/);
+	});
+
+	it('rejects duplicate candidate ids as a solo roster', () => {
+		expect(() =>
+			selectGroupTestActors([
+				{ id: 'same', attribute: 4, rosterOrder: 0 },
+				{ id: 'same', attribute: 1, rosterOrder: 1 }
+			])
+		).toThrow(/at least two distinct/);
+	});
+
+	it('selects distinct actors when every attribute ties', () => {
+		const selection = selectGroupTestActors(roster(3, 3, 3));
+		expect(selection.mostQualified.id).not.toBe(selection.leastQualified.id);
+		expect(selection.requiresTableDecision).toBe(true);
 	});
 
 	it('rejects an empty roster rather than inventing an actor', () => {
@@ -61,6 +73,11 @@ describe('selecting who tests', () => {
 });
 
 describe('group outcome', () => {
+	it('requires exactly two outcomes', () => {
+		expect(() => resolveGroupTest(config, ['success'])).toThrow(/exactly two/);
+		expect(() => resolveGroupTest(config, ['success', 'failure', 'success'])).toThrow(/exactly two/);
+	});
+
 	it.each([
 		{ outcomes: ['great-success', 'great-success'], hits: 4, id: 'success' },
 		{ outcomes: ['success', 'success'], hits: 2, id: 'success' },

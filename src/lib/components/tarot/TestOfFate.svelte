@@ -39,7 +39,8 @@
 		const toCard = (c: (typeof hand)[number]) => ({
 			id: c.id,
 			value: c.value,
-			suit: isMinor(c) ? c.suit : undefined
+			suit: isMinor(c) ? c.suit : undefined,
+			origin: 'test-draw' as const
 		});
 		return resolveTestOfFate(config, {
 			attribute,

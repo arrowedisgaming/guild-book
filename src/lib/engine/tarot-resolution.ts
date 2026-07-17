@@ -17,8 +17,6 @@ import type { SuitId } from '$lib/types/common';
 
 export type OutcomeId = 'great-success' | 'success' | 'failure' | 'great-failure';
 
-
-
 /**
  * Classify a test-of-fate outcome from its computed facts.
  *
@@ -54,10 +52,13 @@ export function classifyOutcome(params: {
 
 const FOOL_ID = 'fool';
 
+export type ResolutionCardOrigin = 'test-draw' | 'supplied';
+
 export interface ResolutionCard {
 	id: string;
 	value: number;
 	suit?: SuitId;
+	origin: ResolutionCardOrigin;
 }
 
 /** Why a test had favor. Reported so the table log can explain the +3. */
@@ -118,7 +119,8 @@ export function resolveTestOfFate(config: TarotConfig, input: TestOfFateInput): 
 	const modifier = hasFavor === input.disfavor ? 0 : hasFavor ? step : -step;
 
 	const pushed = input.pushCard !== null;
-	const initialDrawMatchedTestedSuit = input.initialCard.suit === input.testedSuit;
+	const initialDrawMatchedTestedSuit =
+		input.initialCard.origin === 'test-draw' && input.initialCard.suit === input.testedSuit;
 
 	// Ch1: "If the result of the test is a failure, the player may opt to push
 	// fate." A push is only legal off a failure, so reject an illegal one rather

@@ -233,6 +233,7 @@
 						"kind": "formula",
 						"formulaId": "player-hand-size"
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
 					"visibility": "recipient-private",
 					"resultVisibility": "actor-private",
 					"completion": "automatic",
@@ -247,23 +248,34 @@
 						"kind": "formula",
 						"formulaId": "gm-hand-size"
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
 					"visibility": "actor-private",
 					"resultVisibility": "gm-private",
 					"completion": "automatic",
 					"recovery": "return-to-draw"
 				},
 				{
-					"id": "play-initiative",
+					"id": "place-player-initiative",
 					"actor": "player",
 					"operation": "place-facedown",
 					"deck": "minor",
 					"visibility": "actor-private",
-					"resultVisibility": "public",
+					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
-					"recovery": "return-to-draw"
+					"recovery": "retain-pending"
 				},
 				{
-					"id": "reveal-initiative",
+					"id": "place-gm-initiative",
+					"actor": "gm",
+					"operation": "place-facedown",
+					"deck": "major",
+					"visibility": "actor-private",
+					"resultVisibility": "gm-private",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "reveal-player-initiative",
 					"actor": "system",
 					"operation": "reveal",
 					"deck": "minor",
@@ -273,7 +285,17 @@
 					"recovery": "discard-pending"
 				},
 				{
-					"id": "play-action",
+					"id": "reveal-gm-initiative",
+					"actor": "system",
+					"operation": "reveal",
+					"deck": "major",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "play-player-action",
 					"actor": "player",
 					"operation": "play",
 					"deck": "minor",
@@ -283,7 +305,17 @@
 					"recovery": "discard-pending"
 				},
 				{
-					"id": "gm-play-doom",
+					"id": "place-player-facedown-action",
+					"actor": "player",
+					"operation": "place-facedown",
+					"deck": "minor",
+					"visibility": "actor-private",
+					"resultVisibility": "actor-private",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "play-gm-doom",
 					"actor": "gm",
 					"operation": "play",
 					"deck": "major",
@@ -291,6 +323,16 @@
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "place-gm-facedown-action",
+					"actor": "gm",
+					"operation": "place-facedown",
+					"deck": "major",
+					"visibility": "actor-private",
+					"resultVisibility": "gm-private",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
 				},
 				{
 					"id": "gm-mulligan",
@@ -303,14 +345,38 @@
 					"recovery": "return-to-draw"
 				},
 				{
-					"id": "end-round",
-					"actor": "gm",
+					"id": "discard-player-hand",
+					"actor": "each-player",
 					"operation": "discard",
 					"deck": "minor",
 					"visibility": "public",
 					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "discard-gm-hand",
+					"actor": "gm",
+					"operation": "discard",
+					"deck": "major",
+					"visibility": "public",
+					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "round-boundary",
+					"actor": "system",
+					"operation": "manual-choice",
+					"reshuffle": {
+						"trigger": "fool-drawn",
+						"decks": ["minor", "major"],
+						"boundary": "challenge-round-end"
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -1504,7 +1570,11 @@
 			],
 			"behaviorId": "inspiration-distribution",
 			"params": {
-				"maxPerPlayer": 1
+				"maxHeldPerPlayer": 1,
+				"challengeActionBudget": "challenge",
+				"testUse": "replace-initial-or-push",
+				"provenance": "supplied",
+				"expires": "used-or-session-end"
 			}
 		},
 		{
@@ -1519,7 +1589,12 @@
 			"ruleEntryIds": [],
 			"behaviorId": "prepared-facedown-bonus",
 			"params": {
-				"suit": "swords"
+				"requiresBow": true,
+				"suit": "swords",
+				"placement": "facedown",
+				"targetRequired": true,
+				"revealOn": "next-bow-attack",
+				"addsCardValue": true
 			}
 		},
 		{
@@ -1533,9 +1608,12 @@
 			"ruleEntryIds": [
 				"crawl-black-honey"
 			],
-			"behaviorId": "deal-size-delta",
+			"behaviorId": "optional-hand-size",
 			"params": {
-				"cards": 1
+				"normalCards": 4,
+				"optionalCards": 5,
+				"teethLostFrom": 1,
+				"teethLostTo": 4
 			}
 		},
 		{
@@ -1551,7 +1629,10 @@
 			],
 			"behaviorId": "forced-initiative-selection",
 			"params": {
-				"select": "lowest-value"
+				"initiativeSelection": "lowest-value",
+				"attacksHaveFavor": true,
+				"requiresEmotion": true,
+				"duration": "concentration"
 			}
 		},
 		{
@@ -1567,7 +1648,10 @@
 			],
 			"behaviorId": "private-transfer",
 			"params": {
-				"suitMustMatchAction": true
+				"timing": "any-time-during-challenge",
+				"suitMustMatchAction": true,
+				"maxUsesPerRound": 1,
+				"resolveCostForInterrupt": 1
 			}
 		},
 		{
@@ -1585,6 +1669,7 @@
 			"params": {
 				"requiresShield": true,
 				"anySuit": true,
+				"actionBudget": "miscellaneous",
 				"discardsOldInitiative": true
 			}
 		},
@@ -1599,9 +1684,15 @@
 			"ruleEntryIds": [
 				"sorcery-guardian-angel"
 			],
-			"behaviorId": "private-transfer",
+			"behaviorId": "guardian-angel-defense",
 			"params": {
-				"suitMustMatchAction": false
+				"placement": "facedown",
+				"allowedActions": "dodge-or-riposte",
+				"cumulative": true,
+				"exemptFromFacedownLimit": true,
+				"maxInstances": 1,
+				"targetRequired": true,
+				"duration": "until-used"
 			}
 		},
 		{
@@ -1617,7 +1708,8 @@
 			],
 			"behaviorId": "forced-hand-discard",
 			"params": {
-				"immediate": true
+				"immediate": true,
+				"discard": "entire-hand"
 			}
 		}
 	],

@@ -61,6 +61,12 @@ const step = (procedureId: string, stepId: string) => {
 	return value!;
 };
 
+const modifier = (id: string) => {
+	const value = getTarotProcedures().modifiers.find((candidate) => candidate.id === id);
+	expect(value, `missing modifier ${id}`).toBeDefined();
+	return value!;
+};
+
 describe('tarot procedure semantic schema', () => {
 	it('retains every typed semantic field', () => {
 		const result = tarotProcedureDefinitionSchema.safeParse(validProcedure(validSemanticStep()));
@@ -187,6 +193,97 @@ describe('tarot procedure catalog', () => {
 		expect(
 			highChant.steps.some((candidate) => candidate.cardSource?.kind === 'discard-selection')
 		).toBe(true);
+	});
+
+	it('models both Initiative decks, retained actions, cleanup, and the round Fool boundary', () => {
+		expect(step('challenge-round', 'place-player-initiative')).toMatchObject({
+			actor: 'player',
+			operation: 'place-facedown',
+			deck: 'minor'
+		});
+		expect(step('challenge-round', 'place-gm-initiative')).toMatchObject({
+			actor: 'gm',
+			operation: 'place-facedown',
+			deck: 'major'
+		});
+		expect(step('challenge-round', 'reveal-player-initiative').deck).toBe('minor');
+		expect(step('challenge-round', 'reveal-gm-initiative').deck).toBe('major');
+		expect(step('challenge-round', 'place-player-facedown-action').recovery).toBe('retain-pending');
+		expect(step('challenge-round', 'place-gm-facedown-action').recovery).toBe('retain-pending');
+		expect(step('challenge-round', 'discard-player-hand').deck).toBe('minor');
+		expect(step('challenge-round', 'discard-gm-hand').deck).toBe('major');
+		expect(step('challenge-round', 'round-boundary').reshuffle).toEqual({
+			trigger: 'fool-drawn',
+			decks: ['minor', 'major'],
+			boundary: 'challenge-round-end'
+		});
+	});
+
+	it('records complete Challenge modifier parameters', () => {
+		expect(modifier('challenge-black-honey')).toMatchObject({
+			behaviorId: 'optional-hand-size',
+			params: { normalCards: 4, optionalCards: 5, teethLostFrom: 1, teethLostTo: 4 }
+		});
+		expect(modifier('challenge-brainfever')).toMatchObject({
+			params: {
+				initiativeSelection: 'lowest-value',
+				attacksHaveFavor: true,
+				requiresEmotion: true,
+				duration: 'concentration'
+			}
+		});
+		expect(modifier('challenge-counsel')).toMatchObject({
+			params: {
+				timing: 'any-time-during-challenge',
+				suitMustMatchAction: true,
+				maxUsesPerRound: 1,
+				resolveCostForInterrupt: 1
+			}
+		});
+		expect(modifier('challenge-guardian-angel')).toMatchObject({
+			behaviorId: 'guardian-angel-defense',
+			params: {
+				placement: 'facedown',
+				allowedActions: 'dodge-or-riposte',
+				cumulative: true,
+				exemptFromFacedownLimit: true,
+				maxInstances: 1,
+				targetRequired: true,
+				duration: 'until-used'
+			}
+		});
+		expect(modifier('challenge-aim')).toMatchObject({
+			params: {
+				requiresBow: true,
+				suit: 'swords',
+				placement: 'facedown',
+				targetRequired: true,
+				revealOn: 'next-bow-attack',
+				addsCardValue: true
+			}
+		});
+		expect(modifier('challenge-guard')).toMatchObject({
+			params: {
+				requiresShield: true,
+				anySuit: true,
+				actionBudget: 'miscellaneous',
+				discardsOldInitiative: true
+			}
+		});
+		expect(modifier('camp-high-chant')).toMatchObject({
+			behaviorId: 'inspiration-distribution',
+			params: {
+				maxHeldPerPlayer: 1,
+				challengeActionBudget: 'challenge',
+				testUse: 'replace-initial-or-push',
+				provenance: 'supplied',
+				expires: 'used-or-session-end'
+			}
+		});
+		expect(modifier('challenge-stun')).toMatchObject({
+			behaviorId: 'forced-hand-discard',
+			params: { immediate: true, discard: 'entire-hand' }
+		});
 	});
 });
 

@@ -764,17 +764,86 @@ export interface TarotLookupTable {
 	source: TarotSourceRef;
 }
 
-/** A typed rule hook a procedure composes, e.g. Counsel's private transfer. */
-export interface SessionModifierDefinition {
+interface ModifierBase<BehaviorId extends string, Params> {
 	id: string;
 	title: string;
 	phase: TarotProcedurePhase;
 	source: TarotSourceRef;
 	ruleEntryIds: string[];
-	/** Named behavior the engine implements; content supplies parameters only. */
-	behaviorId: string;
-	params: Record<string, number | string | boolean>;
+	behaviorId: BehaviorId;
+	params: Params;
 }
+
+export interface InspirationDistributionParams {
+	maxHeldPerPlayer: number;
+	challengeActionBudget: 'challenge';
+	testUse: 'replace-initial-or-push';
+	provenance: 'supplied';
+	expires: 'used-or-session-end';
+}
+
+export interface PreparedFacedownBonusParams {
+	requiresBow: boolean;
+	suit: SuitId;
+	placement: 'facedown';
+	targetRequired: boolean;
+	revealOn: 'next-bow-attack';
+	addsCardValue: boolean;
+}
+
+export interface OptionalHandSizeParams {
+	normalCards: number;
+	optionalCards: number;
+	teethLostFrom: number;
+	teethLostTo: number;
+}
+
+export interface ForcedInitiativeSelectionParams {
+	initiativeSelection: 'lowest-value';
+	attacksHaveFavor: boolean;
+	requiresEmotion: boolean;
+	duration: 'concentration';
+}
+
+export interface CounselTransferParams {
+	timing: 'any-time-during-challenge';
+	suitMustMatchAction: boolean;
+	maxUsesPerRound: number;
+	resolveCostForInterrupt: number;
+}
+
+export interface ReplaceInitiativeParams {
+	requiresShield: boolean;
+	anySuit: boolean;
+	actionBudget: 'miscellaneous';
+	discardsOldInitiative: boolean;
+}
+
+export interface GuardianAngelParams {
+	placement: 'facedown';
+	allowedActions: 'dodge-or-riposte';
+	cumulative: boolean;
+	exemptFromFacedownLimit: boolean;
+	maxInstances: number;
+	targetRequired: boolean;
+	duration: 'until-used';
+}
+
+export interface ForcedHandDiscardParams {
+	immediate: boolean;
+	discard: 'entire-hand';
+}
+
+/** A typed rule hook a procedure composes; content supplies behavior parameters. */
+export type SessionModifierDefinition =
+	| ModifierBase<'inspiration-distribution', InspirationDistributionParams>
+	| ModifierBase<'prepared-facedown-bonus', PreparedFacedownBonusParams>
+	| ModifierBase<'optional-hand-size', OptionalHandSizeParams>
+	| ModifierBase<'forced-initiative-selection', ForcedInitiativeSelectionParams>
+	| ModifierBase<'private-transfer', CounselTransferParams>
+	| ModifierBase<'replace-initiative', ReplaceInitiativeParams>
+	| ModifierBase<'guardian-angel-defense', GuardianAngelParams>
+	| ModifierBase<'forced-hand-discard', ForcedHandDiscardParams>;
 
 /** Parameters for a named formula the engine implements (e.g. the GM hand size). */
 export interface TarotFormulaDefinition {

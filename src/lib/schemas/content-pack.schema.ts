@@ -668,15 +668,118 @@ export const tarotLookupTableSchema = z.object({
 	source: tarotSourceRefSchema
 });
 
-export const sessionModifierDefinitionSchema = z.object({
+const sessionModifierBaseShape = {
 	id: z.string(),
 	title: z.string(),
 	phase: tarotProcedurePhaseEnum,
 	source: tarotSourceRefSchema,
-	ruleEntryIds: z.array(z.string()),
-	behaviorId: z.string(),
-	params: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()]))
-});
+	ruleEntryIds: z.array(z.string())
+};
+
+const positiveIntegerSchema = z.number().int().positive();
+
+export const sessionModifierDefinitionSchema = z.discriminatedUnion('behaviorId', [
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('inspiration-distribution'),
+		params: z
+			.object({
+				maxHeldPerPlayer: positiveIntegerSchema,
+				challengeActionBudget: z.literal('challenge'),
+				testUse: z.literal('replace-initial-or-push'),
+				provenance: z.literal('supplied'),
+				expires: z.literal('used-or-session-end')
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('prepared-facedown-bonus'),
+		params: z
+			.object({
+				requiresBow: z.boolean(),
+				suit: suitEnum,
+				placement: z.literal('facedown'),
+				targetRequired: z.boolean(),
+				revealOn: z.literal('next-bow-attack'),
+				addsCardValue: z.boolean()
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('optional-hand-size'),
+		params: z
+			.object({
+				normalCards: positiveIntegerSchema,
+				optionalCards: positiveIntegerSchema,
+				teethLostFrom: positiveIntegerSchema,
+				teethLostTo: positiveIntegerSchema
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('forced-initiative-selection'),
+		params: z
+			.object({
+				initiativeSelection: z.literal('lowest-value'),
+				attacksHaveFavor: z.boolean(),
+				requiresEmotion: z.boolean(),
+				duration: z.literal('concentration')
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('private-transfer'),
+		params: z
+			.object({
+				timing: z.literal('any-time-during-challenge'),
+				suitMustMatchAction: z.boolean(),
+				maxUsesPerRound: positiveIntegerSchema,
+				resolveCostForInterrupt: positiveIntegerSchema
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('replace-initiative'),
+		params: z
+			.object({
+				requiresShield: z.boolean(),
+				anySuit: z.boolean(),
+				actionBudget: z.literal('miscellaneous'),
+				discardsOldInitiative: z.boolean()
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('guardian-angel-defense'),
+		params: z
+			.object({
+				placement: z.literal('facedown'),
+				allowedActions: z.literal('dodge-or-riposte'),
+				cumulative: z.boolean(),
+				exemptFromFacedownLimit: z.boolean(),
+				maxInstances: positiveIntegerSchema,
+				targetRequired: z.boolean(),
+				duration: z.literal('until-used')
+			})
+			.strict()
+	}),
+	z.object({
+		...sessionModifierBaseShape,
+		behaviorId: z.literal('forced-hand-discard'),
+		params: z
+			.object({
+				immediate: z.boolean(),
+				discard: z.literal('entire-hand')
+			})
+			.strict()
+	})
+]);
 
 export const tarotFormulaDefinitionSchema = z.object({
 	id: z.string(),

@@ -12,6 +12,9 @@ import rules from '../../static/content-packs/hmtw/rules.json';
  * are in The City Phase — so the id names the rule, not the chapter.
  */
 const REQUIRED_IDS = [
+	// Chapter 3 — The Guild
+	'guild-deeds-and-fame',
+
 	// Chapter 6 — The Crawl Phase
 	'crawl-sequence',
 	'crawl-watches',

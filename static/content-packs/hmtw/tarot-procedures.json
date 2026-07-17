@@ -868,6 +868,11 @@
 						"kind": "fixed",
 						"count": 3
 					},
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "minor",
+						"provenance": "procedure-draw"
+					},
 					"visibility": "actor-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
@@ -904,10 +909,34 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "minor",
+						"provenance": "procedure-draw"
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "resolve-earnings",
+					"actor": "system",
+					"operation": "manual-choice",
+					"effects": [
+						{
+							"kind": "resource",
+							"resource": "gold",
+							"amount": {
+								"kind": "card-value-plus-attribute",
+								"attribute": "wands"
+							}
+						}
+					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -941,6 +970,11 @@
 						"count": 1
 					},
 					"lookupTableId": "hangover",
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "major",
+						"provenance": "procedure-draw"
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -967,6 +1001,23 @@
 			"modifierIds": [],
 			"steps": [
 				{
+					"id": "pay-fee",
+					"actor": "player",
+					"operation": "manual-choice",
+					"costs": [
+						{
+							"kind": "resource",
+							"resource": "gold",
+							"amount": 10,
+							"timing": "before-step"
+						}
+					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
 					"id": "draw-prophecy",
 					"actor": "player",
 					"operation": "draw",
@@ -976,10 +1027,47 @@
 						"count": 4
 					},
 					"lookupTableId": "doomsaying",
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "minor",
+						"provenance": "procedure-draw"
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "fulfill-prophecy",
+					"actor": "player",
+					"operation": "manual-choice",
+					"effects": [
+						{
+							"kind": "resource",
+							"resource": "resolve",
+							"amount": {
+								"kind": "full"
+							}
+						}
+					],
+					"limits": [
+						{
+							"kind": "single-instance",
+							"count": 1
+						}
+					],
+					"timing": {
+						"kind": "event",
+						"event": "prophecy-fulfilled"
+					},
+					"duration": {
+						"kind": "until",
+						"boundary": "used"
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -1017,10 +1105,29 @@
 						"count": 1
 					},
 					"lookupTableId": "city-events",
+					"cardSource": {
+						"kind": "draw-pile",
+						"deck": "major",
+						"provenance": "procedure-draw"
+					},
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "mark-event-used",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"effects": [
+						{
+							"kind": "mark-entry-used"
+						}
+					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -1054,6 +1161,20 @@
 					"operation": "consult-discard-top",
 					"deck": "minor",
 					"lookupTableId": "signs-and-portents",
+					"cardSource": {
+						"kind": "discard-top",
+						"deck": "minor",
+						"consume": false
+					},
+					"conditions": [
+						{
+							"kind": "lookup-key",
+							"tableId": "city-events",
+							"keys": [
+								"XXI"
+							]
+						}
+					],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -1082,8 +1203,33 @@
 				{
 					"id": "choose-source",
 					"actor": "player",
-					"operation": "select-from-discard",
+					"operation": "manual-choice",
 					"deck": "minor",
+					"cardSource": {
+						"kind": "mixed",
+						"deck": "minor",
+						"sources": [
+							"draw-pile",
+							"discard-top"
+						]
+					},
+					"choice": {
+						"kind": "mixed-source",
+						"sources": [
+							"draw-pile",
+							"discard-top"
+						]
+					},
+					"limits": [
+						{
+							"kind": "once-next-expedition",
+							"count": 1
+						}
+					],
+					"duration": {
+						"kind": "until",
+						"boundary": "next-expedition-end"
+					},
 					"visibility": "recipient-private",
 					"resultVisibility": "actor-private",
 					"completion": "actor-confirmed",
@@ -3882,7 +4028,7 @@
 							"references": [
 								{
 									"collection": "rules",
-									"entryId": "social-encounters-disposition",
+									"entryId": "crawl-social-encounters-disposition",
 									"label": "Social Encounters & Disposition"
 								}
 							]
@@ -5505,7 +5651,7 @@
 							"references": [
 								{
 									"collection": "rules",
-									"entryId": "7-deeds-and-fame",
+									"entryId": "guild-deeds-and-fame",
 									"label": "Deeds and Fame"
 								}
 							]

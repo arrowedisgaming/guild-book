@@ -69,6 +69,24 @@ export function validateProcedureManifestSources(manifest) {
 	}
 }
 
+/** Map source-heading slugs to canonical content ids without editing extracted rows. */
+function normalizeTableReferences(tables, referenceAliases = {}) {
+	return tables.map((table) => ({
+		...table,
+		rows: table.rows.map((row) => ({
+			...row,
+			cells: row.cells.map((cell) => ({
+				...cell,
+				references: cell.references.map((reference) => ({
+					...reference,
+					entryId:
+						referenceAliases[reference.collection]?.[reference.entryId] ?? reference.entryId
+				}))
+			}))
+		}))
+	}));
+}
+
 /** Runtime catalog: supported entries only, deterministically ordered. */
 export function compileProcedureContent(manifest, tables) {
 	return {
@@ -77,7 +95,9 @@ export function compileProcedureContent(manifest, tables) {
 			.filter((entry) => entry.scope === 'supported-v1')
 			.map(({ rationale: _rationale, ...entry }) => entry)
 			.sort((a, b) => a.id.localeCompare(b.id)),
-		lookupTables: [...tables].sort((a, b) => a.id.localeCompare(b.id)),
+		lookupTables: normalizeTableReferences(tables, manifest.referenceAliases).sort((a, b) =>
+			a.id.localeCompare(b.id)
+		),
 		modifiers: [...manifest.modifiers].sort((a, b) => a.id.localeCompare(b.id)),
 		formulas: [...manifest.formulas].sort((a, b) => a.id.localeCompare(b.id))
 	};

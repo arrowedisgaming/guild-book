@@ -116,6 +116,17 @@
 		]
 	},
 	{
+		"id": "guild-deeds-and-fame",
+		"section": "guild",
+		"title": "Deeds and Fame",
+		"body": "When great deeds are done in the Underworld, the whole City buzzes. Adventurers are big business—guilds that pull off big stunts will start to attract the attention of important people. Each discrete achievement your guild accomplishes are cataloged as noteworthy deeds. You track your noteworthy deeds on the guild roster during step 2 of the City Phase.\n\nYour guild’s Fame is equal to the number of noteworthy deeds you have performed. Fame is an abstract measurement of how much gossip and name recognition your guild receives. Fame is rated 0–5. The GM frames role-playing exchanges within the context of your current Fame score.\n\n| Fame | Reaction |\n|:---:|---|\n| 0 | “Who are you again? Am I supposed to have heard of you?” |\n| 1 | Token name recognition |\n| 2 | Known generally in the Underworld |\n| 3 | Famous within the Underworld |\n| 4 | Known generally in the City |\n| 5 | Famous within the City |\n\nNote that Fame isn’t necessarily *good*. It just means people have heard of your deeds. If all of your deeds are dastardly, you’ll be known as dastards. If your guild’s Fame is very high, a GM character’s starting Disposition might be more or less favorable.",
+		"tags": [
+			"guild",
+			"fame",
+			"city"
+		]
+	},
+	{
 		"id": "crawl-sequence",
 		"section": "crawl-phase",
 		"title": "The Flow of the Crawl Phase",

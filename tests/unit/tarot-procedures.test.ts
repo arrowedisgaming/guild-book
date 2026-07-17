@@ -405,6 +405,84 @@ describe('tarot procedure catalog', () => {
 			conditions: [{ kind: 'game-state', state: 'guild-out-of-light' }]
 		});
 	});
+
+	it('records City Events depletion and the Signs discard-top trigger', () => {
+		expect(step('city-events', 'draw-event')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			lookupTableId: 'city-events'
+		});
+		expect(step('city-events', 'mark-event-used').effects).toContainEqual({
+			kind: 'mark-entry-used'
+		});
+		expect(step('city-signs-and-portents', 'consult-discard-top')).toMatchObject({
+			conditions: [{ kind: 'lookup-key', tableId: 'city-events', keys: ['XXI'] }],
+			cardSource: { kind: 'discard-top', deck: 'minor', consume: false }
+		});
+	});
+
+	it('records Beg and Busk earnings and Carouse lookup inputs', () => {
+		expect(step('city-beg-and-busk', 'draw-earnings')).toMatchObject({
+			operation: 'draw',
+			deck: 'minor',
+			draw: { kind: 'fixed', count: 1 }
+		});
+		expect(step('city-beg-and-busk', 'resolve-earnings').effects).toContainEqual({
+			kind: 'resource',
+			resource: 'gold',
+			amount: { kind: 'card-value-plus-attribute', attribute: 'wands' }
+		});
+		expect(step('city-carouse', 'draw-hangover')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			lookupTableId: 'hangover'
+		});
+		const hangover = getTarotProcedures().lookupTables.find((table) => table.id === 'hangover');
+		expect(hangover?.bracketConvention).toBe('minor-discard-top');
+	});
+
+	it('records complete Doomsaying payment, reading, and fulfillment', () => {
+		expect(step('city-doomsaying', 'pay-fee').costs).toContainEqual({
+			kind: 'resource',
+			resource: 'gold',
+			amount: 10,
+			timing: 'before-step'
+		});
+		expect(step('city-doomsaying', 'draw-prophecy')).toMatchObject({
+			operation: 'draw',
+			deck: 'minor',
+			draw: { kind: 'fixed', count: 4 },
+			lookupTableId: 'doomsaying'
+		});
+		expect(step('city-doomsaying', 'fulfill-prophecy')).toMatchObject({
+			effects: [{ kind: 'resource', resource: 'resolve', amount: { kind: 'full' } }],
+			timing: { kind: 'event', event: 'prophecy-fulfilled' },
+			limits: [{ kind: 'single-instance', count: 1 }]
+		});
+	});
+
+	it('records next-expedition source choice and private top-three reordering', () => {
+		expect(step('city-strange-communions', 'choose-source').choice).toEqual({
+			kind: 'mixed-source',
+			sources: ['draw-pile', 'discard-top']
+		});
+		expect(step('city-strange-communions', 'choose-source').limits).toContainEqual({
+			kind: 'once-next-expedition',
+			count: 1
+		});
+		expect(step('city-strange-communions', 'choose-source').duration).toEqual({
+			kind: 'until',
+			boundary: 'next-expedition-end'
+		});
+		expect(step('city-as-above-so-below', 'reorder-top-three')).toMatchObject({
+			operation: 'reorder-top',
+			deck: 'minor',
+			draw: { kind: 'fixed', count: 3 },
+			visibility: 'actor-private',
+			resultVisibility: 'actor-private',
+			recovery: 'return-to-draw'
+		});
+	});
 });
 
 describe('tarot procedure references', () => {
@@ -564,6 +642,21 @@ describe('oracle lookup tables', () => {
 						expect(denizenIds.has(ref.entryId), `${table.id} cites denizen ${ref.entryId}`).toBe(
 							true
 						);
+					}
+				}
+			}
+		}
+	});
+
+	it('resolves every rules cross-reference to a real entry', () => {
+		const ruleIds = new Set(getRules().map((rule) => rule.id));
+		for (const table of getTarotProcedures().lookupTables) {
+			for (const row of table.rows) {
+				for (const cell of row.cells) {
+					for (const ref of cell.references) {
+						if (ref.collection === 'rules') {
+							expect(ruleIds.has(ref.entryId), `${table.id} cites rules ${ref.entryId}`).toBe(true);
+						}
 					}
 				}
 			}

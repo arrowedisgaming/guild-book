@@ -91,6 +91,14 @@
 		"tags": ["core", "effects", "conditions"]
 	},
 	{
+		"id": "guild-deeds-and-fame",
+		"section": "guild",
+		"title": "Deeds and Fame",
+		"file": "03 - Chapter 3 - The Guild.md",
+		"heading": "7. Deeds and Fame",
+		"tags": ["guild", "fame", "city"]
+	},
+	{
 		"id": "crawl-sequence",
 		"section": "crawl-phase",
 		"title": "The Flow of the Crawl Phase",

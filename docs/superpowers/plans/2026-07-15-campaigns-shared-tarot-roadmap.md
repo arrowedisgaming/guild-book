@@ -20,6 +20,7 @@ Decisions and open questions that change what gets built. The design review's B1
 | D5 | Does the app implement rules the game does not have? | **Resolved 2026-07-15; corrected 2026-07-16** | No — anything the rulebook does not contain is removed at the specification, before it can reach content JSON or the engine. The earlier application of this rule to shield Initiative replacement was wrong: Ch7's **Guard** miscellaneous action explicitly lets a shield-bearer replace Initiative with any hand card and discard the old Initiative. The mechanic is restored as `challenge-guard` with `replace-initiative-with-shield`. `Aim` is also real, sourced from Chapter 9's bow equipment rather than Chapter 7. The rulebook remains authoritative; absence claims must search for the mechanic's effect, not only its noun. |
 | ~~D6~~ | ~~What deck does Signs and Portents draw from?~~ | **WITHDRAWN 2026-07-15 — the premise was false** | D6 asked the owner to fill a gap that **does not exist**. The rulebook is *not* silent: Ch9:130 — "When drawing this result, the GM **looks at the top card of the minor arcana discard pile** and then consults the Signs and Portents table" — and the City Events XXI row repeats it at `:160`. The error was reading the section the table *lives in* (`## Signs and Portents`, which says only "Refer to this table when the City Events table yields a XXI result") instead of the section it is *invoked from*. Per D5 the rulebook wins, so Signs is `consult-discard-top` on the minor deck, like `denizen-disposition` and `camp-watch`. This also explains the I–XIV keying: the discard top *is* a minor card, value 1–14. The owner's fresh-deck decision was sound given the information provided; the information was wrong. `deckScope` existed only for this and is removed. Found by an adversarial Codex review, not by the author. |
 | D7 | Where does a rule's procedure live in the book? | **Standing rule, 2026-07-15** | **At the call site, not the table.** Four separate errors shared this cause: Signs (D6), `gm-twist` (modelled as a draw when Ch10:354 says "**Glance at**" the discard top), the bracket convention (declared in Ch9's Carouse section, governing Hangover), and Guard (filed under miscellaneous actions, not the Chapter 9 Shield equipment entry). Before modelling a procedure, grep for where the table or effect is *invoked*, not only where its noun is printed. The audit's `source` field points at the printed rule; it is not evidence of how the rule is used. |
+| D8 | When does the Fool reshuffle the decks? | **Resolved 2026-07-16** | Treat the lone player-facing `played` wording as an erratum. Drawing the Fool schedules both eligible decks to reshuffle at the procedure's legal boundary, matching Chapter 1 and the detailed GM Challenge cleanup rule. The visible result remains available while the underlying deck zones reshuffle. |
 | D4 | Cloudflare Pages or Workers? | **Open — blocks Increment 5 only** | `wrangler.toml` is a Pages config, but Increment 5 assumes Workers: `wrangler deploy --dry-run` errors on a Pages project, and the `[[ratelimits]]` binding is Workers-only yet type-checks cleanly on Pages, so it would be `undefined` at runtime and trip the plan's own fail-closed guard in production. Deliberately deferred — it does not block Increments 0a–4. See the Increment 5 amendments. |
 
 ## Global Constraints
@@ -59,6 +60,30 @@ The plans are executed in table order except the artwork plan, which may run aft
 This table supersedes specification §16's "Recommended release increments" list, which named a single Increment 0. §16 is advisory about sequencing ("recommended"); its normative content — the scope of each increment and what must be true before public enablement — is unchanged and is enforced by the gates below. Fold the split into §16 at the next spec amendment so the two do not drift.
 
 **Why Increment 0 is split.** The original combined plan required every procedure `ruleEntryId` to resolve against the generated rules output, but no task imported the chapters those IDs live in: `manifest/rules-md.json` covers only Chapter 1, and the pack README records the rest as deferred. The combined plan therefore failed against its own validator. 0a imports the prose through the existing, proven `md-rules.mjs` path; 0b adds the procedure contract and extracts the oracle tables through a new path, because `extractRuleBody` deliberately strips the `Example …` sub-sections the tables live under. The two halves are different machinery with different failure modes and are gated separately: the rules path drops the Meatgrinder and City Events tables outright (they sit under `Example …` headings) and flattens every other table's cross-references into prose, so neither output is usable as structured lookup data.
+
+### Tarot Procedure Correctness v2 completion record
+
+The structural correction required by D7 is implemented before Campaign
+Foundation begins:
+
+- schema v2 requires a definition `source` and a non-empty, duplicate-free
+  `invokedFrom` list for every one of the 31 `supported-v1` procedures;
+- the local Markdown vault is used only by authoring and verification commands;
+  runtime and CI consume the committed manifest, generated audit, and generated
+  content pack without reading the vault;
+- all 31 procedures were re-audited across the five mandatory mechanical search
+  families, correcting Test of Fate, group tests, Challenge, Crawl/Camp, City,
+  sorcery, and oracle semantics;
+- Test of Fate now distinguishes deck-drawn from supplied cards, group tests
+  require two distinct actors and exactly two outcomes, and drawing the Fool
+  performs a card-conserving two-deck reshuffle at the legal boundary; and
+- the final independent review's six Important findings were closed, including
+  Questing Beast oil, random Maleficence, Patrol result cardinality, supplied
+  Fool provenance, and cross-file step/table reference validation; and
+- content pack v3.0.0 records the schema and semantic contract break.
+
+The completion bundle remains a correctness foundation. It does not start
+Campaign Foundation, persistence, routes, or the full shared phase runners.
 
 ## Required Architectural Boundaries
 

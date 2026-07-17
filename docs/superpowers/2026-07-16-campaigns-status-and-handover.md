@@ -1,8 +1,10 @@
 # Campaigns & Shared Tarot — Status, Failure Modes, and What's Left
 
 **Date:** 2026-07-16
-**Author:** Claude (Opus 4.8), written after two external adversarial reviews
-**Scope:** everything from `177af5b` (Release v0.1.0) to now
+**Author:** Claude (Opus 4.8), updated by Codex after the Tarot Procedure
+Correctness v2 implementation and adversarial review
+**Scope:** everything from `177af5b` (Release v0.1.0) through the v2 correctness
+bundle
 
 This is a handover, not a progress report. It is written to be useful to whoever
 picks this up — including me in a fresh session — so it leads with what went
@@ -12,18 +14,21 @@ wrong rather than what got built.
 
 ## 1. TL;DR
 
-Three increments landed on `main` (0a, 0b, 0.5) plus one fix round. Everything is
-**local and unpushed**. The engine and content pipeline are real and well-tested.
+Three increments landed on `main` (0a, 0b, 0.5), followed by two correction
+rounds and the Tarot Procedure Correctness v2 bundle. Everything remains **local
+and unpushed**. The engine and content pipeline are real and well-tested.
 
 **But two adversarial reviews found 27 issues between them, and the same root
 cause produced at least four rules errors — including one where I deleted a real
 game rule from the specification after telling the owner the game didn't have
 it.** That deletion was approved by the owner on the strength of my false claim.
 
-The second-review correction bundle is complete on
-`fix/campaigns-second-review-findings`. Work intentionally stops after that
-bundle because the remaining catalog work is *exactly* the class of task that
-produced the repeated errors, and a structural fix (§5) should land first.
+The structural fix recommended by this handover is now implemented on
+`codex/tarot-procedure-correctness-v2`: schema v2 separates definition sources
+from every material invocation citation, all 31 supported procedures were
+re-audited, the known domain errors were corrected, and the existing Test of
+Fate client now executes the required Fool reshuffle. Work still stops before
+Campaign Foundation.
 
 ---
 
@@ -31,21 +36,23 @@ produced the repeated errors, and a structural fix (§5) should land first.
 
 | | |
 |---|---|
-| Branch | `fix/campaigns-second-review-findings` (correction bundle included with this handover) |
+| Branch | `codex/tarot-procedure-correctness-v2` (isolated worktree; not merged or pushed) |
 | `main` | 3 increments + 1 fix round merged, **13+ commits ahead of `origin`, nothing pushed** |
-| Tests | 232 passing, 21 files |
+| Tests | 273 passing, 22 files; focused Playwright 8 passing |
 | `npm run check` | 0 errors |
 | Content drift | 0 across all collections |
-| Rules reference | 56 entries |
+| Rules reference | 57 entries |
 | Procedure catalog | 31 procedures, 14 oracle tables (194 rows), 8 modifiers, 3 formulas |
-| Content pack | v2.3.0, digest-enforced |
+| Content pack | v3.0.0, digest-enforced |
 
 ### Gates
 
 - **Gate A1 (0a — rules prose):** passing
-- **Gate A2 (0b — procedure contract):** passing, but see §3 — "passing" here means
-  self-consistent, not rule-correct. The tests could not catch the rules errors.
-- **Increment 0.5 (resolution engine):** complete, engine verified in a real browser
+- **Gate A2 (0b — procedure contract):** superseded by schema v2 and the full
+  definition/invocation re-audit. Generated/runtime/CI boundaries are explicit.
+- **Increment 0.5 (resolution engine):** complete, including provenance-aware
+  success, exact group-test arity, and executable Fool reshuffling; verified in
+  a real browser.
 
 ### Decision log (`docs/superpowers/plans/…-roadmap.md`)
 
@@ -57,7 +64,8 @@ produced the repeated errors, and a structural fix (§5) should land first.
 | D4 Pages vs Workers | **OPEN** — deliberately deferred to Increment 5 |
 | D5 no invented rules | Standing rule — the rulebook overrides the spec |
 | ~~D6 Signs deck~~ | **WITHDRAWN — my premise was false** |
-| D7 rules live at the call site | Standing rule — **and I broke it immediately after writing it** |
+| D7 rules live at the call site | Standing rule — now enforced by schema v2 `invokedFrom` |
+| D8 Fool reshuffle trigger | Resolved — **drawn**, with the lone `played` wording treated as an erratum |
 
 ---
 
@@ -132,9 +140,8 @@ authoritative on the Fool. Ch7:707 doesn't mention the Fool at all. Its
 
 ## 4. Second-review correction bundle
 
-Included in the commit containing this handover. The content, type, and unit
-gates pass; focused Playwright execution remains an environment gap described
-in §6.4.
+Included in the earlier commit containing this handover. The historical list is
+preserved because it explains the baseline that v2 corrected.
 
 - **Guard restored.** Imported as rules entry `challenge-guard` (0a manifest),
   reinstated in the spec §8.7 with an amendment-history note explaining the
@@ -156,9 +163,26 @@ in §6.4.
 - **E2E rewritten** so it no longer codifies the illegal post-draw sequence, plus
   a new test asserting the lock.
 
+The v2 correctness bundle then completed the follow-on work:
+
+- schema v2 requires `source`, `scope: 'supported-v1'`, and non-empty unique
+  `invokedFrom` evidence; the generated audit renders definition and invocation
+  locations separately;
+- all 31 procedures were re-audited through the five mechanical search families
+  against the local vault, while runtime and CI remain vault-independent;
+- Challenge now models both decks, hidden GM Initiative, round cleanup, exact
+  modifier timing, facedown card rules, and the Fool boundary;
+- Crawl/Camp, City, sorcery, and oracle procedures now preserve their filters,
+  choices, delayed branches, limits, costs, and mechanical outcomes;
+- rules-reference aliases are validated instead of skipped;
+- Test of Fate now tracks card provenance, group tests enforce two distinct
+  actors and two outcomes, and drawing the Fool executes a card-conserving
+  reshuffle of both eligible decks without erasing the visible result; and
+- the content pack contract advances to v3.0.0.
+
 ---
 
-## 5. Recommended structural fix — do this before more content work
+## 5. Structural fix — implemented
 
 **Add `invokedFrom` to the procedure contract, alongside `source`.**
 
@@ -172,96 +196,35 @@ City Events XXI paragraph, which is the *only* place stating you consult the
 discard top. For Guard: the effect (`Initiative`) is the searchable term, not the
 noun (`shield`).
 
-Make it **required** for `supported-v1` entries, so authoring a procedure forces
-you to find the call site. That converts my failure mode from "silently possible"
-to "structurally hard". Without it, the next person repeats this.
+It is now **required** for `supported-v1` entries. The importer rejects missing
+or duplicate invocation citations and locally resolves every definition,
+invocation, table, modifier, and formula source against the vault. Generated
+content and CI use only committed inputs, so the Markdown vault is never read by
+the running application.
 
 ---
 
 ## 6. What's left
 
-### 6.1 Needs an owner ruling (not fixable by me)
+### 6.1 Resolved by this bundle
 
-- **The rulebook contradicts itself on the Fool reshuffle trigger.** Three places
-  say **drawn** (Ch1:302, Ch7:356, Ch7:47); exactly one says **played**
-  (Ch7:383) — and that outlier is the section imported as
-  `challenge-end-the-round`. So the pack contains a statement contradicting its
-  own `challenge-the-fool` entry. The engine uses `foolDrawn` (the majority +
-  Ch1 authority). **Decide: is this a book erratum?** Not an import bug — there
-  is no better section to import.
+- The owner confirmed the Fool ruling: **drawn** is canonical and `played` is
+  treated as an erratum.
+- Every previously listed P0/P1/P2 catalog or existing-engine finding is
+  corrected and mutation-tested where it guards executable behavior.
+- The final independent review found six Important issues and no Critical
+  issues. Its findings are resolved: Questing Beast oil and the missing
+  Maleficence modes/citations are represented, supplied Fools preserve their
+  provenance, all typed table/step references are cross-validated, and Patrol's
+  two-encounter condition has explicit source/cardinality semantics.
+- The former browser gap is closed: the focused Test of Fate/Fool Playwright
+  suite passes against a fresh preview server.
+
+### 6.2 Still deferred
+
 - **D4 — Pages vs Workers.** Still open, blocks Increment 5 only. `wrangler.toml`
   is a Pages config; Increment 5 assumes Workers (`wrangler deploy --dry-run`
   errors; `[[ratelimits]]` type-checks but is `undefined` at runtime).
-
-### 6.2 Outstanding review findings (from gpt-5.6-sol, unfixed)
-
-Ordered by severity. All are catalog/engine modelling, i.e. §3.1's class.
-
-**P0**
-- **Fool reshuffle is only a printed message.** `TestOfFate` never calls
-  `reshuffleAll`; subsequent tests reuse the old deck order. The E2E only asserts
-  the *text*.
-- **Modifiers are not rule-complete.** Brainfever omits favor on Attacks; Counsel
-  omits once-per-round and Resolve-enabled interrupt play; Guardian Angel omits
-  facedown placement, Dodge/Riposte restriction, cumulative value, facedown-limit
-  exemption, single-instance limit and duration; Black Honey turns an optional
-  five-card deal with a teeth consequence into an unconditional `+1`.
-
-**P1**
-- **Challenge Initiative models only the player/minor side.** Ch7 requires the GM
-  to place a facedown *major* Initiative per significant enemy/group. End-round
-  cleanup names only the minor deck. As-is the procedure can't order GM turns.
-- **Maleficence resolves all four tables.** Encoded as four consecutive draws; the
-  rule invokes **one** table (the appropriate far realm). The contract has no
-  branch discriminator — a runner would consume four cards and inflict four
-  catastrophes.
-- **Camp watch is unconditional.** The Meatgrinder draw is missing, and
-  watch-selection + Cups test should fire *only* on a random-encounter result.
-  Patrol draws twice but can't choose one non-encounter result.
-- **Meatgrinder loses its three invocation modes.** Loud noises retain only
-  XVI–XX; moving carefully only I–V; ordinary events are marked off and become
-  no-ops if redrawn. No filters or depletion state exist.
-- **Augury has no decline branch.** The guild may decline (card discarded, Bound
-  by Fate applies) or accept (that card becomes the initial test card, with
-  Resolve/push still available). Neither is modelled.
-- **Malediction's 50% is mis-scoped.** Only I, II, III and IX have checks, and
-  they occur *later* (City end, waking, eating, nightly) — not at draw time.
-- **Strange Communions** has no mixed-source choice, draw count, or
-  once-next-expedition duration.
-- **Beg & Busk / Leeches / Area Sense** encode only the draw, omitting the
-  mechanical result (`value + Wands` gold; suit branch + two charges; 2 Resolve
-  per watch + `value` visions).
-- **`ResolutionCard` has no provenance.** Any matching-suit `initialCard` counts
-  as an initial draw, but Ch1 excludes cards "from … another source" from great
-  success — so a High Chant inspiration card produces an illegal great success.
-
-**P2**
-- **Group test arity.** `selectGroupTestActors` accepts a solo roster and returns
-  the same adventurer twice; `resolveGroupTest` accepts any number of outcomes,
-  though the bands only make sense for exactly two. A test enshrines the solo
-  behaviour.
-- **Broken rules references.** `social-encounters-disposition` should be
-  `crawl-social-encounters-disposition`; `7-deeds-and-fame` has no entry at all.
-  Tests skip every `collection: "rules"` reference, so neither is caught.
-- **Modifier/formula params are untested.** Tests check only that IDs resolve —
-  never param names, values, timing or semantics. Every malformed modifier above
-  passes.
-
-### 6.3 Known-good (confirmed clean by review)
-
-- `index.json` doom tiers, favor modifier, group-outcome bands — match the book
-- All 194 lookup rows: ranges, axes, columns, cell text — match the source
-- All three formula definitions — match the source (the *consumer* was wrong)
-
-### 6.4 Carried forward from earlier
-
-- **Focused E2E is not verified.** The configured production preview fails to
-  start here with a filesystem `ETIMEDOUT`. A local run can also be misled by
-  `reuseExistingServer`: it reused a stale July 15 dev server whose SSR HTML
-  referenced a removed SvelteKit client entry, so the page never hydrated.
-  Starting a fresh dev server removed the stale process but the current
-  pnpm/Vite environment still served that client entry as 404. The assertions
-  need a clean dependency-normalized, networked run.
 - **`vitest.config.ts` only includes `tests/unit/**`.** Increments 1–3 create
   ~12 integration suites that would silently not run. Increment 1 owns this fix.
 - **The "Four aces" poker-face sidebar** (Ch7:391-399) — the review's *other*
@@ -274,13 +237,11 @@ Ordered by severity. All are catalog/engine modelling, i.e. §3.1's class.
 
 ## 7. Suggested order for whoever continues
 
-1. **Do §5 (`invokedFrom`)** before touching the catalog again.
-2. **Get the §6.1 rulings** (Fool trigger erratum).
-3. **Re-audit every `supported-v1` procedure against its call site.** Treat the
-   §6.2 list as a starting point, not an exhaustive one — both reviews found
-   issues from samples, so assume more exist.
-4. **Only then** proceed to Increment 1 (Foundation), which is the first
-   increment to touch the database.
+1. Integrate the v2 correctness branch after reviewing its final verification
+   and adversarial-review record.
+2. Proceed to Increment 1 (Campaign Foundation), which is the first increment
+   to touch the database.
+3. Keep D4 deferred until Increment 5, as recorded in the roadmap.
 
 ## 8. Standing advice
 

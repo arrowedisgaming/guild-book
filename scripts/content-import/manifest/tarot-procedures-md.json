@@ -627,6 +627,8 @@
 				"heading": "Example Meatgrinder table"
 			},
 			"invokedFrom": [
+				{ "file": "01 - Chapter 1 - The Basics.md", "heading": "“Yes, you can do that”" },
+				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "The Flow of the Crawl Phase" },
 				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Watches" },
 				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Meatgrinder" },
 				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Loud noises" },
@@ -642,7 +644,7 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-event",
+					"id": "ordinary-room",
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
@@ -651,10 +653,64 @@
 						"count": 1
 					},
 					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "moving-carefully",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": { "kind": "fixed", "count": 1 },
+					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
+					"conditions": [{ "kind": "value-range", "from": "I", "to": "V", "include": true }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "loud-noise",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": { "kind": "fixed", "count": 1 },
+					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
+					"conditions": [{ "kind": "value-range", "from": "XVI", "to": "XX", "include": true }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "mark-new-entry-used",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"conditions": [
+						{ "kind": "entry-state", "state": "unused" },
+						{ "kind": "value-range", "from": "VI", "to": "XXI", "include": true }
+					],
+					"effects": [{ "kind": "mark-entry-used" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "resolve-used-entry",
+					"actor": "system",
+					"operation": "manual-choice",
+					"conditions": [{ "kind": "entry-state", "state": "used" }],
+					"effects": [{ "kind": "no-op" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -679,7 +735,7 @@
 			"steps": [
 				{
 					"id": "draw-doom",
-					"actor": "player",
+					"actor": "each-player",
 					"operation": "draw",
 					"deck": "minor",
 					"draw": {
@@ -687,6 +743,8 @@
 						"count": 1
 					},
 					"lookupTableId": "were-doomed",
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
+					"conditions": [{ "kind": "game-state", "state": "guild-out-of-light" }],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -712,7 +770,26 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-impression",
+					"id": "pay-resolve",
+					"actor": "player",
+					"operation": "manual-choice",
+					"costs": [{ "kind": "resource", "resource": "resolve", "amount": 2, "timing": "per-watch" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "pass-watch",
+					"actor": "system",
+					"operation": "manual-choice",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "draw-vision-card",
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
@@ -720,10 +797,23 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "resolve-visions",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"effects": [
+						{ "kind": "resource", "resource": "visions", "amount": { "kind": "card-value" } }
+					],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -752,6 +842,7 @@
 					"operation": "consult-discard-top",
 					"deck": "minor",
 					"lookupTableId": "starting-disposition",
+					"cardSource": { "kind": "discard-top", "deck": "minor", "consume": false },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -778,10 +869,25 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "who-is-on-watch",
+					"id": "draw-meatgrinder",
+					"actor": "gm",
+					"operation": "draw",
+					"deck": "major",
+					"draw": { "kind": "fixed", "count": 1 },
+					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "discard-pending"
+				},
+				{
+					"id": "select-watch",
 					"actor": "gm",
 					"operation": "consult-discard-top",
 					"deck": "minor",
+					"cardSource": { "kind": "discard-top", "deck": "minor", "consume": false },
+					"conditions": [{ "kind": "previous-result", "result": "random-encounter" }],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
@@ -796,6 +902,8 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "test-draw" },
+					"conditions": [{ "kind": "previous-result", "result": "random-encounter" }],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
@@ -822,7 +930,7 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-twice",
+					"id": "draw-patrol-options",
 					"actor": "gm",
 					"operation": "draw",
 					"deck": "major",
@@ -831,10 +939,36 @@
 						"count": 2
 					},
 					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "choose-non-encounter",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"choice": {
+						"kind": "choose-one",
+						"fromStepId": "draw-patrol-options",
+						"count": 1,
+						"rejectConditions": [{ "kind": "previous-result", "result": "random-encounter" }]
+					},
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "challenge-if-both-encounters",
+					"actor": "gm",
+					"operation": "manual-choice",
+					"conditions": [{ "kind": "previous-result", "result": "random-encounter" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "gm-confirmed",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -907,7 +1041,16 @@
 			"modifierIds": [],
 			"steps": [
 				{
-					"id": "draw-and-classify",
+					"id": "select-target",
+					"actor": "player",
+					"operation": "manual-choice",
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "actor-confirmed",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "draw-effect",
 					"actor": "player",
 					"operation": "draw",
 					"deck": "minor",
@@ -915,10 +1058,33 @@
 						"kind": "fixed",
 						"count": 1
 					},
+					"cardSource": { "kind": "draw-pile", "deck": "minor", "provenance": "procedure-draw" },
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "actor-confirmed",
 					"recovery": "discard-pending"
+				},
+				{
+					"id": "no-effect",
+					"actor": "system",
+					"operation": "manual-choice",
+					"conditions": [{ "kind": "card-suit", "suits": ["swords", "pentacles"] }],
+					"effects": [{ "kind": "no-op" }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
+				},
+				{
+					"id": "cure-affliction",
+					"actor": "system",
+					"operation": "manual-choice",
+					"conditions": [{ "kind": "card-suit", "suits": ["cups", "wands"] }],
+					"effects": [{ "kind": "affliction-cure", "charges": 2 }],
+					"visibility": "public",
+					"resultVisibility": "public",
+					"completion": "automatic",
+					"recovery": "retain-pending"
 				}
 			]
 		},
@@ -950,6 +1116,8 @@
 						"count": 1
 					},
 					"lookupTableId": "meatgrinder",
+					"cardSource": { "kind": "draw-pile", "deck": "major", "provenance": "procedure-draw" },
+					"limits": [{ "kind": "per-watch", "count": 1 }],
 					"visibility": "public",
 					"resultVisibility": "public",
 					"completion": "gm-confirmed",

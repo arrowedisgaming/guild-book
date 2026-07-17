@@ -285,6 +285,126 @@ describe('tarot procedure catalog', () => {
 			params: { immediate: true, discard: 'entire-hand' }
 		});
 	});
+
+	it('preserves Meatgrinder invocation filters and used-entry behavior', () => {
+		expect(step('crawl-meatgrinder', 'ordinary-room')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			lookupTableId: 'meatgrinder'
+		});
+		expect(step('crawl-meatgrinder', 'ordinary-room').conditions).toBeUndefined();
+		expect(step('crawl-meatgrinder', 'moving-carefully').conditions).toContainEqual({
+			kind: 'value-range',
+			from: 'I',
+			to: 'V',
+			include: true
+		});
+		expect(step('crawl-meatgrinder', 'loud-noise').conditions).toContainEqual({
+			kind: 'value-range',
+			from: 'XVI',
+			to: 'XX',
+			include: true
+		});
+		expect(step('crawl-meatgrinder', 'mark-new-entry-used')).toMatchObject({
+			conditions: [
+				{ kind: 'entry-state', state: 'unused' },
+				{ kind: 'value-range', from: 'VI', to: 'XXI', include: true }
+			],
+			effects: [{ kind: 'mark-entry-used' }]
+		});
+		expect(step('crawl-meatgrinder', 'resolve-used-entry')).toMatchObject({
+			conditions: [{ kind: 'entry-state', state: 'used' }],
+			effects: [{ kind: 'no-op' }]
+		});
+	});
+
+	it('branches Camp watch and Patrol only after Meatgrinder results are known', () => {
+		expect(step('camp-watch', 'draw-meatgrinder')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			lookupTableId: 'meatgrinder'
+		});
+		expect(step('camp-watch', 'select-watch').conditions).toContainEqual({
+			kind: 'previous-result',
+			result: 'random-encounter'
+		});
+		expect(step('camp-watch', 'select-watch').cardSource).toEqual({
+			kind: 'discard-top',
+			deck: 'minor',
+			consume: false
+		});
+		expect(step('camp-watch', 'watch-cups-test').conditions).toContainEqual({
+			kind: 'previous-result',
+			result: 'random-encounter'
+		});
+
+		expect(step('camp-patrol', 'draw-patrol-options')).toMatchObject({
+			operation: 'draw',
+			deck: 'major',
+			draw: { kind: 'fixed', count: 2 },
+			lookupTableId: 'meatgrinder'
+		});
+		expect(step('camp-patrol', 'choose-non-encounter').choice).toEqual({
+			kind: 'choose-one',
+			fromStepId: 'draw-patrol-options',
+			count: 1,
+			rejectConditions: [{ kind: 'previous-result', result: 'random-encounter' }]
+		});
+		expect(step('camp-patrol', 'challenge-if-both-encounters').conditions).toEqual([
+			{ kind: 'previous-result', result: 'random-encounter' }
+		]);
+	});
+
+	it('records Leeches branches and Area Sense cost and output', () => {
+		expect(step('camp-leeches', 'select-target')).toMatchObject({
+			actor: 'player',
+			operation: 'manual-choice'
+		});
+		expect(step('camp-leeches', 'no-effect')).toMatchObject({
+			conditions: [{ kind: 'card-suit', suits: ['swords', 'pentacles'] }],
+			effects: [{ kind: 'no-op' }]
+		});
+		expect(step('camp-leeches', 'cure-affliction')).toMatchObject({
+			conditions: [{ kind: 'card-suit', suits: ['cups', 'wands'] }],
+			effects: [{ kind: 'affliction-cure', charges: 2 }]
+		});
+		expect(step('crawl-area-sense', 'pay-resolve').costs).toContainEqual({
+			kind: 'resource',
+			resource: 'resolve',
+			amount: 2,
+			timing: 'per-watch'
+		});
+		expect(step('crawl-area-sense', 'resolve-visions').effects).toContainEqual({
+			kind: 'resource',
+			resource: 'visions',
+			amount: { kind: 'card-value' }
+		});
+	});
+
+	it('records card-free disposition, per-watch travel, and the darkness-only Doom table', () => {
+		expect(step('denizen-disposition', 'consult-discard-top').cardSource).toEqual({
+			kind: 'discard-top',
+			deck: 'minor',
+			consume: false
+		});
+		expect(procedure('denizen-disposition').invokedFrom).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ heading: 'Social Encounters & Disposition' }),
+				expect.objectContaining({ heading: 'Starting Disposition' })
+			])
+		);
+		expect(step('overland-travel', 'travel-meatgrinder').limits).toContainEqual({
+			kind: 'per-watch',
+			count: 1
+		});
+		expect(step('crawl-were-doomed', 'draw-doom')).toMatchObject({
+			actor: 'each-player',
+			operation: 'draw',
+			deck: 'minor',
+			lookupTableId: 'were-doomed',
+			conditions: [{ kind: 'game-state', state: 'guild-out-of-light' }]
+		});
+	});
 });
 
 describe('tarot procedure references', () => {

@@ -13,11 +13,13 @@
 		movePool,
 		updatePool,
 		seedPersonFromTheme,
-		needsPersonSeed,
 		clearPersonState,
 		setPersonKith,
+		setPersonWoundTracking,
+		personTracksWounds,
 		assignPersonSpreadValue,
-		PERSON_SPREAD
+		PERSON_SPREAD,
+		type DenizenDraft
 	} from '$lib/engine/denizen-builder';
 	import { SUIT_IDS, type SuitId } from '$lib/types/common';
 	import { renderMarkdown } from '$lib/utils/markdown';
@@ -84,15 +86,32 @@
 		}
 	});
 
-	// Person path: seed once past the Theme step; switching back to a standard
-	// theme drops person-only state (kind, kith, the person stat note).
+	// Identity fields travel across the mode boundary; the rest is per-mode.
+	const carryIdentity = (into: DenizenDraft, from: DenizenDraft): DenizenDraft => ({
+		...into,
+		name: from.name,
+		concept: from.concept,
+		exaggeration: from.exaggeration,
+		flavor: from.flavor
+	});
+
+	// Crossing the creature/person boundary stashes the outgoing draft and
+	// restores any earlier work in the target mode, so switching themes back
+	// and forth never loses either side's progress.
 	$effect(() => {
-		if (stepIndex >= 2 && theme && personMode && needsPersonSeed(draft, theme)) {
-			denizenBuilder.updateDraft((d) => seedPersonFromTheme(d, theme));
-			announce(`Adversary seeded from the ${theme.name} theme.`);
+		if (theme && personMode && draft.kind !== 'person') {
+			denizenBuilder.swapMode('person', (stashed, current) =>
+				stashed ? carryIdentity(stashed, current) : seedPersonFromTheme(current, theme)
+			);
+			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
 		}
 		if (theme && !personMode && draft.kind === 'person') {
-			denizenBuilder.updateDraft(clearPersonState);
+			denizenBuilder.swapMode('creature', (stashed, current) =>
+				stashed
+					? { ...carryIdentity(stashed, current), themeId: current.themeId }
+					: clearPersonState(current)
+			);
+			announce('Creature path — your person work is kept and restored if you switch back.');
 		}
 	});
 
@@ -500,9 +519,10 @@
 		{#if personMode}
 			<p>
 				The stat block below was seeded as a <strong>{theme?.name}</strong> adversary. Change any
-				detail to fit your concept — the book explicitly blesses it. Health and Defense are the
-				GM's call: give them what an adventurer of their experience would have, or leave them
-				blank.
+				detail to fit your concept — the book explicitly blesses it. The GM doesn't normally
+				track people with Health and Defense (people take Wounds, like adventurers) — the values
+				are pre-filled for simplicity, so change or clear them freely, or track Wounds properly
+				with the option below.
 			</p>
 		{:else}
 			<p>
@@ -529,6 +549,20 @@
 		{#if threat?.chooseAttribute}
 			<!-- Build-time pick instruction from the template, not stat-block content. -->
 			<p class="guidance"><em>{threat.chooseAttribute}</em></p>
+		{/if}
+		{#if personMode}
+			<label class="wounds-toggle">
+				<input
+					type="checkbox"
+					checked={personTracksWounds(draft)}
+					onchange={(e) =>
+						denizenBuilder.updateDraft((d) => setPersonWoundTracking(d, e.currentTarget.checked))}
+				/>
+				<span>
+					Track Wounds like an adventurer — sets Health to <strong>*</strong> and adds a note
+					listing the wound options.
+				</span>
+			</label>
 		{/if}
 		{#each statMessages as warning}
 			<p class="warning" role="alert">{warning}</p>
@@ -936,6 +970,13 @@
 	.guidance {
 		font-size: 0.9rem;
 		color: var(--ink-soft);
+	}
+	.wounds-toggle {
+		display: flex;
+		gap: 0.5rem;
+		align-items: baseline;
+		margin: 0.75rem 0;
+		font-size: 0.9rem;
 	}
 	.pool-editor {
 		margin: 1rem 0;

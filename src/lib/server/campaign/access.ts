@@ -9,7 +9,10 @@ export type CampaignRole =
 	| { kind: 'gm'; userId: string; campaignId: string }
 	| { kind: 'player'; userId: string; campaignId: string; membershipId: string };
 
-const headerInstalledEvents = new WeakSet<object>();
+// Keyed on event.locals, not the event: a form action and the load it triggers
+// run in the same HTTP request with distinct event objects but shared locals,
+// and setHeaders throws if the same header is installed twice in one response.
+const headerInstalledRequests = new WeakSet<object>();
 
 /** Authenticate and enforce the server-only rollout for campaign collections. */
 export async function requireCampaignFeature(event: RequestEvent): Promise<string> {
@@ -97,9 +100,10 @@ export function campaignHeaders(): Record<string, string> {
 
 
 export function installCampaignHeaders(event: RequestEvent): void {
-	if (headerInstalledEvents.has(event)) return;
+	const requestKey = event.locals ?? event;
+	if (headerInstalledRequests.has(requestKey)) return;
 	event.setHeaders?.(campaignHeaders());
-	headerInstalledEvents.add(event);
+	headerInstalledRequests.add(requestKey);
 }
 
 function campaignNotFound() {

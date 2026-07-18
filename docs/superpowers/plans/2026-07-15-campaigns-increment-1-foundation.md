@@ -697,4 +697,51 @@ git commit -m "feat(campaigns): add campaign foundation interface"
 
 ## Increment 1 Completion Record
 
-Attach the SQLite/local-D1 constraint results, character writer inventory, invite rotation test, lifecycle matrix, and E2E artifacts. Leave `CAMPAIGNS_ENABLED=false`; this increment is not a playable campaign table.
+Recorded 2026-07-18, after the seven implementation commits (9a7c340 through
+a92b528) plus the E2E-harness correction commit that followed.
+
+- **Type check:** `npm run check` — 0 errors, 0 warnings.
+- **Unit + integration:** `npm test` — 375 passed, 0 skipped, 38 files.
+  `vitest.config.ts` now includes `tests/integration/**`; the previously
+  flagged silent-exclusion risk is closed.
+- **SQLite/local-D1 constraint results:**
+  `tests/integration/campaign-constraints.test.ts` (SQLite),
+  `tests/integration/campaign-lifecycle-d1.test.ts` and
+  `campaign-service-d1.test.ts` (miniflare D1) all pass, covering unique
+  active-membership/tenure claims, invite hash uniqueness, and
+  session-boundary races on both engines.
+- **Character writer inventory:** every writer migrated to required integer
+  `expectedVersion` claims — see `tests/unit/character-versioned-write.test.ts`
+  and `tests/unit/character-api-concurrency.test.ts` (stale-claim rejection,
+  concurrent-write loser gets 409).
+- **Invite rotation:** `tests/unit/campaign-invites.test.ts` plus the
+  "closed and rotated invitations invalidate the exposed link" E2E (old link
+  404s after close and after rotate).
+- **Lifecycle matrix:** `tests/integration/campaign-membership.test.ts`,
+  `campaign-tenure.test.ts`, `character-death.test.ts`, and
+  `tests/unit/campaign-lifecycle-api.test.ts` cover join, attach, replace,
+  death, correction, leave, removal, and archive across roles.
+- **E2E artifacts:** full Playwright suite 27/27 passing twice consecutively
+  against a production build served by `npm run preview`
+  (7 campaign-foundation, 8 test-of-fate, plus denizens/wizard/deck suites).
+- **Post-implementation corrections required to reach green** (found because
+  the E2E gate had not actually been run before the final commit):
+  1. The final implementation commit switched the Playwright web server from
+     `npm run build && npm run preview` to `npm run dev`, which made every
+     click race hydration — all 15 then-existing E2E tests failed. The
+     build+preview server is restored; the dev-login provider works there
+     because its `NODE_ENV` gate is read at runtime, not build time.
+  2. `installCampaignHeaders` deduplicated `setHeaders` per *event*, but a
+     form action and the load it triggers share one HTTP response with
+     distinct events, so every campaign form action crashed with
+     `"Cache-Control" header is already set`. The dedupe now keys on
+     `event.locals` (shared per request). Mutation-tested: reverting the fix
+     fails the "GM creates a campaign" E2E.
+  3. The auth fixture's `waitForURL('**/characters')` glob already matched
+     `/login?callbackUrl=/characters`, masking failed sign-ins; it now matches
+     on the pathname alone. Test locators for the adventurer picker needed
+     `{ exact: true }` because the surrounding region's accessible name
+     ("Choose your adventurer") also substring-matches "Adventurer".
+
+`CAMPAIGNS_ENABLED` remains `false`; this increment is not a playable campaign
+table.

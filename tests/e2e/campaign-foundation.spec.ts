@@ -120,13 +120,13 @@ test.describe('campaign foundation', () => {
 
 		const invite = await createCampaignAndReadInvite(gmPage, 'Picker Hall');
 		await joinCampaign(playerPage, invite);
-		const picker = playerPage.getByLabel('Adventurer');
+		const picker = playerPage.getByLabel('Adventurer', { exact: true });
 		await expect(picker.getByRole('option', { name: 'Eligible Hero' })).toHaveCount(1);
 		await expect(picker.getByRole('option', { name: 'Draft Hero' })).toHaveCount(0);
 		await expect(picker.getByRole('option', { name: 'Dead Hero' })).toHaveCount(0);
 		await expect(picker.getByRole('option', { name: 'Archived Hero' })).toHaveCount(0);
 		await playerPage.getByRole('button', { name: 'Attach adventurer' }).click();
-		await expect(playerPage.getByLabel('Adventurer')).toHaveCount(0);
+		await expect(playerPage.getByLabel('Adventurer', { exact: true })).toHaveCount(0);
 
 		await gm.close();
 		await player.close();
@@ -144,9 +144,9 @@ test.describe('campaign foundation', () => {
 		const invite = await createCampaignAndReadInvite(gmPage, 'Changing Guard');
 		await joinCampaign(playerPage, invite);
 
-		await playerPage.getByLabel('Adventurer').selectOption({ label: 'First Hero' });
+		await playerPage.getByLabel('Adventurer', { exact: true }).selectOption({ label: 'First Hero' });
 		await playerPage.getByRole('button', { name: 'Attach adventurer' }).click();
-		await playerPage.getByLabel('Adventurer').selectOption({ label: 'Second Hero' });
+		await playerPage.getByLabel('Adventurer', { exact: true }).selectOption({ label: 'Second Hero' });
 		playerPage.once('dialog', (dialog) => dialog.accept());
 		await playerPage.getByRole('button', { name: 'Replace adventurer' }).click();
 		await expect(playerPage.getByText('Second Hero', { exact: true })).toBeVisible();

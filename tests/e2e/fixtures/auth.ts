@@ -10,7 +10,9 @@ export async function signInAs(page: Page, role: string): Promise<string> {
 	await page.getByLabel('Email').fill(email);
 	await page.getByLabel('Name').fill(role);
 	await page.getByRole('button', { name: 'Dev Sign In' }).click();
-	await page.waitForURL('**/characters');
+	// A glob like '**/characters' would already match /login?callbackUrl=/characters,
+	// so match on the pathname alone.
+	await page.waitForURL((url) => url.pathname === '/characters');
 	await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 	await expect
 		.poll(() => page.evaluate(async () => (await fetch('/api/characters')).status))

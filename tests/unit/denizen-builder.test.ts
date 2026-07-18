@@ -668,8 +668,10 @@ describe('denizen builder — person wound tracking', () => {
 
 		const html = renderMarkdown(note.text);
 		expect(html).toContain('<li class="task"><input type="checkbox" disabled />');
-		// The talent line carries the double box.
-		expect(html).toContain('disabled /> <input type="checkbox" disabled /> Wound a talent');
+		// The two talent wounds are separate lines — Obsidian and other GFM
+		// renderers only honour one checkbox per list item.
+		expect(html).toContain('disabled /> Wound a talent (two max)');
+		expect(html).toContain('disabled /> Wound a second talent');
 
 		const doc = buildDenizenDocDefinition(toDenizenDefinition(draft), 'Man', '');
 		const flattened = JSON.stringify(doc);

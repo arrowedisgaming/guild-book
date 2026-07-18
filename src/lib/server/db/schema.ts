@@ -101,6 +101,156 @@ export const characterVersionClaims = sqliteTable(
 	]
 );
 
+// ─── Campaign foundation ─────────────────────────────────────────
+
+/** A campaign has one immutable owner, who is the sole GM. */
+export const campaigns = sqliteTable(
+	'campaigns',
+	{
+		id: text('id').primaryKey(),
+		ownerUserId: text('owner_user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		name: text('name').notNull().default(''),
+		description: text('description').notNull().default(''),
+		inviteTokenPrefix: text('invite_token_prefix'),
+		inviteTokenHash: text('invite_token_hash'),
+		inviteNonce: text('invite_nonce'),
+		inviteVersion: integer('invite_version').notNull().default(1),
+		joinOpen: integer('join_open', { mode: 'boolean' }).notNull().default(false),
+		version: integer('version').notNull().default(1),
+		archivedAt: integer('archived_at', { mode: 'timestamp' }),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('campaigns_owner_user_idx').on(table.ownerUserId),
+		index('campaigns_invite_token_prefix_idx').on(table.inviteTokenPrefix),
+		check('campaigns_invite_version_check', sql`${table.inviteVersion} > 0`),
+		check('campaigns_version_check', sql`${table.version} > 0`)
+	]
+);
+
+/** The shared, owner-edited Guild Roster document for one campaign. */
+export const guildRosters = sqliteTable(
+	'guild_rosters',
+	{
+		campaignId: text('campaign_id')
+			.primaryKey()
+			.references(() => campaigns.id, { onDelete: 'cascade' }),
+		schemaVersion: integer('schema_version').notNull().default(1),
+		documentJson: text('document_json').notNull(),
+		version: integer('version').notNull().default(1),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		check('guild_rosters_schema_version_check', sql`${table.schemaVersion} > 0`),
+		check('guild_rosters_version_check', sql`${table.version} > 0`)
+	]
+);
+
+/** A historical membership; active rows have no `leftAt`. */
+export const campaignMembers = sqliteTable(
+	'campaign_members',
+	{
+		id: text('id').primaryKey(),
+		campaignId: text('campaign_id')
+			.notNull()
+			.references(() => campaigns.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		joinedAt: integer('joined_at', { mode: 'timestamp' }).notNull(),
+		leftAt: integer('left_at', { mode: 'timestamp' }),
+		removedAt: integer('removed_at', { mode: 'timestamp' }),
+		removedByUserId: text('removed_by_user_id').references(() => users.id, {
+			onDelete: 'set null'
+		})
+	},
+	(table) => [
+		index('campaign_members_campaign_idx').on(table.campaignId),
+		index('campaign_members_user_idx').on(table.userId),
+		index('campaign_members_removed_by_user_idx').on(table.removedByUserId),
+		uniqueIndex('campaign_members_active_user_uq')
+			.on(table.campaignId, table.userId)
+			.where(sql`left_at IS NULL`)
+	]
+);
+
+/** A character's historical attachment to one campaign membership. */
+export const campaignAdventurerTenures = sqliteTable(
+	'campaign_adventurer_tenures',
+	{
+		id: text('id').primaryKey(),
+		campaignId: text('campaign_id')
+			.notNull()
+			.references(() => campaigns.id, { onDelete: 'cascade' }),
+		membershipId: text('membership_id')
+			.notNull()
+			.references(() => campaignMembers.id, { onDelete: 'cascade' }),
+		characterId: text('character_id')
+			.notNull()
+			.references(() => characters.id, { onDelete: 'cascade' }),
+		startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+		startedByUserId: text('started_by_user_id').references(() => users.id, {
+			onDelete: 'set null'
+		}),
+		endedAt: integer('ended_at', { mode: 'timestamp' }),
+		endedByUserId: text('ended_by_user_id').references(() => users.id, {
+			onDelete: 'set null'
+		}),
+		endReason: text('end_reason'),
+		deathSessionId: text('death_session_id')
+	},
+	(table) => [
+		index('campaign_tenures_campaign_idx').on(table.campaignId),
+		index('campaign_tenures_membership_idx').on(table.membershipId),
+		index('campaign_tenures_character_idx').on(table.characterId),
+		index('campaign_tenures_started_by_user_idx').on(table.startedByUserId),
+		index('campaign_tenures_ended_by_user_idx').on(table.endedByUserId),
+		uniqueIndex('campaign_tenures_active_membership_uq')
+			.on(table.membershipId)
+			.where(sql`ended_at IS NULL`),
+		uniqueIndex('campaign_tenures_active_character_uq')
+			.on(table.characterId)
+			.where(sql`ended_at IS NULL`),
+		check(
+			'campaign_tenures_end_reason_check',
+			sql`${table.endReason} IS NULL OR ${table.endReason} IN ('replaced', 'left', 'removed', 'died', 'corrected')`
+		)
+	]
+);
+
+/** Monotonic, sanitized campaign lifecycle and synchronization events. */
+export const campaignEvents = sqliteTable(
+	'campaign_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		campaignId: text('campaign_id')
+			.notNull()
+			.references(() => campaigns.id, { onDelete: 'cascade' }),
+		membershipId: text('membership_id').references(() => campaignMembers.id, {
+			onDelete: 'set null'
+		}),
+		tenureId: text('tenure_id').references(() => campaignAdventurerTenures.id, {
+			onDelete: 'set null'
+		}),
+		characterId: text('character_id').references(() => characters.id, { onDelete: 'set null' }),
+		actorUserId: text('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+		kind: text('kind').notNull(),
+		publicPayloadJson: text('public_payload_json').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('campaign_events_campaign_cursor_idx').on(table.campaignId, table.id),
+		index('campaign_events_membership_idx').on(table.membershipId),
+		index('campaign_events_tenure_idx').on(table.tenureId),
+		index('campaign_events_character_idx').on(table.characterId),
+		index('campaign_events_actor_user_idx').on(table.actorUserId)
+	]
+);
+
 // ─── Guilds (schema-only; multiplayer UI deferred to a later phase) ─
 // These tables are defined now so the initial migration is clean and no
 // destructive migration is needed when the guild/multiplayer layer is built.

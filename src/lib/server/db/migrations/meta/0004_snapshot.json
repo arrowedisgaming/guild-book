@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "67bc9f6c-7804-4f28-b041-97808e7ca1cf",
+  "id": "d77e9a69-23b6-4497-92dc-a4f315c624a0",
   "prevId": "cc3fd821-34e0-452d-9237-c27b14971fc3",
   "tables": {
     "accounts": {
@@ -1932,6 +1932,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "play_sessions_runtime_content_id_session_runtime_contents_session_id_fk": {
+          "name": "play_sessions_runtime_content_id_session_runtime_contents_session_id_fk",
+          "tableFrom": "play_sessions",
+          "tableTo": "session_runtime_contents",
+          "columnsFrom": [
+            "runtime_content_id"
+          ],
+          "columnsTo": [
+            "session_id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "play_sessions_started_by_user_id_users_id_fk": {

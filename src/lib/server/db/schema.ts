@@ -1,4 +1,12 @@
-import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
+import {
+	sqliteTable,
+	text,
+	integer,
+	index,
+	uniqueIndex,
+	check,
+	type AnySQLiteColumn
+} from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // ─── Auth.js tables ───────────────────────────────────────────────
@@ -337,12 +345,18 @@ export const playSessions = sqliteTable(
 		contentPackVersion: text('content_pack_version').notNull(),
 		procedureSchemaVersion: integer('procedure_schema_version').notNull().default(1),
 		contentDigest: text('content_digest').notNull(),
-		/** Points at `sessionRuntimeContents.sessionId`, set once the runtime
-		 * snapshot is compiled at session start. Not a declared FK: it and
-		 * `sessionRuntimeContents` reference each other, and this column is
-		 * only ever equal to this row's own `id` (see `deathSessionId` above
-		 * for the same forward-reference-avoidance convention). */
-		runtimeContentId: text('runtime_content_id'),
+		/** References `sessionRuntimeContents.sessionId`, set once the runtime
+		 * snapshot is compiled at session start (nullable only in the brief
+		 * gap between creating this row and inserting its snapshot in the
+		 * same transaction/batch). SQLite does not validate FK targets at
+		 * `CREATE TABLE` time — only at DML time, by which point every table
+		 * in this migration exists — so the mutual reference with
+		 * `sessionRuntimeContents` (which itself FKs back to `playSessions.id`)
+		 * is fully enforced despite the declaration-order cycle. */
+		runtimeContentId: text('runtime_content_id').references(
+			(): AnySQLiteColumn => sessionRuntimeContents.sessionId,
+			{ onDelete: 'set null' }
+		),
 		version: integer('version').notNull().default(0),
 		publicStateSchemaVersion: integer('public_state_schema_version').notNull().default(1),
 		publicStateJson: text('public_state_json').notNull(),

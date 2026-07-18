@@ -41,6 +41,31 @@ describe('session persistence constraints', () => {
 		expect(() => insertRuntimeContent(sqlite, { sessionId: 'session-a' })).toThrow(/unique/i);
 	});
 
+	it('enforces runtimeContentId as a real foreign key into sessionRuntimeContents', () => {
+		insertSession(sqlite, { id: 'session-a', campaignId: 'campaign-a', sequence: 1, status: 'active' });
+
+		expect(() =>
+			sqlite
+				.prepare('UPDATE play_sessions SET runtime_content_id = ? WHERE id = ?')
+				.run('no-such-session', 'session-a')
+		).toThrow(/foreign key/i);
+
+		insertRuntimeContent(sqlite, { sessionId: 'session-a' });
+		expect(() =>
+			sqlite
+				.prepare('UPDATE play_sessions SET runtime_content_id = ? WHERE id = ?')
+				.run('session-a', 'session-a')
+		).not.toThrow();
+
+		// Deleting the runtime content row nulls the pointer rather than
+		// leaving a dangling reference (onDelete: 'set null').
+		sqlite.prepare('DELETE FROM session_runtime_contents WHERE session_id = ?').run('session-a');
+		const row = sqlite
+			.prepare('SELECT runtime_content_id AS runtimeContentId FROM play_sessions WHERE id = ?')
+			.get('session-a') as { runtimeContentId: string | null };
+		expect(row.runtimeContentId).toBeNull();
+	});
+
 	it('allows only one server state row per session', () => {
 		insertSession(sqlite, { id: 'session-a', campaignId: 'campaign-a', sequence: 1, status: 'active' });
 		insertServerState(sqlite, { sessionId: 'session-a' });

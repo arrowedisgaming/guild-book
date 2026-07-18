@@ -33,6 +33,7 @@ CREATE TABLE `play_sessions` (
 	`final_public_state_json` text,
 	`public_history_checksum` text,
 	FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`runtime_content_id`) REFERENCES `session_runtime_contents`(`session_id`) ON UPDATE no action ON DELETE set null,
 	FOREIGN KEY (`started_by_user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
 	FOREIGN KEY (`ended_by_user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE set null,
 	CONSTRAINT "play_sessions_status_check" CHECK("play_sessions"."status" IN ('active', 'ended', 'frozen')),

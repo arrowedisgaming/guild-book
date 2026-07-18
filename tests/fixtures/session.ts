@@ -7,6 +7,7 @@
  */
 
 import { getContentPack } from '$lib/server/content/loader';
+import { buildCardCatalogEntries, toCardCatalog } from '$lib/server/content/session-runtime';
 import { buildMajorDeck, buildPlayerDeck, shuffleDeck, type TarotCard } from '$lib/engine/tarot-deck';
 import type { CardId, SessionEngineStateV1, TarotCardCatalog, UserId } from '$lib/types/session';
 
@@ -26,6 +27,20 @@ export function makeSessionCatalogFixture(): TarotCardCatalog {
 		catalog[card.id] = { id: card.id, deck: 'player' };
 	}
 	return catalog;
+}
+
+/**
+ * The same 78-card catalog, but hydrated the way Task 4's
+ * `compileSessionRuntimeContent` does — real label/imageKey/value and
+ * suit/rank-or-major metadata per entry, via the same
+ * `buildCardCatalogEntries`/`toCardCatalog` the server runtime compiler
+ * uses. Use this (over `makeSessionCatalogFixture`) whenever a test needs to
+ * assert that `hydrateVisible` reads real catalog metadata rather than
+ * falling back to the card id.
+ */
+export function makeRichSessionCatalogFixture(): TarotCardCatalog {
+	const config = getContentPack().tarot;
+	return toCardCatalog(buildCardCatalogEntries(config));
 }
 
 /**

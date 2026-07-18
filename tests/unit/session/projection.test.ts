@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { projectForActor } from '$lib/engine/session/projection';
 import { legalCommandsForActor } from '$lib/engine/session/reducer';
-import { fixtureWithHands, makeSessionCatalogFixture, makeSessionFixture } from '../../fixtures/session';
+import {
+	fixtureWithHands,
+	makeRichSessionCatalogFixture,
+	makeSessionCatalogFixture,
+	makeSessionFixture
+} from '../../fixtures/session';
 import type { SessionActor, SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
 
 const GM: SessionActor = { kind: 'gm', userId: 'gm-1' };
@@ -210,5 +215,83 @@ describe('projectForActor — shared public projection', () => {
 
 		const projection = projectForActor(state, GM, catalog) as SessionGmProjection;
 		expect(projection.public.playerHandCounts.playerA).toBe(2);
+	});
+});
+
+describe('projectForActor — hydration from a rich runtime catalog (Task 4 metadata)', () => {
+	const richCatalog = makeRichSessionCatalogFixture();
+
+	it('hydrates a visible minor-card slot with the catalog entry\'s real label/imageKey/value/suit/rank, not the card id', () => {
+		const state = fixtureWithHands({ playerA: ['cups-i'] });
+		const entry = richCatalog['cups-i'];
+		if (!entry) throw new Error('fixture missing cups-i');
+
+		const projection = projectForActor(state, PLAYER_A, richCatalog) as SessionPlayerProjection;
+
+		expect(projection.privateHand).toEqual([
+			{
+				hidden: false,
+				id: 'cups-i',
+				label: entry.label,
+				imageKey: entry.imageKey,
+				value: entry.value,
+				suit: entry.suit,
+				rank: entry.rank
+			}
+		]);
+		expect(projection.privateHand[0]).not.toEqual({ hidden: false, id: 'cups-i', label: 'cups-i', imageKey: 'cups-i', value: 0 });
+	});
+
+	it('hydrates a visible major-card slot with the catalog entry\'s real label/value/major metadata', () => {
+		const state = makeSessionFixture();
+		state.gmHand = ['magician'];
+		const entry = richCatalog['magician'];
+		if (!entry) throw new Error('fixture missing magician');
+
+		const projection = projectForActor(state, GM, richCatalog) as SessionGmProjection;
+
+		expect(projection.gmHand).toEqual([
+			{
+				hidden: false,
+				id: 'magician',
+				label: entry.label,
+				imageKey: entry.imageKey,
+				value: entry.value,
+				major: entry.major
+			}
+		]);
+	});
+
+	it('still hydrates only public zone cards fully — hidden slots stay `{ hidden: true }` with a rich catalog', () => {
+		const state = fixtureWithHands({ playerA: [], playerB: [] });
+		const cardId = state.playerDraw.pop();
+		if (!cardId) throw new Error('fixture empty');
+		state.privateZones.push({ id: 'facedown:playerB', kind: 'player-facedown', ownerUserId: 'playerB', cards: [cardId] });
+
+		const projection = projectForActor(state, PLAYER_A, richCatalog) as SessionPlayerProjection;
+
+		expect(projection.public.privateZoneCardBacks).toEqual([
+			{ id: 'facedown:playerB', kind: 'player-facedown', ownerUserId: 'playerB', cards: [{ hidden: true }] }
+		]);
+		expect(Object.keys(projection.public.privateZoneCardBacks[0]?.cards[0] ?? {})).toEqual(['hidden']);
+		expect(JSON.stringify(projection)).not.toContain(cardId);
+	});
+
+	it('falls back to the card id/0 when a catalog entry lacks metadata, even alongside rich entries elsewhere', () => {
+		const state = makeSessionFixture();
+		const cardId = state.majorDraw.pop();
+		if (!cardId) throw new Error('fixture empty');
+		state.publicZones.push({ id: 'played:round-1', kind: 'played', cards: [cardId] });
+
+		const sparseCatalog = { ...richCatalog, [cardId]: { id: cardId, deck: 'major' as const } };
+		const projection = projectForActor(state, PLAYER_A, sparseCatalog) as SessionPlayerProjection;
+
+		expect(projection.public.publicZones[0]?.cards[0]).toEqual({
+			hidden: false,
+			id: cardId,
+			label: cardId,
+			imageKey: cardId,
+			value: 0
+		});
 	});
 });

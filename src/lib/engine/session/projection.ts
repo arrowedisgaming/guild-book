@@ -27,17 +27,29 @@ import { legalCommandsForActor } from './reducer';
 export type SessionProjection = SessionPlayerProjection | SessionGmProjection;
 
 /**
- * Task 2's `catalog` is the minimal `{id, deck}` shape (Task 1's deliberate
- * scope boundary — Task 4 builds the full runtime catalog with real
- * labels/art/suit/rank/major metadata). A visible slot's `label`/`imageKey`
- * fall back to the card id and `value` is `0` rather than fabricating
- * rulebook data the engine doesn't have; `entry?.id` still consults the
- * catalog to confirm the id is genuinely configured.
+ * Task 4's runtime catalog (`compileSessionRuntimeContent` in
+ * `$lib/server/content/session-runtime.ts`) hydrates each entry with real
+ * label/imageKey/value and suit/rank-or-major metadata from the content
+ * pack's tarot config. When present, that metadata is copied onto the
+ * visible slot as-is. The engine's minimal test catalog (Task 1's deliberate
+ * scope boundary — see `tests/fixtures/session.ts`) may carry only
+ * `{id, deck}`; for those entries — or an id absent from the catalog
+ * entirely — `label`/`imageKey` fall back to the card id and `value` falls
+ * back to `0` rather than fabricating rulebook data the engine doesn't have.
  */
 function hydrateVisible(cardId: CardId, catalog: TarotCardCatalog): VisibleCardSlot {
 	const entry = catalog[cardId];
 	const id = entry?.id ?? cardId;
-	return { hidden: false, id, label: id, imageKey: id, value: 0 };
+	return {
+		hidden: false,
+		id,
+		label: entry?.label ?? id,
+		imageKey: entry?.imageKey ?? id,
+		value: entry?.value ?? 0,
+		...(entry?.suit !== undefined ? { suit: entry.suit } : {}),
+		...(entry?.rank !== undefined ? { rank: entry.rank } : {}),
+		...(entry?.major !== undefined ? { major: entry.major } : {})
+	};
 }
 
 function visibleSlots(cardIds: readonly CardId[], catalog: TarotCardCatalog): CardSlot[] {

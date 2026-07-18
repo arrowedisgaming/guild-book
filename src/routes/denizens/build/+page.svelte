@@ -400,6 +400,10 @@
 				This creature's Health and Defense live in named pools — you'll build them on the
 				<strong>Pools</strong> step.
 			</p>
+			{#if threat?.statNote}
+				<!-- Build-time instruction from the template, not stat-block content. -->
+				<p class="guidance"><em>{threat.statNote}</em></p>
+			{/if}
 		{/if}
 		{#each statWarnings as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>

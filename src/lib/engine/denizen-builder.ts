@@ -126,7 +126,10 @@ export function seedFromTemplates(
 		},
 		health: !poolsMode && threat.health !== undefined ? String(threat.health) : '',
 		defense: !poolsMode && threat.defense !== undefined ? String(threat.defense) : '',
-		statNote: threat.statNote ?? '',
+		// A pools threat's statNote is build-time instruction ("Choose 1
+		// attribute to increase to 6…") — shown as Customize guidance, not
+		// carried into the finished stat block.
+		statNote: poolsMode ? '' : (threat.statNote ?? ''),
 		likes: (theme.likes ?? []).join(', '),
 		hates: (theme.hates ?? []).join(', '),
 		notes: [...(theme.notes ?? []), ...(threat.notes ?? [])],

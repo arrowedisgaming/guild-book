@@ -49,14 +49,19 @@ describe('denizen builder — template seeding', () => {
 		expect(draft.attributes.swords).toBe('3');
 	});
 
-	it('seeds the threat stat note', () => {
+	it('keeps a pools threat’s pick instructions out of the stat note', () => {
+		// "Choose 1 attribute to increase to 6…" is build-time guidance — the
+		// Customize step shows it, the finished stat block doesn't carry it.
 		const lordDraft = seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
-		expect(lordDraft.statNote).toMatch(/Choose 1 attribute to increase to 6/);
+		expect(lordDraft.statNote).toBe('');
 	});
 
-	it('clears the stat note when reseeding to a threat without one', () => {
-		const lord = seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
-		const reseeded = seedFromTemplates(lord, theme('undead'), threat('minion'));
+	it('clears a stale stat note when reseeding', () => {
+		const noted = {
+			...seedFromTemplates(createBlankDraft(), theme('undead'), threat('brute')),
+			statNote: 'Old note'
+		};
+		const reseeded = seedFromTemplates(noted, theme('undead'), threat('minion'));
 		expect(reseeded.statNote).toBe('');
 	});
 
@@ -115,11 +120,12 @@ describe('denizen builder — materializing a definition', () => {
 		expect(toDenizenDefinition(createBlankDraft()).name).toBe('Unnamed Denizen');
 	});
 
-	it('carries the stat note into the definition', () => {
-		const lord = toDenizenDefinition(
-			seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'))
-		);
-		expect(lord.statNote).toMatch(/Choose 1 attribute to increase to 6/);
+	it('carries a user-set stat note into the definition', () => {
+		const lord = toDenizenDefinition({
+			...seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord')),
+			statNote: 'The crown can only be harmed by silver.'
+		});
+		expect(lord.statNote).toBe('The crown can only be harmed by silver.');
 	});
 
 	it('omits the stat note when the threat has none', () => {

@@ -70,9 +70,11 @@ describe('denizen markdown export', () => {
 		expect(md).toContain('> [!sidebar] Killing the Vampire');
 	});
 
-	it('carries a built dungeon lord’s stat note and omits its blank HD entirely', () => {
+	it('omits a built dungeon lord’s blank HD and template pick instructions', () => {
 		const md = exportDenizenToMarkdown(builtLord, 'Sorcerous', 'Dungeon Lord');
-		expect(md).toContain('_Choose 1 attribute to increase to 6.');
+		// The "Choose 1 attribute…" instruction is Customize guidance, not
+		// stat-block content — it never reaches the export.
+		expect(md).not.toContain('Choose 1 attribute to increase to 6');
 		expect(md).not.toContain('Health/Defense: /');
 		expect(md).not.toContain('hd: "/"');
 		expect(md).not.toContain('**Health/Defense:**');
@@ -125,10 +127,10 @@ describe('denizen PDF export', () => {
 		expect(flattened).toContain('Torso  Health/Defense: 5/10');
 	});
 
-	it('carries a built dungeon lord’s stat note and omits its blank HD entirely', () => {
+	it('omits a built dungeon lord’s blank HD and template pick instructions', () => {
 		const doc = buildDenizenDocDefinition(builtLord, 'Sorcerous', 'Dungeon Lord');
 		const flattened = JSON.stringify(doc);
-		expect(flattened).toContain('Choose 1 attribute to increase to 6.');
+		expect(flattened).not.toContain('Choose 1 attribute to increase to 6');
 		expect(flattened).not.toContain('Health/Defense');
 	});
 

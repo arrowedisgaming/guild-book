@@ -58,14 +58,30 @@ export function builderPath(mode: BuilderPathMode): BuilderStep[] {
 	});
 }
 
+/**
+ * Work parked while the draft is in the other mode: switching Man → Undead
+ * stashes the person draft, and switching back restores it instead of
+ * reseeding, so no work is lost crossing the mode boundary.
+ */
+export interface ModeStash {
+	creature: DenizenDraft | null;
+	person: DenizenDraft | null;
+}
+
 export interface DenizenBuilderState {
 	version: number;
 	currentStepId: BuilderStepId;
 	draft: DenizenDraft;
+	modeStash: ModeStash;
 }
 
 function createInitialState(): DenizenBuilderState {
-	return { version: BUILDER_STATE_VERSION, currentStepId: 'concept', draft: createBlankDraft() };
+	return {
+		version: BUILDER_STATE_VERSION,
+		currentStepId: 'concept',
+		draft: createBlankDraft(),
+		modeStash: { creature: null, person: null }
+	};
 }
 
 /** Accept a known step id, migrate a legacy numeric index, else start over. */
@@ -89,10 +105,15 @@ function loadFromStorage(): DenizenBuilderState {
 		if (state.version !== BUILDER_STATE_VERSION) return createInitialState();
 		// Stored drafts are untrusted (older builds, manual edits) — rebuild
 		// field by field instead of spreading a cast object into the state.
+		const stash = (state.modeStash ?? {}) as Record<string, unknown>;
 		return {
 			version: BUILDER_STATE_VERSION,
 			currentStepId: sanitizeStepId(state.currentStepId ?? state.currentStep),
-			draft: sanitizeDraft(state.draft)
+			draft: sanitizeDraft(state.draft),
+			modeStash: {
+				creature: stash.creature ? sanitizeDraft(stash.creature) : null,
+				person: stash.person ? sanitizeDraft(stash.person) : null
+			}
 		};
 	} catch {
 		return createInitialState();
@@ -115,6 +136,25 @@ function createBuilderStore() {
 
 		goToStep(stepId: BuilderStepId) {
 			update((s) => ({ ...s, currentStepId: stepId }));
+		},
+
+		/**
+		 * Cross the creature/person mode boundary: the outgoing draft is
+		 * stashed, and `build` receives any previously stashed draft for the
+		 * target mode (consumed on restore) plus the current draft.
+		 */
+		swapMode(
+			target: 'creature' | 'person',
+			build: (stashed: DenizenDraft | null, current: DenizenDraft) => DenizenDraft
+		) {
+			update((s) => {
+				const from = target === 'person' ? 'creature' : 'person';
+				return {
+					...s,
+					draft: build(s.modeStash[target], s.draft),
+					modeStash: { ...s.modeStash, [from]: s.draft, [target]: null }
+				};
+			});
 		},
 
 		reset() {

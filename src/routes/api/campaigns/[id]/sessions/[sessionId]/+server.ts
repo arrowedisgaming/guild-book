@@ -3,14 +3,14 @@ import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
 import { getDb, getDbContext } from '$lib/server/db';
-import { endSession, recoverSession, type LifecycleRejectionCode } from '$lib/server/session/lifecycle';
+import { endSession, freezeSession, recoverSession, type LifecycleRejectionCode } from '$lib/server/session/lifecycle';
 import { loadEndedSessionHistory, loadSessionSummary } from '$lib/server/session/repository';
 import { loadProjectionForActor } from '$lib/server/session/command-service';
 import { rejectionStatus } from '$lib/server/session/sanitize';
 
 const patchSchema = z
 	.object({
-		action: z.enum(['recover', 'end']),
+		action: z.enum(['freeze', 'recover', 'end']),
 		expectedVersion: z.number().int().nonnegative().optional()
 	})
 	.strict();
@@ -42,21 +42,34 @@ export const GET: RequestHandler = async (event) => {
 	return json({ status: summary.status, session: projection }, { headers: campaignHeaders() });
 };
 
-/** GM-only structural lifecycle transitions: recover a frozen session back
- * to active, or end an active/frozen session. Both go through Task 5's
- * `lifecycle.ts`, which claims a version exactly like an in-band structural
- * command — no session logic lives here beyond parsing and translating the
- * result. Manual GM-initiated freeze is intentionally not exposed: Task 5's
- * `buildFreezeStatements` only supports the automatic freeze-on-failure path
- * today (`actorUserId` is hardcoded `null` there; its own doc comment calls
- * a GM-initiated freeze "future" work), so there is no service call for a
- * route to invoke. */
+/** GM-only structural lifecycle transitions: manually freeze an active
+ * session, recover a frozen session back to active, or end an active/frozen
+ * session. All three go through Task 5's `lifecycle.ts`, which claims a
+ * version exactly like an in-band structural command — no session logic
+ * lives here beyond parsing and translating the result. `freeze`/`recover`
+ * return the GM's fresh projection (the session is still readable
+ * afterward, exercising the fragment-version-stamp fix in
+ * `repository.ts`'s `fragmentVersionStampStatements`); `end` returns the
+ * public-history checksum instead, since there's no longer a live
+ * projection to read. */
 export const PATCH: RequestHandler = async (event) => {
 	const role = await requireCampaignAccess(event, event.params.id);
 	const dbContext = await getDbContext(event);
 
 	const parsed = patchSchema.safeParse(await readJson(event.request));
 	if (!parsed.success) throw error(400, 'Invalid lifecycle command');
+
+	if (parsed.data.action === 'freeze') {
+		const result = await freezeSession({
+			dbContext,
+			campaignId: event.params.id,
+			sessionId: event.params.sessionId,
+			actorUserId: role.userId,
+			expectedVersion: parsed.data.expectedVersion
+		});
+		if (!result.ok) return respondToLifecycleRejection(result.code);
+		return json({ success: true, action: 'freeze', session: await freshProjection() }, { headers: campaignHeaders() });
+	}
 
 	if (parsed.data.action === 'recover') {
 		const result = await recoverSession({
@@ -67,13 +80,7 @@ export const PATCH: RequestHandler = async (event) => {
 			expectedVersion: parsed.data.expectedVersion
 		});
 		if (!result.ok) return respondToLifecycleRejection(result.code);
-
-		const db = await getDb(event);
-		const projection = await loadProjectionForActor(db, event.params.sessionId, event.params.id, {
-			kind: role.kind,
-			userId: role.userId
-		});
-		return json({ success: true, action: 'recover', session: projection }, { headers: campaignHeaders() });
+		return json({ success: true, action: 'recover', session: await freshProjection() }, { headers: campaignHeaders() });
 	}
 
 	const result = await endSession({
@@ -88,6 +95,11 @@ export const PATCH: RequestHandler = async (event) => {
 		{ success: true, action: 'end', publicHistoryChecksum: result.publicHistoryChecksum },
 		{ headers: campaignHeaders() }
 	);
+
+	async function freshProjection() {
+		const db = await getDb(event);
+		return loadProjectionForActor(db, event.params.sessionId, event.params.id, { kind: role.kind, userId: role.userId });
+	}
 };
 
 /** Translates a lifecycle rejection code to its HTTP response per

@@ -35,7 +35,13 @@ export const GET: RequestHandler = async (event) => {
 	// Advisory, isolate-local short-circuit (amendment 6) — only ever
 	// consulted AFTER authorization above, and only for an exact, fresh
 	// cursor match; anything else falls through to the authoritative reads
-	// below.
+	// below. The hint deliberately ignores `clientVersion` — it is only safe
+	// under the invariant (documented in `latest-cursor.ts`) that every write
+	// which advances a session's version also inserts at least one
+	// `campaign_events` row in the same atomic batch, so an unchanged cursor
+	// implies an unchanged session version too. If that pairing is ever
+	// broken by a future command/lifecycle type, this hint must start
+	// tracking version as well or it can mask a real session change.
 	if (hasFreshMatchingCursorHint(campaignId, after)) {
 		return new Response(null, { status: 204, headers: NO_CONTENT_HEADERS });
 	}

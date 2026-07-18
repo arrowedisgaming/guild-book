@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyMigrations, fakeEvent, makeDbContext, seedCampaignFoundation } from '../fixtures/session-http';
+import { resetCursorHintsForTest } from '$lib/server/session/latest-cursor';
 import type { AppDbContext } from '$lib/server/db/atomic';
 
 /**
@@ -35,6 +36,13 @@ describe('session HTTP contracts', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// The isolate-local cursor-hint `Map` (`latest-cursor.ts`) is a module
+		// singleton shared across every test in this process — without
+		// resetting it, a hint recorded by an earlier test's campaign/cursor
+		// pairing could (rarely, but not never) collide with this test's and
+		// mask a real /sync regression behind a stale 204. Never rely on the
+		// hint's TTL alone to keep tests isolated.
+		resetCursorHintsForTest();
 		sqlite = new Database(':memory:');
 		sqlite.pragma('foreign_keys = ON');
 		applyMigrations(sqlite);
@@ -183,7 +191,7 @@ describe('session HTTP contracts', () => {
 			const sessionId = await startAsGm();
 			mocks.ensureUser.mockResolvedValue(gmUserId);
 			await expect(
-				patchSession(fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'freeze' } }) as never)
+				patchSession(fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'pause' } }) as never)
 			).rejects.toMatchObject({ status: 400 });
 		});
 
@@ -209,6 +217,69 @@ describe('session HTTP contracts', () => {
 			const body = (await response.json()) as { success: boolean; session: { projection: unknown } };
 			expect(body.success).toBe(true);
 			expect(body.session.projection).toHaveProperty('gmHand');
+		});
+
+		describe('freeze (review round 1: GM-initiated manual freeze)', () => {
+			it('lets the GM freeze an active session — version bumps, and the session stays readable through the route afterward', async () => {
+				const sessionId = await startAsGm();
+				mocks.ensureUser.mockResolvedValue(gmUserId);
+				const response = await patchSession(
+					fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'freeze' } }) as never
+				);
+				expect(response.status).toBe(200);
+				const body = (await response.json()) as { success: boolean; action: string; session: { projection: unknown } };
+				expect(body).toMatchObject({ success: true, action: 'freeze' });
+				// The claim-serialized version bump: `startSession` leaves the
+				// session at version 1, so a real accepted freeze claim lands it
+				// at 2 — confirmed both via the row and via a subsequent read
+				// through the route (exercising the freeze branch of the
+				// fragment-version-stamp fix through HTTP, not direct SQL).
+				const row = sqlite.prepare('SELECT version, status FROM play_sessions WHERE id = ?').get(sessionId) as {
+					version: number;
+					status: string;
+				};
+				expect(row).toEqual({ version: 2, status: 'frozen' });
+				expect(body.session.projection).toHaveProperty('gmHand');
+
+				const readAfterFreeze = await getSession(fakeEvent({ campaignId, sessionId }) as never);
+				expect(readAfterFreeze.status).toBe(200);
+				const readBody = (await readAfterFreeze.json()) as { status: string };
+				expect(readBody.status).toBe('frozen');
+			});
+
+			it('denies a player attempting to freeze a session with a 404', async () => {
+				const sessionId = await startAsGm();
+				mocks.ensureUser.mockResolvedValue(playerAUserId);
+				await expect(
+					patchSession(fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'freeze' } }) as never)
+				).rejects.toMatchObject({ status: 404 });
+			});
+
+			it('rejects freezing an already-frozen session with a 400, without a spurious version bump', async () => {
+				const sessionId = await startAsGm();
+				sqlite.prepare("UPDATE play_sessions SET status = 'frozen' WHERE id = ?").run(sessionId);
+				mocks.ensureUser.mockResolvedValue(gmUserId);
+				await expect(
+					patchSession(fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'freeze' } }) as never)
+				).rejects.toMatchObject({ status: 400 });
+
+				const row = sqlite.prepare('SELECT version, status FROM play_sessions WHERE id = ?').get(sessionId) as {
+					version: number;
+					status: string;
+				};
+				expect(row).toEqual({ version: 1, status: 'frozen' });
+			});
+
+			it('returns a 409 with a retry hint on a stale expectedVersion', async () => {
+				const sessionId = await startAsGm();
+				mocks.ensureUser.mockResolvedValue(gmUserId);
+				const response = await patchSession(
+					fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'freeze', expectedVersion: 99 } }) as never
+				);
+				expect(response.status).toBe(409);
+				const body = (await response.json()) as { code: string };
+				expect(body.code).toBe('stale-structure');
+			});
 		});
 	});
 

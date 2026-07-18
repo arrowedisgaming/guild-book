@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyMigrations, fakeEvent, makeDbContext, seedCampaignFoundation } from '../fixtures/session-http';
+import { resetCursorHintsForTest } from '$lib/server/session/latest-cursor';
 import type { AppDbContext } from '$lib/server/db/atomic';
 
 /**
@@ -80,6 +81,11 @@ describe('session HTTP surface — privacy canary', () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		// See the matching comment in `session-api.test.ts` — the isolate-local
+		// cursor-hint `Map` is a module singleton; without resetting it here a
+		// hint left by an earlier test could mask a real /sync regression
+		// behind a stale 204 rather than a genuine "nothing changed".
+		resetCursorHintsForTest();
 		sqlite = new Database(':memory:');
 		sqlite.pragma('foreign_keys = ON');
 		applyMigrations(sqlite);
@@ -111,7 +117,7 @@ describe('session HTTP surface — privacy canary', () => {
 		sqlite.close();
 	});
 
-	it("player-a's own read carries their secret and never the GM's", async () => {
+	it("player-a's own read carries their secret and never the GM's — in the body, never in headers", async () => {
 		mocks.ensureUser.mockResolvedValue(playerAUserId);
 		const response = await getSession(fakeEvent({ campaignId, sessionId }) as never);
 		expect(response.status).toBe(200);
@@ -119,9 +125,13 @@ describe('session HTTP surface — privacy canary', () => {
 
 		expect(bodyText).toContain(PLAYER_A_SECRET);
 		expect(bodyText).not.toContain(GM_SECRET);
+		// Headers must never carry a secret at all, even the owner's own —
+		// there's no legitimate reason a card identity would ever need to
+		// travel in a response header.
+		assertNoPoisonInHeaders(response, "player-a's own session read headers");
 	});
 
-	it("the GM's own read carries their secret and never player-a's", async () => {
+	it("the GM's own read carries their secret and never player-a's — in the body, never in headers", async () => {
 		mocks.ensureUser.mockResolvedValue(gmUserId);
 		const response = await getSession(fakeEvent({ campaignId, sessionId }) as never);
 		expect(response.status).toBe(200);
@@ -129,6 +139,7 @@ describe('session HTTP surface — privacy canary', () => {
 
 		expect(bodyText).toContain(GM_SECRET);
 		expect(bodyText).not.toContain(PLAYER_A_SECRET);
+		assertNoPoisonInHeaders(response, "the GM's own session read headers");
 	});
 
 	it('an uninvolved player never sees either secret, across the session read, the sync poll, and headers', async () => {
@@ -146,6 +157,64 @@ describe('session HTTP surface — privacy canary', () => {
 		const syncBody = JSON.stringify(await syncResponse.json());
 		assertNoPoison(syncBody, 'player-b sync body');
 		assertNoPoisonInHeaders(syncResponse, 'player-b sync headers');
+	});
+
+	it('a card-secret-bearing event flows through /sync — player-a sees it, player-b never does (review round 1)', async () => {
+		// A real private-zone-to-private-zone move (hand -> facedown, both
+		// owned by player-a) so the resulting event's identity lands only in
+		// `privatePayloads[player-a]` (`card-commands.ts`'s `buildMoveEvent`) —
+		// never the public payload. `cups-i` is the poisoned card already
+		// planted in player-a's hand by `plantPoisonedCards`.
+		mocks.ensureUser.mockResolvedValue(playerAUserId);
+		const moveResponse = await postCommand(
+			fakeEvent({
+				method: 'POST',
+				campaignId,
+				sessionId,
+				body: {
+					commandId: 'facedown-1',
+					observedSessionVersion: 1,
+					command: {
+						type: 'place-facedown',
+						sourceZoneId: `hand:${playerAUserId}`,
+						cardId: 'cups-i',
+						destinationZoneId: `facedown:${playerAUserId}`
+					}
+				}
+			}) as never
+		);
+		expect(moveResponse.status).toBe(200);
+		expect(((await moveResponse.json()) as { outcome: { ok: boolean } }).outcome.ok).toBe(true);
+
+		// Player-a's own poll: the event itself carries their own private
+		// payload (the raw card id), and their session projection carries the
+		// poisoned label.
+		const playerASync = await getSync(fakeEvent({ campaignId, searchParams: { after: '0', version: '1' } }) as never);
+		expect(playerASync.status).toBe(200);
+		const playerASyncBody = (await playerASync.json()) as {
+			events: Array<{ kind: string; privatePayload?: { cardIds?: string[] } }>;
+			session: { projection: unknown } | null;
+		};
+		const playerAEvent = playerASyncBody.events.find((event) => event.kind === 'card-placed-facedown');
+		expect(playerAEvent?.privatePayload?.cardIds).toEqual(['cups-i']);
+		expect(JSON.stringify(playerASyncBody.session?.projection)).toContain(PLAYER_A_SECRET);
+		assertNoPoisonInHeaders(playerASync, "player-a's sync headers");
+
+		// Player-b's poll of the SAME event range: no private payload at all
+		// (`listEventSecretsForRecipient` is scoped to player-b, who owns no
+		// secret row for this event), and neither the raw card id nor the
+		// poisoned label anywhere in the response.
+		mocks.ensureUser.mockResolvedValue(playerBUserId);
+		const playerBSync = await getSync(fakeEvent({ campaignId, searchParams: { after: '0', version: '1' } }) as never);
+		expect(playerBSync.status).toBe(200);
+		const playerBBody = (await playerBSync.json()) as { events: Array<{ kind: string; privatePayload?: unknown }> };
+		const playerBEvent = playerBBody.events.find((event) => event.kind === 'card-placed-facedown');
+		expect(playerBEvent).toBeDefined();
+		expect(playerBEvent?.privatePayload).toBeUndefined();
+		const playerBBodyText = JSON.stringify(playerBBody);
+		expect(playerBBodyText).not.toContain('cups-i');
+		assertNoPoison(playerBBodyText, "player-b's sync poll after player-a's private move");
+		assertNoPoisonInHeaders(playerBSync, "player-b's sync poll headers");
 	});
 
 	it('a nonmember gets an indistinguishable 404 with no secret in the thrown error', async () => {

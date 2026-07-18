@@ -246,6 +246,128 @@ export async function freezeSessionForFailure(dbContext: AppDbContext, input: Fr
 }
 
 // ---------------------------------------------------------------------------
+// GM-initiated freeze (Task 6 follow-up: distinct from `freezeSessionForFailure`
+// above, which is the automatic, system-triggered path with `actorUserId:
+// null`). Same statement builder (`buildFreezeStatements`), but authorized
+// and audited exactly like `recoverSession`/`endSession` below.
+// ---------------------------------------------------------------------------
+
+export interface FreezeSessionOptions {
+	dbContext: AppDbContext;
+	campaignId: string;
+	sessionId: string;
+	actorUserId: string;
+	/** When supplied, the GM's confirmed structural version — mismatch hard
+	 * rejects, same as `recoverSession`/`endSession`. */
+	expectedVersion?: number;
+	now?: Date;
+}
+
+export type FreezeSessionResult = { ok: true } | { ok: false; code: LifecycleRejectionCode };
+
+/**
+ * GM-only manual freeze. `buildFreezeStatements`'s own SQL guard is
+ * `status != 'ended'` — deliberately broad, since the automatic
+ * freeze-on-failure path may legitimately race against a session that's
+ * already frozen and should just no-op rather than error (see that
+ * function's doc comment). A GM-*requested* freeze is stricter: this wrapper
+ * rejects a session that isn't `'active'` up front (`illegal-command`, not a
+ * silent no-op claim), so a GM can't "freeze" an already-frozen session and
+ * get back a spurious version bump with nothing having changed.
+ */
+export async function freezeSession(options: FreezeSessionOptions): Promise<FreezeSessionResult> {
+	const db = options.dbContext.db as unknown as AppDb;
+	const now = options.now ?? new Date();
+	const commandId = nanoid();
+
+	const actor = await resolveSessionActor(db, options.campaignId, options.actorUserId);
+	if (!actor) return { ok: false, code: 'not-authorized' };
+
+	const summary = await loadSessionSummary(db, options.sessionId);
+	if (!summary || summary.campaignId !== options.campaignId) return { ok: false, code: 'illegal-command' };
+
+	if (actor.kind !== 'gm') {
+		const rejection: SessionRejection = { code: 'not-authorized', message: 'only the GM may freeze a session' };
+		await persistLifecycleRejection(options.dbContext, {
+			sessionId: options.sessionId,
+			commandId,
+			actorUserId: options.actorUserId,
+			commandType: 'freeze-session',
+			expectedVersion: summary.version,
+			rejection,
+			now
+		});
+		return { ok: false, code: 'not-authorized' };
+	}
+
+	// Active-only guard (review finding): without this, freezing an
+	// already-frozen session would fall through to `buildFreezeStatements`,
+	// whose SQL guard (`status != 'ended'`) would happily claim a new version
+	// and re-stamp `status = 'frozen'` as a no-op transition — a spurious
+	// version bump with no real state change, and no way for the GM to tell
+	// their freeze request actually did nothing.
+	if (summary.status !== 'active') {
+		const rejection: SessionRejection = { code: 'illegal-command', message: `session is ${summary.status}, not active` };
+		await persistLifecycleRejection(options.dbContext, {
+			sessionId: options.sessionId,
+			commandId,
+			actorUserId: options.actorUserId,
+			commandType: 'freeze-session',
+			expectedVersion: summary.version,
+			rejection,
+			now
+		});
+		return { ok: false, code: 'illegal-command' };
+	}
+
+	if (options.expectedVersion !== undefined && options.expectedVersion !== summary.version) {
+		const rejection: SessionRejection = {
+			code: 'stale-structure',
+			message: `expected version ${options.expectedVersion} does not match current version ${summary.version}`
+		};
+		await persistLifecycleRejection(options.dbContext, {
+			sessionId: options.sessionId,
+			commandId,
+			actorUserId: options.actorUserId,
+			commandType: 'freeze-session',
+			expectedVersion: summary.version,
+			rejection,
+			now
+		});
+		return { ok: false, code: 'stale-structure' };
+	}
+
+	const statements = buildFreezeStatements({
+		commandRowId: nanoid(),
+		commandId,
+		sessionId: options.sessionId,
+		campaignId: options.campaignId,
+		actorUserId: options.actorUserId,
+		expectedVersion: summary.version,
+		reason: 'gm-requested',
+		now
+	});
+
+	try {
+		await runAtomic(options.dbContext, statements);
+		return { ok: true };
+	} catch (cause) {
+		if (!isUniqueConstraintError(cause)) throw cause;
+		const rejection: SessionRejection = { code: 'stale-structure', message: 'the session advanced past the expected version' };
+		await persistLifecycleRejection(options.dbContext, {
+			sessionId: options.sessionId,
+			commandId,
+			actorUserId: options.actorUserId,
+			commandType: 'freeze-session',
+			expectedVersion: summary.version,
+			rejection,
+			now
+		});
+		return { ok: false, code: 'stale-structure' };
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Recover
 // ---------------------------------------------------------------------------
 

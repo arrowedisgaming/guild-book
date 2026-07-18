@@ -9,21 +9,29 @@ export type CampaignRole =
 	| { kind: 'gm'; userId: string; campaignId: string }
 	| { kind: 'player'; userId: string; campaignId: string; membershipId: string };
 
-/** Resolve one active campaign role or hide every denial behind the same 404. */
-export async function requireCampaignAccess(
-	event: RequestEvent,
-	campaignId: string
-): Promise<CampaignRole> {
+/** Authenticate and enforce the server-only rollout for campaign collections. */
+export async function requireCampaignFeature(event: RequestEvent): Promise<string> {
+	installCampaignHeaders(event);
 	let userId: string;
 	try {
 		userId = await ensureUser(event);
-	} catch {
-		throw campaignNotFound();
+	} catch (cause) {
+		if (isUnauthorized(cause)) throw campaignNotFound();
+		throw cause;
 	}
 
 	if (!canAccessCampaignFeature(getCampaignFeatureConfig(event), userId)) {
 		throw campaignNotFound();
 	}
+	return userId;
+}
+
+/** Resolve one active campaign role or hide every denial behind the same 404. */
+export async function requireCampaignAccess(
+	event: RequestEvent,
+	campaignId: string
+): Promise<CampaignRole> {
+	const userId = await requireCampaignFeature(event);
 
 	const db = await getDb(event);
 	const access = await db
@@ -61,10 +69,23 @@ export async function requireCampaignAccess(
 	throw campaignNotFound();
 }
 
-export function campaignHeaders(): HeadersInit {
+export function campaignHeaders(): Record<string, string> {
 	return { 'Cache-Control': 'private, no-store', Vary: 'Cookie' };
+}
+
+function installCampaignHeaders(event: RequestEvent): void {
+	event.setHeaders?.(campaignHeaders());
 }
 
 function campaignNotFound() {
 	return error(404, 'Campaign not found');
+}
+
+function isUnauthorized(cause: unknown): cause is { status: 401 } {
+	return (
+		typeof cause === 'object' &&
+		cause !== null &&
+		'status' in cause &&
+		cause.status === 401
+	);
 }

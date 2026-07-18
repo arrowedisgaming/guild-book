@@ -26,6 +26,7 @@ declare global {
 				DB?: D1Database;
 				CAMPAIGNS_ENABLED?: string;
 				CAMPAIGNS_PILOT_USER_IDS?: string;
+				CAMPAIGN_INVITE_SECRET?: string;
 			};
 		}
 	}

@@ -115,8 +115,18 @@ describe('requireCampaignAccess', () => {
 
 	it('returns 404 when the feature is disabled', async () => {
 		mocks.ensureUser.mockResolvedValue('owner');
-		await expect(requireCampaignAccess(disabledEvent(), 'campaign-a')).rejects.toMatchObject({
+		const setHeaders = vi.fn();
+		await expect(
+			requireCampaignAccess(
+				eventWithEnv({ CAMPAIGNS_ENABLED: 'false' }, setHeaders),
+				'campaign-a'
+			)
+		).rejects.toMatchObject({
 			status: 404
+		});
+		expect(setHeaders).toHaveBeenCalledWith({
+			'Cache-Control': 'private, no-store',
+			Vary: 'Cookie'
 		});
 	});
 
@@ -134,6 +144,12 @@ describe('requireCampaignAccess', () => {
 			body: { message: 'Campaign not found' }
 		});
 	});
+
+	it('does not hide unexpected authentication infrastructure failures', async () => {
+		const outage = new Error('session database unavailable');
+		mocks.ensureUser.mockRejectedValue(outage);
+		await expect(requireCampaignAccess(enabledEvent(), 'campaign-a')).rejects.toBe(outage);
+	});
 });
 
 function enabledEvent() {
@@ -148,6 +164,6 @@ function pilotEvent(userId: string) {
 	return eventWithEnv({ CAMPAIGNS_ENABLED: 'false', CAMPAIGNS_PILOT_USER_IDS: userId });
 }
 
-function eventWithEnv(env: Record<string, string>) {
-	return { platform: { env } } as unknown as Parameters<typeof requireCampaignAccess>[0];
+function eventWithEnv(env: Record<string, string>, setHeaders?: (headers: Record<string, string>) => void) {
+	return { platform: { env }, setHeaders } as unknown as Parameters<typeof requireCampaignAccess>[0];
 }

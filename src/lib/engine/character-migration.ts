@@ -13,7 +13,8 @@ import {
 	CHARACTER_SCHEMA_VERSION,
 	createBlankCharacter,
 	type GuildBookCharacterData,
-	type AttributeState
+	type AttributeState,
+	type CharacterLife
 } from '$lib/types/character';
 import { SUIT_IDS } from '$lib/types/common';
 
@@ -69,10 +70,41 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 			notchesTaken: typeof e.notchesTaken === 'number' ? e.notchesTaken : 0
 		})),
 		afflictions: Array.isArray(stored.afflictions) ? stored.afflictions : [],
+		// v2 → v3: life state becomes explicit. Reject incomplete death records
+		// rather than retaining partial audit metadata.
+		life: normalizeLife(stored.life),
 		languages: Array.isArray(stored.languages) ? stored.languages : base.languages,
 		conditions: Array.isArray(stored.conditions) ? stored.conditions : base.conditions,
 		lore: typeof stored.lore === 'number' ? stored.lore : base.lore
 	};
+}
+
+function normalizeLife(value: unknown): CharacterLife {
+	if (!value || typeof value !== 'object') return { status: 'alive' };
+
+	const life = value as Record<string, unknown>;
+	if (life.status !== 'dead') return { status: 'alive' };
+	if (!isNonEmptyString(life.diedAt) || !isNonEmptyString(life.markedByUserId)) {
+		return { status: 'alive' };
+	}
+	if (life.campaignId !== undefined && !isNonEmptyString(life.campaignId)) {
+		return { status: 'alive' };
+	}
+	if (life.sessionId !== undefined && !isNonEmptyString(life.sessionId)) {
+		return { status: 'alive' };
+	}
+
+	return {
+		status: 'dead',
+		diedAt: life.diedAt,
+		...(life.campaignId === undefined ? {} : { campaignId: life.campaignId }),
+		...(life.sessionId === undefined ? {} : { sessionId: life.sessionId }),
+		markedByUserId: life.markedByUserId
+	};
+}
+
+function isNonEmptyString(value: unknown): value is string {
+	return typeof value === 'string' && value.length > 0;
 }
 
 function normalizeTriggers(value: unknown): [boolean, boolean, boolean] {

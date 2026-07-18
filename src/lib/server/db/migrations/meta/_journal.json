@@ -8,6 +8,13 @@
       "when": 1782938900359,
       "tag": "0000_dashing_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784336939736,
+      "tag": "0001_campaign_character_versions",
+      "breakpoints": true
     }
   ]
 }

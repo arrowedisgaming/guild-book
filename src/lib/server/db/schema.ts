@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // ─── Auth.js tables ───────────────────────────────────────────────
@@ -64,6 +64,8 @@ export const characters = sqliteTable(
 		path: text('path').notNull().default(''),
 		/** Full GuildBookCharacterData as JSON blob. */
 		data: text('data').notNull(),
+		version: integer('version').notNull().default(1),
+		lifeStatus: text('life_status').notNull().default('alive'),
 		isDraft: integer('is_draft', { mode: 'boolean' }).notNull().default(true),
 		isArchived: integer('is_archived', { mode: 'boolean' }).notNull().default(false),
 		shareId: text('share_id').unique(),
@@ -73,7 +75,29 @@ export const characters = sqliteTable(
 	},
 	(table) => [
 		index('characters_user_id_idx').on(table.userId),
-		index('characters_share_id_idx').on(table.shareId)
+		index('characters_share_id_idx').on(table.shareId),
+		check('characters_life_status_check', sql`${table.lifeStatus} IN ('alive', 'dead')`)
+	]
+);
+
+/** Append-only claims proving every successful character document version. */
+export const characterVersionClaims = sqliteTable(
+	'character_version_claims',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		characterId: text('character_id')
+			.notNull()
+			.references(() => characters.id, { onDelete: 'cascade' }),
+		resultingVersion: integer('resulting_version').notNull(),
+		mutationKind: text('mutation_kind').notNull(),
+		actorUserId: text('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		uniqueIndex('character_version_claims_character_version_uq').on(
+			table.characterId,
+			table.resultingVersion
+		)
 	]
 );
 

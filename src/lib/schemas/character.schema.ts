@@ -56,6 +56,17 @@ const areteStateSchema = z.object({
 	talentEarned: z.boolean()
 });
 
+const characterLifeSchema = z.discriminatedUnion('status', [
+	z.object({ status: z.literal('alive') }),
+	z.object({
+		status: z.literal('dead'),
+		diedAt: z.string().min(1),
+		campaignId: z.string().min(1).optional(),
+		sessionId: z.string().min(1).optional(),
+		markedByUserId: z.string().min(1)
+	})
+]);
+
 export const characterDataSchema = z.object({
 	schemaVersion: z.number(),
 	system: z.literal('hmtw'),
@@ -72,6 +83,7 @@ export const characterDataSchema = z.object({
 	quest: z.string(),
 	motifs: z.array(z.string()),
 	bonds: z.array(bondSchema),
+	life: characterLifeSchema,
 	resolve: z.object({ current: z.number(), max: z.number() }),
 	arete: areteStateSchema,
 	languages: z.array(z.string()),

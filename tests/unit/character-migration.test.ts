@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { migrateCharacterData } from '$lib/engine/character-migration';
-import { CHARACTER_SCHEMA_VERSION } from '$lib/types/character';
+import { CHARACTER_SCHEMA_VERSION, createBlankCharacter } from '$lib/types/character';
 import { characterDataSchema } from '$lib/schemas/character.schema';
 import { SUIT_IDS } from '$lib/types/common';
 
@@ -35,5 +35,15 @@ describe('migrateCharacterData', () => {
 		const migrated = migrateCharacterData({ schemaVersion: 0, system: 'other' });
 		expect(migrated.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
 		expect(migrated.system).toBe('hmtw');
+	});
+
+	it('migrates a v2 adventurer to an alive v3 life record', () => {
+		const raw = { ...createBlankCharacter(), schemaVersion: 2 } as Record<string, unknown>;
+		delete raw.life;
+
+		const migrated = migrateCharacterData(raw);
+
+		expect(migrated.schemaVersion).toBe(3);
+		expect(migrated.life).toEqual({ status: 'alive' });
 	});
 });

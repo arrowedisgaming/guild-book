@@ -2,7 +2,18 @@ import type { SuitId, ItemTier, TalentState } from './common';
 import { SUIT_IDS } from './common';
 
 /** Schema version for character-data migration (migrate-on-read). */
-export const CHARACTER_SCHEMA_VERSION = 2;
+export const CHARACTER_SCHEMA_VERSION = 3;
+
+/** Canonical living/dead state stored in the character document. */
+export type CharacterLife =
+	| { status: 'alive' }
+	| {
+			status: 'dead';
+			diedAt: string;
+			campaignId?: string;
+			sessionId?: string;
+			markedByUserId: string;
+	  };
 
 /**
  * Provenance for an allocation (attribute value, talent grant, …). Mirrors the
@@ -109,6 +120,7 @@ export interface GuildBookCharacterData {
 	bonds: Bond[];
 
 	// Resources & state
+	life: CharacterLife;
 	resolve: { current: number; max: number };
 	arete: AreteState;
 	languages: string[];
@@ -152,6 +164,7 @@ export function createBlankCharacter(contentPackId = 'hmtw'): GuildBookCharacter
 		quest: '',
 		motifs: [],
 		bonds: [],
+		life: { status: 'alive' },
 		resolve: { current: 4, max: 4 },
 		arete: { triggersMet: [false, false, false], talentEarned: false },
 		languages: [],

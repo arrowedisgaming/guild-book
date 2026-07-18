@@ -61,7 +61,7 @@ export function buildDenizenDocDefinition(
 
 	const content: unknown[] = [
 		{ text: denizen.name, style: 'title' },
-		{ text: `${themeName} ${threatName}`, style: 'subtitle' },
+		{ text: [themeName, threatName].filter(Boolean).join(' '), style: 'subtitle' },
 		{ text: plain(denizen.flavor), style: 'flavor', margin: [0, 8, 0, 12] },
 		statLine(
 			'Attributes',

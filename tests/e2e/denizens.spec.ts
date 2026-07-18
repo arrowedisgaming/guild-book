@@ -204,8 +204,13 @@ test.describe('denizen builder', () => {
 		await expect(page.getByLabel('Swords spread value')).toHaveValue('2');
 		await expect(page.locator('.warning')).toHaveCount(0);
 
-		// Kith is flavour, recorded as a note.
+		// Kith is flavour, recorded as a note; a kin adds its arete talent.
 		await page.getByRole('radio', { name: 'Orcs' }).check();
+		await page.getByLabel('Kin', { exact: true }).selectOption({ index: 1 });
+
+		// Talents: the highest attribute's path (Cups) is open; pick the first.
+		await expect(page.getByRole('heading', { name: /their path/ })).toBeVisible();
+		await page.locator('ul.options input[type=checkbox]').first().check();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
 		// Customize: person wording, HD pre-filled for simplicity (5/1), and the
@@ -226,6 +231,8 @@ test.describe('denizen builder', () => {
 		await page.getByLabel('Health', { exact: true }).fill('6');
 		await page.getByLabel('Defense', { exact: true }).fill('2');
 		await expect(page.locator('ul.current li', { hasText: 'Kith: Orcs' })).toBeVisible();
+		await expect(page.locator('ul.current li', { hasText: 'Arete talent:' })).toBeVisible();
+		await expect(page.locator('ul.current li', { hasText: 'Talent:' }).first()).toBeVisible();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
 		// Dooms: no template pick-lists, straight to gimmick dooms.
@@ -237,12 +244,12 @@ test.describe('denizen builder', () => {
 		await page.getByRole('button', { name: 'Add as greater doom' }).click();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
-		// Review: no threat in the type line; kith note and stat note carry over.
+		// Review: no threat in the type line; kith and talent notes carry over.
 		await expect(page.getByRole('heading', { name: 'Review', level: 2 })).toBeVisible();
 		const preview = page.locator('.preview');
 		await expect(preview.getByRole('heading', { name: 'Odo the Cannibal' })).toBeVisible();
-		await expect(preview.getByText('Person — built as a character.')).toBeVisible();
 		await expect(preview.getByText('Kith: Orcs.')).toBeVisible();
+		await expect(preview.getByText('Arete talent:')).toBeVisible();
 		await expect(preview.getByText('Health/Defense: 6/2')).toBeVisible();
 
 		// The Markdown export drops the threat entirely.
@@ -284,6 +291,21 @@ test.describe('denizen builder', () => {
 		// And back to Undead: the customized Health survived too.
 		await page.getByRole('button', { name: 'Theme' }).click();
 		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('4');
+
+		// Flipping to a different creature template and back keeps it as well.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Sorcerous' }).check();
+		await page.getByRole('button', { name: 'Threat' }).click();
+		await page.getByRole('radio', { name: 'Elite' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).not.toHaveValue('4'); // reseeded pair
+
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Threat' }).click();
+		await page.getByRole('radio', { name: 'Brute' }).check();
 		await page.getByRole('button', { name: 'Customize' }).click();
 		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('4');
 	});

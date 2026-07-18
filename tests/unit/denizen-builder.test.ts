@@ -659,6 +659,23 @@ describe('denizen builder — person wound tracking', () => {
 		expect(denizen.health).toBe('*');
 		expect(denizen.notes?.some((n) => n.name === 'Wounds')).toBe(true);
 	});
+
+	it('the Wounds note renders drawn checkboxes in HTML and PDF', async () => {
+		const { renderMarkdown } = await import('$lib/utils/markdown');
+		const { buildDenizenDocDefinition } = await import('$lib/export/denizen-pdf-export');
+		const draft = setPersonWoundTracking(seedPerson(), true);
+		const note = draft.notes.find((n) => n.name === 'Wounds')!;
+
+		const html = renderMarkdown(note.text);
+		expect(html).toContain('<li class="task"><input type="checkbox" disabled />');
+		// The talent line carries the double box.
+		expect(html).toContain('disabled /> <input type="checkbox" disabled /> Wound a talent');
+
+		const doc = buildDenizenDocDefinition(toDenizenDefinition(draft), 'Man', '');
+		const flattened = JSON.stringify(doc);
+		expect(flattened).toContain('"type":"rect"'); // vector-drawn boxes
+		expect(flattened).not.toContain('[ ]'); // no literal bracket boxes remain
+	});
 });
 
 describe('denizen builder — sanitizing person drafts', () => {

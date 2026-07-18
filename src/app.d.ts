@@ -1,7 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 import type { DefaultSession } from '@auth/core/types';
-import type { AppDb } from '$lib/server/db';
+import type { AppDb, AppDbContext } from '$lib/server/db';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -18,6 +18,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			db: AppDb;
+			dbContext: AppDbContext;
 		}
 		// interface PageData {}
 		// interface PageState {}

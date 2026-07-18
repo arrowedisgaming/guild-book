@@ -1,6 +1,6 @@
 import { json, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { getDb } from '$lib/server/db';
+import { getDb, getDbContext } from '$lib/server/db';
 import { handle as authHandle } from '$lib/server/auth';
 
 // Optional dev-only auto-login bypass. The implementation file is gitignored
@@ -28,6 +28,7 @@ const writeBuckets = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX_BUCKETS = 4096;
 
 const appHandle: Handle = async ({ event, resolve }) => {
+	event.locals.dbContext = await getDbContext(event);
 	event.locals.db = await getDb(event);
 
 	if (isUnsafeRequest(event.request) && !isSameOrigin(event.request)) {

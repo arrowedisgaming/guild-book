@@ -264,6 +264,40 @@
 		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
 	}
 
+	// --- saving (signed-in only; anonymous building and exports unchanged) ----
+
+	let saving = $state(false);
+	let savedAt = $state<number | null>(null);
+
+	async function saveDenizen() {
+		if (saving) return;
+		saving = true;
+		try {
+			const editingId = $denizenBuilder.editingId;
+			const res = await fetch(editingId ? `/api/denizens/${editingId}` : '/api/denizens', {
+				method: editingId ? 'PUT' : 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ draft })
+			});
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { message?: string } | null;
+				announce(body?.message ?? 'Could not save — check the warnings above and try again.');
+				return;
+			}
+			if (!editingId) {
+				const { id } = (await res.json()) as { id: string };
+				denizenBuilder.setEditingId(id);
+			}
+			savedAt = Date.now();
+			announce('Denizen saved.');
+			setTimeout(() => (savedAt = null), 2000);
+		} catch {
+			announce('Could not save — check your connection and try again.');
+		} finally {
+			saving = false;
+		}
+	}
+
 	// --- person (adversary) editing -------------------------------------------
 
 	function chooseKith(kithId: string | null) {
@@ -888,6 +922,27 @@
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
+		{#if data.user}
+			<div class="save-row">
+				<button type="button" class="save" disabled={saving} onclick={saveDenizen}>
+					{saving
+						? 'Saving…'
+						: $denizenBuilder.editingId
+							? savedAt
+								? 'Saved!'
+								: 'Save changes'
+							: 'Save denizen'}
+				</button>
+				{#if $denizenBuilder.editingId}
+					<a href="/denizens/mine">My denizens →</a>
+				{/if}
+			</div>
+		{:else}
+			<p class="save-nudge">
+				<a href="/login?callbackUrl=/denizens/build">Sign in</a> to save this denizen to your
+				bestiary — exports above work without an account.
+			</p>
+		{/if}
 		<div class="preview">
 			<DenizenStatBlock denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		</div>
@@ -1252,6 +1307,31 @@
 		padding: 1rem 1.25rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
 		border-radius: 6px;
+	}
+	.save-row {
+		display: flex;
+		gap: 1rem;
+		align-items: baseline;
+		margin: 0.75rem 0 1rem;
+	}
+	.save {
+		font: inherit;
+		font-family: var(--font-subhead);
+		padding: 0.5rem 1.1rem;
+		border: 1px solid var(--accent);
+		border-radius: 4px;
+		background: var(--accent);
+		color: var(--parchment);
+		cursor: pointer;
+	}
+	.save:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.save-nudge {
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+		margin: 0.75rem 0 1rem;
 	}
 	.nav-buttons {
 		display: flex;

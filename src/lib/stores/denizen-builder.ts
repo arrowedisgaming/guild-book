@@ -79,6 +79,8 @@ export interface DenizenBuilderState {
 	 * newly chosen pair instead of reseeding it away.
 	 */
 	pairStash: Record<string, DenizenDraft>;
+	/** The saved denizen this draft edits, if any — saves become updates. */
+	editingId: string | null;
 }
 
 /** Belt-and-braces bound — there are only ~20 usable template pairs. */
@@ -90,7 +92,8 @@ function createInitialState(): DenizenBuilderState {
 		currentStepId: 'concept',
 		draft: createBlankDraft(),
 		modeStash: { creature: null, person: null },
-		pairStash: {}
+		pairStash: {},
+		editingId: null
 	};
 }
 
@@ -133,7 +136,8 @@ function loadFromStorage(): DenizenBuilderState {
 				creature: stash.creature ? sanitizeDraft(stash.creature) : null,
 				person: stash.person ? sanitizeDraft(stash.person) : null
 			},
-			pairStash
+			pairStash,
+			editingId: typeof state.editingId === 'string' ? state.editingId : null
 		};
 	} catch {
 		return createInitialState();
@@ -199,6 +203,26 @@ function createBuilderStore() {
 					modeStash: { ...s.modeStash, [from]: s.draft, [target]: null }
 				};
 			});
+		},
+
+		/**
+		 * Load a stored draft for editing (sanitized — server rows are data).
+		 * Clears the mode stash: the loaded row is a fresh editing context.
+		 */
+		loadForEditing(rawDraft: unknown, editingId: string) {
+			update((s) => ({
+				...s,
+				draft: sanitizeDraft(rawDraft),
+				editingId,
+				modeStash: { creature: null, person: null },
+				pairStash: {},
+				currentStepId: 'review'
+			}));
+		},
+
+		/** Record that the current draft now corresponds to a saved row. */
+		setEditingId(editingId: string | null) {
+			update((s) => ({ ...s, editingId }));
 		},
 
 		reset() {

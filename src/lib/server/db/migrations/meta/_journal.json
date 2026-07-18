@@ -57,6 +57,13 @@
       "when": 1784736059799,
       "tag": "0007_purge_pinned_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1784580145058,
+      "tag": "0008_saved_denizens",
+      "breakpoints": true
     }
   ]
 }

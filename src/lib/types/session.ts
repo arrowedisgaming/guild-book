@@ -13,6 +13,11 @@
  */
 
 import type { SuitId, RankId } from '$lib/types/common';
+import type {
+	SessionModifierDefinition,
+	TarotConfig,
+	TarotProcedureDefinition
+} from '$lib/types/content-pack';
 
 export type CardId = string;
 export type UserId = string;
@@ -84,12 +89,24 @@ export type SessionActor = { kind: 'gm'; userId: UserId } | { kind: 'player'; us
 
 /**
  * Lookup of every configured tarot card. The invariant checker consumes this
- * to verify deck ownership and set completeness. Task 4 builds the full
- * runtime catalog entry type (art, labels, etc.); this stays minimal.
+ * to verify deck ownership and set completeness; it only ever reads `id` and
+ * `deck`, so those two fields remain the minimum any catalog entry must
+ * carry (see `tests/fixtures/session.ts`'s `{id, deck}`-only fixture). The
+ * remaining fields are what Task 4's compiler (`compileSessionRuntimeContent`
+ * in `$lib/server/content/session-runtime.ts`) additionally hydrates from the
+ * content pack's tarot config so projections can show real labels/art/suit/
+ * rank/major metadata instead of falling back to the card id — see
+ * `src/lib/engine/session/projection.ts`'s `hydrateVisible`.
  */
 export interface TarotCardCatalogEntry {
 	id: CardId;
 	deck: 'major' | 'player';
+	label?: string;
+	imageKey?: string;
+	value?: number;
+	suit?: SuitId;
+	rank?: RankId;
+	major?: { number: number; name: string; doomTier?: DoomTier; valueParity: ValueParity };
 }
 export type TarotCardCatalog = Record<CardId, TarotCardCatalogEntry>;
 
@@ -362,4 +379,33 @@ export interface SessionGmProjection {
 	gmHand: CardSlot[];
 	gmPrivateProcedure?: unknown;
 	legalCommands: SessionCommandType[];
+}
+
+// ---------------------------------------------------------------------------
+// Session runtime content (Task 4). A single immutable, digest-stamped
+// snapshot of every game rule a live session needs — tarot config, the
+// in-session procedure catalog, the full card catalog, and their modifiers —
+// compiled from the content pack and pinned to `sessionRuntimeContents` at
+// session start (see `src/lib/server/db/schema.ts`). A mid-campaign
+// content-pack update must never change a live session's rules, so the
+// command service (Task 5) always loads this pinned document rather than the
+// live bundle. Compiled by `compileSessionRuntimeContent` in
+// `$lib/server/content/session-runtime.ts`; validated against
+// `sessionRuntimeContentV1Schema` (`$lib/schemas/session-runtime.schema.ts`)
+// both before insert and after every read. Deliberately excludes
+// `TarotProceduresFile`'s `lookupTables`/`formulas` collections — those are
+// rule reference data, not state a live command needs to resolve; only what
+// procedures/modifiers/cards actually carry belongs here (no speculative or
+// unrelated rule prose).
+export interface SessionRuntimeContentV1 {
+	schemaVersion: 1;
+	contentPackId: string;
+	contentPackVersion: string;
+	/** SHA-256 (hex) over every other field via the stable-key canonical
+	 * serializer in `$lib/server/content/canonical-json.ts`. */
+	contentDigest: string;
+	tarot: TarotConfig;
+	procedures: TarotProcedureDefinition[];
+	cards: TarotCardCatalogEntry[];
+	modifiers: SessionModifierDefinition[];
 }

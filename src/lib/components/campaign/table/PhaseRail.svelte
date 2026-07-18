@@ -1,0 +1,124 @@
+<script lang="ts">
+	/**
+	 * Deck/phase status and the GM's structural table controls. Generic
+	 * actions are gated by `canDeal`/`canEndRound` — both computed by the
+	 * caller from the projection's own `legalCommands`, never guessed here.
+	 */
+	import { renderableCard } from '$lib/stores/campaign-session.svelte';
+	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
+	import type { SessionPublicProjection } from '$lib/types/session';
+
+	let {
+		publicProjection,
+		role,
+		canDeal,
+		canEndRound,
+		onDeal,
+		onEndRound
+	}: {
+		publicProjection: SessionPublicProjection;
+		role: 'gm' | 'player';
+		canDeal: boolean;
+		canEndRound: boolean;
+		onDeal: () => void | Promise<void>;
+		onEndRound: () => void | Promise<void>;
+	} = $props();
+
+	const majorDiscard = $derived(renderableCard(publicProjection.majorDiscardTop));
+	const playerDiscard = $derived(renderableCard(publicProjection.playerDiscardTop));
+</script>
+
+<aside class="phase-rail" data-testid="phase-rail" aria-label="Phase and deck status">
+	<p class="phase" data-testid="session-phase">Phase: {publicProjection.phase}</p>
+	{#if publicProjection.procedure}
+		<p class="procedure">
+			Procedure: {publicProjection.procedure.procedureId} (step {publicProjection.procedure.stepIndex + 1})
+		</p>
+	{/if}
+
+	<section aria-label="Major deck">
+		<h3>Major deck</h3>
+		<p>{publicProjection.majorDrawCount} remaining</p>
+		<div class="discard-top">
+			<TarotCard card={majorDiscard.card} faceDown={majorDiscard.faceDown} size="sm" />
+		</div>
+	</section>
+
+	<section aria-label="Player deck">
+		<h3>Player deck</h3>
+		<p>{publicProjection.playerDrawCount} remaining</p>
+		<div class="discard-top">
+			<TarotCard card={playerDiscard.card} faceDown={playerDiscard.faceDown} size="sm" />
+		</div>
+	</section>
+
+	{#if publicProjection.pendingZoneCounts.length > 0}
+		<section aria-label="Pending selections">
+			<h3>Pending</h3>
+			<ul>
+				{#each publicProjection.pendingZoneCounts as zone (zone.id)}
+					<li>{zone.id}: {zone.count} card{zone.count === 1 ? '' : 's'}</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
+	{#if role === 'gm' && (canDeal || canEndRound)}
+		<section aria-label="Table controls">
+			<h3>Controls</h3>
+			{#if canDeal}
+				<button type="button" onclick={onDeal}>Deal a card to each hand</button>
+			{/if}
+			{#if canEndRound}
+				<button type="button" onclick={onEndRound}>End round</button>
+			{/if}
+		</section>
+	{/if}
+</aside>
+
+<style>
+	.phase-rail {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+	}
+	.phase {
+		margin: 0;
+		font-family: var(--font-subhead);
+		text-transform: capitalize;
+	}
+	.procedure {
+		margin: 0;
+		color: var(--ink-soft);
+		font-size: 0.85rem;
+	}
+	h3 {
+		margin: 0 0 0.35rem;
+		font-size: 0.9rem;
+	}
+	section p {
+		margin: 0 0 0.5rem;
+		color: var(--ink-soft);
+		font-size: 0.85rem;
+	}
+	ul {
+		margin: 0;
+		padding-left: 1.1rem;
+		font-size: 0.85rem;
+		color: var(--ink-soft);
+	}
+	section[aria-label='Table controls'] {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	button {
+		border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
+		background: none;
+		padding: 0.45rem 0.75rem;
+		font-family: var(--font-subhead);
+		cursor: pointer;
+	}
+</style>

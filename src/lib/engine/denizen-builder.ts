@@ -199,10 +199,27 @@ export function needsReseed(draft: DenizenDraft): boolean {
 /** The adventurer attribute spread people are built on. */
 export const PERSON_SPREAD = [4, 3, 2, 1];
 
-/** The seeded statNote for people; HD is the GM's call, never materialized blank. */
-export const PERSON_STAT_NOTE = 'Person — built as a character.';
+/**
+ * The seeded statNote for people. The book tracks people as characters (they
+ * take Wounds, not Health loss), so the pre-filled HD is a simplification the
+ * GM is invited to change or clear.
+ */
+export const PERSON_STAT_NOTE =
+	'Person — built as a character. HD is pre-filled for simplicity; people usually take ' +
+	'Wounds rather than losing Health, so change or clear these freely.';
+
+/** The simple-HD defaults people seed with (a sturdy commoner). */
+export const PERSON_DEFAULT_HEALTH = '5';
+export const PERSON_DEFAULT_DEFENSE = '1';
 
 const KITH_NOTE_PREFIX = 'Kith: ';
+
+/** The optional "track Wounds like an adventurer" note, toggled on Customize. */
+export const WOUNDS_NOTE_NAME = 'Wounds';
+const WOUNDS_NOTE_TEXT =
+	'Takes Wounds like an adventurer instead of losing Health. Each Wound: notch a piece of ' +
+	'armor, Wound a talent (two max), mark Staggered, mark Injured, or mark Death’s Door. ' +
+	'Once Injured, the next Wound must mark Death’s Door; Wounds never mark Stressed.';
 
 /**
  * Seed a person draft from a theme with builderMode 'person'. People follow
@@ -219,8 +236,8 @@ export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefi
 		threatId: null,
 		seededFrom: { themeId: theme.id, threatId: '' },
 		attributes: { swords: '4', pentacles: '3', cups: '2', wands: '1' },
-		health: '',
-		defense: '',
+		health: PERSON_DEFAULT_HEALTH,
+		defense: PERSON_DEFAULT_DEFENSE,
 		statNote: PERSON_STAT_NOTE,
 		likes: (theme.likes ?? []).join(', '),
 		hates: (theme.hates ?? []).join(', '),
@@ -265,6 +282,32 @@ export function setPersonKith(draft: DenizenDraft, kith: KithDefinition | null):
 		});
 	}
 	return { ...draft, kithId: kith?.id ?? null, notes };
+}
+
+/** True when the draft carries the optional Wounds-tracking note. */
+export function personTracksWounds(draft: DenizenDraft): boolean {
+	return draft.notes.some((n) => n.name === WOUNDS_NOTE_NAME);
+}
+
+/**
+ * Toggle wound tracking for a person: on, Health becomes '*' and the Wounds
+ * note (the book's wound options) is added; off, the note is removed and a
+ * '*' Health returns to the simple default.
+ */
+export function setPersonWoundTracking(draft: DenizenDraft, enabled: boolean): DenizenDraft {
+	const notes = draft.notes.filter((n) => n.name !== WOUNDS_NOTE_NAME);
+	if (enabled) {
+		return {
+			...draft,
+			health: '*',
+			notes: [...notes, { name: WOUNDS_NOTE_NAME, text: WOUNDS_NOTE_TEXT }]
+		};
+	}
+	return {
+		...draft,
+		health: draft.health === '*' ? PERSON_DEFAULT_HEALTH : draft.health,
+		notes
+	};
 }
 
 /** Assign one spread value to a suit (swapping with whichever suit held it). */

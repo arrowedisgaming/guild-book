@@ -208,9 +208,21 @@ test.describe('denizen builder', () => {
 		await page.getByRole('radio', { name: 'Orcs' }).check();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
-		// Customize: person wording, HD left to the GM (pair rule still applies).
+		// Customize: person wording, HD pre-filled for simplicity (5/1), and the
+		// wound-tracking option toggles a * Health with the Wounds note.
 		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
-		await expect(page.getByText("Health and Defense are the GM's call")).toBeVisible();
+		await expect(page.getByText('pre-filled for simplicity')).toBeVisible();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('5');
+		await expect(page.getByLabel('Defense', { exact: true })).toHaveValue('1');
+
+		const woundsToggle = page.getByRole('checkbox', { name: /Track Wounds/ });
+		await woundsToggle.check();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('*');
+		await expect(page.locator('ul.current li', { hasText: 'Wounds.' })).toBeVisible();
+		await woundsToggle.uncheck();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('5');
+		await expect(page.locator('ul.current li', { hasText: 'Wounds.' })).toHaveCount(0);
+
 		await page.getByLabel('Health', { exact: true }).fill('6');
 		await page.getByLabel('Defense', { exact: true }).fill('2');
 		await expect(page.locator('ul.current li', { hasText: 'Kith: Orcs' })).toBeVisible();
@@ -241,6 +253,39 @@ test.describe('denizen builder', () => {
 		expect(clipboard).not.toContain('threat:');
 		expect(clipboard).toContain('- **Kith: Orcs.**');
 		expect(clipboard).toContain('- **Hunger Beyond Reason.**');
+	});
+
+	test('switching modes stashes and restores work on both sides', async ({ page }) => {
+		await page.goto('/denizens/build');
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Person side: pick Man and a kith.
+		await page.getByRole('radio', { name: /Man/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Person', level: 2 })).toBeVisible();
+		await page.getByRole('radio', { name: 'Orcs' }).check();
+
+		// Creature side: switch to Undead Brute and customize Health.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Threat', level: 2 })).toBeVisible();
+		await page.getByRole('radio', { name: 'Brute' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByLabel('Health', { exact: true }).fill('4');
+
+		// Back to Man: the kith choice survived the round trip.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: /Man/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Person', level: 2 })).toBeVisible();
+		await expect(page.getByRole('radio', { name: 'Orcs' })).toBeChecked();
+
+		// And back to Undead: the customized Health survived too.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('4');
 	});
 
 	test('stat inputs warn on a starting Health of 0', async ({ page }) => {

@@ -137,7 +137,22 @@ export function createCampaignSessionStore(
 		if (!response.ok) throw new Error(SYNC_ERROR_MESSAGE);
 
 		const body = (await response.json()) as SyncResponseBody;
-		snapshot = { cursor: body.cursor, events: body.events, session: body.session };
+		// Review round 2 fix: a poll started before a command's POST can
+		// resolve *after* that command's response already replaced `session`
+		// with a newer projection (sendCommand's optimistic update) — the
+		// slower GET reflects state read before the write landed. Applying it
+		// unconditionally would silently regress the visible session back to
+		// stale data. Only the `session` field needs this guard: `cursor`/
+		// `events` are always poll-owned (a command intentionally never
+		// advances them — see `performSend`), so they always take the poll's
+		// value.
+		snapshot = {
+			cursor: body.cursor,
+			events: body.events,
+			session: isOlderSessionVersion(snapshot.session?.sessionVersion, body.session?.sessionVersion)
+				? snapshot.session
+				: body.session
+		};
 		error = null;
 	}
 
@@ -261,7 +276,16 @@ export function createCampaignSessionStore(
 			});
 			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
 
-			if (body?.projection && snapshot.session && snapshot.session.sessionId === sessionId) {
+			// Same-class race as `poll()` above, mirrored: a slow command
+			// response can resolve after a poll (or another command) already
+			// moved `session` forward, in which case this response reflects
+			// state from before that later write — never regress past it.
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
 				snapshot = {
 					...snapshot,
 					session: {
@@ -309,6 +333,19 @@ export function createCampaignSessionStore(
 
 function isAbortError(cause: unknown): boolean {
 	return cause instanceof DOMException && cause.name === 'AbortError';
+}
+
+/**
+ * True only when both a current and an incoming session version are known
+ * and the incoming one is strictly behind — the one case an out-of-order
+ * poll/command response must never be allowed to apply (review round 2).
+ * An `undefined` version — no session known yet locally, or the incoming
+ * response has none (the session ended, which is a one-way transition and
+ * therefore never "stale" relative to any earlier live version) — always
+ * lets the incoming value through.
+ */
+function isOlderSessionVersion(currentVersion: number | undefined, incomingVersion: number | undefined): boolean {
+	return currentVersion !== undefined && incomingVersion !== undefined && incomingVersion < currentVersion;
 }
 
 function canonicalCommandKey(command: SessionCommand, expectedStructuralVersion?: number): string {

@@ -6,18 +6,24 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Reactive on `data.campaignId`/`data.initial`, not just captured once:
-	// SvelteKit can reuse this same +page.svelte instance across a
-	// client-side navigation between two different campaigns' table routes,
-	// so the store must be torn down and rebuilt for the new campaign rather
-	// than silently continuing to poll the old one.
+	// Constructed exactly once (review round 2: no throwaway store built
+	// before the mount effect swaps in a second one). Reactive on
+	// `data.campaignId`, not just captured once: SvelteKit can reuse this
+	// same +page.svelte instance across a client-side navigation between two
+	// different campaigns' table routes, so the store is torn down and
+	// rebuilt for the new campaign rather than silently continuing to poll
+	// the old one — but only then, not on every unrelated `data` refresh.
 	let store = $state.raw(untrack(() => createStoreFor(data)));
+	let storeCampaignId = untrack(() => data.campaignId);
 
 	$effect(() => {
-		const next = createStoreFor(data);
-		store = next;
-		next.start();
-		return () => next.stop();
+		if (data.campaignId !== storeCampaignId) {
+			store.stop();
+			store = createStoreFor(data);
+			storeCampaignId = data.campaignId;
+		}
+		store.start();
+		return () => store.stop();
 	});
 
 	function createStoreFor(pageData: PageData) {

@@ -150,4 +150,42 @@ test.describe('shared table sync', () => {
 		await playerA.close();
 		await playerB.close();
 	});
+
+	test('a mobile viewport renders the public table before the phase/log drawers, in real DOM order', async ({
+		browser
+	}) => {
+		// Review round 2: the plan/brief mandate "table first" on mobile, but
+		// nothing exercised a mobile viewport before this — the drawers were
+		// shipped rendering ahead of the table in actual DOM order (visually
+		// hidden by CSS on desktop, but wrong on mobile, where the whole point
+		// is that the table leads). Checking document order (not just visual
+		// position) so a future CSS-`order`-only "fix" can't silently
+		// re-introduce the same bug.
+		const gm = await browser.newContext({ viewport: { width: 390, height: 844 } });
+		const gmPage = await gm.newPage();
+		await signInAs(gmPage, 'Mobile Order GM');
+
+		const invite = await createCampaignAndReadInvite(gmPage, 'Mobile Order Table');
+		const campaignId = campaignIdFromUrl(gmPage.url());
+		void invite; // only the GM is needed for this check; no player join required.
+
+		await gmPage.goto(`/campaigns/${campaignId}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+		// Confirms the mobile branch (not the desktop grid) actually rendered —
+		// the drawers component only exists in the mobile layout.
+		await expect(gmPage.locator('[data-testid="mobile-drawers"]')).toBeVisible();
+
+		const order = await gmPage.evaluate(() => {
+			const shell = document.querySelector('[data-testid="table-shell"]');
+			if (!shell) return null;
+			const nodes = Array.from(
+				shell.querySelectorAll('[data-testid="public-table"], [data-testid="mobile-drawers"]')
+			);
+			return nodes.map((node) => node.getAttribute('data-testid'));
+		});
+		expect(order).toEqual(['public-table', 'mobile-drawers']);
+
+		await gm.close();
+	});
 });

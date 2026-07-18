@@ -17,15 +17,26 @@
 	// campaign-wide cursor shared with membership/tenure/character events
 	// (`db/schema.ts`), so a cursor bump just means "reload this page's data"
 	// (`invalidateAll`) — never a session projection to render.
+	//
+	// Constructed exactly once (review round 2: no throwaway store built
+	// before the mount effect swaps in a second one), and only rebuilt if
+	// `data.campaign.id` itself changes (SvelteKit reusing this instance
+	// across a client-side navigation between two different campaigns) —
+	// not on every `data` refresh, including the ones this page's own
+	// `invalidateAll()` below triggers.
 	let store = $state.raw(untrack(() => createDashboardStoreFor(data)));
+	let storeCampaignId = untrack(() => data.campaign.id);
 	let lastAppliedCursor = untrack(() => data.cursor);
 
 	$effect(() => {
-		const next = createDashboardStoreFor(data);
-		store = next;
-		lastAppliedCursor = data.cursor;
-		next.start();
-		return () => next.stop();
+		if (data.campaign.id !== storeCampaignId) {
+			store.stop();
+			store = createDashboardStoreFor(data);
+			storeCampaignId = data.campaign.id;
+			lastAppliedCursor = data.cursor;
+		}
+		store.start();
+		return () => store.stop();
 	});
 
 	$effect(() => {

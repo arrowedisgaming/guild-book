@@ -127,6 +127,10 @@
 		</div>
 	{:else}
 		<div class="mobile-layout">
+			<!-- Table-first (review round 2 fix): real DOM order, not CSS
+			     `order` — PublicTable must precede the drawers/hand so the table
+			     genuinely leads on mobile, not just visually. -->
+			<PublicTable publicProjection={session.projection.public} {otherHands} />
 			<MobileTableDrawers
 				publicProjection={session.projection.public}
 				{role}
@@ -136,7 +140,6 @@
 				onEndRound={endRound}
 				{events}
 			/>
-			<PublicTable publicProjection={session.projection.public} {otherHands} />
 			<PrivateHand
 				cards={ownCards}
 				heading={role === 'gm' ? "GM's hand" : 'Your hand'}

@@ -101,8 +101,22 @@ test.describe('shared table privacy', () => {
 			timeout: CROSS_CLIENT_BUDGET_MS
 		});
 
-		// The GM never renders a face for either player's hand.
-		await expect(gmPage.locator('[data-testid="hand-card"] .card:not(.back)')).toHaveCount(0);
+		// The GM draws too (review round 2: with an empty `gmHand`, the "GM
+		// never shows a face" check below was vacuously true either way —
+		// `hand-card .card:not(.back)` is 0 whether or not the rendering is
+		// actually correct. Drawing first gives the GM a real face of their
+		// own, so the follow-up count assertion can only pass if it is
+		// *exactly* their own card and nothing a player owns).
+		await gmPage.getByRole('button', { name: 'Draw a card' }).click();
+		const ownCardGm = gmPage.locator('[data-testid="hand-card"] .card').first();
+		await expect(ownCardGm).toBeVisible();
+		await expect(ownCardGm).not.toHaveClass(/back/);
+		const labelGm = await ownCardGm.getAttribute('aria-label');
+		expect(labelGm).toBeTruthy();
+		expect(labelGm).not.toBe('Face-down card');
+
+		// The GM's own hand shows exactly their own card — never a player's.
+		await expect(gmPage.locator('[data-testid="hand-card"] .card:not(.back)')).toHaveCount(1);
 		const gmBacks = gmPage.locator('[data-testid="other-hand-back"] .card');
 		for (const back of await gmBacks.all()) {
 			await expect(back).toHaveClass(/back/);
@@ -124,20 +138,26 @@ test.describe('shared table privacy', () => {
 		}
 
 		// Neither drawn card's identity string appears anywhere it should not:
-		// not on the GM's page, not on the other player's page.
+		// not on the GM's page, not on the other player's page, and the GM's
+		// own card never leaks to either player.
 		const gmContent = await gmPage.content();
 		expect(gmContent).not.toContain(labelA as string);
 		expect(gmContent).not.toContain(labelB as string);
 
 		const playerBContent = await playerBPage.content();
 		expect(playerBContent).not.toContain(labelA as string);
+		expect(playerBContent).not.toContain(labelGm as string);
 
 		const playerAContent = await playerAPage.content();
 		expect(playerAContent).not.toContain(labelB as string);
+		expect(playerAContent).not.toContain(labelGm as string);
 
 		// Never leaked to the console on any client either.
 		const leaked = consoleTexts.some(
-			(text) => text.includes(labelA as string) || text.includes(labelB as string)
+			(text) =>
+				text.includes(labelA as string) ||
+				text.includes(labelB as string) ||
+				text.includes(labelGm as string)
 		);
 		expect(leaked).toBe(false);
 

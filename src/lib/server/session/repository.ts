@@ -497,10 +497,27 @@ export async function campaignCursor(db: AppDb, campaignId: string): Promise<num
  * poll cycle. Calling this right after every accepted-commit path closes it
  * at the source — a stale-but-equal hint can no longer survive a local
  * write, regardless of `HINT_FRESH_MS`.
+ *
+ * Review round 2: never throws. This runs immediately after every
+ * accepted-commit path's `runAtomic` — outside that call's own try/catch at
+ * every one of the six call sites, deliberately, so a throw here can never
+ * turn an already-successful commit into a reported failure (a caller that
+ * saw a failure for a command that actually succeeded would mint a new
+ * `commandId` on retry, risking double application). The hint is advisory by
+ * this whole module's contract ("never authority... a burst of identical
+ * no-change polls" is all it optimizes) — a lost update here just means the
+ * next `/sync` poll falls back to the real D1 read it would have done
+ * anyway, not a correctness gap. Failures are swallowed with a debug-level
+ * note at most, never rethrown or escalated.
  */
 export async function recordFreshCursorHintAfterCommit(db: AppDb, campaignId: string): Promise<void> {
-	const cursor = await campaignCursor(db, campaignId);
-	recordCursorHint(campaignId, cursor);
+	try {
+		const cursor = await campaignCursor(db, campaignId);
+		recordCursorHint(campaignId, cursor);
+	} catch (cause) {
+		// eslint-disable-next-line no-console -- advisory-only; see doc comment.
+		console.debug('[session] cursor-hint refresh after commit failed (advisory, non-fatal)', cause);
+	}
 }
 
 // ---------------------------------------------------------------------------

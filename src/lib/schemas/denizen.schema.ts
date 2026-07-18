@@ -40,6 +40,7 @@ export const denizenDraftSchema = z.object({
 	themeId: z.string().max(100).nullable(),
 	threatId: z.string().max(100).nullable(),
 	kithId: z.string().max(100).nullable(),
+	kinId: z.string().max(100).nullable(),
 	seededFrom: z
 		.object({ themeId: z.string().max(100), threatId: z.string().max(100) })
 		.nullable(),
@@ -51,6 +52,7 @@ export const denizenDraftSchema = z.object({
 	}),
 	health: statString,
 	defense: statString,
+	healthBeforeWounds: statString,
 	statNote: z.string().max(1000),
 	likes: z.string().max(2000),
 	hates: z.string().max(2000),

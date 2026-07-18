@@ -642,8 +642,10 @@ export function draftStatReminders(draft: DenizenDraft): string[] {
 /**
  * Turn a bestiary entry into an editable draft — "save as custom, pre-filled".
  * The inverse of `toDenizenDefinition`: stats back to strings, pools to pool
- * drafts, abilities copied. `seededFrom` matches the entry's templates so
- * loading it never triggers a reseed.
+ * drafts, abilities copied, and sidebars folded into notes (drafts have no
+ * sidebar field — dropping them would silently lose book content like the
+ * vampire's "Killing the Vampire"). `seededFrom` matches the entry's
+ * templates so loading it never triggers a reseed.
  */
 export function draftFromDefinition(denizen: DenizenDefinition): DenizenDraft {
 	const toDraftStat = (value: DenizenStatValue | undefined): string =>
@@ -667,7 +669,10 @@ export function draftFromDefinition(denizen: DenizenDefinition): DenizenDraft {
 		statNote: denizen.statNote ?? '',
 		likes: (denizen.likes ?? []).join(', '),
 		hates: (denizen.hates ?? []).join(', '),
-		notes: [...(denizen.notes ?? [])],
+		notes: [
+			...(denizen.notes ?? []),
+			...(denizen.sidebars ?? []).map((s) => ({ name: s.title, text: s.body }))
+		],
 		lesserDooms: [...(denizen.lesserDooms ?? [])],
 		greaterDooms: [...(denizen.greaterDooms ?? [])],
 		pools: (denizen.pools ?? []).map((pool) => ({

@@ -56,7 +56,9 @@ export const denizenDraftSchema = z.object({
 	statNote: z.string().max(1000),
 	likes: z.string().max(2000),
 	hates: z.string().max(2000),
-	notes: z.array(abilitySchema).max(50),
+	// Room for a maxed-out person: all 49 talents + kith, arete, and Wounds
+	// notes, plus custom notes — 50 would reject a legal draft.
+	notes: z.array(abilitySchema).max(80),
 	lesserDooms: z.array(abilitySchema).max(50),
 	greaterDooms: z.array(abilitySchema).max(50),
 	pools: z.array(poolDraftSchema).max(20),

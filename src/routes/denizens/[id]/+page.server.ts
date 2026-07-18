@@ -12,7 +12,13 @@ export const load: PageServerLoad = async (event) => {
 	// entries always have one, but resolve to '' so the props stay strings.
 	const threatName = threat?.name ?? denizen.threat ?? '';
 	// "Customize in the builder" only offers templates the builder supports.
+	// A person-mode theme paired with a threat is a contradiction the builder
+	// can't represent (people have no threat template) — no such entry exists
+	// today, but content is data and may change under us.
 	const usable = (mode?: string) => (mode ?? 'standard') !== 'unsupported';
-	const builderReady = usable(theme?.builderMode) && usable(threat?.builderMode);
+	const builderReady =
+		usable(theme?.builderMode) &&
+		usable(threat?.builderMode) &&
+		!(theme?.builderMode === 'person' && denizen.threat);
 	return { denizen, themeName, threatName, builderReady };
 };

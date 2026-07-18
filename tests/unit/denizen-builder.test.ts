@@ -777,4 +777,13 @@ describe('denizen builder — drafts from bestiary entries', () => {
 		const draft = draftFromDefinition(byId['titan-sporehulk']);
 		expect(sanitizeDraft(JSON.parse(JSON.stringify(draft)))).toEqual(draft);
 	});
+
+	it('folds sidebars into notes so no book content is silently lost', () => {
+		const draft = draftFromDefinition(byId['vampire']);
+		const sidebarNote = draft.notes.find((n) => n.name === 'Killing the Vampire');
+		expect(sidebarNote).toBeDefined();
+		// And it reaches the materialized block like any other note.
+		const back = toDenizenDefinition(draft);
+		expect(back.notes?.some((n) => n.name === 'Killing the Vampire')).toBe(true);
+	});
 });

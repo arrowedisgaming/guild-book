@@ -11,7 +11,8 @@ import {
 import {
 	getDenizenPersonRules,
 	getDenizenThemes,
-	getDenizenThreats
+	getDenizenThreats,
+	getTalents
 } from '$lib/server/content/loader';
 
 const theme = (id: string) => getDenizenThemes().find((t) => t.id === id)!;
@@ -64,6 +65,21 @@ describe('saveDenizenSchema', () => {
 		if (!result.success) {
 			expect(result.error.issues.some((i) => i.message === 'Denizen is too large to save')).toBe(true);
 		}
+	});
+});
+
+describe('saveDenizenSchema — capacity', () => {
+	it('accepts a maxed-out person (49 talents + kith, arete, wounds notes)', () => {
+		const talents = getTalents();
+		const notes = [
+			{ name: 'Kith: Orcs', text: 'kith' },
+			{ name: 'Arete talent: Jarl', text: 'arete' },
+			{ name: 'Wounds', text: 'wounds' },
+			...talents.map((t) => ({ name: `Talent: ${t.name}`, text: t.description }))
+		];
+		const draft = { ...personDraft(), notes };
+		expect(notes.length).toBeGreaterThan(50); // the old cap would reject this
+		expect(saveDenizenSchema.safeParse({ draft }).success).toBe(true);
 	});
 });
 

@@ -132,6 +132,11 @@ test.describe('denizen builder', () => {
 		await expect(preview.getByText('Fear.')).toBeVisible();
 		await expect(preview.getByText('Locust Cloud.')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
+
+		// Anonymous users export freely; saving shows a quiet sign-in nudge.
+		await expect(page.getByRole('button', { name: /Save denizen/ })).toHaveCount(0);
+		await expect(page.getByText('to save this denizen to your bestiary')).toBeVisible();
+		await expect(page.getByText('exports above work without an account')).toBeVisible();
 	});
 
 	test('elite notes are called out as optional and can be edited or removed', async ({ page }) => {

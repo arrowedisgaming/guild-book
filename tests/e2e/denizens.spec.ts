@@ -165,8 +165,11 @@ test.describe('denizen builder', () => {
 
 		// The Man theme is selectable and carries the book's guidance.
 		await expect(page.getByRole('heading', { name: 'Theme', level: 2 })).toBeVisible();
-		await expect(page.locator('.pick-card.unavailable', { hasText: 'Man' })).toHaveCount(0);
-		const manCard = page.locator('.pick-card', { hasText: 'Man' });
+		// Match the card by its exact name — hasText is a case-insensitive
+		// substring match, and other cards' prose contains "man".
+		const exactMan = page.locator('.pick-name', { hasText: /^Man$/ });
+		await expect(page.locator('.pick-card.unavailable', { has: exactMan })).toHaveCount(0);
+		const manCard = page.locator('.pick-card', { has: exactMan });
 		await expect(manCard.getByRole('radio')).toHaveCount(1);
 		await expect(manCard.getByText('making actual characters')).toBeVisible();
 

@@ -41,8 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sanitized draft as the single source of truth (definitions re-materialize on
   render), validates template ids and stat invariants server-side, and caps
   payload size. Anonymous building and exporting are untouched — saving is the
-  only signed-in feature. Deploy note: run `npm run db:migrate:d1:remote`
-  (additive `denizens` table, migration 0008) before merging.
+  only signed-in feature. Every bestiary entry with builder-supported templates
+  gains "Customize in the builder", loading a pre-filled copy as a new custom
+  denizen. Save failures show inline next to the button, and the header's Sign
+  in link returns you to the page you were on. Deploy note: run
+  `npm run db:migrate:d1:remote` (additive `denizens` table, migration 0008)
+  before merging.
 - **People in the denizen builder**: the Man theme now follows the book's
   "make actual characters" advice as an adversary path. Choosing it swaps the
   wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread

@@ -1,19 +1,42 @@
 import { describe, it, expect } from 'vitest';
 import { exportDenizenToMarkdown } from '$lib/export/denizen-markdown-export';
 import { buildDenizenDocDefinition } from '$lib/export/denizen-pdf-export';
-import { createBlankDraft, seedFromTemplates, toDenizenDefinition } from '$lib/engine/denizen-builder';
+import {
+	createBlankDraft,
+	createBlankPoolDraft,
+	seedFromTemplates,
+	toDenizenDefinition
+} from '$lib/engine/denizen-builder';
 import { getBestiary, getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
 
 const byId = Object.fromEntries(getBestiary().map((d) => [d.id, d]));
 
-/** A built dungeon lord, the way the builder's review step materializes one. */
-const builtLord = toDenizenDefinition(
+const lordDraft = () =>
 	seedFromTemplates(
 		{ ...createBlankDraft(), name: 'Gilded Horror' },
 		getDenizenThemes().find((t) => t.id === 'sorcerous')!,
 		getDenizenThreats().find((t) => t.id === 'dungeon-lord')!
-	)
-);
+	);
+
+/** A built dungeon lord, the way the builder's review step materializes one. */
+const builtLord = toDenizenDefinition(lordDraft());
+
+/** A pooled lord mid-edit: one complete pool, one that only has a name so far. */
+const pooledLord = toDenizenDefinition({
+	...lordDraft(),
+	specialRules: 'The horror regrows a defeated pool at dawn.',
+	pools: [
+		{
+			...createBlankPoolDraft(),
+			name: 'The Crown',
+			health: '6',
+			defense: '3',
+			text: 'Shattering the crown breaks its dominion.',
+			lesserDooms: [{ name: 'Crownfall', text: 'The crown cracks.' }]
+		},
+		{ ...createBlankPoolDraft(), name: 'The Roots' }
+	]
+});
 
 describe('denizen markdown export', () => {
 	it('produces frontmatter, stat line, and doom sections for a simple creature', () => {
@@ -53,6 +76,19 @@ describe('denizen markdown export', () => {
 		expect(md).not.toContain('Health/Defense: /');
 		expect(md).not.toContain('hd: "/"');
 		expect(md).not.toContain('**Health/Defense:**');
+	});
+
+	it('renders builder-made pools and special rules, never a blank HD pair', () => {
+		const md = exportDenizenToMarkdown(pooledLord, 'Sorcerous', 'Dungeon Lord');
+		expect(md).toContain('### The Crown — Health/Defense: 6/3');
+		expect(md).toContain('Shattering the crown breaks its dominion.');
+		expect(md).toContain('- **Crownfall.** The crown cracks.');
+		expect(md).toContain('#### Special rules');
+		expect(md).toContain('The horror regrows a defeated pool at dawn.');
+		// The half-filled pool renders without an HD fragment, not as "/" or "6/".
+		expect(md).toContain('### The Roots\n');
+		expect(md).not.toContain('Health/Defense: /');
+		expect(md).not.toMatch(/Health\/Defense: \d+\/(?!\d)/);
 	});
 });
 
@@ -94,5 +130,16 @@ describe('denizen PDF export', () => {
 		const flattened = JSON.stringify(doc);
 		expect(flattened).toContain('Choose 1 attribute to increase to 6.');
 		expect(flattened).not.toContain('Health/Defense');
+	});
+
+	it('renders builder-made pools and special rules, never a blank HD pair', () => {
+		const doc = buildDenizenDocDefinition(pooledLord, 'Sorcerous', 'Dungeon Lord');
+		const flattened = JSON.stringify(doc);
+		expect(flattened).toContain('The Crown  Health/Defense: 6/3');
+		expect(flattened).toContain('The horror regrows a defeated pool at dawn.');
+		// The half-filled pool renders without an HD fragment, not as "/" or "6/".
+		expect(flattened).toContain('The Roots');
+		expect(flattened).not.toContain('The Roots  Health/Defense');
+		expect(flattened).not.toContain('Health/Defense: /');
 	});
 });

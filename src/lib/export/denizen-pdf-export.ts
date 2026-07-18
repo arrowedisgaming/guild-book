@@ -92,9 +92,13 @@ export function buildDenizenDocDefinition(
 	);
 
 	for (const pool of denizen.pools ?? []) {
-		// Plain-space separator: HamletOrNot has no em-dash glyph.
+		// Builder drafts can hold an incomplete pair — omit HD rather than render "3/" or "/".
+		const poolHd =
+			String(pool.health).trim() !== '' && String(pool.defense).trim() !== ''
+				? `  Health/Defense: ${pool.health}/${pool.defense}` // plain-space separator: HamletOrNot has no em-dash glyph
+				: '';
 		content.push({
-			text: `${pool.name}  Health/Defense: ${pool.health}/${pool.defense}`,
+			text: `${pool.name}${poolHd}`,
 			style: 'poolTitle'
 		});
 		if (pool.text) content.push({ text: plain(pool.text), style: 'body' });

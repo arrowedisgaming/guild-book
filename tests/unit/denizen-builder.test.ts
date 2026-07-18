@@ -1,11 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
 	createBlankDraft,
+	createBlankPoolDraft,
 	seedFromTemplates,
 	needsReseed,
 	toDenizenDefinition,
 	draftStatWarnings,
-	sanitizeDraft
+	sanitizeDraft,
+	addPool,
+	removePool,
+	movePool,
+	updatePool
 } from '$lib/engine/denizen-builder';
 import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
 
@@ -206,5 +211,192 @@ describe('denizen builder — stat warnings', () => {
 		expect(draftStatWarnings(withStats('4', ''))).toEqual([
 			'Health and Defense are a pair — fill in both or leave both blank.'
 		]);
+	});
+});
+
+// --- pools (dungeon lords) ---------------------------------------------------
+
+const seedLord = () => seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
+
+const filledPool = (overrides: Partial<ReturnType<typeof createBlankPoolDraft>> = {}) => ({
+	...createBlankPoolDraft(),
+	name: 'The Crown',
+	health: '6',
+	defense: '3',
+	...overrides
+});
+
+describe('denizen builder — pool seeding', () => {
+	it('seeds a pools-mode threat with blank top-level HD and one blank pool', () => {
+		const draft = seedLord();
+		expect(draft.health).toBe('');
+		expect(draft.defense).toBe('');
+		expect(draft.pools).toEqual([createBlankPoolDraft()]);
+	});
+
+	it('seeds standard threats with no pools', () => {
+		const draft = seedFromTemplates(createBlankDraft(), theme('undead'), threat('brute'));
+		expect(draft.pools).toEqual([]);
+	});
+
+	it('clears pools when reseeding from a pools threat to a standard one', () => {
+		const lord = updatePool(seedLord(), 0, () => filledPool());
+		const reseeded = seedFromTemplates(lord, theme('undead'), threat('brute'));
+		expect(reseeded.pools).toEqual([]);
+		expect(reseeded.health).toBe('2');
+	});
+});
+
+describe('denizen builder — pool editing helpers', () => {
+	it('adds, updates, and removes pools immutably', () => {
+		let draft = seedLord();
+		draft = addPool(draft);
+		expect(draft.pools).toHaveLength(2);
+
+		draft = updatePool(draft, 1, (p) => ({ ...p, name: 'The Roots' }));
+		expect(draft.pools[1].name).toBe('The Roots');
+		expect(draft.pools[0].name).toBe('');
+
+		draft = removePool(draft, 0);
+		expect(draft.pools).toHaveLength(1);
+		expect(draft.pools[0].name).toBe('The Roots');
+	});
+
+	it('reorders pools and ignores out-of-range moves', () => {
+		let draft = { ...seedLord(), pools: [filledPool({ name: 'A' }), filledPool({ name: 'B' })] };
+		draft = movePool(draft, 1, -1);
+		expect(draft.pools.map((p) => p.name)).toEqual(['B', 'A']);
+
+		expect(movePool(draft, 0, -1)).toBe(draft); // no-op at the top
+		expect(movePool(draft, 1, 1)).toBe(draft); // no-op at the bottom
+		expect(movePool(draft, 5, 1)).toBe(draft); // out of range
+	});
+});
+
+describe('denizen builder — pool stat warnings', () => {
+	const lordThreat = threat('dungeon-lord');
+
+	it('accepts a complete dungeon-lord draft', () => {
+		const draft = updatePool(seedLord(), 0, () => filledPool());
+		expect(draftStatWarnings(draft, lordThreat)).toEqual([]);
+	});
+
+	it('requires at least one pool in pools mode', () => {
+		const draft = { ...seedLord(), pools: [] };
+		expect(draftStatWarnings(draft, lordThreat)).toEqual([
+			'This threat is fought in pools — add at least one pool of Health and Defense.'
+		]);
+	});
+
+	it('requires both Health and Defense on every pool', () => {
+		const untouched = seedLord(); // one blank pool
+		expect(draftStatWarnings(untouched, lordThreat)).toEqual([
+			'Pool 1: every pool needs both Health and Defense.'
+		]);
+
+		const half = updatePool(seedLord(), 0, () => filledPool({ name: 'The Crown', defense: '' }));
+		expect(draftStatWarnings(half, lordThreat)).toEqual([
+			'The Crown: Health and Defense are a pair — fill in both or leave both blank.'
+		]);
+	});
+
+	it('applies the book stat rules per pool', () => {
+		const draft = updatePool(seedLord(), 0, () => filledPool({ health: '0', defense: '-1' }));
+		expect(draftStatWarnings(draft, lordThreat)).toEqual([
+			'The Crown: starting Health cannot be 0 — use at least 1, or ∞ for the unkillable.',
+			'The Crown: Defense cannot be negative (0 is fine).'
+		]);
+	});
+
+	it('accepts the book edge cases per pool (∞ Health, 0 Defense)', () => {
+		const draft = updatePool(seedLord(), 0, () => filledPool({ health: '∞', defense: '0' }));
+		expect(draftStatWarnings(draft, lordThreat)).toEqual([]);
+	});
+
+	it('flags top-level HD alongside pools as mutually exclusive', () => {
+		const draft = { ...updatePool(seedLord(), 0, () => filledPool()), health: '3', defense: '2' };
+		expect(draftStatWarnings(draft, lordThreat)).toEqual([
+			'Top-level Health/Defense and pools are mutually exclusive — clear the top-level pair.'
+		]);
+	});
+
+	it('keeps standard-mode behavior unchanged when no threat is passed', () => {
+		const draft = { ...createBlankDraft(), health: '4', defense: '' };
+		expect(draftStatWarnings(draft)).toEqual([
+			'Health and Defense are a pair — fill in both or leave both blank.'
+		]);
+	});
+});
+
+describe('denizen builder — materializing pools', () => {
+	it('emits pools with generated ids and omits blank fields', () => {
+		const draft = updatePool(seedLord(), 0, () =>
+			filledPool({ text: '', lesserDooms: [{ name: 'Crownfall', text: 'The crown shatters.' }] })
+		);
+		const denizen = toDenizenDefinition(draft);
+		expect(denizen.pools).toEqual([
+			{
+				id: 'custom-pool-1',
+				name: 'The Crown',
+				health: 6,
+				defense: 3,
+				lesserDooms: [{ name: 'Crownfall', text: 'The crown shatters.' }]
+			}
+		]);
+		expect('health' in denizen).toBe(false);
+	});
+
+	it('keeps special stat values verbatim in pools', () => {
+		const draft = updatePool(seedLord(), 0, () => filledPool({ health: '∞', defense: 'X' }));
+		expect(toDenizenDefinition(draft).pools?.[0]).toMatchObject({ health: '∞', defense: 'X' });
+	});
+
+	it('drops untouched blank pools and omits an empty pools array', () => {
+		const denizen = toDenizenDefinition(seedLord()); // one blank pool
+		expect('pools' in denizen).toBe(false);
+	});
+
+	it('falls back to a placeholder pool name', () => {
+		const draft = updatePool(seedLord(), 0, () => filledPool({ name: '' }));
+		expect(toDenizenDefinition(draft).pools?.[0].name).toBe('Pool 1');
+	});
+
+	it('emits trimmed special rules and omits them when blank', () => {
+		const draft = { ...seedLord(), specialRules: '  The lord regrows lost pools at dawn. ' };
+		expect(toDenizenDefinition(draft).specialRules).toBe('The lord regrows lost pools at dawn.');
+		expect('specialRules' in toDenizenDefinition(seedLord())).toBe(false);
+	});
+});
+
+describe('denizen builder — sanitizing pool drafts', () => {
+	it('repairs garbage pools field by field', () => {
+		const draft = sanitizeDraft({
+			pools: [
+				{ name: 'The Crown', health: 6, defense: '3', notes: 'nope' }, // health wrong type
+				'not a pool', // dropped
+				null, // dropped
+				{ lesserDooms: [{ name: 'Crownfall', text: 'Shatters.' }, { name: 'broken' }] }
+			],
+			specialRules: 42
+		});
+		expect(draft.pools).toEqual([
+			{ ...createBlankPoolDraft(), name: 'The Crown', defense: '3' },
+			{
+				...createBlankPoolDraft(),
+				lesserDooms: [{ name: 'Crownfall', text: 'Shatters.' }]
+			}
+		]);
+		expect(draft.specialRules).toBe('');
+	});
+
+	it('defaults missing pool fields on old drafts without a version bump', () => {
+		const draft = sanitizeDraft({ name: 'Old Draft', health: '2', defense: '6' });
+		expect(draft.pools).toEqual([]);
+		expect(draft.specialRules).toBe('');
+	});
+
+	it('round-trips a pooled draft unchanged', () => {
+		const seeded = updatePool(seedLord(), 0, () => filledPool());
+		expect(sanitizeDraft(JSON.parse(JSON.stringify(seeded)))).toEqual(seeded);
 	});
 });

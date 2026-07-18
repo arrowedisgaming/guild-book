@@ -24,6 +24,8 @@ declare global {
 		interface Platform {
 			env: {
 				DB?: D1Database;
+				CAMPAIGNS_ENABLED?: string;
+				CAMPAIGNS_PILOT_USER_IDS?: string;
 			};
 		}
 	}

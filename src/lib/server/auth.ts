@@ -14,7 +14,8 @@ type EnvPlatform = {
 
 export const DEV_AUTH_SECRET = 'guild-book-local-development-secret';
 
-function getEnv(event: RequestEvent, key: string): string | undefined {
+/** Read a server-only setting from Cloudflare bindings or the Node environment. */
+export function getEnv(event: RequestEvent, key: string): string | undefined {
 	const platform = event.platform as EnvPlatform | undefined;
 	const platformValue = platform?.env?.[key];
 	if (typeof platformValue === 'string' && platformValue.length > 0) return platformValue;

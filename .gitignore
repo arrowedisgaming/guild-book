@@ -62,3 +62,4 @@ Adherent of the Worm Template/
 
 # Locally-supplied credentials — never commit
 secrets.*
+.superpowers/

@@ -208,7 +208,13 @@ test.describe('denizen builder', () => {
 		// previewed right below the pick so the GM can judge it.
 		await page.getByRole('radio', { name: 'Orcs' }).check();
 		await page.getByLabel('Kin', { exact: true }).selectOption({ index: 1 });
+		// Both kin talents preview with checkboxes: arete on by default,
+		// the mastered talent opt-in.
 		await expect(page.locator('.arete-preview')).toBeVisible();
+		await expect(page.locator('.kin-talent', { hasText: 'Arete:' }).getByRole('checkbox')).toBeChecked();
+		const masteredBox = page.locator('.kin-talent', { hasText: 'Mastered:' }).getByRole('checkbox');
+		await expect(masteredBox).not.toBeChecked();
+		await masteredBox.check();
 
 		// Talents: the highest attribute's path (Cups) is open; pick the first.
 		await expect(page.getByRole('heading', { name: /their path/ })).toBeVisible();

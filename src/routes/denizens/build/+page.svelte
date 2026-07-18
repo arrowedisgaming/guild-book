@@ -17,7 +17,9 @@
 		setPersonKith,
 		setPersonKin,
 		personHasTalent,
+		personHasAreteTalent,
 		togglePersonTalent,
+		togglePersonAreteTalent,
 		setPersonWoundTracking,
 		personTracksWounds,
 		assignPersonSpreadValue,
@@ -268,6 +270,9 @@
 		chosenKin?.areteTalentId
 			? (data.talents.find((t) => t.id === chosenKin.areteTalentId) ?? null)
 			: null
+	);
+	let chosenKinMastered = $derived(
+		chosenKin ? (data.talents.find((t) => t.id === chosenKin.masteredTalentId) ?? null) : null
 	);
 
 	function chooseKin(kinId: string) {
@@ -584,12 +589,43 @@
 					{/each}
 				</select>
 			</label>
-			{#if chosenKinArete}
-				<!-- Shown right below the pick so the GM can judge the talent. -->
+			{#if chosenKin}
+				<!-- Both kin talents previewed right below the pick, each opt-in,
+				     so the GM can judge them before they join the stat block. -->
 				<div class="arete-preview">
-					<strong>{abilityLabel(chosenKinArete.name)}</strong>
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
-					<span class="inline-md">{@html renderMarkdown(chosenKinArete.description)}</span>
+					{#if chosenKinMastered}
+						<label class="kin-talent">
+							<input
+								type="checkbox"
+								checked={personHasTalent(draft, chosenKinMastered)}
+								onchange={(e) => toggleTalent(chosenKinMastered!, e.currentTarget.checked)}
+							/>
+							<span>
+								<em>Mastered:</em>
+								<strong>{abilityLabel(chosenKinMastered.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(chosenKinMastered.description)}</span>
+							</span>
+						</label>
+					{/if}
+					{#if chosenKinArete}
+						<label class="kin-talent">
+							<input
+								type="checkbox"
+								checked={personHasAreteTalent(draft, chosenKinArete)}
+								onchange={(e) =>
+									denizenBuilder.updateDraft((d) =>
+										togglePersonAreteTalent(d, chosenKinArete!, e.currentTarget.checked)
+									)}
+							/>
+							<span>
+								<em>Arete:</em>
+								<strong>{abilityLabel(chosenKinArete.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(chosenKinArete.description)}</span>
+							</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 		{/if}
@@ -1115,6 +1151,21 @@
 		font-size: 0.9rem;
 		border-left: 3px solid color-mix(in oklab, var(--accent) 45%, transparent);
 		background: color-mix(in oklab, var(--accent) 6%, transparent);
+	}
+	.kin-talent {
+		display: flex;
+		gap: 0.5rem;
+		align-items: baseline;
+		cursor: pointer;
+	}
+	.kin-talent + .kin-talent {
+		margin-top: 0.5rem;
+	}
+	.kin-talent em {
+		font-family: var(--font-subhead);
+		font-style: normal;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
 	}
 	.offpath {
 		border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);

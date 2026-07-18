@@ -13,7 +13,6 @@ import {
 	movePool,
 	updatePool,
 	seedPersonFromTheme,
-	needsPersonSeed,
 	clearPersonState,
 	setPersonKith,
 	setPersonKin,
@@ -515,11 +514,6 @@ describe('denizen builder — person seeding', () => {
 		expect(draft.concept).toBe('A hermit');
 	});
 
-	it('knows when a person seed is needed', () => {
-		expect(needsPersonSeed(createBlankDraft(), manTheme())).toBe(true); // creature kind
-		const seeded = seedPerson();
-		expect(needsPersonSeed(seeded, manTheme())).toBe(false);
-	});
 
 	it('clears person-only state when leaving the person path', () => {
 		const person = setPersonKith(seedPerson(), kiths[0]);

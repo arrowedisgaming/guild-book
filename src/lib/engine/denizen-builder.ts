@@ -263,12 +263,6 @@ export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefi
 	};
 }
 
-/** True when a person draft's stats came from a different (or no) theme. */
-export function needsPersonSeed(draft: DenizenDraft, theme: DenizenThemeDefinition): boolean {
-	if (draft.kind !== 'person') return true;
-	return draft.seededFrom?.themeId !== theme.id;
-}
-
 /**
  * Drop person-only state when the draft leaves the person path (a standard
  * theme was chosen): kind, kith/kin, and their notes.

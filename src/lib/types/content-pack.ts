@@ -312,8 +312,12 @@ export interface DenizenDefinition {
 	name: string;
 	/** Theme id (must resolve within the themes collection). */
 	theme: string;
-	/** Threat id (must resolve within the threats collection). */
-	threat: string;
+	/**
+	 * Threat id (must resolve within the threats collection). Bestiary entries
+	 * always have one (the Zod schema requires it); builder-made people omit
+	 * it — the book builds people as characters, not theme + threat.
+	 */
+	threat?: string;
 	/** Markdown flavor text, reproduced from the book (open content). */
 	flavor: string;
 	attributes: DenizenAttributes;

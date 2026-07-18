@@ -26,12 +26,14 @@ export function exportDenizenToMarkdown(
 	themeName: string,
 	threatName: string
 ): string {
+	// People carry no threat template — the subtitle and frontmatter drop it.
+	const typeLine = [themeName, threatName].filter(Boolean).join(' ');
 	const frontmatter = [
 		'---',
 		`name: ${yamlValue(denizen.name)}`,
 		'system: His Majesty the Worm',
 		`theme: ${yamlValue(themeName)}`,
-		`threat: ${yamlValue(threatName)}`,
+		threatName ? `threat: ${yamlValue(threatName)}` : null,
 		`swords: ${yamlStat(denizen.attributes.swords)}`,
 		`pentacles: ${yamlStat(denizen.attributes.pentacles)}`,
 		`cups: ${yamlStat(denizen.attributes.cups)}`,
@@ -48,7 +50,7 @@ export function exportDenizenToMarkdown(
 		'',
 		`## ${denizen.name}`,
 		'',
-		`_${themeName} ${threatName}_`,
+		`_${typeLine}_`,
 		'',
 		...denizen.flavor.split('\n\n').flatMap((p) => [`_${p.replace(/\n/g, ' ')}_`, '']),
 		`**Attributes:** Swords ${denizen.attributes.swords} | Pentacles ${denizen.attributes.pentacles} | Cups ${denizen.attributes.cups} | Wands ${denizen.attributes.wands}`,

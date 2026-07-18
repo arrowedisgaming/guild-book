@@ -11,9 +11,15 @@ import {
 	addPool,
 	removePool,
 	movePool,
-	updatePool
+	updatePool,
+	seedPersonFromTheme,
+	needsPersonSeed,
+	clearPersonState,
+	setPersonKith,
+	assignPersonSpreadValue,
+	PERSON_STAT_NOTE
 } from '$lib/engine/denizen-builder';
-import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
+import { getDenizenThemes, getDenizenThreats, getKiths } from '$lib/server/content/loader';
 
 const themes = getDenizenThemes();
 const threats = getDenizenThreats();
@@ -473,5 +479,118 @@ describe('denizen builder — sanitizing pool drafts', () => {
 	it('round-trips a pooled draft unchanged', () => {
 		const seeded = updatePool(seedLord(), 0, () => filledPool());
 		expect(sanitizeDraft(JSON.parse(JSON.stringify(seeded)))).toEqual(seeded);
+	});
+});
+
+// --- people (the Man theme's adversary path) ---------------------------------
+
+const manTheme = () => theme('man');
+const seedPerson = () => seedPersonFromTheme(createBlankDraft(), manTheme());
+const kiths = getKiths();
+
+describe('denizen builder — person seeding', () => {
+	it('seeds the adventurer spread with no threat and no HD', () => {
+		const draft = seedPerson();
+		expect(draft.kind).toBe('person');
+		expect(draft.threatId).toBeNull();
+		expect(draft.attributes).toEqual({ swords: '4', pentacles: '3', cups: '2', wands: '1' });
+		expect(draft.health).toBe('');
+		expect(draft.defense).toBe('');
+		expect(draft.statNote).toBe(PERSON_STAT_NOTE);
+		expect(draft.pools).toEqual([]);
+	});
+
+	it('preserves identity fields across a person seed', () => {
+		const blank = { ...createBlankDraft(), name: 'Odo the Cannibal', concept: 'A hermit' };
+		const draft = seedPersonFromTheme(blank, manTheme());
+		expect(draft.name).toBe('Odo the Cannibal');
+		expect(draft.concept).toBe('A hermit');
+	});
+
+	it('knows when a person seed is needed', () => {
+		expect(needsPersonSeed(createBlankDraft(), manTheme())).toBe(true); // creature kind
+		const seeded = seedPerson();
+		expect(needsPersonSeed(seeded, manTheme())).toBe(false);
+	});
+
+	it('clears person-only state when leaving the person path', () => {
+		const person = setPersonKith(seedPerson(), kiths[0]);
+		const cleared = clearPersonState(person);
+		expect(cleared.kind).toBe('creature');
+		expect(cleared.kithId).toBeNull();
+		expect(cleared.statNote).toBe('');
+		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+	});
+});
+
+describe('denizen builder — person kith and spread', () => {
+	it('keeps a single kith note in sync with the chosen kith', () => {
+		let draft = setPersonKith(seedPerson(), kiths[0]);
+		expect(draft.kithId).toBe(kiths[0].id);
+		expect(draft.notes.filter((n) => n.name.startsWith('Kith:'))).toHaveLength(1);
+		expect(draft.notes[0].name).toBe(`Kith: ${kiths[0].name}`);
+
+		draft = setPersonKith(draft, kiths[1]);
+		expect(draft.notes.filter((n) => n.name.startsWith('Kith:'))).toHaveLength(1);
+		expect(draft.notes[0].name).toBe(`Kith: ${kiths[1].name}`);
+
+		draft = setPersonKith(draft, null);
+		expect(draft.kithId).toBeNull();
+		expect(draft.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+	});
+
+	it('assigns a spread value by swapping with its current holder', () => {
+		// Seeded: swords 4, pentacles 3, cups 2, wands 1. Give cups the 4.
+		const draft = assignPersonSpreadValue(seedPerson(), 'cups', 4);
+		expect(draft.attributes).toEqual({ swords: '2', pentacles: '3', cups: '4', wands: '1' });
+		// Still a valid spread, so no warning.
+		expect(draftStatWarnings(draft)).toEqual([]);
+	});
+
+	it('warns when the attributes are not the adventurer spread', () => {
+		const draft = { ...seedPerson(), attributes: { swords: '4', pentacles: '4', cups: '2', wands: '1' } };
+		expect(draftStatWarnings(draft)).toEqual([
+			'A person uses the adventurer spread — assign 4, 3, 2, and 1 each to one suit.'
+		]);
+	});
+
+	it('applies the HD pair rule to people who are given stats', () => {
+		const draft = { ...seedPerson(), health: '3' };
+		expect(draftStatWarnings(draft)).toEqual([
+			'Health and Defense are a pair — fill in both or leave both blank.'
+		]);
+	});
+});
+
+describe('denizen builder — materializing a person', () => {
+	it('omits the threat key entirely and keeps the person stat note', () => {
+		const denizen = toDenizenDefinition({ ...seedPerson(), name: 'Odo' });
+		expect(denizen.theme).toBe('man');
+		expect('threat' in denizen).toBe(false);
+		expect(denizen.statNote).toBe(PERSON_STAT_NOTE);
+		expect('health' in denizen).toBe(false);
+	});
+
+	it('carries the kith note into the definition', () => {
+		const denizen = toDenizenDefinition(setPersonKith(seedPerson(), kiths[0]));
+		expect(denizen.notes?.[0].name).toBe(`Kith: ${kiths[0].name}`);
+	});
+});
+
+describe('denizen builder — sanitizing person drafts', () => {
+	it('defaults kind and kith on old drafts', () => {
+		const draft = sanitizeDraft({ name: 'Old Draft' });
+		expect(draft.kind).toBe('creature');
+		expect(draft.kithId).toBeNull();
+	});
+
+	it('repairs a garbage kind to creature', () => {
+		expect(sanitizeDraft({ kind: 'werewolf' }).kind).toBe('creature');
+		expect(sanitizeDraft({ kind: 'person' }).kind).toBe('person');
+	});
+
+	it('round-trips a person draft unchanged', () => {
+		const person = setPersonKith(seedPerson(), kiths[2]);
+		expect(sanitizeDraft(JSON.parse(JSON.stringify(person)))).toEqual(person);
 	});
 });

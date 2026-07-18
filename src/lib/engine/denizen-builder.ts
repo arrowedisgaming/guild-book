@@ -10,8 +10,11 @@ import type {
 	DenizenPool,
 	DenizenStatValue,
 	DenizenThemeDefinition,
-	DenizenThreatDefinition
+	DenizenThreatDefinition,
+	KithDefinition
 } from '$lib/types/content-pack';
+import { isValidSpread } from '$lib/engine/attributes';
+import { SUIT_IDS, type SuitId } from '$lib/types/common';
 
 /**
  * One named pool of Health/Defense in progress (dungeon lords). Same string
@@ -34,6 +37,12 @@ export interface DenizenPoolDraft {
  * comma-separated for easy editing. `toDenizenDefinition` normalizes.
  */
 export interface DenizenDraft {
+	/**
+	 * 'creature' drafts follow theme + threat; 'person' drafts (a theme with
+	 * builderMode 'person') follow the book's "make actual characters" advice:
+	 * adventurer spread, kith, gimmick dooms, no threat template.
+	 */
+	kind: 'creature' | 'person';
 	name: string;
 	/** The classic monster this starts from ("a zombie…"). */
 	concept: string;
@@ -43,6 +52,8 @@ export interface DenizenDraft {
 	flavor: string;
 	themeId: string | null;
 	threatId: string | null;
+	/** Person drafts only — flavour, rendered as a "Kith: …" note. */
+	kithId: string | null;
 	/** The template pair the stats below were seeded from (re-seed on change). */
 	seededFrom: { themeId: string; threatId: string } | null;
 	attributes: { swords: string; pentacles: string; cups: string; wands: string };
@@ -78,12 +89,14 @@ export function createBlankPoolDraft(): DenizenPoolDraft {
 
 export function createBlankDraft(): DenizenDraft {
 	return {
+		kind: 'creature',
 		name: '',
 		concept: '',
 		exaggeration: '',
 		flavor: '',
 		themeId: null,
 		threatId: null,
+		kithId: null,
 		seededFrom: null,
 		attributes: { swords: '0', pentacles: '0', cups: '0', wands: '0' },
 		health: '',
@@ -115,6 +128,8 @@ export function seedFromTemplates(
 	const poolsMode = threat.builderMode === 'pools';
 	return {
 		...draft,
+		kind: 'creature',
+		kithId: null,
 		themeId: theme.id,
 		threatId: threat.id,
 		seededFrom: { themeId: theme.id, threatId: threat.id },
@@ -179,6 +194,92 @@ export function needsReseed(draft: DenizenDraft): boolean {
 	return draft.seededFrom.themeId !== draft.themeId || draft.seededFrom.threatId !== draft.threatId;
 }
 
+// --- person (adversary) drafts -----------------------------------------------
+
+/** The adventurer attribute spread people are built on. */
+export const PERSON_SPREAD = [4, 3, 2, 1];
+
+/** The seeded statNote for people; HD is the GM's call, never materialized blank. */
+export const PERSON_STAT_NOTE = 'Person — built as a character.';
+
+const KITH_NOTE_PREFIX = 'Kith: ';
+
+/**
+ * Seed a person draft from a theme with builderMode 'person'. People follow
+ * the book's "make actual characters" advice: the adventurer spread (seeded
+ * 4/3/2/1 in suit order, reassigned on the Person step), no threat template,
+ * no seeded HD — the statNote says so. Preserves identity fields.
+ */
+export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefinition): DenizenDraft {
+	return {
+		...draft,
+		kind: 'person',
+		kithId: null,
+		themeId: theme.id,
+		threatId: null,
+		seededFrom: { themeId: theme.id, threatId: '' },
+		attributes: { swords: '4', pentacles: '3', cups: '2', wands: '1' },
+		health: '',
+		defense: '',
+		statNote: PERSON_STAT_NOTE,
+		likes: (theme.likes ?? []).join(', '),
+		hates: (theme.hates ?? []).join(', '),
+		notes: [...(theme.notes ?? [])],
+		lesserDooms: [],
+		greaterDooms: [],
+		pools: [],
+		specialRules: ''
+	};
+}
+
+/** True when a person draft's stats came from a different (or no) theme. */
+export function needsPersonSeed(draft: DenizenDraft, theme: DenizenThemeDefinition): boolean {
+	if (draft.kind !== 'person') return true;
+	return draft.seededFrom?.themeId !== theme.id;
+}
+
+/**
+ * Drop person-only state when the draft leaves the person path (a standard
+ * theme was chosen): kind, kith, the kith note, and the person statNote.
+ */
+export function clearPersonState(draft: DenizenDraft): DenizenDraft {
+	return {
+		...draft,
+		kind: 'creature',
+		kithId: null,
+		statNote: draft.statNote === PERSON_STAT_NOTE ? '' : draft.statNote,
+		notes: draft.notes.filter((n) => !n.name.startsWith(KITH_NOTE_PREFIX))
+	};
+}
+
+/**
+ * Choose (or clear) a person's kith. Flavour only — it stores the id and
+ * keeps a single "Kith: …" note in sync so the choice reaches every export.
+ */
+export function setPersonKith(draft: DenizenDraft, kith: KithDefinition | null): DenizenDraft {
+	const notes = draft.notes.filter((n) => !n.name.startsWith(KITH_NOTE_PREFIX));
+	if (kith) {
+		notes.unshift({
+			name: `${KITH_NOTE_PREFIX}${kith.name}`,
+			text: kith.description.split('\n')[0]
+		});
+	}
+	return { ...draft, kithId: kith?.id ?? null, notes };
+}
+
+/** Assign one spread value to a suit (swapping with whichever suit held it). */
+export function assignPersonSpreadValue(
+	draft: DenizenDraft,
+	suit: SuitId,
+	value: number
+): DenizenDraft {
+	const current = { ...draft.attributes };
+	const holder = SUIT_IDS.find((s) => Number(current[s]) === value);
+	if (holder) current[holder] = current[suit];
+	current[suit] = String(value);
+	return { ...draft, attributes: current };
+}
+
 function toStatValue(raw: string): DenizenStatValue {
 	const trimmed = raw.trim();
 	const asNumber = Number(trimmed);
@@ -241,12 +342,14 @@ export function sanitizeDraft(raw: unknown): DenizenDraft {
 	const seeded = draft.seededFrom as { themeId?: unknown; threatId?: unknown } | null | undefined;
 
 	return {
+		kind: draft.kind === 'person' ? 'person' : 'creature',
 		name: asString(draft.name, blank.name),
 		concept: asString(draft.concept, blank.concept),
 		exaggeration: asString(draft.exaggeration, blank.exaggeration),
 		flavor: asString(draft.flavor, blank.flavor),
 		themeId: typeof draft.themeId === 'string' ? draft.themeId : null,
 		threatId: typeof draft.threatId === 'string' ? draft.threatId : null,
+		kithId: typeof draft.kithId === 'string' ? draft.kithId : null,
 		seededFrom:
 			seeded &&
 			typeof seeded === 'object' &&
@@ -318,6 +421,16 @@ export function draftStatWarnings(
 	const defense = draft.defense.trim();
 	const warnings: string[] = [];
 
+	if (draft.kind === 'person') {
+		const values = Object.fromEntries(
+			SUIT_IDS.map((s) => [s, Number(draft.attributes[s])])
+		) as Record<SuitId, number>;
+		if (!isValidSpread(values, PERSON_SPREAD)) {
+			warnings.push(
+				'A person uses the adventurer spread — assign 4, 3, 2, and 1 each to one suit.'
+			);
+		}
+	}
 	if (poolsMode && draft.pools.length === 0) {
 		warnings.push('This threat is fought in pools — add at least one pool of Health and Defense.');
 	}
@@ -418,7 +531,8 @@ export function toDenizenDefinition(draft: DenizenDraft): DenizenDefinition {
 		id: 'custom-denizen',
 		name: draft.name.trim() || 'Unnamed Denizen',
 		theme: draft.themeId ?? '',
-		threat: draft.threatId ?? '',
+		// People have no threat template — omit it rather than emit ''.
+		...(draft.threatId ? { threat: draft.threatId } : {}),
 		flavor: draft.flavor.trim() || composed,
 		attributes: {
 			swords: toStatValue(draft.attributes.swords),

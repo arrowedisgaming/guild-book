@@ -49,7 +49,7 @@
 
 <article class="statblock">
 	<svelte:element this={`h${headingLevel}`} class="name">{denizen.name}</svelte:element>
-	<p class="type">{themeName} {threatName}</p>
+	<p class="type">{[themeName, threatName].filter(Boolean).join(' ')}</p>
 
 	<div class="flavor">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->

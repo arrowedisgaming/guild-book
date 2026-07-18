@@ -6,6 +6,7 @@ import {
 	needsReseed,
 	toDenizenDefinition,
 	draftStatWarnings,
+	draftStatReminders,
 	sanitizeDraft,
 	addPool,
 	removePool,
@@ -230,6 +231,29 @@ describe('denizen builder — stat warnings', () => {
 			'Defense is a whole number — no fractions.'
 		]);
 		expect(draftStatWarnings(withStats('∞', 'X'))).toEqual([]);
+	});
+
+	it('reminds — without blocking — that special strings need a note', () => {
+		// ∞ and plain numbers are silent; anything else nudges for a note.
+		expect(draftStatReminders(withStats('∞', '0'))).toEqual([]);
+		expect(draftStatReminders(withStats('X', '2'))).toEqual([
+			`Health is normally a number or ∞ — don't forget a note explaining what "X" means.`
+		]);
+		expect(draftStatReminders(withStats('3', 'X'))).toEqual([
+			`Defense is normally a number or ∞ — don't forget a note explaining what "X" means.`
+		]);
+		// Reminders are advisory: the hard warnings stay empty.
+		expect(draftStatWarnings(withStats('X', '2'))).toEqual([]);
+	});
+
+	it('reminds per pool too', () => {
+		const draft = {
+			...createBlankDraft(),
+			pools: [{ ...createBlankPoolDraft(), name: 'The Crown', health: '?', defense: '3' }]
+		};
+		expect(draftStatReminders(draft)).toEqual([
+			`The Crown: Health is normally a number or ∞ — don't forget a note explaining what "?" means.`
+		]);
 	});
 });
 

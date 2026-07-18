@@ -7,6 +7,7 @@
 		needsReseed,
 		toDenizenDefinition,
 		draftStatWarnings,
+		draftStatReminders,
 		addPool,
 		removePool,
 		movePool,
@@ -27,6 +28,9 @@
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
 	let templatesChosen = $derived(Boolean(theme && threat));
 	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null));
+	// Advisory only — never blocks saving (a special stat with a note is legal).
+	let statReminders = $derived(draftStatReminders(draft));
+	let statMessages = $derived([...statWarnings, ...statReminders]);
 
 	// The step path is mode-dependent: pool-based threats visit a Pools step.
 	let poolsMode = $derived(threat?.builderMode === 'pools');
@@ -406,7 +410,7 @@
 			<!-- Build-time pick instruction from the template, not stat-block content. -->
 			<p class="guidance"><em>{threat.chooseAttribute}</em></p>
 		{/if}
-		{#each statWarnings as warning (warning)}
+		{#each statMessages as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		{#if draft.statNote || threat?.statNote}
@@ -452,7 +456,7 @@
 			and dooms. Each can be attacked separately — as long as a pool stands, the creature keeps
 			its abilities. Make it clear what each pool is and what defeating it means.
 		</p>
-		{#each statWarnings as warning (warning)}
+		{#each statMessages as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		{#each draft.pools as pool, pi (pi)}
@@ -542,7 +546,7 @@
 		</div>
 	{:else if stepId === 'review'}
 		<h2>Review</h2>
-		{#each statWarnings as warning (warning)}
+		{#each statMessages as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />

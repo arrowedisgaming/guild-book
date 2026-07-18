@@ -342,6 +342,33 @@ export function draftStatWarnings(
 	return warnings;
 }
 
+/**
+ * Advisory reminders — shown alongside the warnings but never save-blocking.
+ * A special stat string other than ∞ is legal (the slime's "X" is book canon)
+ * but needs a note explaining it, so nudge the builder.
+ */
+export function draftStatReminders(draft: DenizenDraft): string[] {
+	const reminders: string[] = [];
+	// A '*' Health is self-explanatory while a "Wounds" note is present.
+	const explained = draft.notes.some((n) => n.name === 'Wounds');
+	const check = (value: string, label: string, where: string) => {
+		const trimmed = value.trim();
+		if (trimmed === '' || Number.isFinite(Number(trimmed)) || trimmed === '∞') return;
+		if (label === 'Health' && trimmed === '*' && explained) return;
+		reminders.push(
+			`${where}${label} is normally a number or ∞ — don't forget a note explaining what "${trimmed}" means.`
+		);
+	};
+	check(draft.health, 'Health', '');
+	check(draft.defense, 'Defense', '');
+	draft.pools.forEach((pool, index) => {
+		const label = pool.name.trim() || `Pool ${index + 1}`;
+		check(pool.health, 'Health', `${label}: `);
+		check(pool.defense, 'Defense', `${label}: `);
+	});
+	return reminders;
+}
+
 /** True when a pool draft carries no user input at all (the seeded blank). */
 function isBlankPool(pool: DenizenPoolDraft): boolean {
 	return (

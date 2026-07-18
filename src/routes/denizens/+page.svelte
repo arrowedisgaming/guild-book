@@ -11,8 +11,11 @@
 	let themeFilter = $state<string | null>(null);
 	let threatFilter = $state<string | null>(null);
 
-	const themeName = (id: string) => data.themes.find((t) => t.id === id)?.name ?? id;
-	const threatName = (id: string) => data.threats.find((t) => t.id === id)?.name ?? id;
+	// threat is optional on DenizenDefinition (people omit it) — resolve to ''.
+	const themeName = (id: string | undefined) =>
+		id ? (data.themes.find((t) => t.id === id)?.name ?? id) : '';
+	const threatName = (id: string | undefined) =>
+		id ? (data.threats.find((t) => t.id === id)?.name ?? id) : '';
 
 	let filtered = $derived.by(() => {
 		const q = query.trim().toLowerCase();

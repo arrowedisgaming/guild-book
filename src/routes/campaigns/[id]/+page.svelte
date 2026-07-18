@@ -150,9 +150,13 @@
 					<dd>{data.campaign.roster.document.deeds.length}</dd>
 				</div>
 			</dl>
-			<p class="future">Roster editing and the live campaign table arrive in the next increment.</p>
+			<p class="future">Roster editing arrives in a future update.</p>
 		</section>
 	</div>
+
+	{#if data.campaign.archivedAt === null}
+		<a class="table-link" href="/campaigns/{data.campaign.id}/table">Open the campaign table →</a>
+	{/if}
 
 	{#if data.campaign.archivedAt === null && data.campaign.role === 'player'}
 		<AdventurerPicker
@@ -305,6 +309,19 @@
 	}
 	.future {
 		font-size: 0.82rem;
+	}
+	.table-link {
+		display: inline-block;
+		margin-bottom: 1rem;
+		padding: 0.6rem 0.9rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		color: var(--accent);
+		text-decoration: none;
+	}
+	.table-link:hover {
+		background: color-mix(in oklab, var(--accent) 7%, transparent);
 	}
 	.danger-action {
 		margin-top: 1rem;

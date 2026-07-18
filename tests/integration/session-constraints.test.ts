@@ -242,6 +242,25 @@ describe('session persistence constraints', () => {
 		).not.toThrow();
 	});
 
+	it('nulls campaign_events.session_id when the referenced session is deleted', () => {
+		insertSession(sqlite, { id: 'session-a', campaignId: 'campaign-a', sequence: 1, status: 'active' });
+
+		const eventId = sqlite
+			.prepare(
+				`INSERT INTO campaign_events (campaign_id, session_id, actor_user_id, kind, public_payload_json, created_at)
+				 VALUES (?, ?, ?, ?, ?, ?)`
+			)
+			.run('campaign-a', 'session-a', 'owner-a', 'command-accepted', '{}', 100).lastInsertRowid;
+
+		// Deleting the session nulls the pointer rather than leaving a
+		// dangling reference (onDelete: 'set null').
+		sqlite.prepare('DELETE FROM play_sessions WHERE id = ?').run('session-a');
+		const row = sqlite
+			.prepare('SELECT session_id AS sessionId FROM campaign_events WHERE id = ?')
+			.get(eventId) as { sessionId: string | null };
+		expect(row.sessionId).toBeNull();
+	});
+
 	it('allows only one secret payload per (event, recipient)', () => {
 		const eventId = sqlite
 			.prepare(

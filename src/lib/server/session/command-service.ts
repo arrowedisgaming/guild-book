@@ -118,20 +118,8 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 	const requestHash = sha256Hex(canonicalJsonStringify(envelope.command));
 
 	// Step 3 — idempotency lookup by (sessionId, commandId).
-	const existing = await findSessionCommand(db, sessionId, envelope.commandId);
-	if (existing) {
-		if (existing.requestHash !== requestHash) {
-			return {
-				outcome: { ok: false, code: 'command-id-reused', message: 'this commandId was already used for a different request' },
-				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-			};
-		}
-		const outcome: CommandOutcome =
-			existing.status === 'accepted'
-				? { ok: true, resultingVersion: existing.resultingVersion as number }
-				: { ok: false, ...(JSON.parse(existing.outcomeMetadataJson) as { code: CommandRejectionCode; message: string }) };
-		return { outcome, projection: await loadProjectionForActor(db, sessionId, campaignId, actor) };
-	}
+	const initialDuplicate = await resolveDuplicateCommandOutcome(db, sessionId, campaignId, envelope, requestHash, actor);
+	if (initialDuplicate) return initialDuplicate;
 
 	const isStructural = STRUCTURAL_COMMAND_TYPES.has(envelope.command.type);
 	const maxAttempts = isStructural ? 1 : MAX_NONSTRUCTURAL_ATTEMPTS;
@@ -158,11 +146,18 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 				code: 'illegal-command',
 				message: `session is ${summary.status}, no commands are accepted`
 			};
-			await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, summary.version, rejection);
-			return {
-				outcome: { ok: false, code: rejection.code, message: rejection.message },
-				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-			};
+			return await persistRejectionOrReplayDuplicate(
+				dbContext,
+				db,
+				campaignId,
+				sessionId,
+				envelope,
+				actor,
+				actorUserId,
+				requestHash,
+				summary.version,
+				rejection
+			);
 		}
 
 		if (isStructural && envelope.expectedStructuralVersion !== summary.version) {
@@ -170,11 +165,18 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 				code: 'stale-structure',
 				message: `expected structural version ${envelope.expectedStructuralVersion ?? 'unset'} does not match current version ${summary.version}`
 			};
-			await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, summary.version, rejection);
-			return {
-				outcome: { ok: false, code: rejection.code, message: rejection.message },
-				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-			};
+			return await persistRejectionOrReplayDuplicate(
+				dbContext,
+				db,
+				campaignId,
+				sessionId,
+				envelope,
+				actor,
+				actorUserId,
+				requestHash,
+				summary.version,
+				rejection
+			);
 		}
 
 		let loaded: LoadedSession;
@@ -210,11 +212,18 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		}
 
 		if (!reduceResult.ok) {
-			await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, loaded.currentVersion, reduceResult.rejection);
-			return {
-				outcome: { ok: false, code: reduceResult.rejection.code, message: reduceResult.rejection.message },
-				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-			};
+			return await persistRejectionOrReplayDuplicate(
+				dbContext,
+				db,
+				campaignId,
+				sessionId,
+				envelope,
+				actor,
+				actorUserId,
+				requestHash,
+				loaded.currentVersion,
+				reduceResult.rejection
+			);
 		}
 
 		const nextState: SessionEngineStateV1 = { ...reduceResult.state, version: loaded.currentVersion + 1 };
@@ -250,16 +259,37 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		} catch (cause) {
 			if (!isUniqueConstraintError(cause)) throw cause;
 
+			// This unique-constraint failure came from one of two indexes:
+			// `session_commands_session_command_uq` (a genuine concurrent
+			// duplicate of THIS commandId — a race, not a version claim loss) or
+			// `session_commands_resulting_version_uq` (someone else's *different*
+			// command claimed this version first). The two need different
+			// handling, and the driver-agnostic way to tell them apart is to
+			// re-run the same idempotency lookup Step 3 did: if a row for this
+			// exact commandId now exists, the loser lost to its own duplicate and
+			// must replay/reject via the normal duplicate path below, never via
+			// the version-claim retry/stale-structure handling meant for a
+			// different command.
+			const duplicate = await resolveDuplicateCommandOutcome(db, sessionId, campaignId, envelope, requestHash, actor);
+			if (duplicate) return duplicate;
+
 			if (isStructural) {
 				const rejection: SessionRejection = {
 					code: 'stale-structure',
 					message: 'the session advanced past the expected structural version'
 				};
-				await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, loaded.currentVersion, rejection);
-				return {
-					outcome: { ok: false, code: rejection.code, message: rejection.message },
-					projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-				};
+				return await persistRejectionOrReplayDuplicate(
+					dbContext,
+					db,
+					campaignId,
+					sessionId,
+					envelope,
+					actor,
+					actorUserId,
+					requestHash,
+					loaded.currentVersion,
+					rejection
+				);
 			}
 			// Nonstructural: someone else claimed this version first. Loop back
 			// to the top — reread state, re-reduce, try again (up to 4 total).
@@ -270,11 +300,18 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		code: 'retry-exhausted',
 		message: `command could not be committed after ${MAX_NONSTRUCTURAL_ATTEMPTS} attempts`
 	};
-	await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, lastKnownVersion, rejection);
-	return {
-		outcome: { ok: false, code: rejection.code, message: rejection.message },
-		projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
-	};
+	return await persistRejectionOrReplayDuplicate(
+		dbContext,
+		db,
+		campaignId,
+		sessionId,
+		envelope,
+		actor,
+		actorUserId,
+		requestHash,
+		lastKnownVersion,
+		rejection
+	);
 }
 
 async function persistRejection(
@@ -302,6 +339,75 @@ async function persistRejection(
 			now: new Date()
 		})
 	);
+}
+
+/** Step 3's idempotency lookup, factored out so it can also be re-run after a
+ * `session_commands_session_command_uq` collision (a duplicate submission
+ * that raced past the initial lookup — see the doc comments at both call
+ * sites below). Returns `null` when no row exists yet for this commandId. */
+async function resolveDuplicateCommandOutcome(
+	db: AppDb,
+	sessionId: string,
+	campaignId: string,
+	envelope: SessionCommandEnvelope<SessionCommand>,
+	requestHash: string,
+	actor: SessionActor
+): Promise<ExecuteCommandResult | null> {
+	const existing = await findSessionCommand(db, sessionId, envelope.commandId);
+	if (!existing) return null;
+
+	if (existing.requestHash !== requestHash) {
+		return {
+			outcome: { ok: false, code: 'command-id-reused', message: 'this commandId was already used for a different request' },
+			projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+		};
+	}
+	const outcome: CommandOutcome =
+		existing.status === 'accepted'
+			? { ok: true, resultingVersion: existing.resultingVersion as number }
+			: { ok: false, ...(JSON.parse(existing.outcomeMetadataJson) as { code: CommandRejectionCode; message: string }) };
+	return { outcome, projection: await loadProjectionForActor(db, sessionId, campaignId, actor) };
+}
+
+/**
+ * Persists a rejection, but hardens against the same commandId-collision
+ * race `resolveDuplicateCommandOutcome`'s callers guard on the accept path:
+ * two concurrent requests carrying the same commandId can both reach a
+ * rejection call site (e.g. both observe a non-active session, or both fail
+ * the same structural precondition) with neither having persisted anything
+ * yet, so the loser's own `INSERT` can hit
+ * `session_commands_session_command_uq` here too. When that happens, this
+ * re-checks by lookup (driver-agnostic, unlike message-sniffing) rather than
+ * letting the unique-constraint error surface as a 500: if the winner's row
+ * is now visible, follow the normal duplicate path (replay on a matching
+ * hash, `command-id-reused` on a mismatched one) instead of the rejection
+ * that was originally intended.
+ */
+async function persistRejectionOrReplayDuplicate(
+	dbContext: AppDbContext,
+	db: AppDb,
+	campaignId: string,
+	sessionId: string,
+	envelope: SessionCommandEnvelope<SessionCommand>,
+	actor: SessionActor,
+	actorUserId: string,
+	requestHash: string,
+	expectedVersion: number,
+	rejection: SessionRejection
+): Promise<ExecuteCommandResult> {
+	try {
+		await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, expectedVersion, rejection);
+	} catch (cause) {
+		if (isUniqueConstraintError(cause)) {
+			const duplicate = await resolveDuplicateCommandOutcome(db, sessionId, campaignId, envelope, requestHash, actor);
+			if (duplicate) return duplicate;
+		}
+		throw cause;
+	}
+	return {
+		outcome: { ok: false, code: rejection.code, message: rejection.message },
+		projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+	};
 }
 
 /** `HMAC/hash of stored seed + sessionVersion + attempt` (amendment 10):

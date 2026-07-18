@@ -99,6 +99,49 @@ describe('session command service — idempotency and contention', () => {
 		expect(countCommandRows(sqlite, 'session-a', 'command-1')).toBe(1);
 	});
 
+	it('resolves both racing requests without throwing when two nonstructural submissions share an identical commandId, persisting only one row', async () => {
+		await startFixtureSession();
+		const envelope = drawEnvelope('race-duplicate');
+
+		// Both requests reach the pre-loop idempotency lookup before either has
+		// persisted anything, so both proceed to attempt a commit with the SAME
+		// commandId. Pre-fix, the loser's own insert (either its claim insert or
+		// a subsequent persistRejection insert) threw an unhandled
+		// `session_commands_session_command_uq` violation instead of resolving
+		// — this regresses that 500.
+		const [first, second] = await Promise.all([
+			executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'player-a', envelope }),
+			executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'player-a', envelope })
+		]);
+
+		expect(first.outcome).toEqual({ ok: true, resultingVersion: 2 });
+		// The loser replays the winner's stored outcome rather than
+		// re-attempting (which would double-advance the session).
+		expect(second.outcome).toEqual(first.outcome);
+		expect(countCommandRows(sqlite, 'session-a', 'race-duplicate')).toBe(1);
+		expect(currentVersion(sqlite, 'session-a')).toBe(2);
+	});
+
+	it('resolves both racing requests without throwing when two structural submissions share an identical commandId, persisting only one row', async () => {
+		await startFixtureSession();
+		const envelope: SessionCommandEnvelope<SessionCommand> = {
+			commandId: 'race-duplicate-structural',
+			observedSessionVersion: 1,
+			expectedStructuralVersion: 1,
+			command: { type: 'end-round' }
+		};
+
+		const [first, second] = await Promise.all([
+			executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a', envelope }),
+			executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a', envelope })
+		]);
+
+		expect(first.outcome).toEqual({ ok: true, resultingVersion: 2 });
+		expect(second.outcome).toEqual(first.outcome);
+		expect(countCommandRows(sqlite, 'session-a', 'race-duplicate-structural')).toBe(1);
+		expect(currentVersion(sqlite, 'session-a')).toBe(2);
+	});
+
 	it('claims consecutive versions for two racing nonstructural commands from different actors', async () => {
 		await startFixtureSession();
 		const envelopeA: SessionCommandEnvelope<SessionCommand> = {

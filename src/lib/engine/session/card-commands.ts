@@ -413,8 +413,11 @@ export function handleReorderTop(
 // ---------------------------------------------------------------------------
 
 /** Discards every card currently in `zoneId` and draws the same count of
- * replacements from that zone's deck (spec §8.6: GM mulligan). Deck-exhausted
- * redraws reshuffle exactly like `draw`. */
+ * replacements from that zone's deck. Authorization follows the same rule as
+ * every other zone-scoped command (`actorMayAccessZone`, below): the GM may
+ * mulligan any zone, and a player may mulligan a zone they can access — their
+ * own private zone, or any public/public-top zone — not just the GM. Deck-
+ * exhausted redraws reshuffle exactly like `draw`. */
 export function handleMulligan(command: MulliganCommand, state: SessionEngineStateV1, ctx: CommandHandlerContext): SessionReduceResult {
 	const zone = findZoneDescriptor(state, command.zoneId);
 	if (!zone) return reject('illegal-command', `zone not found: ${command.zoneId}`);

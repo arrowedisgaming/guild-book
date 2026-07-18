@@ -115,7 +115,7 @@ CREATE TABLE `session_server_states` (
 	CONSTRAINT "session_server_states_session_version_check" CHECK("session_server_states"."session_version" >= 0)
 );
 --> statement-breakpoint
-ALTER TABLE `campaign_events` ADD `session_id` text REFERENCES play_sessions(id);--> statement-breakpoint
-ALTER TABLE `campaign_events` ADD `command_id` text REFERENCES session_commands(id);--> statement-breakpoint
+ALTER TABLE `campaign_events` ADD `session_id` text REFERENCES play_sessions(id) ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE `campaign_events` ADD `command_id` text REFERENCES session_commands(id) ON DELETE SET NULL;--> statement-breakpoint
 CREATE INDEX `campaign_events_session_idx` ON `campaign_events` (`session_id`);--> statement-breakpoint
 CREATE INDEX `campaign_events_command_idx` ON `campaign_events` (`command_id`);

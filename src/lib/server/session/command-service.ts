@@ -309,7 +309,14 @@ function deriveAttemptSeed(shuffleSeedHex: string, sessionVersion: number, attem
 	return sha256Hex(`${shuffleSeedHex}:${sessionVersion}:${attempt}`);
 }
 
-async function loadProjectionForActor(
+/**
+ * Exported for Task 6's HTTP layer: GET reads (session detail, `/sync`) and
+ * lifecycle PATCH responses need the identical actor-scoped, freshly-loaded
+ * projection this module already builds after every command — one
+ * implementation, so a route can never accidentally build (and thus
+ * potentially leak) its own divergent projection.
+ */
+export async function loadProjectionForActor(
 	db: AppDb,
 	sessionId: string,
 	campaignId: string,

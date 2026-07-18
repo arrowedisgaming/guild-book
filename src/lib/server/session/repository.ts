@@ -15,13 +15,14 @@
  * this for the campaign-event id assignment below).
  */
 
-import { and, eq, isNull, max } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, max } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AppDb } from '$lib/server/db';
 import type { AtomicStatement } from '$lib/server/db/atomic';
 import { statement } from '$lib/server/db/atomic';
 import {
 	campaignEvents,
+	campaignEventSecrets,
 	campaignMembers,
 	campaigns,
 	sessionCommands,
@@ -475,6 +476,167 @@ export async function campaignCursor(db: AppDb, campaignId: string): Promise<num
 }
 
 // ---------------------------------------------------------------------------
+// Task 6 (HTTP layer) read helpers — session listing, ended-session public
+// history, and event/secret reads for `/sync`. Read-only; every write path
+// stays in the statement builders above. Kept here (not duplicated in a
+// route file) so "no session logic in routes" holds for reads too.
+// ---------------------------------------------------------------------------
+
+export interface OpenSessionSummary {
+	sessionId: string;
+	status: SessionStatus;
+	version: number;
+	sequence: number;
+	startedAt: number;
+}
+
+/** The campaign's single active-or-frozen session, if any — the partial
+ * unique index `play_sessions_open_campaign_uq` guarantees at most one. */
+export async function findOpenSessionForCampaign(db: AppDb, campaignId: string): Promise<OpenSessionSummary | null> {
+	const row = await db
+		.select({
+			sessionId: playSessions.id,
+			status: playSessions.status,
+			version: playSessions.version,
+			sequence: playSessions.sequence,
+			startedAt: playSessions.startedAt
+		})
+		.from(playSessions)
+		.where(and(eq(playSessions.campaignId, campaignId), inArray(playSessions.status, ['active', 'frozen'])))
+		.get();
+	if (!row) return null;
+	return { ...row, status: row.status as SessionStatus, startedAt: row.startedAt.getTime() };
+}
+
+export interface CampaignSessionListRow {
+	sessionId: string;
+	sequence: number;
+	status: SessionStatus;
+	startedAt: number;
+	endedAt: number | null;
+	publicHistoryChecksum: string | null;
+}
+
+/** Every session for `campaignId` (open or ended), newest first — the raw
+ * summary row only; an ended session's full public snapshot is fetched
+ * separately via `loadEndedSessionHistory` so this listing stays small. */
+export async function listCampaignSessions(db: AppDb, campaignId: string): Promise<CampaignSessionListRow[]> {
+	const rows = await db
+		.select({
+			sessionId: playSessions.id,
+			sequence: playSessions.sequence,
+			status: playSessions.status,
+			startedAt: playSessions.startedAt,
+			endedAt: playSessions.endedAt,
+			publicHistoryChecksum: playSessions.publicHistoryChecksum
+		})
+		.from(playSessions)
+		.where(eq(playSessions.campaignId, campaignId))
+		.orderBy(desc(playSessions.sequence));
+	return rows.map((row) => ({
+		...row,
+		status: row.status as SessionStatus,
+		startedAt: row.startedAt.getTime(),
+		endedAt: row.endedAt ? row.endedAt.getTime() : null
+	}));
+}
+
+export interface EndedSessionHistory {
+	sessionId: string;
+	sequence: number;
+	finalPublicState: unknown;
+	publicHistoryChecksum: string;
+	startedAt: number;
+	endedAt: number;
+}
+
+/** An ended session's sanctioned public history: the one GM-computed public
+ * snapshot `endSession` stamped, plus its checksum (§9's corruption-
+ * detection-only guarantee — never re-derived here). `null` for anything
+ * that isn't a genuinely ended session with both fields populated. */
+export async function loadEndedSessionHistory(db: AppDb, sessionId: string): Promise<EndedSessionHistory | null> {
+	const row = await db
+		.select({
+			sessionId: playSessions.id,
+			sequence: playSessions.sequence,
+			status: playSessions.status,
+			startedAt: playSessions.startedAt,
+			endedAt: playSessions.endedAt,
+			finalPublicStateJson: playSessions.finalPublicStateJson,
+			publicHistoryChecksum: playSessions.publicHistoryChecksum
+		})
+		.from(playSessions)
+		.where(eq(playSessions.id, sessionId))
+		.get();
+	if (!row || row.status !== 'ended' || !row.endedAt || !row.finalPublicStateJson || !row.publicHistoryChecksum) return null;
+	return {
+		sessionId: row.sessionId,
+		sequence: row.sequence,
+		finalPublicState: JSON.parse(row.finalPublicStateJson),
+		publicHistoryChecksum: row.publicHistoryChecksum,
+		startedAt: row.startedAt.getTime(),
+		endedAt: row.endedAt.getTime()
+	};
+}
+
+export interface CampaignEventRow {
+	id: number;
+	sessionId: string | null;
+	kind: string;
+	publicPayload: unknown;
+	createdAt: number;
+}
+
+/** Up to `limit` campaign events for `campaignId` with `id > afterId`,
+ * ascending — the public payload only; per-recipient secrets are joined
+ * separately by `listEventSecretsForRecipient`, scoped to one caller at a
+ * time, so this function alone can never leak a secret payload. */
+export async function listCampaignEventsSince(
+	db: AppDb,
+	campaignId: string,
+	afterId: number,
+	limit: number
+): Promise<CampaignEventRow[]> {
+	const rows = await db
+		.select({
+			id: campaignEvents.id,
+			sessionId: campaignEvents.sessionId,
+			kind: campaignEvents.kind,
+			publicPayloadJson: campaignEvents.publicPayloadJson,
+			createdAt: campaignEvents.createdAt
+		})
+		.from(campaignEvents)
+		.where(and(eq(campaignEvents.campaignId, campaignId), gt(campaignEvents.id, afterId)))
+		.orderBy(asc(campaignEvents.id))
+		.limit(limit);
+	return rows.map((row) => ({
+		id: row.id,
+		sessionId: row.sessionId,
+		kind: row.kind,
+		publicPayload: JSON.parse(row.publicPayloadJson) as unknown,
+		createdAt: row.createdAt.getTime()
+	}));
+}
+
+/** `eventId -> recipientUserId's own secret payload`, scoped to exactly one
+ * `recipientUserId` — never another recipient's row, even though
+ * `campaign_event_secrets` may hold rows for several recipients per event. */
+export async function listEventSecretsForRecipient(
+	db: AppDb,
+	eventIds: readonly number[],
+	recipientUserId: string
+): Promise<Map<number, unknown>> {
+	const map = new Map<number, unknown>();
+	if (eventIds.length === 0) return map;
+	const rows = await db
+		.select({ eventId: campaignEventSecrets.eventId, payloadJson: campaignEventSecrets.payloadJson })
+		.from(campaignEventSecrets)
+		.where(and(inArray(campaignEventSecrets.eventId, eventIds), eq(campaignEventSecrets.recipientUserId, recipientUserId)));
+	for (const row of rows) map.set(row.eventId, JSON.parse(row.payloadJson) as unknown);
+	return map;
+}
+
+// ---------------------------------------------------------------------------
 // Statement builders — every write in this module goes through these, never
 // through Drizzle's query builder, so `command-service.ts`/`lifecycle.ts` can
 // hand the results straight to `runAtomic`.
@@ -552,6 +714,32 @@ function conditionalCampaignEventInsertStatement(input: {
 			input.guardStatus
 		]
 	);
+}
+
+/**
+ * Stamps every fragment's `session_version` to `nextVersion` without
+ * touching their JSON content — used by the lifecycle transitions that claim
+ * a version but don't otherwise mutate card state (freeze, recover).
+ * `loadSessionForReduce` requires every fragment's `session_version` to
+ * equal `play_sessions.version` before it will reassemble state at all (see
+ * its doc comment above); `buildAcceptedCommandStatements` already keeps
+ * that invariant for in-band commands by rewriting each fragment's content
+ * *and* version together, so this is the lifecycle-only counterpart that
+ * advances just the stamp. Guarded by `WHERE EXISTS (... version = nextVersion)`
+ * so these updates are a no-op unless the preceding `play_sessions` UPDATE in
+ * the same batch actually landed at `nextVersion` — belt-and-suspenders
+ * alongside the version-claim insert that should already make that
+ * unconditional in practice (see `sessionCommandClaimStatement`'s doc
+ * comment), matching this file's existing guarded-write convention
+ * (`conditionalCampaignEventInsertStatement`, just above).
+ */
+function fragmentVersionStampStatements(sessionId: string, nextVersion: number): AtomicStatement[] {
+	const guard = `session_id = ? AND EXISTS (SELECT 1 FROM play_sessions WHERE id = ? AND version = ?)`;
+	const params = [nextVersion, sessionId, sessionId, nextVersion];
+	return [
+		statement(`UPDATE session_server_states SET session_version = ? WHERE ${guard}`, params),
+		statement(`UPDATE session_private_states SET session_version = ? WHERE ${guard}`, params)
+	];
 }
 
 /** Inserts one `campaign_event_secrets` row for the `eventIndex`-th event
@@ -838,6 +1026,18 @@ export function buildFreezeStatements(input: FreezeSessionInput): AtomicStatemen
 			input.expectedVersion + 1,
 			input.sessionId
 		]),
+		// Bug fix (discovered via Task 6's HTTP-level integration testing):
+		// `loadSessionForReduce` (`repository.ts`, above) requires every
+		// fragment's `session_version` to equal `play_sessions.version` before
+		// it will reassemble state at all — the same requirement
+		// `buildAcceptedCommandStatements` already satisfies for in-band
+		// commands. Freeze doesn't touch fragment *content*, but it still
+		// claims the version, so the stamp must move too; without this, every
+		// read/command after a freeze (including the automatic
+		// freeze-on-failure path `command-service.ts` already relies on)
+		// would throw `SessionLoadIntegrityError` forever, since the fragments
+		// would permanently disagree with `play_sessions.version`.
+		...fragmentVersionStampStatements(input.sessionId, input.expectedVersion + 1),
 		conditionalCampaignEventInsertStatement({
 			campaignId: input.campaignId,
 			sessionId: input.sessionId,
@@ -882,6 +1082,9 @@ export function buildRecoverStatements(input: RecoverSessionInput): AtomicStatem
 			input.expectedVersion + 1,
 			input.sessionId
 		]),
+		// See the matching comment in `buildFreezeStatements` above — same
+		// fragment-version-stamp requirement, same fix.
+		...fragmentVersionStampStatements(input.sessionId, input.expectedVersion + 1),
 		conditionalCampaignEventInsertStatement({
 			campaignId: input.campaignId,
 			sessionId: input.sessionId,

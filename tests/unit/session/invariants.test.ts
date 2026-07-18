@@ -33,6 +33,18 @@ describe('session card invariants', () => {
 		expect(() => assertSessionInvariants(state, catalog)).toThrow(/wrong deck/i);
 	});
 
+	it('rejects a major-arcana card placed in an inspiration public zone', () => {
+		// `inspiration` is declared player-deck only (High Chant distributes
+		// inspiration from the player discard — spec §8.7), unlike the
+		// genuinely mixed `initiative`/`played`/`revealed` public zones.
+		const catalog = makeSessionCatalogFixture();
+		const state = makeSessionFixture();
+		const major = state.majorDraw.pop();
+		if (!major) throw new Error('major fixture empty');
+		state.publicZones.push({ id: 'inspiration:pool', kind: 'inspiration', cards: [major] });
+		expect(() => assertSessionInvariants(state, catalog)).toThrow(/wrong deck/i);
+	});
+
 	it('rejects a session version that is not a non-negative integer', () => {
 		const catalog = makeSessionCatalogFixture();
 		const state = makeSessionFixture();

@@ -7,7 +7,12 @@
 
 import type { CardId, SessionEngineStateV1, UserId } from '$lib/types/session';
 
-export type ZoneDeck = 'major' | 'player' | 'any';
+/** `'both'` is an explicit domain declaration — not an escape hatch — for
+ * zones where the spec genuinely mixes decks (e.g. the GM plays major-deck
+ * cards and players play player-deck cards into the same public area). The
+ * deck-ownership invariant still runs for `'both'` zones; it just accepts
+ * any catalog card there by declaration. */
+export type ZoneDeck = 'major' | 'player' | 'both';
 
 /**
  * `hidden` — identities are secret; only a count may be public (draw piles).
@@ -104,9 +109,14 @@ export function listZoneDescriptors(state: SessionEngineStateV1): ZoneDescriptor
 	for (const zone of state.publicZones) {
 		descriptors.push({
 			id: zone.id,
-			deck: 'any',
+			// `initiative`/`played`/`revealed` are genuinely mixed zones — the GM
+			// plays major-deck cards and players play player-deck cards into the
+			// same public area (spec §8.2). `inspiration` is player-deck only:
+			// High Chant distributes inspiration from the player discard (spec
+			// §8.7), so it is deck-checked like any single-deck zone.
+			deck: zone.kind === 'inspiration' ? 'player' : 'both',
 			visibility: 'public',
-			ordered: false,
+			ordered: zone.kind === 'initiative',
 			owner: NONE_OWNER,
 			cards: zone.cards
 		});

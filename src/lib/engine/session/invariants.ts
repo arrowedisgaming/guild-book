@@ -127,8 +127,10 @@ export function assertSessionInvariants(state: SessionEngineStateV1, catalog: Ta
 	}
 
 	// 7. Deck ownership: a card may only occupy zones of its assigned deck.
+	// `'both'` zones are checked too — by declaration they accept any catalog
+	// card, so the loop below is a no-op for them, not a skip.
 	for (const zone of zones) {
-		if (zone.deck === 'any') continue;
+		if (zone.deck === 'both') continue;
 		for (const cardId of zone.cards) {
 			const entry = catalog[cardId];
 			if (entry.deck !== zone.deck) {

@@ -69,7 +69,7 @@ const drawCommandSchema = z
 		type: z.literal('draw'),
 		deck: z.enum(['major', 'player']),
 		destinationZoneId: zoneId,
-		count: z.number().int().positive()
+		count: z.number().int().positive().max(78)
 	})
 	.strict();
 
@@ -77,8 +77,8 @@ const dealCommandSchema = z
 	.object({
 		type: z.literal('deal'),
 		deck: z.enum(['major', 'player']),
-		destinationZoneIds: z.array(zoneId).min(1),
-		countPerDestination: z.number().int().positive()
+		destinationZoneIds: z.array(zoneId).min(1).max(20),
+		countPerDestination: z.number().int().positive().max(78)
 	})
 	.strict();
 
@@ -139,7 +139,7 @@ const reorderTopCommandSchema = z
 	.object({
 		type: z.literal('reorder-top'),
 		zoneId,
-		cardIds: z.array(cardId).min(1)
+		cardIds: z.array(cardId).min(1).max(78)
 	})
 	.strict();
 

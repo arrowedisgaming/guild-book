@@ -99,9 +99,14 @@
 	// restores any earlier work in the target mode, so switching themes back
 	// and forth never loses either side's progress.
 	$effect(() => {
+		// A restored stash always takes the theme just chosen: the outgoing
+		// draft's themeId was overwritten by the radio before this effect ran,
+		// so the stash may carry the other mode's theme — never trust it.
 		if (theme && personMode && draft.kind !== 'person') {
 			denizenBuilder.swapMode('person', (stashed, current) =>
-				stashed ? carryIdentity(stashed, current) : seedPersonFromTheme(current, theme)
+				stashed
+					? { ...carryIdentity(stashed, current), themeId: current.themeId }
+					: seedPersonFromTheme(current, theme)
 			);
 			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
 		}

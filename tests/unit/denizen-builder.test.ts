@@ -16,6 +16,8 @@ import {
 	needsPersonSeed,
 	clearPersonState,
 	setPersonKith,
+	setPersonWoundTracking,
+	personTracksWounds,
 	assignPersonSpreadValue,
 	PERSON_STAT_NOTE
 } from '$lib/engine/denizen-builder';
@@ -489,13 +491,14 @@ const seedPerson = () => seedPersonFromTheme(createBlankDraft(), manTheme());
 const kiths = getKiths();
 
 describe('denizen builder — person seeding', () => {
-	it('seeds the adventurer spread with no threat and no HD', () => {
+	it('seeds the adventurer spread, simple default HD, and no threat', () => {
 		const draft = seedPerson();
 		expect(draft.kind).toBe('person');
 		expect(draft.threatId).toBeNull();
 		expect(draft.attributes).toEqual({ swords: '4', pentacles: '3', cups: '2', wands: '1' });
-		expect(draft.health).toBe('');
-		expect(draft.defense).toBe('');
+		// HD pre-filled for simplicity; the statNote explains the GM may change it.
+		expect(draft.health).toBe('5');
+		expect(draft.defense).toBe('1');
 		expect(draft.statNote).toBe(PERSON_STAT_NOTE);
 		expect(draft.pools).toEqual([]);
 	});
@@ -555,7 +558,7 @@ describe('denizen builder — person kith and spread', () => {
 	});
 
 	it('applies the HD pair rule to people who are given stats', () => {
-		const draft = { ...seedPerson(), health: '3' };
+		const draft = { ...seedPerson(), defense: '' };
 		expect(draftStatWarnings(draft)).toEqual([
 			'Health and Defense are a pair — fill in both or leave both blank.'
 		]);
@@ -568,12 +571,48 @@ describe('denizen builder — materializing a person', () => {
 		expect(denizen.theme).toBe('man');
 		expect('threat' in denizen).toBe(false);
 		expect(denizen.statNote).toBe(PERSON_STAT_NOTE);
-		expect('health' in denizen).toBe(false);
+		// Simple default HD carries through (the statNote explains it).
+		expect(denizen.health).toBe(5);
+		expect(denizen.defense).toBe(1);
 	});
 
 	it('carries the kith note into the definition', () => {
 		const denizen = toDenizenDefinition(setPersonKith(seedPerson(), kiths[0]));
 		expect(denizen.notes?.[0].name).toBe(`Kith: ${kiths[0].name}`);
+	});
+});
+
+describe('denizen builder — person wound tracking', () => {
+	it('toggles the Wounds note and a * Health', () => {
+		const tracking = setPersonWoundTracking(seedPerson(), true);
+		expect(personTracksWounds(tracking)).toBe(true);
+		expect(tracking.health).toBe('*');
+		const note = tracking.notes.find((n) => n.name === 'Wounds')!;
+		expect(note.text).toMatch(/notch a piece of armor/i);
+		expect(note.text).toMatch(/Death’s Door/);
+
+		const off = setPersonWoundTracking(tracking, false);
+		expect(personTracksWounds(off)).toBe(false);
+		expect(off.health).toBe('5'); // the * restores to the simple default
+	});
+
+	it('never doubles the Wounds note and keeps a custom Health on toggle-off', () => {
+		let draft = setPersonWoundTracking(seedPerson(), true);
+		draft = setPersonWoundTracking(draft, true);
+		expect(draft.notes.filter((n) => n.name === 'Wounds')).toHaveLength(1);
+
+		draft = { ...draft, health: '8' }; // user overrode the * by hand
+		draft = setPersonWoundTracking(draft, false);
+		expect(draft.health).toBe('8');
+		expect(personTracksWounds(draft)).toBe(false);
+	});
+
+	it('a wound-tracking person still materializes and passes stat warnings', () => {
+		const draft = setPersonWoundTracking(seedPerson(), true);
+		expect(draftStatWarnings(draft)).toEqual([]);
+		const denizen = toDenizenDefinition(draft);
+		expect(denizen.health).toBe('*');
+		expect(denizen.notes?.some((n) => n.name === 'Wounds')).toBe(true);
 	});
 });
 

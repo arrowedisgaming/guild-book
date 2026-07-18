@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **People in the denizen builder**: the Man theme now follows the book's
+  "make actual characters" advice as an adversary path. Choosing it swaps the
+  wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread
+  assigned by swap, an optional flavour-only kith recorded as a stat-block
+  note, HD left to the GM, and custom gimmick dooms instead of template
+  pick-lists. Exports omit the threat line entirely for people.
 - **Dungeon lords in the denizen builder**: threats fought in named pools of
   Health and Defense are now fully buildable. A new Pools step (shown only for
   pool-based threats) adds, names, reorders, and removes pools, each with its

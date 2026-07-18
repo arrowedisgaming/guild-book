@@ -328,6 +328,27 @@ export function personHasTalent(draft: DenizenDraft, talent: TalentDefinition): 
 	return draft.notes.some((n) => n.name === `${TALENT_NOTE_PREFIX}${talent.name}`);
 }
 
+/** True when the draft carries this talent as the kin's arete note. */
+export function personHasAreteTalent(draft: DenizenDraft, talent: TalentDefinition): boolean {
+	return draft.notes.some((n) => n.name === `${ARETE_NOTE_PREFIX}${talent.name}`);
+}
+
+/**
+ * Include or drop the kin's arete talent note without touching the kin
+ * choice — the preview checkbox under the kin picker drives this.
+ */
+export function togglePersonAreteTalent(
+	draft: DenizenDraft,
+	talent: TalentDefinition,
+	enabled: boolean
+): DenizenDraft {
+	const notes = draft.notes.filter((n) => !n.name.startsWith(ARETE_NOTE_PREFIX));
+	if (enabled) {
+		notes.push({ name: `${ARETE_NOTE_PREFIX}${talent.name}`, text: talent.description });
+	}
+	return { ...draft, notes };
+}
+
 /** Add or remove a talent note (path or off-path — talents are just notes). */
 export function togglePersonTalent(
 	draft: DenizenDraft,

@@ -18,7 +18,9 @@ import {
 	setPersonKith,
 	setPersonKin,
 	personHasTalent,
+	personHasAreteTalent,
 	togglePersonTalent,
+	togglePersonAreteTalent,
 	setPersonWoundTracking,
 	personTracksWounds,
 	assignPersonSpreadValue
@@ -637,6 +639,22 @@ describe('denizen builder — person wound tracking', () => {
 		const rekithed = setPersonKith(draft, kiths[1]);
 		expect(rekithed.kinId).toBeNull();
 		expect(rekithed.notes.some((n) => n.name.startsWith('Arete'))).toBe(false);
+	});
+
+	it('the arete note can be unticked without losing the kin', () => {
+		const kith = kiths[0];
+		const kin = kith.kins.find((k) => k.areteTalentId)!;
+		const arete = getTalents().find((t) => t.id === kin.areteTalentId)!;
+
+		let draft = setPersonKin(setPersonKith(seedPerson(), kith), kin, arete);
+		expect(personHasAreteTalent(draft, arete)).toBe(true);
+
+		draft = togglePersonAreteTalent(draft, arete, false);
+		expect(personHasAreteTalent(draft, arete)).toBe(false);
+		expect(draft.kinId).toBe(kin.id); // the kin choice survives
+
+		draft = togglePersonAreteTalent(draft, arete, true);
+		expect(draft.notes.filter((n) => n.name.startsWith('Arete talent:'))).toHaveLength(1);
 	});
 
 	it('talents toggle on and off as notes', () => {

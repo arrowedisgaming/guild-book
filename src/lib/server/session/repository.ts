@@ -32,13 +32,13 @@ import {
 } from '$lib/server/db/schema';
 import { ownedPrivateZoneSchema, pendingZoneSchema, publicZoneSchema, sessionPhaseSchema } from '$lib/schemas/session.schema';
 import { parseSessionRuntimeContent } from '$lib/server/content/session-runtime';
+import { canonicalDigest } from '$lib/server/content/canonical-json';
 import type {
 	CardId,
 	OwnedPrivateZone,
 	PendingZone,
 	PublicZone,
 	SessionActor,
-	SessionCommandType,
 	SessionEngineStateV1,
 	SessionEvent,
 	SessionPhase,
@@ -517,6 +517,43 @@ function campaignEventInsertStatement(input: {
 	);
 }
 
+/** Like `campaignEventInsertStatement`, but expressed as `INSERT ... SELECT
+ * ... WHERE EXISTS(...)` instead of `INSERT ... VALUES(...)`, so the row is
+ * inserted only if `input.sessionId`'s `play_sessions` row still has status
+ * `guardStatus` *after* the preceding statements in this same batch ran. Used
+ * by the lifecycle
+ * builders below so a status flip that turned out to be a no-op (belt-and-
+ * suspenders alongside the version claim that should already prevent this)
+ * never leaves behind an audit event claiming a transition happened when it
+ * didn't. */
+function conditionalCampaignEventInsertStatement(input: {
+	campaignId: string;
+	sessionId: string;
+	commandRowId: string | null;
+	actorUserId: string | null;
+	kind: string;
+	publicPayload: unknown;
+	createdAt: Date;
+	guardStatus: string;
+}): AtomicStatement {
+	return statement(
+		`INSERT INTO campaign_events (id, campaign_id, session_id, command_id, actor_user_id, kind, public_payload_json, created_at)
+		 SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM campaign_events), ?, ?, ?, ?, ?, ?, ?
+		 WHERE EXISTS (SELECT 1 FROM play_sessions WHERE id = ? AND status = ?)`,
+		[
+			input.campaignId,
+			input.sessionId,
+			input.commandRowId,
+			input.actorUserId,
+			input.kind,
+			JSON.stringify(input.publicPayload),
+			input.createdAt.getTime(),
+			input.sessionId,
+			input.guardStatus
+		]
+	);
+}
+
 /** Inserts one `campaign_event_secrets` row for the `eventIndex`-th event
  * (0-based, insertion order) attached to `(sessionId, commandRowId)` in this
  * same batch — see `campaignEventInsertStatement`'s comment for why the
@@ -577,6 +614,53 @@ function eventStatements(input: {
 	return out;
 }
 
+/**
+ * The `session_commands` version-claim insert, shared by every atomic write
+ * that advances `play_sessions.version` by one: accepted `SessionCommand`s
+ * AND lifecycle actions (freeze/recover/end — amendment 8's "structural
+ * commands through the same service", now literal, not just patterned-
+ * after). The unique partial index on `(session_id, resulting_version)`
+ * (`db/schema.ts`) is what makes this the single point of serialization
+ * between racing writers, regardless of whether they're two card commands or
+ * a card command racing a GM's `endSession` — whichever one's claim lands
+ * first wins; the loser's *entire* batch (fragment writes, cleanup deletes,
+ * whatever it was) rolls back, never partially applies. This is the fix for
+ * the critical race where lifecycle actions previously had no version claim
+ * at all and could interleave with an in-flight command's commit. */
+function sessionCommandClaimStatement(input: {
+	commandRowId: string;
+	sessionId: string;
+	commandId: string;
+	actorUserId: string | null;
+	requestHash: string;
+	commandType: string;
+	clientObservedVersion: number;
+	structuralPreconditionVersion: number | null;
+	expectedVersion: number;
+	now: Date;
+}): AtomicStatement {
+	return statement(
+		`INSERT INTO session_commands
+			(id, session_id, command_id, actor_user_id, request_hash, command_type,
+			 client_observed_version, structural_precondition_version, expected_version, resulting_version,
+			 status, outcome_metadata_json, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'accepted', '{}', ?)`,
+		[
+			input.commandRowId,
+			input.sessionId,
+			input.commandId,
+			input.actorUserId,
+			input.requestHash,
+			input.commandType,
+			input.clientObservedVersion,
+			input.structuralPreconditionVersion,
+			input.expectedVersion,
+			input.expectedVersion + 1,
+			input.now.getTime()
+		]
+	);
+}
+
 export interface AcceptedCommandInput {
 	commandRowId: string;
 	sessionId: string;
@@ -584,7 +668,10 @@ export interface AcceptedCommandInput {
 	commandId: string;
 	actorUserId: string;
 	requestHash: string;
-	commandType: SessionCommandType;
+	/** A `SessionCommandType` for an in-band command, or a lifecycle action
+	 * label (`'freeze-session'`/`'recover-session'`/`'end-session'`) — the
+	 * `command_type` column is free text, no CHECK constraint. */
+	commandType: string;
 	clientObservedVersion: number;
 	structuralPreconditionVersion: number | null;
 	expectedVersion: number;
@@ -611,26 +698,18 @@ export function buildAcceptedCommandStatements(input: AcceptedCommandInput): Ato
 	);
 
 	const statements: AtomicStatement[] = [
-		statement(
-			`INSERT INTO session_commands
-				(id, session_id, command_id, actor_user_id, request_hash, command_type,
-				 client_observed_version, structural_precondition_version, expected_version, resulting_version,
-				 status, outcome_metadata_json, created_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'accepted', '{}', ?)`,
-			[
-				input.commandRowId,
-				input.sessionId,
-				input.commandId,
-				input.actorUserId,
-				input.requestHash,
-				input.commandType,
-				input.clientObservedVersion,
-				input.structuralPreconditionVersion,
-				input.expectedVersion,
-				nextVersion,
-				input.now.getTime()
-			]
-		),
+		sessionCommandClaimStatement({
+			commandRowId: input.commandRowId,
+			sessionId: input.sessionId,
+			commandId: input.commandId,
+			actorUserId: input.actorUserId,
+			requestHash: input.requestHash,
+			commandType: input.commandType,
+			clientObservedVersion: input.clientObservedVersion,
+			structuralPreconditionVersion: input.structuralPreconditionVersion,
+			expectedVersion: input.expectedVersion,
+			now: input.now
+		}),
 		statement(`UPDATE play_sessions SET version = ?, phase = ?, procedure_id = ?, public_state_json = ? WHERE id = ?`, [
 			nextVersion,
 			input.nextState.phase,
@@ -676,7 +755,10 @@ export interface RejectedCommandInput {
 	commandId: string;
 	actorUserId: string;
 	requestHash: string;
-	commandType: SessionCommandType;
+	/** A `SessionCommandType` for an in-band command, or a lifecycle action
+	 * label (`'freeze-session'`/`'recover-session'`/`'end-session'`) — the
+	 * `command_type` column is free text, no CHECK constraint. */
+	commandType: string;
 	clientObservedVersion: number;
 	structuralPreconditionVersion: number | null;
 	expectedVersion: number;
@@ -715,75 +797,152 @@ export function buildRejectedCommandStatements(input: RejectedCommandInput): Ato
 }
 
 export interface FreezeSessionInput {
+	commandRowId: string;
+	commandId: string;
 	sessionId: string;
 	campaignId: string;
+	/** `null` for the automatic freeze-on-error path (system-triggered, no
+	 * specific acting user); a real user id for a future GM-initiated freeze. */
+	actorUserId: string | null;
+	/** The version this freeze claims to transition FROM — see
+	 * `sessionCommandClaimStatement`'s doc comment for why this is what
+	 * serializes freeze against a racing command/recover/end. */
+	expectedVersion: number;
 	reason: string;
 	now: Date;
 }
 
-/** Freeze-on-error (brief Step 4's last paragraph): flips status to
- * `'frozen'` and records a redacted audit event. Deliberately status-guarded
- * rather than version-claimed — this is an emergency path triggered by a
- * load/invariant failure, where we may not have a trustworthy version to
- * claim against; a benign race against a second freeze attempt just produces
- * a harmless duplicate audit event, never a correctness issue (no card
- * identity, no private data — see `reason`'s callers). */
+/** Freeze-on-error (brief Step 4's last paragraph): claims the next version
+ * (exactly like an accepted structural command), flips status to `'frozen'`,
+ * and records a redacted audit event — one atomic write. Claiming a version
+ * here (rather than the pre-fix status-guarded-only approach) is what
+ * prevents an in-flight command's commit — built from a read at the *same*
+ * version — from landing after the freeze: both would try to claim the same
+ * `resulting_version`, so only one can ever win. */
 export function buildFreezeStatements(input: FreezeSessionInput): AtomicStatement[] {
+	const requestHash = canonicalDigest({ action: 'freeze-session', reason: input.reason });
 	return [
-		statement(`UPDATE play_sessions SET status = 'frozen' WHERE id = ? AND status != 'ended'`, [input.sessionId]),
-		campaignEventInsertStatement({
+		sessionCommandClaimStatement({
+			commandRowId: input.commandRowId,
+			sessionId: input.sessionId,
+			commandId: input.commandId,
+			actorUserId: input.actorUserId,
+			requestHash,
+			commandType: 'freeze-session',
+			clientObservedVersion: input.expectedVersion,
+			structuralPreconditionVersion: input.expectedVersion,
+			expectedVersion: input.expectedVersion,
+			now: input.now
+		}),
+		statement(`UPDATE play_sessions SET version = ?, status = 'frozen' WHERE id = ? AND status != 'ended'`, [
+			input.expectedVersion + 1,
+			input.sessionId
+		]),
+		conditionalCampaignEventInsertStatement({
 			campaignId: input.campaignId,
 			sessionId: input.sessionId,
-			commandRowId: null,
-			actorUserId: null,
+			commandRowId: input.commandRowId,
+			actorUserId: input.actorUserId,
 			kind: 'session-frozen',
 			publicPayload: { reason: input.reason },
-			createdAt: input.now
+			createdAt: input.now,
+			guardStatus: 'frozen'
 		})
 	];
 }
 
 export interface RecoverSessionInput {
+	commandRowId: string;
+	commandId: string;
 	sessionId: string;
 	campaignId: string;
 	actorUserId: string;
+	expectedVersion: number;
 	now: Date;
 }
 
+/** Same version-claim pattern as `buildFreezeStatements` — see its doc
+ * comment. */
 export function buildRecoverStatements(input: RecoverSessionInput): AtomicStatement[] {
+	const requestHash = canonicalDigest({ action: 'recover-session' });
 	return [
-		statement(`UPDATE play_sessions SET status = 'active' WHERE id = ? AND status = 'frozen'`, [input.sessionId]),
-		campaignEventInsertStatement({
+		sessionCommandClaimStatement({
+			commandRowId: input.commandRowId,
+			sessionId: input.sessionId,
+			commandId: input.commandId,
+			actorUserId: input.actorUserId,
+			requestHash,
+			commandType: 'recover-session',
+			clientObservedVersion: input.expectedVersion,
+			structuralPreconditionVersion: input.expectedVersion,
+			expectedVersion: input.expectedVersion,
+			now: input.now
+		}),
+		statement(`UPDATE play_sessions SET version = ?, status = 'active' WHERE id = ? AND status = 'frozen'`, [
+			input.expectedVersion + 1,
+			input.sessionId
+		]),
+		conditionalCampaignEventInsertStatement({
 			campaignId: input.campaignId,
 			sessionId: input.sessionId,
-			commandRowId: null,
+			commandRowId: input.commandRowId,
 			actorUserId: input.actorUserId,
 			kind: 'session-recovered',
 			publicPayload: {},
-			createdAt: input.now
+			createdAt: input.now,
+			guardStatus: 'active'
 		})
 	];
 }
 
 export interface EndSessionInput {
+	commandRowId: string;
+	commandId: string;
 	sessionId: string;
 	campaignId: string;
 	actorUserId: string;
+	expectedVersion: number;
 	finalPublicStateJson: string;
 	publicHistoryChecksum: string;
 	now: Date;
 }
 
-/** End cleanup (amendment 9): stamps the final public snapshot + checksum,
- * flips status to `'ended'`, deletes every private-state row and secret
- * payload for this session, clears the server-only fragment's JSON (the
- * shuffle seed and hidden pile order never need to survive an ended
- * session), and records the closing event — all in the one atomic write. */
+/**
+ * End cleanup (amendment 9): claims the next version (same pattern as
+ * `buildFreezeStatements` — the frozen envelope comment lists "end session"
+ * as a structural intent, and this claim is what closes the critical race
+ * where a racing accepted-command commit could otherwise land after this
+ * batch's cleanup and resurrect deleted private/secret rows into an ended
+ * session), stamps the final public snapshot + checksum, flips status to
+ * `'ended'`, deletes every private-state row and secret payload for this
+ * session, clears the server-only fragment's JSON (the shuffle seed and
+ * hidden pile order never need to survive an ended session), and records the
+ * closing event — all in the one atomic write. Because the whole batch lives
+ * or dies with the claim, `finalPublicStateJson`/`publicHistoryChecksum`
+ * (computed by the caller from a read at `expectedVersion`) can never commit
+ * against a version other than the one they were actually computed from — if
+ * a racing write claims `expectedVersion + 1` first, this whole batch
+ * (checksum included) rolls back instead of silently persisting a stale
+ * snapshot.
+ */
 export function buildEndSessionStatements(input: EndSessionInput): AtomicStatement[] {
-	const statements: AtomicStatement[] = [
+	const requestHash = canonicalDigest({ action: 'end-session' });
+	return [
+		sessionCommandClaimStatement({
+			commandRowId: input.commandRowId,
+			sessionId: input.sessionId,
+			commandId: input.commandId,
+			actorUserId: input.actorUserId,
+			requestHash,
+			commandType: 'end-session',
+			clientObservedVersion: input.expectedVersion,
+			structuralPreconditionVersion: input.expectedVersion,
+			expectedVersion: input.expectedVersion,
+			now: input.now
+		}),
 		statement(
-			`UPDATE play_sessions SET status = 'ended', ended_at = ?, ended_by_user_id = ?, final_public_state_json = ?, public_history_checksum = ? WHERE id = ? AND status != 'ended'`,
-			[input.now.getTime(), input.actorUserId, input.finalPublicStateJson, input.publicHistoryChecksum, input.sessionId]
+			`UPDATE play_sessions SET version = ?, status = 'ended', ended_at = ?, ended_by_user_id = ?, final_public_state_json = ?, public_history_checksum = ? WHERE id = ? AND status != 'ended'`,
+			[input.expectedVersion + 1, input.now.getTime(), input.actorUserId, input.finalPublicStateJson, input.publicHistoryChecksum, input.sessionId]
 		),
 		statement(`UPDATE session_server_states SET server_state_json = '{}' WHERE session_id = ?`, [input.sessionId]),
 		statement(`DELETE FROM session_private_states WHERE session_id = ?`, [input.sessionId]),
@@ -791,17 +950,17 @@ export function buildEndSessionStatements(input: EndSessionInput): AtomicStateme
 			`DELETE FROM campaign_event_secrets WHERE event_id IN (SELECT id FROM campaign_events WHERE session_id = ?)`,
 			[input.sessionId]
 		),
-		campaignEventInsertStatement({
+		conditionalCampaignEventInsertStatement({
 			campaignId: input.campaignId,
 			sessionId: input.sessionId,
-			commandRowId: null,
+			commandRowId: input.commandRowId,
 			actorUserId: input.actorUserId,
 			kind: 'session-ended',
 			publicPayload: { publicHistoryChecksum: input.publicHistoryChecksum },
-			createdAt: input.now
+			createdAt: input.now,
+			guardStatus: 'ended'
 		})
 	];
-	return statements;
 }
 
 export interface StartSessionInput {

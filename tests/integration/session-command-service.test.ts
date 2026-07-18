@@ -224,6 +224,16 @@ describe('session command service — idempotency and contention', () => {
 		const result = await executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'player-a', envelope: drawEnvelope('command-1') });
 		expect(result.outcome.ok).toBe(true);
 
+		// The exact card player-a actually drew, read straight out of their
+		// private-state fragment — checked against this, not a suit-prefix
+		// guess, so the assertion covers every suit AND every major arcana id
+		// (majors don't share a common string prefix the way minors do).
+		const privateRow = sqlite
+			.prepare("SELECT private_state_json AS json FROM session_private_states WHERE session_id = 'session-a' AND recipient_user_id = 'player-a'")
+			.get() as { json: string };
+		const drawnCardIds: string[] = JSON.parse(privateRow.json).zones.flatMap((zone: { cards: string[] }) => zone.cards);
+		expect(drawnCardIds.length).toBeGreaterThan(0);
+
 		const observerResult = await executeCommand({
 			dbContext: ctx,
 			campaignId: 'campaign-a',
@@ -236,8 +246,9 @@ describe('session command service — idempotency and contention', () => {
 		// certainly no view into player-a's private cards beyond a card-back count.
 		expect(observerProjection).not.toHaveProperty('gmHand');
 		const serialized = JSON.stringify(observerResult.projection);
-		expect(serialized).not.toContain('cups-');
-		expect(serialized).not.toContain('swords-');
+		for (const cardId of drawnCardIds) {
+			expect(serialized).not.toContain(cardId);
+		}
 	});
 });
 
@@ -317,25 +328,68 @@ describe('session lifecycle — freeze / recover / end', () => {
 		expect(status.status).toBe('frozen');
 	});
 
-	it('lets the GM recover a frozen session back to active', async () => {
+	it('lets the GM recover a frozen session back to active, persisting a rejected row for the non-GM attempt (§6.5 auditability)', async () => {
 		await startFixtureSession();
 		sqlite.prepare("UPDATE play_sessions SET status = 'frozen' WHERE id = 'session-a'").run();
 
 		const notGm = await recoverSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'player-a' });
 		expect(notGm).toEqual({ ok: false, code: 'not-authorized' });
+		// IMPORTANT 1: a rejected lifecycle action from a known-but-wrong-role
+		// actor IS persisted, same as an in-band command rejection.
+		expect(countRowsByType(sqlite, 'session-a', 'recover-session')).toBe(1);
 
 		const result = await recoverSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a', expectedVersion: 1 });
 		expect(result).toEqual({ ok: true });
-		const status = sqlite.prepare("SELECT status FROM play_sessions WHERE id = 'session-a'").get() as { status: string };
-		expect(status.status).toBe('active');
+		const row = sqlite.prepare("SELECT status, version FROM play_sessions WHERE id = 'session-a'").get() as { status: string; version: number };
+		expect(row.status).toBe('active');
+		expect(row.version).toBe(2); // recover now claims a version too.
 	});
 
-	it('rejects recovery with a stale expectedVersion', async () => {
+	it('rejects recovery with a stale expectedVersion, persisting the rejection', async () => {
 		await startFixtureSession();
 		sqlite.prepare("UPDATE play_sessions SET status = 'frozen' WHERE id = 'session-a'").run();
 
 		const result = await recoverSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a', expectedVersion: 99 });
 		expect(result).toEqual({ ok: false, code: 'stale-structure' });
+		expect(countRowsByType(sqlite, 'session-a', 'recover-session')).toBe(1);
+	});
+
+	it('rejects recovery of a session that is not frozen, persisting the rejection', async () => {
+		await startFixtureSession();
+		const result = await recoverSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a' });
+		expect(result).toEqual({ ok: false, code: 'illegal-command' });
+		expect(countRowsByType(sqlite, 'session-a', 'recover-session')).toBe(1);
+	});
+
+	it('rejects a card command that raced a concurrent endSession, leaving the DB internally consistent either way', async () => {
+		await startFixtureSession();
+		const drawEnvelope1: SessionCommandEnvelope<SessionCommand> = {
+			commandId: 'draw-vs-end',
+			observedSessionVersion: 1,
+			command: { type: 'draw', deck: 'player', destinationZoneId: 'hand:player-a', count: 1 }
+		};
+
+		const [commandResult, endResult] = await Promise.all([
+			executeCommand({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'player-a', envelope: drawEnvelope1 }),
+			endSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a' })
+		]);
+
+		// Exactly one of {the draw, the end} can have won the version-1->2
+		// transition — never both, and never a state where end's cleanup ran
+		// but the draw ALSO landed (the critical bug this regresses).
+		const row = sqlite.prepare("SELECT status FROM play_sessions WHERE id = 'session-a'").get() as { status: string };
+		if (row.status === 'ended') {
+			expect(commandResult.outcome.ok).toBe(false);
+			expect(endResult.ok).toBe(true);
+			expect((sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get() as { n: number }).n).toBe(0);
+			expect((sqlite.prepare("SELECT server_state_json AS json FROM session_server_states WHERE session_id = 'session-a'").get() as { json: string }).json).toBe('{}');
+			expect((sqlite.prepare('SELECT count(*) AS n FROM campaign_event_secrets').get() as { n: number }).n).toBe(0);
+		} else {
+			expect(row.status).toBe('active');
+			expect(commandResult.outcome.ok).toBe(true);
+			expect(endResult.ok).toBe(false);
+			expect((sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get() as { n: number }).n).toBe(3);
+		}
 	});
 
 	it('ends a session: stamps a checksum, deletes private state and secrets, and blocks further commands', async () => {
@@ -395,6 +449,13 @@ function countCommandRows(sqlite: Database.Database, sessionId: string, commandI
 	const row = sqlite
 		.prepare('SELECT count(*) AS count FROM session_commands WHERE session_id = ? AND command_id = ?')
 		.get(sessionId, commandId) as { count: number };
+	return row.count;
+}
+
+function countRowsByType(sqlite: Database.Database, sessionId: string, commandType: string): number {
+	const row = sqlite
+		.prepare('SELECT count(*) AS count FROM session_commands WHERE session_id = ? AND command_type = ?')
+		.get(sessionId, commandType) as { count: number };
 	return row.count;
 }
 

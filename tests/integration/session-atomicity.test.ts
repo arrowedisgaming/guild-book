@@ -18,7 +18,7 @@ import {
 	standardPrivateZonesForMember,
 	standardPublicZones
 } from '$lib/server/session/repository';
-import { startSession } from '$lib/server/session/lifecycle';
+import { endSession, startSession } from '$lib/server/session/lifecycle';
 import { executeCommand } from '$lib/server/session/command-service';
 import { reduceSession, type ReduceContext } from '$lib/engine/session/reducer';
 import { toSessionEngineRuntime, compileSessionRuntimeContent } from '$lib/server/content/session-runtime';
@@ -174,24 +174,110 @@ describe('session atomicity — SQLite failure-injection matrix', () => {
 		});
 
 		const statements = buildEndSessionStatements({
+			commandRowId: nanoid(),
+			commandId: nanoid(),
 			sessionId: 'session-a',
 			campaignId: 'campaign-a',
 			actorUserId: 'gm-a',
+			expectedVersion: 2,
 			finalPublicStateJson: '{"final":true}',
 			publicHistoryChecksum: 'deadbeef',
 			now: new Date(3_000)
 		});
-		expect(statements.length).toBeGreaterThanOrEqual(5);
+		// end-session now claims a version too (the critical-fix redesign), so
+		// the batch includes the claim insert as its first statement.
+		expect(statements.length).toBeGreaterThanOrEqual(6);
+		const baselineCommandCount = (sqlite.prepare("SELECT count(*) AS n FROM session_commands WHERE session_id = 'session-a'").get() as { n: number }).n;
 
 		for (let i = 0; i < statements.length; i++) {
 			await expect(runAtomic(ctx, corruptAt(statements, i))).rejects.toThrow();
-			expect(sqlite.prepare("SELECT status FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ status: 'active' });
+			expect(sqlite.prepare("SELECT status, version FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ status: 'active', version: 2 });
 			expect(sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get()).toEqual({ n: 3 });
+			expect(sqlite.prepare("SELECT count(*) AS n FROM session_commands WHERE session_id = 'session-a'").get()).toEqual({ n: baselineCommandCount });
 		}
 
 		await runAtomic(ctx, statements);
-		expect(sqlite.prepare("SELECT status FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ status: 'ended' });
+		expect(sqlite.prepare("SELECT status, version FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ status: 'ended', version: 3 });
 		expect(sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get()).toEqual({ n: 0 });
+	});
+
+	/**
+	 * CRITICAL regression (reviewer-confirmed): before the fix, freeze/recover/
+	 * end never took a version claim, so nothing serialized them against an
+	 * in-flight command's commit. This deterministically reproduces the exact
+	 * reported interleaving — a card command's read/reduce phase completes
+	 * *before* a concurrent `endSession` runs its cleanup, but the command's
+	 * stale commit is only *attempted* afterward — and proves the late commit
+	 * now fails outright (claim collision on the version `endSession` already
+	 * consumed) instead of silently resurrecting deleted private state/secrets
+	 * or rewriting the server fragment (with its `shuffleSeed`) into an ended
+	 * session.
+	 */
+	it('rejects a stale accepted-command commit built before a concurrent endSession already claimed that version', async () => {
+		const started = await startSession({ dbContext: ctx, campaignId: 'campaign-a', actorUserId: 'gm-a', sessionId: 'session-a', shuffleSeed: 'race-seed', now: new Date(1_000) });
+		if (!started.ok) throw new Error('fixture session failed to start');
+
+		// The card command's read+reduce phase — everything up to the point
+		// where a real `executeCommand` call would `await runAtomic(...)`.
+		const db = ctx.db as unknown as AppDb;
+		const actor: SessionActor = { kind: 'player', userId: 'player-a' };
+		const loadedBeforeEnd = await loadSessionForReduce(db, 'session-a');
+		const context: ReduceContext = { actor, runtime: toSessionEngineRuntime(loadedBeforeEnd.runtimeContent), rng: makeRng('stale-race-seed') };
+		const command: SessionCommand = { type: 'draw', deck: 'player', destinationZoneId: 'hand:player-a', count: 1 };
+		const reduceResult = reduceSession(loadedBeforeEnd.engineState, command, context);
+		if (!reduceResult.ok) throw new Error('fixture reduce unexpectedly rejected');
+		const nextState = { ...reduceResult.state, version: loadedBeforeEnd.currentVersion + 1 };
+		const staleStatements = buildAcceptedCommandStatements({
+			commandRowId: nanoid(),
+			sessionId: 'session-a',
+			campaignId: 'campaign-a',
+			commandId: 'stale-draw',
+			actorUserId: 'player-a',
+			requestHash: 'stale-hash',
+			commandType: 'draw',
+			clientObservedVersion: 1,
+			structuralPreconditionVersion: null,
+			expectedVersion: loadedBeforeEnd.currentVersion,
+			nextState,
+			events: reduceResult.events,
+			shuffleSeed: loadedBeforeEnd.shuffleSeed,
+			gmUserId: loadedBeforeEnd.gmUserId,
+			recipientUserIds: loadedBeforeEnd.recipientUserIds,
+			now: new Date(2_000),
+			idFactory: () => nanoid()
+		});
+
+		// The GM ends the session — completing before the stale commit above
+		// is ever attempted (the "concurrent endSession completes cleanup"
+		// step of the reported race).
+		const endResult = await endSession({ dbContext: ctx, campaignId: 'campaign-a', sessionId: 'session-a', actorUserId: 'gm-a' });
+		expect(endResult.ok).toBe(true);
+		const preAttemptSnapshot = {
+			status: (sqlite.prepare("SELECT status FROM play_sessions WHERE id = 'session-a'").get() as { status: string }).status,
+			privateStateCount: (sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get() as { n: number }).n,
+			serverStateJson: (sqlite.prepare("SELECT server_state_json AS json FROM session_server_states WHERE session_id = 'session-a'").get() as { json: string }).json,
+			secretCount: (sqlite.prepare('SELECT count(*) AS n FROM campaign_event_secrets').get() as { n: number }).n
+		};
+		expect(preAttemptSnapshot).toEqual({ status: 'ended', privateStateCount: 0, serverStateJson: '{}', secretCount: 0 });
+
+		// The stale commit — built from a read that happened *before* the end
+		// above — is now attempted. It MUST fail (claim collision on the
+		// version `endSession` already consumed) and MUST NOT resurrect, or
+		// mutate, anything `endSession` already cleaned up.
+		await expect(runAtomic(ctx, staleStatements)).rejects.toThrow();
+
+		const afterStaleAttempt = {
+			status: (sqlite.prepare("SELECT status, version FROM play_sessions WHERE id = 'session-a'").get() as { status: string; version: number }),
+			privateStateCount: (sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get() as { n: number }).n,
+			serverStateJson: (sqlite.prepare("SELECT server_state_json AS json FROM session_server_states WHERE session_id = 'session-a'").get() as { json: string }).json,
+			secretCount: (sqlite.prepare('SELECT count(*) AS n FROM campaign_event_secrets').get() as { n: number }).n,
+			commandRowForStaleDraw: sqlite.prepare("SELECT count(*) AS n FROM session_commands WHERE session_id = 'session-a' AND command_id = 'stale-draw'").get()
+		};
+		expect(afterStaleAttempt.status).toEqual({ status: 'ended', version: 2 });
+		expect(afterStaleAttempt.privateStateCount).toBe(0);
+		expect(afterStaleAttempt.serverStateJson).toBe('{}'); // NOT rewritten with a fresh shuffleSeed/draw pile.
+		expect(afterStaleAttempt.secretCount).toBe(0); // NOT resurrected.
+		expect(afterStaleAttempt.commandRowForStaleDraw).toEqual({ n: 0 }); // The stale command's claim never landed.
 	});
 });
 
@@ -223,7 +309,16 @@ describe('session atomicity — D1 representative failures', () => {
 	});
 
 	afterEach(async () => {
-		await d1.exec(`DELETE FROM campaign_events; DELETE FROM session_private_states; DELETE FROM session_server_states; DELETE FROM session_runtime_contents; DELETE FROM play_sessions; DELETE FROM campaign_members; DELETE FROM campaigns; DELETE FROM users;`);
+		// campaign_events first — its ON DELETE CASCADE takes
+		// campaign_event_secrets with it, and only once campaign_events (which
+		// FKs to session_commands via command_id) is gone can session_commands
+		// itself be deleted cleanly. session_commands was missing from this
+		// cleanup entirely before this fix — rows silently accumulated across
+		// tests and could violate `session_commands_session_command_uq` on a
+		// session/commandId reused by a later test.
+		await d1.exec(
+			`DELETE FROM campaign_events; DELETE FROM session_commands; DELETE FROM session_private_states; DELETE FROM session_server_states; DELETE FROM session_runtime_contents; DELETE FROM play_sessions; DELETE FROM campaign_members; DELETE FROM campaigns; DELETE FROM users;`
+		);
 	});
 
 	it('rolls back the accepted-command batch on D1 at the first, a middle, and the last statement', async () => {

@@ -105,6 +105,15 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		};
 	}
 	const envelope = parsed.data as unknown as SessionCommandEnvelope<SessionCommand>;
+	// Hashes only `envelope.command` — deliberately excludes
+	// `expectedStructuralVersion` (and `observedSessionVersion`/
+	// `observedCharacterVersion`). This is a Task 6 client contract, not an
+	// oversight: replaying the same `commandId` with the same `command` but a
+	// *corrected* `expectedStructuralVersion` still hits the same hash, so the
+	// idempotency lookup below replays the original stored outcome (including
+	// a stale `stale-structure` rejection) rather than re-attempting with the
+	// fixed precondition. A client that wants a genuine retry after
+	// `stale-structure` must mint a new `commandId`.
 	const requestHash = sha256Hex(canonicalJsonStringify(envelope.command));
 
 	// Step 3 — idempotency lookup by (sessionId, commandId).
@@ -172,7 +181,10 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			loaded = await loadSessionForReduce(db, sessionId);
 		} catch (cause) {
 			if (cause instanceof SessionLoadIntegrityError) {
-				await freezeSessionForFailure(dbContext, { sessionId, campaignId, reason: 'load-integrity-failure' });
+				// `summary.version` (not `loaded.currentVersion` — the full load
+				// just failed) is the freshest version this attempt actually
+				// confirmed, so freeze claims against that.
+				await freezeSessionForFailure(dbContext, { sessionId, campaignId, reason: 'load-integrity-failure', expectedVersion: summary.version });
 				return { outcome: { ok: false, code: 'illegal-command', message: FROZEN_MESSAGE }, projection: null };
 			}
 			if (cause instanceof SessionNotFoundError) {
@@ -190,7 +202,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			reduceResult = reduceSession(loaded.engineState, envelope.command, context);
 		} catch (cause) {
 			if (cause instanceof SessionInvariantError) {
-				await freezeSessionForFailure(dbContext, { sessionId, campaignId, reason: 'invariant-violation' });
+				await freezeSessionForFailure(dbContext, { sessionId, campaignId, reason: 'invariant-violation', expectedVersion: loaded.currentVersion });
 				return { outcome: { ok: false, code: 'illegal-command', message: FROZEN_MESSAGE }, projection: null };
 			}
 			throw cause;
@@ -239,6 +251,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 					code: 'stale-structure',
 					message: 'the session advanced past the expected structural version'
 				};
+				await persistRejection(dbContext, sessionId, envelope, actorUserId, requestHash, loaded.currentVersion, rejection);
 				return {
 					outcome: { ok: false, code: rejection.code, message: rejection.message },
 					projection: await loadProjectionForActor(db, sessionId, campaignId, actor)

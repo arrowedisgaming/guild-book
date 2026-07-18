@@ -21,6 +21,7 @@ export const BUILDER_STEP_CATALOGUE = [
 	{ id: 'concept', label: 'Concept' },
 	{ id: 'theme', label: 'Theme' },
 	{ id: 'threat', label: 'Threat' },
+	{ id: 'person', label: 'Person' },
 	{ id: 'customize', label: 'Customize' },
 	{ id: 'pools', label: 'Pools' },
 	{ id: 'dooms', label: 'Dooms' },
@@ -42,9 +43,19 @@ const LEGACY_STEP_IDS: readonly BuilderStepId[] = [
 	'review'
 ];
 
-/** The step path for a draft: 'pools' appears only for pool-based threats. */
-export function builderPath(poolsMode: boolean): BuilderStep[] {
-	return BUILDER_STEP_CATALOGUE.filter((s) => s.id !== 'pools' || poolsMode);
+export type BuilderPathMode = 'standard' | 'pools' | 'person';
+
+/**
+ * The step path for a draft: 'pools' appears only for pool-based threats;
+ * person-mode themes swap Threat for a Person step.
+ */
+export function builderPath(mode: BuilderPathMode): BuilderStep[] {
+	return BUILDER_STEP_CATALOGUE.filter((s) => {
+		if (s.id === 'pools') return mode === 'pools';
+		if (s.id === 'person') return mode === 'person';
+		if (s.id === 'threat') return mode !== 'person';
+		return true;
+	});
 }
 
 export interface DenizenBuilderState {

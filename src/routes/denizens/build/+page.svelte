@@ -11,8 +11,15 @@
 		addPool,
 		removePool,
 		movePool,
-		updatePool
+		updatePool,
+		seedPersonFromTheme,
+		needsPersonSeed,
+		clearPersonState,
+		setPersonKith,
+		assignPersonSpreadValue,
+		PERSON_SPREAD
 	} from '$lib/engine/denizen-builder';
+	import { SUIT_IDS, type SuitId } from '$lib/types/common';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
 	import { announce } from '$lib/stores/announcer';
@@ -26,16 +33,21 @@
 
 	let theme = $derived(data.themes.find((t) => t.id === draft.themeId));
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
-	let templatesChosen = $derived(Boolean(theme && threat));
 	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null));
 	// Advisory only — never blocks saving (a special stat with a note is legal).
 	let statReminders = $derived(draftStatReminders(draft));
 	let statMessages = $derived([...statWarnings, ...statReminders]);
 
-	// The step path is mode-dependent: pool-based threats visit a Pools step.
+	// The step path is mode-dependent: person-mode themes swap Threat for a
+	// Person step; pool-based threats add a Pools step.
+	let personMode = $derived(theme?.builderMode === 'person');
 	let poolsMode = $derived(threat?.builderMode === 'pools');
-	let steps = $derived(builderPath(poolsMode));
+	let pathMode = $derived(personMode ? ('person' as const) : poolsMode ? ('pools' as const) : ('standard' as const));
+	let steps = $derived(builderPath(pathMode));
 	let stepIndex = $derived(steps.findIndex((s) => s.id === stepId));
+
+	// People need only a theme; creatures need the theme + threat pair.
+	let templatesChosen = $derived(personMode ? Boolean(theme) : Boolean(theme && threat));
 
 	// A mode switch can strand the persisted position on a step the new path
 	// doesn't visit (e.g. 'pools' after reseeding to a standard threat) —
@@ -62,7 +74,7 @@
 
 	// Steps past Threat need both templates; re-seed stats when the pair changes.
 	$effect(() => {
-		if (stepIndex >= 3 && theme && threat && needsReseed(draft)) {
+		if (stepIndex >= 3 && theme && !personMode && threat && needsReseed(draft)) {
 			// Reseeding replaces the pool array — drop pool-scoped edit and
 			// scratch state so half-typed text can't attach to the new pools.
 			editing = null;
@@ -72,13 +84,27 @@
 		}
 	});
 
+	// Person path: seed once past the Theme step; switching back to a standard
+	// theme drops person-only state (kind, kith, the person stat note).
+	$effect(() => {
+		if (stepIndex >= 2 && theme && personMode && needsPersonSeed(draft, theme)) {
+			denizenBuilder.updateDraft((d) => seedPersonFromTheme(d, theme));
+			announce(`Adversary seeded from the ${theme.name} theme.`);
+		}
+		if (theme && !personMode && draft.kind === 'person') {
+			denizenBuilder.updateDraft(clearPersonState);
+		}
+	});
+
 	function go(next: number) {
 		const clamped = Math.max(0, Math.min(next, steps.length - 1));
 		denizenBuilder.goToStep(steps[clamped].id);
 	}
 
 	function stepAccessible(i: number): boolean {
-		return i <= 2 || templatesChosen;
+		// Concept and Theme are always open; the person path's step 2 (Person)
+		// already needs a theme, the creature path's (Threat) does not.
+		return i <= (personMode ? 1 : 2) || templatesChosen;
 	}
 
 	function confirmStartOver() {
@@ -188,6 +214,17 @@
 		editing = null;
 		poolCustom = {};
 		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
+	}
+
+	// --- person (adversary) editing -------------------------------------------
+
+	function chooseKith(kithId: string | null) {
+		const kith = kithId ? (data.kiths.find((k) => k.id === kithId) ?? null) : null;
+		denizenBuilder.updateDraft((d) => setPersonKith(d, kith));
+	}
+
+	function assignSpread(suit: SuitId, value: number) {
+		denizenBuilder.updateDraft((d) => assignPersonSpreadValue(d, suit, value));
 	}
 
 	// Per-pool "add ability" form state, keyed by pool index.
@@ -346,6 +383,7 @@
 						<span class="pick-desc">{option.description.split('\n')[0]}</span>
 						{#if option.likes?.length}<span class="pick-meta"><strong>Likes:</strong> {option.likes.join(', ')}</span>{/if}
 						{#if option.hates?.length}<span class="pick-meta"><strong>Hates:</strong> {option.hates.join(', ')}</span>{/if}
+						{#if option.builderNote}<span class="pick-meta">{option.builderNote}</span>{/if}
 					</label>
 				{:else}
 					<div class="pick-card unavailable">
@@ -392,14 +430,86 @@
 				{/if}
 			{/each}
 		</div>
+	{:else if stepId === 'person' && theme}
+		<h2>Person</h2>
+		<p>
+			The book: <em
+				>"Represent people in your game by making actual characters… If the character is strange
+				or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms
+				that represent their core gimmick."</em
+			> This adversary gets the adventurer spread, an optional kith, and gimmick dooms.
+		</p>
+
+		<h3>Attribute spread</h3>
+		<p class="guidance">
+			Assign 4, 3, 2, and 1 — one to each suit. Picking a value swaps it with the suit that
+			currently holds it.
+		</p>
+		<div class="attr-grid">
+			{#each SUIT_IDS as suit (suit)}
+				<label class="field">
+					<span>{suit[0].toUpperCase() + suit.slice(1)}</span>
+					<select
+						value={draft.attributes[suit]}
+						onchange={(e) => assignSpread(suit, Number(e.currentTarget.value))}
+						aria-label={`${suit[0].toUpperCase() + suit.slice(1)} spread value`}
+					>
+						{#each PERSON_SPREAD as value (value)}
+							<option value={String(value)}>{value}</option>
+						{/each}
+					</select>
+				</label>
+			{/each}
+		</div>
+		{#each statWarnings as warning (warning)}
+			<p class="warning" role="alert">{warning}</p>
+		{/each}
+
+		<h3>Kith</h3>
+		<p class="guidance">Flavour only — the choice is recorded as a note on the stat block.</p>
+		<div class="picker">
+			<label class="pick-card" class:selected={draft.kithId === null}>
+				<input
+					type="radio"
+					name="kith"
+					value=""
+					checked={draft.kithId === null}
+					onchange={() => chooseKith(null)}
+				/>
+				<span class="pick-name">No kith</span>
+				<span class="pick-desc">Leave kith off the stat block.</span>
+			</label>
+			{#each data.kiths as option (option.id)}
+				<label class="pick-card" class:selected={draft.kithId === option.id}>
+					<input
+						type="radio"
+						name="kith"
+						value={option.id}
+						checked={draft.kithId === option.id}
+						onchange={() => chooseKith(option.id)}
+					/>
+					<span class="pick-name">{option.name}</span>
+					<span class="pick-desc">{option.description.split('\n')[0]}</span>
+				</label>
+			{/each}
+		</div>
 	{:else if !templatesChosen}
 		<p class="empty">Choose a theme and a threat first.</p>
 	{:else if stepId === 'customize'}
 		<h2>Customize</h2>
-		<p>
-			The stat block below was seeded from <strong>{theme?.name} {threat?.name}</strong>. Change
-			any detail to fit your concept — the book explicitly blesses it.
-		</p>
+		{#if personMode}
+			<p>
+				The stat block below was seeded as a <strong>{theme?.name}</strong> adversary. Change any
+				detail to fit your concept — the book explicitly blesses it. Health and Defense are the
+				GM's call: give them what an adventurer of their experience would have, or leave them
+				blank.
+			</p>
+		{:else}
+			<p>
+				The stat block below was seeded from <strong>{theme?.name} {threat?.name}</strong>. Change
+				any detail to fit your concept — the book explicitly blesses it.
+			</p>
+		{/if}
 		<div class="attr-grid">
 			<label class="field"><span>Swords</span><input type="text" value={draft.attributes.swords} oninput={(e) => setAttribute('swords', e.currentTarget.value)} /></label>
 			<label class="field"><span>Pentacles</span><input type="text" value={draft.attributes.pentacles} oninput={(e) => setAttribute('pentacles', e.currentTarget.value)} /></label>
@@ -425,7 +535,9 @@
 		{/each}
 		{#if draft.statNote || threat?.statNote}
 			<label class="field">
-				<span>Stat note (explains irregular stats — from the {threat?.name} template)</span>
+				<span>
+					Stat note (explains irregular stats{personMode ? '' : ` — from the ${threat?.name} template`})
+				</span>
 				<input type="text" value={draft.statNote} oninput={(e) => setField('statNote', e.currentTarget.value)} />
 			</label>
 		{/if}
@@ -529,18 +641,25 @@
 			</p>
 		{/if}
 
-		<h3>Lesser dooms <span class="from">from {theme?.name}</span></h3>
-		{#if theme?.lesserDooms?.length}
-			{@render templateDoomPicker('lesserDooms', theme.lesserDooms, theme.chooseLesserDooms)}
+		{#if personMode}
+			<p class="guidance">
+				People have no template pick-lists — <em>"give them a few special greater dooms that
+				represent their core gimmick"</em>. Add them below.
+			</p>
 		{:else}
-			<p class="empty">The {theme?.name} theme has no default lesser dooms.</p>
-		{/if}
+			<h3>Lesser dooms <span class="from">from {theme?.name}</span></h3>
+			{#if theme?.lesserDooms?.length}
+				{@render templateDoomPicker('lesserDooms', theme.lesserDooms, theme.chooseLesserDooms)}
+			{:else}
+				<p class="empty">The {theme?.name} theme has no default lesser dooms.</p>
+			{/if}
 
-		<h3>Greater dooms <span class="from">from {threat?.name}</span></h3>
-		{#if threat?.greaterDooms?.length}
-			{@render templateDoomPicker('greaterDooms', threat.greaterDooms, threat.chooseGreaterDooms)}
-		{:else}
-			<p class="empty">The {threat?.name} threat has no default greater dooms.</p>
+			<h3>Greater dooms <span class="from">from {threat?.name}</span></h3>
+			{#if threat?.greaterDooms?.length}
+				{@render templateDoomPicker('greaterDooms', threat.greaterDooms, threat.chooseGreaterDooms)}
+			{:else}
+				<p class="empty">The {threat?.name} threat has no default greater dooms.</p>
+			{/if}
 		{/if}
 
 		<h3>Your dooms</h3>
@@ -654,7 +773,8 @@
 		color: var(--ink-soft);
 	}
 	.field input,
-	.field textarea {
+	.field textarea,
+	.field select {
 		width: 100%;
 		padding: 0.5rem 0.7rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);

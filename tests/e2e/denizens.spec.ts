@@ -204,4 +204,78 @@ test.describe('denizen builder', () => {
 		await page.reload();
 		await expect(page.getByLabel('Name')).toHaveValue('Persistent Horror');
 	});
+
+	test('builds a dungeon lord with pools end to end', async ({ page, context }) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await page.goto('/denizens/build');
+
+		await page.getByLabel('Name').fill('Gilded Horror');
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Sorcerous' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: /Dungeon Lord/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Customize: pool threats have no top-level HD; special rules instead.
+		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveCount(0);
+		await expect(page.getByText("you'll build them on the Pools step")).toBeVisible();
+		await page
+			.getByLabel(/Special rules/)
+			.fill('The horror regrows a defeated pool at dawn.');
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Pools: the path inserts a Pools step; one blank pool is seeded.
+		await expect(page.getByRole('heading', { name: 'Pools', level: 2 })).toBeVisible();
+		await expect(page.getByText('every pool needs both Health and Defense')).toBeVisible();
+		await page.getByLabel('Pool 1 name').fill('The Crown');
+		await page.getByLabel('Pool 1 Health').fill('6');
+		await page.getByLabel('Pool 1 Defense').fill('3');
+		await page.getByLabel('Pool 1 description').fill('Shattering the crown breaks its dominion.');
+		await page.getByLabel('Pool 1 new ability name').fill('Crownfall');
+		await page.getByLabel('Pool 1 new ability text').fill('The crown cracks; its court flees.');
+		await page.getByRole('button', { name: 'Add lesser doom' }).click();
+
+		await page.getByRole('button', { name: '+ Add pool' }).click();
+		await page.getByLabel('Pool 2 name').fill('The Roots');
+		await page.getByLabel('Pool 2 Health').fill('4');
+		await page.getByLabel('Pool 2 Defense').fill('1');
+		await page.getByLabel('Pool 2 new ability name').fill('Strangling Growth');
+		await page.getByLabel('Pool 2 new ability text').fill('Play a greater doom to root a zone.');
+		await page.getByRole('button', { name: 'Add greater doom' }).nth(1).click();
+		await expect(page.getByText('every pool needs both Health and Defense')).toHaveCount(0);
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Dooms: pool guidance shown; dooms here apply regardless of pool.
+		await expect(page.getByRole('heading', { name: 'Dooms', level: 2 })).toBeVisible();
+		await expect(page.getByText(/dooms live on its pools/)).toBeVisible();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Review: the preview shows both pools with their HD and dooms.
+		await expect(page.getByRole('heading', { name: 'Review', level: 2 })).toBeVisible();
+		const preview = page.locator('.preview');
+		await expect(preview.getByText('The Crown — Health/Defense: 6/3')).toBeVisible();
+		await expect(preview.getByText('The Roots — Health/Defense: 4/1')).toBeVisible();
+		await expect(preview.getByText('Crownfall.')).toBeVisible();
+		await expect(preview.getByText('The horror regrows a defeated pool at dawn.')).toBeVisible();
+
+		// The real Markdown export carries the pools.
+		await page.getByRole('button', { name: 'Copy Markdown' }).click();
+		await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
+		const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+		expect(clipboard).toContain('### The Crown — Health/Defense: 6/3');
+		expect(clipboard).toContain('### The Roots — Health/Defense: 4/1');
+		expect(clipboard).toContain('- **Strangling Growth.**');
+		expect(clipboard).toContain('#### Special rules');
+		expect(clipboard).not.toContain('Health/Defense: /');
+
+		const mdDownload = page.waitForEvent('download');
+		await page.getByRole('button', { name: 'Download .md' }).click();
+		expect((await mdDownload).suggestedFilename()).toBe('gilded-horror.md');
+
+		// PDF generation fetches fonts and triggers a download.
+		const pdfDownload = page.waitForEvent('download');
+		await page.getByRole('button', { name: 'Download PDF' }).click();
+		expect((await pdfDownload).suggestedFilename()).toBe('gilded-horror.pdf');
+	});
 });

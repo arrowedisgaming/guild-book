@@ -4,6 +4,7 @@ import { characters } from '$lib/server/db/schema';
 import type { AppDb } from '$lib/server/db';
 import type { GuildBookCharacterData } from '$lib/types/character';
 import { migrateCharacterData } from '$lib/engine/character-migration';
+import { mutateCharacterMetadata } from './versioned-write';
 
 /**
  * Token length for public share URLs. 16 chars from the nanoid alphabet gives
@@ -13,7 +14,7 @@ import { migrateCharacterData } from '$lib/engine/character-migration';
 export const SHARE_ID_LENGTH = 16;
 
 export type EnableShareResult =
-	| { ok: true; shareId: string }
+	| { ok: true; shareId: string; version: number }
 	| { ok: false; status: 404 | 409; message: string };
 
 /**
@@ -27,7 +28,7 @@ export async function enableCharacterShare(
 	now: Date = new Date()
 ): Promise<EnableShareResult> {
 	const existing = await db
-		.select({ id: characters.id, isDraft: characters.isDraft })
+		.select({ id: characters.id, isDraft: characters.isDraft, version: characters.version })
 		.from(characters)
 		.where(and(eq(characters.id, params.characterId), eq(characters.userId, params.userId)))
 		.get();
@@ -38,15 +39,31 @@ export async function enableCharacterShare(
 	}
 
 	const shareId = nanoid(SHARE_ID_LENGTH);
-	await db
-		.update(characters)
-		.set({ shareId, isPublic: true, updatedAt: now })
-		.where(eq(characters.id, params.characterId));
+	const mutation = await mutateCharacterMetadata(db, {
+		characterId: params.characterId,
+		ownerUserId: params.userId,
+		actorUserId: params.userId,
+		expectedVersion: existing.version,
+		now,
+		mutation: { kind: 'share-enable', shareId }
+	});
+	if (!mutation.ok) {
+		if (mutation.reason === 'not-found') {
+			return { ok: false, status: 404, message: 'Adventurer not found' };
+		}
+		return {
+			ok: false,
+			status: 409,
+			message: 'Adventurer was updated elsewhere — refetch and retry'
+		};
+	}
 
-	return { ok: true, shareId };
+	return { ok: true, shareId, version: mutation.version };
 }
 
-export type DisableShareResult = { ok: true } | { ok: false; status: 404; message: string };
+export type DisableShareResult =
+	| { ok: true; version: number }
+	| { ok: false; status: 404 | 409; message: string };
 
 /**
  * Disable sharing. Clears the token so the public URL stops resolving
@@ -58,19 +75,33 @@ export async function disableCharacterShare(
 	now: Date = new Date()
 ): Promise<DisableShareResult> {
 	const existing = await db
-		.select({ id: characters.id })
+		.select({ id: characters.id, version: characters.version })
 		.from(characters)
 		.where(and(eq(characters.id, params.characterId), eq(characters.userId, params.userId)))
 		.get();
 
 	if (!existing) return { ok: false, status: 404, message: 'Adventurer not found' };
 
-	await db
-		.update(characters)
-		.set({ shareId: null, isPublic: false, updatedAt: now })
-		.where(eq(characters.id, params.characterId));
+	const mutation = await mutateCharacterMetadata(db, {
+		characterId: params.characterId,
+		ownerUserId: params.userId,
+		actorUserId: params.userId,
+		expectedVersion: existing.version,
+		now,
+		mutation: { kind: 'share-disable' }
+	});
+	if (!mutation.ok) {
+		if (mutation.reason === 'not-found') {
+			return { ok: false, status: 404, message: 'Adventurer not found' };
+		}
+		return {
+			ok: false,
+			status: 409,
+			message: 'Adventurer was updated elsewhere — refetch and retry'
+		};
+	}
 
-	return { ok: true };
+	return { ok: true, version: mutation.version };
 }
 
 export type SharedCharacterPayload = {

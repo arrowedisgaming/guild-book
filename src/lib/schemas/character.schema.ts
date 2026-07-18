@@ -102,4 +102,17 @@ export const createCharacterSchema = z.object({
 	character: characterDataSchema
 });
 
+/** Update requests must carry an integer version or the temporary timestamp fallback. */
+export const updateCharacterSchema = z
+	.object({
+		character: characterDataSchema,
+		expectedVersion: z.number().int().positive().optional(),
+		expectedUpdatedAt: z.number().int().nonnegative().optional()
+	})
+	.superRefine((value, context) => {
+		if (value.expectedVersion === undefined && value.expectedUpdatedAt === undefined) {
+			context.addIssue({ code: 'custom', message: 'Expected character version is required' });
+		}
+	});
+
 export type CharacterDataInput = z.infer<typeof characterDataSchema>;

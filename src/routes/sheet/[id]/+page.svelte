@@ -15,10 +15,10 @@
 	// Local working copy, seeded once — the $effect below re-syncs it whenever
 	// the server copy changes (post-save invalidateAll, or a 409 refetch).
 	let char = $state<GuildBookCharacterData>(untrack(() => structuredClone(data.character)));
-	let serverUpdatedAt = $state(untrack(() => data.updatedAt));
+	let serverVersion = $state(untrack(() => data.version));
 	$effect(() => {
 		char = structuredClone(data.character);
-		serverUpdatedAt = data.updatedAt;
+		serverVersion = data.version;
 	});
 
 	let editMode = $state(false);
@@ -36,11 +36,11 @@
 			const res = await fetch(`/api/characters/${data.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ character: char, expectedUpdatedAt: serverUpdatedAt })
+				body: JSON.stringify({ character: char, expectedVersion: serverVersion })
 			});
 			if (res.ok) {
-				const body = (await res.json()) as { updatedAt: number };
-				serverUpdatedAt = body.updatedAt;
+				const body = (await res.json()) as { version: number };
+				serverVersion = body.version;
 				await invalidateAll();
 				return true;
 			}

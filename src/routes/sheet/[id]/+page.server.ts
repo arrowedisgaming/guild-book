@@ -33,6 +33,7 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		id: row.id,
+		version: row.version,
 		view: buildCharacterView(character),
 		character,
 		updatedAt: row.updatedAt.getTime(),

@@ -13,7 +13,7 @@ export const POST: RequestHandler = async (event) => {
 	if (!result.ok) throw error(result.status, result.message);
 
 	const shareUrl = `${event.url.origin}/s/${result.shareId}`;
-	return json({ shareId: result.shareId, shareUrl });
+	return json({ shareId: result.shareId, shareUrl, version: result.version });
 };
 
 /** DELETE /api/characters/:id/share — revoke sharing. */
@@ -24,5 +24,5 @@ export const DELETE: RequestHandler = async (event) => {
 	const result = await disableCharacterShare(db, { characterId: event.params.id, userId });
 	if (!result.ok) throw error(result.status, result.message);
 
-	return json({ success: true });
+	return json({ success: true, version: result.version });
 };

@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid';
 import { createCharacterSchema } from '$lib/schemas/character.schema';
 import { validateFinalCharacter } from '$lib/server/validation/character';
 import type { GuildBookCharacterData } from '$lib/types/character';
+import { createCharacterWithVersionClaim } from '$lib/server/character/versioned-write';
 
 /** GET /api/characters — list the signed-in user's adventurers. */
 export const GET: RequestHandler = async (event) => {
@@ -23,6 +24,7 @@ export const GET: RequestHandler = async (event) => {
 			isDraft: characters.isDraft,
 			shareId: characters.shareId,
 			isPublic: characters.isPublic,
+			version: characters.version,
 			createdAt: characters.createdAt,
 			updatedAt: characters.updatedAt
 		})
@@ -60,18 +62,16 @@ export const POST: RequestHandler = async (event) => {
 	const id = nanoid();
 	const now = new Date();
 
-	await db.insert(characters).values({
-		id,
-		userId,
-		name: char.name || 'Unnamed Adventurer',
-		kith: char.kithId ?? '',
-		path: char.pathId ?? '',
-		data: JSON.stringify(char),
-		isDraft: char.isDraft,
-		isArchived: false,
-		createdAt: now,
-		updatedAt: now
+	const created = await createCharacterWithVersionClaim(db, {
+		characterId: id,
+		ownerUserId: userId,
+		actorUserId: userId,
+		data: char,
+		createdAt: now
 	});
 
-	return json({ id }, { status: 201 });
+	return json(
+		{ id, version: created.version, updatedAt: created.updatedAt.getTime() },
+		{ status: 201 }
+	);
 };

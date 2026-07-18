@@ -17,16 +17,37 @@
  * unchanged session version too; if that invariant is ever broken by a
  * future command type that mutates state without emitting an event, this
  * hint would need to start tracking version as well.
+ *
+ * Fix round 1 (task-7 coordinator correction): every accepted-commit path in
+ * `command-service.ts`/`lifecycle.ts` now calls `repository.ts`'s
+ * `recordFreshCursorHintAfterCommit` right after its write lands, so a
+ * same-isolate write can never leave a stale-but-still-"fresh" hint behind —
+ * the hint is corrected the instant the write that would invalidate it
+ * commits, not left to whenever some later `/sync` poll happens to do a real
+ * read. `HINT_FRESH_MS` below therefore only has to bound the *cross-isolate*
+ * case (a write lands on a different isolate than the one serving a given
+ * poll — real on a multi-isolate platform like Cloudflare Workers/D1, the
+ * production target; not applicable to the single-process dev/test server).
+ *
+ * Budget arithmetic for Task 7's two-second cross-client visibility bound
+ * (spec Gate C): a client polls at most every `intervalMs + jitterMs` =
+ * 1000 + 150 = 1150ms while visible (`campaign-session.svelte.ts`). Assume
+ * up to ~150ms of request/response latency. A poll that lands just before a
+ * cross-isolate write commits can miss it once; the very next poll, up to
+ * 1150 + 150 = 1300ms later, must not be able to hit the same stale hint —
+ * so `HINT_FRESH_MS` must be comfortably under that 1300ms remainder of the
+ * 2000ms budget. 600ms leaves real margin.
  */
 
 /** Cap on distinct campaigns tracked at once, so a long-lived isolate
  * serving many campaigns can't grow this map without bound. */
 const MAX_HINTS = 256;
 
-/** How long a hint is trusted before falling back to D1 — short, matching
- * the ~1s table-polling cadence (spec §10.3), so a hint reused across a poll
- * or two is at most this stale. */
-const HINT_FRESH_MS = 2_000;
+/** How long a hint is trusted before falling back to D1 — see the budget
+ * arithmetic in this file's header comment. Short enough that even a
+ * cross-isolate write, which this cache cannot see land, can delay visibility
+ * by at most one missed poll and never a second one within the 2s bound. */
+const HINT_FRESH_MS = 600;
 
 interface CursorHint {
 	cursor: number;

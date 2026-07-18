@@ -483,8 +483,17 @@ describe('session HTTP contracts', () => {
 			);
 
 			mocks.ensureUser.mockResolvedValue(gmUserId);
-			// The caller's `after` is already the latest cursor, but their
-			// `version` (1) is stale relative to the session's new version (2).
+			// Fix round 1: the draw above now records a fresh cursor hint
+			// (cursor=2) the instant its own commit lands
+			// (`recordFreshCursorHintAfterCommit`), same isolate, same process —
+			// so without clearing it here, the hint's cursor-only fast path would
+			// match this call's `after` and short-circuit to a 204 before ever
+			// reaching the version check this test exists to exercise. Clearing
+			// it forces the real DB read, which is the thing actually under
+			// test: the caller's `after` is already the latest cursor, but their
+			// `version` (1) is stale relative to the session's new version (2),
+			// and only a real read (never the cursor-only hint) can catch that.
+			resetCursorHintsForTest();
 			const response = await getSync(fakeEvent({ campaignId, searchParams: { after: '2', version: '1' } }) as never);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as { session: { sessionVersion: number } | null };

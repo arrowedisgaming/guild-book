@@ -12,19 +12,10 @@ import { signInAs } from './fixtures/auth';
  * Privacy assertions (own face vs. others' backs) live in
  * `shared-table-privacy.spec.ts` — this file is about the sync mechanics.
  *
- * Cross-client propagation budget: the brief's acceptance bar is "within two
- * seconds." This store polls every ~1s (+0-150ms jitter) while visible, so a
- * single missed cycle should land well inside that. In practice, once every
- * client has caught up to the same campaign cursor, `/sync`'s isolate-local
- * cursor-hint cache (`latest-cursor.ts`'s `HINT_FRESH_MS = 2000`, outside
- * this task's file scope) can serve one extra stale 204 to a poll whose
- * `after` still matches the pre-write cursor, pushing first-observed
- * propagation to as late as ~2 poll cycles (observed up to ~2.35s in this
- * suite). The budget below (3.5s) reflects that measured, real worst case
- * rather than the idealized single-hop figure — see the task-7 report for
- * the recommendation to retune that cache.
+ * Cross-client propagation budget: the brief's acceptance bar (Gate C) is
+ * "within two seconds" — enforced literally below, not loosened.
  */
-const CROSS_CLIENT_BUDGET_MS = 3500;
+const CROSS_CLIENT_BUDGET_MS = 2000;
 
 async function createCampaignAndReadInvite(page: Page, name: string): Promise<string> {
 	await page.goto('/campaigns/new');

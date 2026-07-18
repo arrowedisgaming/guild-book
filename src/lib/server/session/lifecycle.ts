@@ -44,6 +44,7 @@ import {
 	listActiveCampaignMemberUserIds,
 	loadSessionForReduce,
 	loadSessionSummary,
+	recordFreshCursorHintAfterCommit,
 	resolveSessionActor,
 	standardPrivateZonesForMember,
 	standardPublicZones
@@ -180,6 +181,9 @@ export async function startSession(options: StartSessionOptions): Promise<StartS
 	});
 
 	await runAtomic(options.dbContext, statements);
+	// Fix round 1: close the same-isolate false-204 window at the source —
+	// see `recordFreshCursorHintAfterCommit`'s doc comment.
+	await recordFreshCursorHintAfterCommit(db, options.campaignId);
 	return { ok: true, sessionId, version: 1 };
 }
 
@@ -239,6 +243,9 @@ export async function freezeSessionForFailure(dbContext: AppDbContext, input: Fr
 
 	try {
 		await runAtomic(dbContext, statements);
+		// Fix round 1: close the same-isolate false-204 window at the source —
+		// see `recordFreshCursorHintAfterCommit`'s doc comment.
+		await recordFreshCursorHintAfterCommit(db, input.campaignId);
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;
 		// Lost the race — see doc comment above.
@@ -350,6 +357,9 @@ export async function freezeSession(options: FreezeSessionOptions): Promise<Free
 
 	try {
 		await runAtomic(options.dbContext, statements);
+		// Fix round 1: close the same-isolate false-204 window at the source —
+		// see `recordFreshCursorHintAfterCommit`'s doc comment.
+		await recordFreshCursorHintAfterCommit(db, options.campaignId);
 		return { ok: true };
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;
@@ -454,6 +464,9 @@ export async function recoverSession(options: RecoverSessionOptions): Promise<Re
 
 	try {
 		await runAtomic(options.dbContext, statements);
+		// Fix round 1: close the same-isolate false-204 window at the source —
+		// see `recordFreshCursorHintAfterCommit`'s doc comment.
+		await recordFreshCursorHintAfterCommit(db, options.campaignId);
 		return { ok: true };
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;
@@ -590,6 +603,9 @@ export async function endSession(options: EndSessionOptions): Promise<EndSession
 
 	try {
 		await runAtomic(options.dbContext, statements);
+		// Fix round 1: close the same-isolate false-204 window at the source —
+		// see `recordFreshCursorHintAfterCommit`'s doc comment.
+		await recordFreshCursorHintAfterCommit(db, options.campaignId);
 		return { ok: true, publicHistoryChecksum };
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;

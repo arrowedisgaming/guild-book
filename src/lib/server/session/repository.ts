@@ -34,6 +34,7 @@ import {
 import { ownedPrivateZoneSchema, pendingZoneSchema, publicZoneSchema, sessionPhaseSchema } from '$lib/schemas/session.schema';
 import { parseSessionRuntimeContent } from '$lib/server/content/session-runtime';
 import { canonicalDigest } from '$lib/server/content/canonical-json';
+import { recordCursorHint } from './latest-cursor';
 import type {
 	CardId,
 	OwnedPrivateZone,
@@ -473,6 +474,33 @@ export async function campaignCursor(db: AppDb, campaignId: string): Promise<num
 		.where(eq(campaignEvents.campaignId, campaignId))
 		.get();
 	return row?.max ?? 0;
+}
+
+/**
+ * Fix round 1 (task-7 coordinator correction): re-reads the campaign's
+ * cursor immediately after a commit already known to have inserted at least
+ * one `campaign_events` row — an accepted in-band command
+ * (`command-service.ts`) or any lifecycle transition (`lifecycle.ts`'s
+ * start/freeze/recover/end, all via `eventStatements`/
+ * `conditionalCampaignEventInsertStatement`) — and records the result as a
+ * confirmed hint (`latest-cursor.ts`'s `recordCursorHint`; this qualifies as
+ * "a successful commit" per that module's own contract, so it's exactly as
+ * trustworthy as the reads `/sync` already uses to populate the hint).
+ *
+ * Without this, the same isolate that just committed a write has no reason
+ * to touch the hint cache until *some* `/sync` poll happens to do a real
+ * read — so a hint recorded moments earlier by an unrelated poll (at the
+ * pre-write cursor) can keep matching every other client's still-stale
+ * `after` for up to `HINT_FRESH_MS`, even though the true cursor already
+ * moved. That gap was observed directly: a poll landing ~1s after an
+ * accepted command returned a false 204, deferring visibility to the next
+ * poll cycle. Calling this right after every accepted-commit path closes it
+ * at the source — a stale-but-equal hint can no longer survive a local
+ * write, regardless of `HINT_FRESH_MS`.
+ */
+export async function recordFreshCursorHintAfterCommit(db: AppDb, campaignId: string): Promise<void> {
+	const cursor = await campaignCursor(db, campaignId);
+	recordCursorHint(campaignId, cursor);
 }
 
 // ---------------------------------------------------------------------------

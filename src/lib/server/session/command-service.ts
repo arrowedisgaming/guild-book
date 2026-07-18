@@ -26,6 +26,7 @@ import {
 	findSessionCommand,
 	loadSessionForReduce,
 	loadSessionSummary,
+	recordFreshCursorHintAfterCommit,
 	resolveSessionActor,
 	SessionLoadIntegrityError,
 	SessionNotFoundError,
@@ -239,6 +240,9 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 
 		try {
 			await runAtomic(dbContext, statements);
+			// Fix round 1: close the same-isolate false-204 window at the
+			// source — see `recordFreshCursorHintAfterCommit`'s doc comment.
+			await recordFreshCursorHintAfterCommit(db, campaignId);
 			return {
 				outcome: { ok: true, resultingVersion: loaded.currentVersion + 1 },
 				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)

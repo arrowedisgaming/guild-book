@@ -9,14 +9,10 @@ import { signInAs } from './fixtures/auth';
  * level (rendered card markup, attributes, page content, console output) —
  * never by trusting a wire-shape assumption.
  *
- * Cross-client propagation budget: see `shared-table.spec.ts` for why this
- * uses ~3.5s rather than the brief's idealized "two seconds" figure — the
- * `/sync` cursor-hint cache's `HINT_FRESH_MS` (outside this task's scope)
- * can occasionally add one extra stale poll once every client shares the
- * same last-known cursor, which is the steady state a live table settles
- * into.
+ * Cross-client propagation budget: the brief's acceptance bar (Gate C) is
+ * "within two seconds" — enforced literally below, not loosened.
  */
-const CROSS_CLIENT_BUDGET_MS = 3500;
+const CROSS_CLIENT_BUDGET_MS = 2000;
 
 async function createCampaignAndReadInvite(page: Page, name: string): Promise<string> {
 	await page.goto('/campaigns/new');

@@ -204,9 +204,11 @@ test.describe('denizen builder', () => {
 		await expect(page.getByLabel('Swords spread value')).toHaveValue('2');
 		await expect(page.locator('.warning')).toHaveCount(0);
 
-		// Kith is flavour, recorded as a note; a kin adds its arete talent.
+		// Kith is flavour, recorded as a note; a kin adds its arete talent,
+		// previewed right below the pick so the GM can judge it.
 		await page.getByRole('radio', { name: 'Orcs' }).check();
 		await page.getByLabel('Kin', { exact: true }).selectOption({ index: 1 });
+		await expect(page.locator('.arete-preview')).toBeVisible();
 
 		// Talents: the highest attribute's path (Cups) is open; pick the first.
 		await expect(page.getByRole('heading', { name: /their path/ })).toBeVisible();

@@ -263,6 +263,12 @@
 	}
 
 	let chosenKith = $derived(data.kiths.find((k) => k.id === draft.kithId) ?? null);
+	let chosenKin = $derived(chosenKith?.kins.find((k) => k.id === draft.kinId) ?? null);
+	let chosenKinArete = $derived(
+		chosenKin?.areteTalentId
+			? (data.talents.find((t) => t.id === chosenKin.areteTalentId) ?? null)
+			: null
+	);
 
 	function chooseKin(kinId: string) {
 		const kin = kinId ? (chosenKith?.kins.find((k) => k.id === kinId) ?? null) : null;
@@ -578,6 +584,14 @@
 					{/each}
 				</select>
 			</label>
+			{#if chosenKinArete}
+				<!-- Shown right below the pick so the GM can judge the talent. -->
+				<div class="arete-preview">
+					<strong>{abilityLabel(chosenKinArete.name)}</strong>
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+					<span class="inline-md">{@html renderMarkdown(chosenKinArete.description)}</span>
+				</div>
+			{/if}
 		{/if}
 
 		<h3>Talents</h3>
@@ -1094,6 +1108,13 @@
 		align-items: baseline;
 		margin: 0.75rem 0;
 		font-size: 0.9rem;
+	}
+	.arete-preview {
+		margin: 0.35rem 0 0.75rem;
+		padding: 0.5rem 0.75rem;
+		font-size: 0.9rem;
+		border-left: 3px solid color-mix(in oklab, var(--accent) 45%, transparent);
+		background: color-mix(in oklab, var(--accent) 6%, transparent);
 	}
 	.offpath {
 		border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);

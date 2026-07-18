@@ -159,7 +159,9 @@ test.describe('denizen builder', () => {
 		await expect(page.locator('ul.current li', { hasText: 'Threshold' })).toHaveCount(0);
 	});
 
-	test('pool-based and description-only templates are reference-only', async ({ page }) => {
+	test('description-only templates are reference-only; pool threats are buildable', async ({
+		page
+	}) => {
 		await page.goto('/denizens/build');
 		await page.getByRole('button', { name: 'Next →' }).click();
 
@@ -173,13 +175,12 @@ test.describe('denizen builder', () => {
 		await page.getByRole('radio', { name: 'Undead' }).check();
 		await page.getByRole('button', { name: 'Next →' }).click();
 
-		// Dungeon lords need pool editing, which the builder doesn't have yet.
+		// Dungeon lords are pool-based and fully supported by the Pools step.
 		await expect(page.getByRole('heading', { name: 'Threat', level: 2 })).toBeVisible();
-		const lordCard = page.locator('.pick-card.unavailable', { hasText: 'Dungeon Lord' });
-		await expect(lordCard).toBeVisible();
-		await expect(lordCard.getByRole('radio')).toHaveCount(0);
-		await expect(lordCard.getByText('does not support pool editing yet')).toBeVisible();
-		await expect(lordCard.getByRole('link', { name: 'Read it in the reference →' })).toBeVisible();
+		await expect(page.locator('.pick-card.unavailable', { hasText: 'Dungeon Lord' })).toHaveCount(
+			0
+		);
+		await expect(page.getByRole('radio', { name: /Dungeon Lord/ })).toBeVisible();
 	});
 
 	test('stat inputs warn on a starting Health of 0', async ({ page }) => {

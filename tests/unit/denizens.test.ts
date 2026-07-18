@@ -80,8 +80,9 @@ describe('denizens — book irregularities survive the schema', () => {
 
 	it('marks pool-based and description-only templates for the builder', () => {
 		const threats = Object.fromEntries(getDenizenThreats().map((t) => [t.id, t]));
+		// Pool-based threats are builder-supported (the Pools step) — no note.
 		expect(threats['dungeon-lord'].builderMode).toBe('pools');
-		expect(threats['dungeon-lord'].builderNote).toMatch(/pool editing/);
+		expect(threats['dungeon-lord'].builderNote).toBeUndefined();
 		for (const id of ['minion', 'brute', 'strategist', 'elite']) {
 			expect(threats[id].builderMode, id).toBeUndefined();
 		}

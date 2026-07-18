@@ -1,12 +1,16 @@
 <script lang="ts">
 	import DenizenStatBlock from '$lib/components/denizens/DenizenStatBlock.svelte';
 	import DenizenExportButtons from '$lib/components/denizens/DenizenExportButtons.svelte';
-	import { denizenBuilder, BUILDER_STEPS } from '$lib/stores/denizen-builder';
+	import { denizenBuilder, builderPath } from '$lib/stores/denizen-builder';
 	import {
 		seedFromTemplates,
 		needsReseed,
 		toDenizenDefinition,
-		draftStatWarnings
+		draftStatWarnings,
+		addPool,
+		removePool,
+		movePool,
+		updatePool
 	} from '$lib/engine/denizen-builder';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
@@ -16,18 +20,30 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let step = $derived($denizenBuilder.currentStep);
+	let stepId = $derived($denizenBuilder.currentStepId);
 	let draft = $derived($denizenBuilder.draft);
 
 	let theme = $derived(data.themes.find((t) => t.id === draft.themeId));
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
 	let templatesChosen = $derived(Boolean(theme && threat));
-	let statWarnings = $derived(draftStatWarnings(draft));
+	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null));
 
-	// The builder only supports standard templates; pool-based and
-	// description-only ones stay reference material (capability from data).
+	// The step path is mode-dependent: pool-based threats visit a Pools step.
+	let poolsMode = $derived(threat?.builderMode === 'pools');
+	let steps = $derived(builderPath(poolsMode));
+	let stepIndex = $derived(steps.findIndex((s) => s.id === stepId));
+
+	// A mode switch can strand the persisted position on a step the new path
+	// doesn't visit (e.g. 'pools' after reseeding to a standard threat) —
+	// snap to Customize, the last step both paths share.
+	$effect(() => {
+		if (stepIndex === -1) denizenBuilder.goToStep('customize');
+	});
+
+	// Description-only templates stay reference material (capability from
+	// data, never template ids); pool-based threats are fully supported.
 	const usableInBuilder = (option: { builderMode?: string }) =>
-		(option.builderMode ?? 'standard') === 'standard';
+		(option.builderMode ?? 'standard') !== 'unsupported';
 
 	// A persisted draft can reference a template the builder no longer offers
 	// (e.g. stored before capability metadata existed) — drop that selection.
@@ -42,14 +58,15 @@
 
 	// Steps past Threat need both templates; re-seed stats when the pair changes.
 	$effect(() => {
-		if (step >= 3 && theme && threat && needsReseed(draft)) {
+		if (stepIndex >= 3 && theme && threat && needsReseed(draft)) {
 			denizenBuilder.updateDraft((d) => seedFromTemplates(d, theme, threat));
 			announce(`Stat block seeded from ${theme.name} ${threat.name}.`);
 		}
 	});
 
 	function go(next: number) {
-		denizenBuilder.goToStep(Math.max(0, Math.min(next, BUILDER_STEPS.length - 1)));
+		const clamped = Math.max(0, Math.min(next, steps.length - 1));
+		denizenBuilder.goToStep(steps[clamped].id);
 	}
 
 	function stepAccessible(i: number): boolean {
@@ -63,19 +80,47 @@
 	}
 
 	// --- ability-list editing -------------------------------------------------
+	// Lists are addressed by key so the same snippets edit the draft's own
+	// lists ('notes') and a pool's lists ('pool:0:notes') interchangeably.
 
-	type AbilityListKey = 'notes' | 'lesserDooms' | 'greaterDooms';
+	type AbilityKind = 'notes' | 'lesserDooms' | 'greaterDooms';
+	type AbilityListKey = AbilityKind | `pool:${number}:${AbilityKind}`;
+
+	function parsePoolKey(key: AbilityListKey): { pool: number; kind: AbilityKind } | null {
+		const match = /^pool:(\d+):(notes|lesserDooms|greaterDooms)$/.exec(key);
+		return match ? { pool: Number(match[1]), kind: match[2] as AbilityKind } : null;
+	}
+
+	function listAt(key: AbilityListKey): DenizenAbility[] {
+		const scoped = parsePoolKey(key);
+		if (scoped) return draft.pools[scoped.pool]?.[scoped.kind] ?? [];
+		return draft[key as AbilityKind];
+	}
+
+	function updateList(key: AbilityListKey, change: (list: DenizenAbility[]) => DenizenAbility[]) {
+		const scoped = parsePoolKey(key);
+		denizenBuilder.updateDraft((d) => {
+			if (scoped) {
+				return updatePool(d, scoped.pool, (p) => ({
+					...p,
+					[scoped.kind]: change(p[scoped.kind])
+				}));
+			}
+			const kind = key as AbilityKind;
+			return { ...d, [kind]: change(d[kind]) };
+		});
+	}
 
 	function addAbility(key: AbilityListKey, ability: DenizenAbility) {
-		denizenBuilder.updateDraft((d) => ({ ...d, [key]: [...d[key], ability] }));
+		updateList(key, (list) => [...list, ability]);
 	}
 
 	function removeAbility(key: AbilityListKey, index: number) {
-		denizenBuilder.updateDraft((d) => ({ ...d, [key]: d[key].filter((_, i) => i !== index) }));
+		updateList(key, (list) => list.filter((_, i) => i !== index));
 	}
 
 	function hasAbility(key: AbilityListKey, name: string): boolean {
-		return draft[key].some((a) => a.name === name);
+		return listAt(key).some((a) => a.name === name);
 	}
 
 	// Inline editing of an ability already on the draft — template-seeded notes
@@ -86,18 +131,15 @@
 
 	function startEdit(key: AbilityListKey, index: number) {
 		editing = { key, index };
-		editName = draft[key][index].name;
-		editText = draft[key][index].text;
+		editName = listAt(key)[index].name;
+		editText = listAt(key)[index].text;
 	}
 
 	function saveEdit() {
 		if (!editing || !editName.trim() || !editText.trim()) return;
 		const { key, index } = editing;
 		const ability = { name: editName.trim(), text: editText.trim() };
-		denizenBuilder.updateDraft((d) => ({
-			...d,
-			[key]: d[key].map((a, i) => (i === index ? ability : a))
-		}));
+		updateList(key, (list) => list.map((a, i) => (i === index ? ability : a)));
 		editing = null;
 	}
 
@@ -109,6 +151,43 @@
 		addAbility(key, { name: customName.trim(), text: customText.trim() });
 		customName = '';
 		customText = '';
+	}
+
+	// --- pool editing ---------------------------------------------------------
+
+	function setPoolField(index: number, field: 'name' | 'health' | 'defense' | 'text', value: string) {
+		denizenBuilder.updateDraft((d) => updatePool(d, index, (p) => ({ ...p, [field]: value })));
+	}
+
+	function handleAddPool() {
+		denizenBuilder.updateDraft(addPool);
+		announce(`Pool ${draft.pools.length} added.`);
+	}
+
+	function handleRemovePool(index: number) {
+		const label = draft.pools[index]?.name.trim() || `Pool ${index + 1}`;
+		editing = null; // indices shift — drop any in-flight pool ability edit
+		denizenBuilder.updateDraft((d) => removePool(d, index));
+		announce(`${label} removed.`);
+	}
+
+	function handleMovePool(index: number, direction: -1 | 1) {
+		editing = null;
+		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
+	}
+
+	// Per-pool "add ability" form state, keyed by pool index.
+	let poolCustom = $state<Record<number, { name: string; text: string }>>({});
+
+	function poolCustomFor(index: number): { name: string; text: string } {
+		return poolCustom[index] ?? { name: '', text: '' };
+	}
+
+	function addPoolCustom(index: number, kind: AbilityKind) {
+		const { name, text } = poolCustomFor(index);
+		if (!name.trim() || !text.trim()) return;
+		addAbility(`pool:${index}:${kind}`, { name: name.trim(), text: text.trim() });
+		poolCustom = { ...poolCustom, [index]: { name: '', text: '' } };
 	}
 
 	function setField(field: string, value: string) {
@@ -136,7 +215,7 @@
 						checked={hasAbility(key, option.name)}
 						onchange={(e) => {
 							if (e.currentTarget.checked) addAbility(key, option);
-							else removeAbility(key, draft[key].findIndex((a) => a.name === option.name));
+							else removeAbility(key, listAt(key).findIndex((a) => a.name === option.name));
 						}}
 					/>
 					<span>
@@ -151,11 +230,11 @@
 {/snippet}
 
 {#snippet currentAbilities(key: AbilityListKey, emptyLabel: string)}
-	{#if draft[key].length === 0}
+	{#if listAt(key).length === 0}
 		<p class="empty">{emptyLabel}</p>
 	{:else}
 		<ul class="current">
-			{#each draft[key] as ability, i (ability.name + i)}
+			{#each listAt(key) as ability, i (ability.name + i)}
 				<li>
 					{#if editing !== null && editing.key === key && editing.index === i}
 						<div class="edit-fields">
@@ -191,15 +270,15 @@
 
 	<nav class="steps" aria-label="Denizen builder progress">
 		<ol>
-			{#each BUILDER_STEPS as s, i (s.id)}
+			{#each steps as s, i (s.id)}
 				<li>
 					{#if i > 0}<span class="sep">/</span>{/if}
 					{#if stepAccessible(i)}
 						<button
 							type="button"
 							class="steplink"
-							class:active={i === step}
-							aria-current={i === step ? 'step' : undefined}
+							class:active={i === stepIndex}
+							aria-current={i === stepIndex ? 'step' : undefined}
 							onclick={() => go(i)}
 						>
 							{s.label}
@@ -213,7 +292,7 @@
 		<button type="button" class="startover" onclick={confirmStartOver}>Start over</button>
 	</nav>
 
-	{#if step === 0}
+	{#if stepId === 'concept'}
 		<h2>Concept</h2>
 		<p>
 			Start with a classic mythological monster, then exaggerate <em>one</em> aspect. One new idea
@@ -235,7 +314,7 @@
 			<span>Description (optional — defaults to the two lines above)</span>
 			<textarea rows="4" value={draft.flavor} oninput={(e) => setField('flavor', e.currentTarget.value)}></textarea>
 		</label>
-	{:else if step === 1}
+	{:else if stepId === 'theme'}
 		<h2>Theme</h2>
 		<p>Theme defines the creature's mythological context. How is it fantastic?</p>
 		<div class="picker">
@@ -264,7 +343,7 @@
 				{/if}
 			{/each}
 		</div>
-	{:else if step === 2}
+	{:else if stepId === 'threat'}
 		<h2>Threat</h2>
 		<p>Threat defines the creature's personality, tactics, and overall strength. How does it act?</p>
 		<div class="picker">
@@ -300,7 +379,7 @@
 		</div>
 	{:else if !templatesChosen}
 		<p class="empty">Choose a theme and a threat first.</p>
-	{:else if step === 3}
+	{:else if stepId === 'customize'}
 		<h2>Customize</h2>
 		<p>
 			The stat block below was seeded from <strong>{theme?.name} {threat?.name}</strong>. Change
@@ -311,9 +390,17 @@
 			<label class="field"><span>Pentacles</span><input type="text" value={draft.attributes.pentacles} oninput={(e) => setAttribute('pentacles', e.currentTarget.value)} /></label>
 			<label class="field"><span>Cups</span><input type="text" value={draft.attributes.cups} oninput={(e) => setAttribute('cups', e.currentTarget.value)} /></label>
 			<label class="field"><span>Wands</span><input type="text" value={draft.attributes.wands} oninput={(e) => setAttribute('wands', e.currentTarget.value)} /></label>
-			<label class="field"><span>Health</span><input type="text" value={draft.health} oninput={(e) => setField('health', e.currentTarget.value)} /></label>
-			<label class="field"><span>Defense</span><input type="text" value={draft.defense} oninput={(e) => setField('defense', e.currentTarget.value)} /></label>
+			{#if !poolsMode}
+				<label class="field"><span>Health</span><input type="text" value={draft.health} oninput={(e) => setField('health', e.currentTarget.value)} /></label>
+				<label class="field"><span>Defense</span><input type="text" value={draft.defense} oninput={(e) => setField('defense', e.currentTarget.value)} /></label>
+			{/if}
 		</div>
+		{#if poolsMode}
+			<p class="guidance">
+				This creature's Health and Defense live in named pools — you'll build them on the
+				<strong>Pools</strong> step.
+			</p>
+		{/if}
 		{#each statWarnings as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
@@ -321,6 +408,12 @@
 			<label class="field">
 				<span>Stat note (explains irregular stats — from the {threat?.name} template)</span>
 				<input type="text" value={draft.statNote} oninput={(e) => setField('statNote', e.currentTarget.value)} />
+			</label>
+		{/if}
+		{#if poolsMode}
+			<label class="field">
+				<span>Special rules (fight-changing rules that precede the pools)</span>
+				<textarea rows="3" value={draft.specialRules} oninput={(e) => setField('specialRules', e.currentTarget.value)} placeholder="e.g. The lord regrows a defeated pool at dawn."></textarea>
 			</label>
 		{/if}
 		<label class="field">
@@ -347,12 +440,75 @@
 			<textarea rows="2" bind:value={customText} placeholder="What the GM needs to remember"></textarea>
 			<button type="button" onclick={() => addCustom('notes')}>Add note</button>
 		</div>
-	{:else if step === 4}
+	{:else if stepId === 'pools'}
+		<h2>Pools</h2>
+		<p>
+			Each pool is a named part of the creature with its own Health and Defense, special rules,
+			and dooms. Each can be attacked separately — as long as a pool stands, the creature keeps
+			its abilities. Make it clear what each pool is and what defeating it means.
+		</p>
+		{#each statWarnings as warning (warning)}
+			<p class="warning" role="alert">{warning}</p>
+		{/each}
+		{#each draft.pools as pool, pi (pi)}
+			<fieldset class="pool-editor">
+				<legend>{pool.name.trim() || `Pool ${pi + 1}`}</legend>
+				<div class="pool-head">
+					<label class="field pool-name-field">
+						<span>Pool name</span>
+						<input type="text" value={pool.name} oninput={(e) => setPoolField(pi, 'name', e.currentTarget.value)} placeholder="e.g. The Crown" aria-label={`Pool ${pi + 1} name`} />
+					</label>
+					<label class="field">
+						<span>Health</span>
+						<input type="text" value={pool.health} oninput={(e) => setPoolField(pi, 'health', e.currentTarget.value)} aria-label={`Pool ${pi + 1} Health`} />
+					</label>
+					<label class="field">
+						<span>Defense</span>
+						<input type="text" value={pool.defense} oninput={(e) => setPoolField(pi, 'defense', e.currentTarget.value)} aria-label={`Pool ${pi + 1} Defense`} />
+					</label>
+				</div>
+				<label class="field">
+					<span>What defeating this pool means</span>
+					<textarea rows="2" value={pool.text} oninput={(e) => setPoolField(pi, 'text', e.currentTarget.value)} placeholder="e.g. Shattering the crown breaks its dominion over the level." aria-label={`Pool ${pi + 1} description`}></textarea>
+				</label>
+
+				<h4>Notes</h4>
+				{@render currentAbilities(`pool:${pi}:notes`, 'No notes on this pool.')}
+				<h4>Lesser dooms</h4>
+				{@render currentAbilities(`pool:${pi}:lesserDooms`, 'No lesser dooms on this pool.')}
+				<h4>Greater dooms</h4>
+				{@render currentAbilities(`pool:${pi}:greaterDooms`, 'No greater dooms on this pool.')}
+				<div class="add-custom">
+					<input type="text" value={poolCustomFor(pi).name} oninput={(e) => (poolCustom = { ...poolCustom, [pi]: { ...poolCustomFor(pi), name: e.currentTarget.value } })} placeholder="Ability name" aria-label={`Pool ${pi + 1} new ability name`} />
+					<textarea rows="2" value={poolCustomFor(pi).text} oninput={(e) => (poolCustom = { ...poolCustom, [pi]: { ...poolCustomFor(pi), text: e.currentTarget.value } })} placeholder="What it does" aria-label={`Pool ${pi + 1} new ability text`}></textarea>
+					<div class="pool-add-actions">
+						<button type="button" onclick={() => addPoolCustom(pi, 'notes')}>Add note</button>
+						<button type="button" onclick={() => addPoolCustom(pi, 'lesserDooms')}>Add lesser doom</button>
+						<button type="button" onclick={() => addPoolCustom(pi, 'greaterDooms')}>Add greater doom</button>
+					</div>
+				</div>
+				<div class="pool-actions">
+					{#if draft.pools.length > 1}
+						<button type="button" onclick={() => handleMovePool(pi, -1)} disabled={pi === 0} aria-label={`Move pool ${pi + 1} up`}>↑ Move up</button>
+						<button type="button" onclick={() => handleMovePool(pi, 1)} disabled={pi === draft.pools.length - 1} aria-label={`Move pool ${pi + 1} down`}>↓ Move down</button>
+					{/if}
+					<button type="button" class="remove" onclick={() => handleRemovePool(pi)}>Remove pool</button>
+				</div>
+			</fieldset>
+		{/each}
+		<button type="button" class="add-pool" onclick={handleAddPool}>+ Add pool</button>
+	{:else if stepId === 'dooms'}
 		<h2>Dooms</h2>
 		<p>
 			Pick from the template lists, then invent one or two dooms for your exaggerated aspect
 			{#if draft.exaggeration}(<em>{draft.exaggeration}</em>){/if} — that's what makes it fresh.
 		</p>
+		{#if poolsMode}
+			<p class="guidance">
+				Most of a pool-based creature's dooms live on its pools — add those on the
+				<strong>Pools</strong> step. Dooms added here apply no matter which pools still stand.
+			</p>
+		{/if}
 
 		<h3>Lesser dooms <span class="from">from {theme?.name}</span></h3>
 		{#if theme?.lesserDooms?.length}
@@ -379,7 +535,7 @@
 			<button type="button" onclick={() => addCustom('lesserDooms')}>Add as lesser doom</button>
 			<button type="button" onclick={() => addCustom('greaterDooms')}>Add as greater doom</button>
 		</div>
-	{:else if step === 5}
+	{:else if stepId === 'review'}
 		<h2>Review</h2>
 		{#each statWarnings as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>
@@ -391,15 +547,15 @@
 	{/if}
 
 	<div class="nav-buttons">
-		{#if step > 0}
-			<button type="button" onclick={() => go(step - 1)}>← Back</button>
+		{#if stepIndex > 0}
+			<button type="button" onclick={() => go(stepIndex - 1)}>← Back</button>
 		{/if}
-		{#if step < BUILDER_STEPS.length - 1}
+		{#if stepIndex < steps.length - 1}
 			<button
 				type="button"
 				class="primary"
-				disabled={step >= 2 && !templatesChosen}
-				onclick={() => go(step + 1)}
+				disabled={stepIndex >= 2 && !templatesChosen}
+				onclick={() => go(stepIndex + 1)}
 			>
 				Next →
 			</button>
@@ -641,6 +797,61 @@
 	.guidance {
 		font-size: 0.9rem;
 		color: var(--ink-soft);
+	}
+	.pool-editor {
+		margin: 1rem 0;
+		padding: 0.9rem 1rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border-radius: 6px;
+	}
+	.pool-editor legend {
+		font-family: var(--font-subhead);
+		font-size: 1.05rem;
+		padding: 0 0.4rem;
+	}
+	.pool-head {
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr;
+		gap: 0.5rem 0.75rem;
+	}
+	.pool-head .field {
+		margin: 0.25rem 0;
+	}
+	.pool-add-actions,
+	.pool-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: baseline;
+	}
+	.pool-actions {
+		margin-top: 0.75rem;
+	}
+	.pool-actions button,
+	.pool-add-actions button,
+	.add-pool {
+		font: inherit;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		padding: 0.3rem 0.8rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 4px;
+		background: none;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.pool-actions button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+	.pool-actions .remove {
+		border: none;
+		color: var(--accent);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.add-pool {
+		margin: 0.25rem 0 0.5rem;
 	}
 	.from {
 		font-size: 0.8rem;

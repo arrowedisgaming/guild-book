@@ -268,10 +268,12 @@
 
 	let saving = $state(false);
 	let savedAt = $state<number | null>(null);
+	let saveError = $state<string | null>(null);
 
 	async function saveDenizen() {
 		if (saving) return;
 		saving = true;
+		saveError = null;
 		try {
 			const editingId = $denizenBuilder.editingId;
 			const res = await fetch(editingId ? `/api/denizens/${editingId}` : '/api/denizens', {
@@ -281,7 +283,9 @@
 			});
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
-				announce(body?.message ?? 'Could not save — check the warnings above and try again.');
+				// Shown right next to the button as well as announced.
+				saveError = body?.message ?? 'Could not save — fix the warnings above and try again.';
+				announce(saveError);
 				return;
 			}
 			if (!editingId) {
@@ -292,7 +296,8 @@
 			announce('Denizen saved.');
 			setTimeout(() => (savedAt = null), 2000);
 		} catch {
-			announce('Could not save — check your connection and try again.');
+			saveError = 'Could not save — check your connection and try again.';
+			announce(saveError);
 		} finally {
 			saving = false;
 		}
@@ -923,6 +928,9 @@
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		{#if data.user}
+			{#if saveError}
+				<p class="warning" role="alert">{saveError}</p>
+			{/if}
 			<div class="save-row">
 				<button type="button" class="save" disabled={saving} onclick={saveDenizen}>
 					{saving

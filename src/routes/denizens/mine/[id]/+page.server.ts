@@ -23,7 +23,7 @@ export const load: PageServerLoad = async (event) => {
 		.where(and(eq(denizens.id, event.params.id), eq(denizens.userId, userId)))
 		.get();
 
-	if (!row || row.isArchived) throw error(404, 'Denizen not found');
+	if (!row || row.isArchived) throw error(404, 'Your denizen is in another dungeon.');
 
 	let storedDraft: unknown;
 	try {

@@ -290,6 +290,13 @@ function hdPairWarnings(health: string, defense: string, where: string): string[
 	if (defense !== '' && Number.isFinite(defenseNumber) && defenseNumber < 0) {
 		warnings.push(phrase('Defense cannot be negative (0 is fine).'));
 	}
+	// Numeric stats are whole numbers; special strings (∞, X, *) pass through.
+	if (health !== '' && Number.isFinite(healthNumber) && !Number.isInteger(healthNumber)) {
+		warnings.push(phrase('Health is a whole number — no fractions.'));
+	}
+	if (defense !== '' && Number.isFinite(defenseNumber) && !Number.isInteger(defenseNumber)) {
+		warnings.push(phrase('Defense is a whole number — no fractions.'));
+	}
 	return warnings;
 }
 

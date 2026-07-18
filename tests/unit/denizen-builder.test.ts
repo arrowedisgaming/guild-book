@@ -221,6 +221,16 @@ describe('denizen builder — stat warnings', () => {
 			'Health and Defense are a pair — fill in both or leave both blank.'
 		]);
 	});
+
+	it('rejects fractional stats but leaves special strings alone', () => {
+		expect(draftStatWarnings(withStats('3.5', '2'))).toEqual([
+			'Health is a whole number — no fractions.'
+		]);
+		expect(draftStatWarnings(withStats('3', '2.5'))).toEqual([
+			'Defense is a whole number — no fractions.'
+		]);
+		expect(draftStatWarnings(withStats('∞', 'X'))).toEqual([]);
+	});
 });
 
 // --- pools (dungeon lords) ---------------------------------------------------

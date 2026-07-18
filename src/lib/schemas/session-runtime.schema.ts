@@ -4,6 +4,8 @@ import {
 	tarotConfigSchema,
 	tarotProcedureDefinitionSchema,
 	sessionModifierDefinitionSchema,
+	tarotLookupTableSchema,
+	tarotFormulaDefinitionSchema,
 	parseOrThrow
 } from '$lib/schemas/content-pack.schema';
 
@@ -11,8 +13,9 @@ import {
  * Zod mirror of `SessionRuntimeContentV1` (`$lib/types/session.ts`) — the
  * compiled, immutable session runtime document Task 4 pins at session start.
  * Reuses the content-pack's own `tarotConfigSchema` /
- * `tarotProcedureDefinitionSchema` / `sessionModifierDefinitionSchema` rather
- * than redefining them, so the two stay in lockstep.
+ * `tarotProcedureDefinitionSchema` / `sessionModifierDefinitionSchema` /
+ * `tarotLookupTableSchema` / `tarotFormulaDefinitionSchema` rather than
+ * redefining them, so the two stay in lockstep.
  */
 
 const suitEnum = z.enum(SUIT_IDS);
@@ -49,7 +52,9 @@ export const sessionRuntimeContentV1Schema = z
 		tarot: tarotConfigSchema,
 		procedures: z.array(tarotProcedureDefinitionSchema),
 		cards: z.array(tarotCardCatalogEntrySchema),
-		modifiers: z.array(sessionModifierDefinitionSchema)
+		modifiers: z.array(sessionModifierDefinitionSchema),
+		lookupTables: z.array(tarotLookupTableSchema),
+		formulas: z.array(tarotFormulaDefinitionSchema)
 	})
 	.strict();
 

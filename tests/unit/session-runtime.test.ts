@@ -7,7 +7,7 @@ import {
 	MAX_SESSION_RUNTIME_CONTENT_BYTES
 } from '$lib/server/content/session-runtime';
 import { sessionRuntimeContentV1Schema } from '$lib/schemas/session-runtime.schema';
-import { getContentPack, getTarotProcedures } from '$lib/server/content/loader';
+import { getContentPack, getRules, getTarotProcedures } from '$lib/server/content/loader';
 import { assertSessionInvariants } from '$lib/engine/session/invariants';
 import { reduceSession, type ReduceContext } from '$lib/engine/session/reducer';
 import { makeRng } from '$lib/engine/rng';
@@ -45,24 +45,52 @@ describe('compileSessionRuntimeContent — scope', () => {
 	it('carries exactly the documented top-level fields, no speculative ones', () => {
 		const content = compileSessionRuntimeContent();
 		expect(Object.keys(content).sort()).toEqual(
-			['cards', 'contentDigest', 'contentPackId', 'contentPackVersion', 'modifiers', 'procedures', 'schemaVersion', 'tarot'].sort()
+			[
+				'cards',
+				'contentDigest',
+				'contentPackId',
+				'contentPackVersion',
+				'formulas',
+				'lookupTables',
+				'modifiers',
+				'procedures',
+				'schemaVersion',
+				'tarot'
+			].sort()
 		);
 	});
 
-	it('excludes rule-reference collections unrelated to live procedures (lookup tables, formulas)', () => {
+	/**
+	 * Spec §6.4 is normative over the plan's original Step 2 shape: the
+	 * runtime document carries "the tarot config, procedure definitions,
+	 * modifiers, and lookup tables the session needs" — a pinned snapshot is
+	 * immutable, so Increment 3's procedure runner needs the oracle tables
+	 * and formula params to travel with the pin, not be fetched from the
+	 * live bundle later. Taken whole (no subsetting filter): Increment 0b
+	 * already generated `lookupTables`/`formulas` scoped to the same
+	 * procedure set as `procedures`/`modifiers`.
+	 */
+	it('includes the full lookup-table and formula catalogs verbatim (spec §6.4)', () => {
+		const content = compileSessionRuntimeContent();
+		const proceduresFile = getTarotProcedures();
+		expect(content.lookupTables).toEqual(proceduresFile.lookupTables);
+		expect(content.formulas).toEqual(proceduresFile.formulas);
+		expect(content.lookupTables.length).toBeGreaterThan(0);
+		expect(content.formulas.length).toBeGreaterThan(0);
+	});
+
+	it('excludes rule content unrelated to live procedures (e.g. the rules-reference collection)', () => {
 		const content = compileSessionRuntimeContent();
 		const serialized = JSON.stringify(content);
-		const proceduresFile = getTarotProcedures();
-		// Steps legitimately reference a lookup table *id* they resolve
-		// against (e.g. `lookupTableId: 'city-events'`), so ids alone can
-		// leak through — that is fine and expected. What must NOT leak is
-		// the verbatim oracle prose (row/cell text) those tables carry; that
-		// is rule-reference content no live command needs.
-		const oracleCellText = proceduresFile.lookupTables[0]?.rows[0]?.cells[0]?.text;
-		expect(oracleCellText).toBeTruthy();
-		expect(serialized.includes(oracleCellText!)).toBe(false);
-		expect(content).not.toHaveProperty('lookupTables');
-		expect(content).not.toHaveProperty('formulas');
+		// A rules-reference entry's body is prose for the browsable rules
+		// section, not state a live command resolves against — it must not
+		// leak into the compiled document via some other path.
+		const rulesEntry = getRules().find((entry) => entry.body.length > 20);
+		expect(rulesEntry).toBeTruthy();
+		expect(serialized.includes(rulesEntry!.body)).toBe(false);
+		expect(content).not.toHaveProperty('kiths');
+		expect(content).not.toHaveProperty('denizens');
+		expect(content).not.toHaveProperty('spells');
 	});
 
 	it('includes the full 78-card catalog (21 majors + 56 minors + the Fool)', () => {

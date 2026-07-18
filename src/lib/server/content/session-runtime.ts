@@ -86,7 +86,13 @@ export function compileSessionRuntimeContent(
 		tarot: pack.tarot,
 		procedures: proceduresFile.procedures,
 		cards: buildCardCatalogEntries(pack.tarot),
-		modifiers: proceduresFile.modifiers
+		modifiers: proceduresFile.modifiers,
+		// Taken whole, no subsetting filter: Increment 0b already generated
+		// `lookupTables`/`formulas` scoped to the same procedure set as
+		// `procedures`/`modifiers` (spec §6.4 — normative over the plan's
+		// original Step 2 shape).
+		lookupTables: proceduresFile.lookupTables,
+		formulas: proceduresFile.formulas
 	};
 
 	const contentDigest = canonicalDigest(unsigned);

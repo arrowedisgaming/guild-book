@@ -16,6 +16,8 @@ import type { SuitId, RankId } from '$lib/types/common';
 import type {
 	SessionModifierDefinition,
 	TarotConfig,
+	TarotFormulaDefinition,
+	TarotLookupTable,
 	TarotProcedureDefinition
 } from '$lib/types/content-pack';
 
@@ -384,7 +386,8 @@ export interface SessionGmProjection {
 // ---------------------------------------------------------------------------
 // Session runtime content (Task 4). A single immutable, digest-stamped
 // snapshot of every game rule a live session needs — tarot config, the
-// in-session procedure catalog, the full card catalog, and their modifiers —
+// in-session procedure catalog, the full card catalog, their modifiers, and
+// the oracle lookup tables/formulas those procedures resolve against —
 // compiled from the content pack and pinned to `sessionRuntimeContents` at
 // session start (see `src/lib/server/db/schema.ts`). A mid-campaign
 // content-pack update must never change a live session's rules, so the
@@ -392,11 +395,18 @@ export interface SessionGmProjection {
 // live bundle. Compiled by `compileSessionRuntimeContent` in
 // `$lib/server/content/session-runtime.ts`; validated against
 // `sessionRuntimeContentV1Schema` (`$lib/schemas/session-runtime.schema.ts`)
-// both before insert and after every read. Deliberately excludes
-// `TarotProceduresFile`'s `lookupTables`/`formulas` collections — those are
-// rule reference data, not state a live command needs to resolve; only what
-// procedures/modifiers/cards actually carry belongs here (no speculative or
-// unrelated rule prose).
+// both before insert and after every read.
+//
+// `lookupTables`/`formulas` are included per spec §6.4 (normative over the
+// plan's Step 2 shape): "the tarot config, procedure definitions, modifiers,
+// and lookup tables the session needs." Since a pinned snapshot is immutable,
+// omitting them would strand Increment 3's procedure runner — procedure
+// steps already reference lookup tables/formulas by id
+// (`lookupTableId`/`draw: {kind: 'formula', ...}`), so the resolved data must
+// travel with the pin, not be looked up from the live bundle later. Taken
+// whole from `TarotProceduresFile` (no subsetting filter) because Increment
+// 0b already generated `lookupTables`/`formulas` scoped to the same
+// procedure set as `procedures`/`modifiers`.
 export interface SessionRuntimeContentV1 {
 	schemaVersion: 1;
 	contentPackId: string;
@@ -408,4 +418,6 @@ export interface SessionRuntimeContentV1 {
 	procedures: TarotProcedureDefinition[];
 	cards: TarotCardCatalogEntry[];
 	modifiers: SessionModifierDefinition[];
+	lookupTables: TarotLookupTable[];
+	formulas: TarotFormulaDefinition[];
 }

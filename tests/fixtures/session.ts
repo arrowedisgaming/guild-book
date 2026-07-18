@@ -8,7 +8,7 @@
 
 import { getContentPack } from '$lib/server/content/loader';
 import { buildMajorDeck, buildPlayerDeck, shuffleDeck, type TarotCard } from '$lib/engine/tarot-deck';
-import type { SessionEngineStateV1, TarotCardCatalog } from '$lib/types/session';
+import type { CardId, SessionEngineStateV1, TarotCardCatalog, UserId } from '$lib/types/session';
 
 function cardIds(cards: readonly TarotCard[]): string[] {
 	return cards.map((card) => card.id);
@@ -54,4 +54,28 @@ export function makeSessionFixture(seed = 'session-fixture'): SessionEngineState
 		pendingZones: [],
 		reshuffleAtBoundary: { major: false, player: false }
 	};
+}
+
+/**
+ * A session fixture with one private `player-hand` zone per entry of
+ * `hands`, populated by pulling those exact card ids out of the shuffled
+ * player draw pile (so the fixture's card count stays 78 and every id used
+ * must be a real minor/Fool id — e.g. `'cups-i'`, `'swords-x'`). Zone ids are
+ * `hand:<ownerUserId>`.
+ */
+export function fixtureWithHands(hands: Record<UserId, CardId[]>, seed = 'session-fixture'): SessionEngineStateV1 {
+	const state = makeSessionFixture(seed);
+	const playerDraw = state.playerDraw.slice();
+	const privateZones = state.privateZones.slice();
+
+	for (const [ownerUserId, cardIds] of Object.entries(hands)) {
+		for (const cardId of cardIds) {
+			const index = playerDraw.indexOf(cardId);
+			if (index === -1) throw new Error(`fixtureWithHands: card not in player draw pile: ${cardId}`);
+			playerDraw.splice(index, 1);
+		}
+		privateZones.push({ id: `hand:${ownerUserId}`, kind: 'player-hand', ownerUserId, cards: cardIds.slice() });
+	}
+
+	return { ...state, playerDraw, privateZones };
 }

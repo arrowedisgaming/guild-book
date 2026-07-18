@@ -1,11 +1,48 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import AdventurerPicker from '$lib/components/campaign/AdventurerPicker.svelte';
 	import CampaignRoster from '$lib/components/campaign/CampaignRoster.svelte';
+	import { createCampaignSessionStore } from '$lib/stores/campaign-session.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let copied = $state(false);
 	let actionMessage = $derived(form && 'message' in form ? form.message : null);
+
+	// ~5s-while-visible dashboard cadence (plan Step 2 / controller amendment
+	// 5): reuses the table's store — pause-while-hidden, immediate refresh on
+	// focus/reconnect all come for free — purely as a change detector here.
+	// This page has no live session UI of its own; `campaignEvents` is one
+	// campaign-wide cursor shared with membership/tenure/character events
+	// (`db/schema.ts`), so a cursor bump just means "reload this page's data"
+	// (`invalidateAll`) — never a session projection to render.
+	let store = $state.raw(untrack(() => createDashboardStoreFor(data)));
+	let lastAppliedCursor = untrack(() => data.cursor);
+
+	$effect(() => {
+		const next = createDashboardStoreFor(data);
+		store = next;
+		lastAppliedCursor = data.cursor;
+		next.start();
+		return () => next.stop();
+	});
+
+	$effect(() => {
+		const cursor = store.snapshot.cursor;
+		if (cursor !== lastAppliedCursor) {
+			lastAppliedCursor = cursor;
+			void invalidateAll();
+		}
+	});
+
+	function createDashboardStoreFor(pageData: PageData) {
+		return createCampaignSessionStore(
+			pageData.campaign.id,
+			{ cursor: pageData.cursor, events: [], session: null },
+			{ intervalMs: 5000 }
+		);
+	}
 
 	async function copyInvite() {
 		if (!data.inviteUrl) return;

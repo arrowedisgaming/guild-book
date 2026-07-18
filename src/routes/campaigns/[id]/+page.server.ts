@@ -24,13 +24,20 @@ import {
 } from '$lib/server/campaign/service';
 import { attachAdventurer, replaceAdventurer } from '$lib/server/campaign/tenure';
 import { getDb } from '$lib/server/db';
+import { campaignCursor } from '$lib/server/session/repository';
 
 export const load: PageServerLoad = async (event) => {
 	const role = await requireCampaignReadAccess(event, event.params.id);
 	const db = await getDb(event);
-	const [campaign, rosterView] = await Promise.all([
+	const [campaign, rosterView, cursor] = await Promise.all([
 		loadCampaignProjection(db, role),
-		loadCampaignRosterView(db, event.params.id)
+		loadCampaignRosterView(db, event.params.id),
+		// Seeds the client's ~5s dashboard poller (fix round 1 / plan Step 2):
+		// the same campaign-wide cursor `/sync` tracks — membership, tenure,
+		// and character events all bump it, not just session events — so a
+		// cursor change here is exactly "the roster this page rendered may now
+		// be stale."
+		campaignCursor(db, event.params.id)
 	]);
 	if (!campaign) throw error(404, 'Campaign not found');
 
@@ -61,7 +68,8 @@ export const load: PageServerLoad = async (event) => {
 		eligibleAdventurers,
 		activePlayerTenureId: activePlayerTenure?.id ?? null,
 		inviteUrl,
-		joinedWithoutAdventurer: event.url.searchParams.get('joined') === 'observer'
+		joinedWithoutAdventurer: event.url.searchParams.get('joined') === 'observer',
+		cursor
 	};
 };
 

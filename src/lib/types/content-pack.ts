@@ -233,11 +233,13 @@ export interface DenizenThemeDefinition {
 	chooseLesserDooms?: string;
 	/**
 	 * Whether the builder can use this template. Omitted = 'standard'.
-	 * 'unsupported' keeps the template in the reference but out of the builder
-	 * (the Man theme: the book says to build people as characters instead).
+	 * 'person' switches the builder to the adversary path (the Man theme:
+	 * the book builds people as characters — spread attributes, kith, and
+	 * gimmick dooms). 'unsupported' keeps the template in the reference but
+	 * out of the builder.
 	 */
-	builderMode?: 'standard' | 'unsupported';
-	/** Shown in the builder when the template is unavailable. */
+	builderMode?: 'standard' | 'person' | 'unsupported';
+	/** Guidance shown on the template's builder card. */
 	builderNote?: string;
 }
 

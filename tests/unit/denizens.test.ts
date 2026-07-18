@@ -87,8 +87,9 @@ describe('denizens — book irregularities survive the schema', () => {
 			expect(threats[id].builderMode, id).toBeUndefined();
 		}
 
+		// Man is person-mode: the builder's adversary path, guided by book text.
 		const man = getDenizenThemes().find((t) => t.id === 'man')!;
-		expect(man.builderMode).toBe('unsupported');
+		expect(man.builderMode).toBe('person');
 		expect(man.builderNote).toMatch(/making actual characters/);
 	});
 

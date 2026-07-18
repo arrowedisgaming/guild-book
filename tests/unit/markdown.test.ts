@@ -58,4 +58,17 @@ describe('renderMarkdown', () => {
 		// Needs a space after the hashes and to be a lone line.
 		expect(renderMarkdown('Roll 2 hits: success.')).toBe('<p>Roll 2 hits: success.</p>');
 	});
+
+	it('renders task items as inert checkboxes (single and double)', () => {
+		const out = renderMarkdown('- [ ] mark Staggered\n- [ ] [ ] Wound a talent');
+		expect(out).toBe(
+			'<ul>' +
+				'<li class="task"><input type="checkbox" disabled /> mark Staggered</li>' +
+				'<li class="task"><input type="checkbox" disabled /> <input type="checkbox" disabled /> Wound a talent</li>' +
+				'</ul>'
+		);
+		// A checked box renders checked; plain bullets are untouched.
+		expect(renderMarkdown('- [x] done')).toContain('checked');
+		expect(renderMarkdown('- plain item')).toBe('<ul><li>plain item</li></ul>');
+	});
 });

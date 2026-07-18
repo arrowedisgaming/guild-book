@@ -170,6 +170,13 @@
 		display: block;
 		margin: 0.35rem 0 0;
 	}
+	/* Task rows (the Wounds options) show checkboxes, not bullets. */
+	.ability-text :global(li.task) {
+		list-style: none;
+	}
+	.ability-text :global(li.task input) {
+		accent-color: var(--accent);
+	}
 	.pool {
 		margin-top: 1.25rem;
 	}

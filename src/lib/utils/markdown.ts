@@ -32,7 +32,18 @@ function renderList(block: string): string {
 		.split('\n')
 		.filter((l) => l.trim() !== '')
 		.map((l) => l.replace(/^\s*-\s+/, ''))
-		.map((item) => `<li>${renderInline(escapeHtml(item))}</li>`)
+		.map((item) => {
+			// Task items (`[ ] text`, `[ ] [ ] text`) render as real (inert)
+			// checkboxes — used by e.g. the person Wounds note's option list.
+			const task = /^((?:\[[ xX]\]\s*)+)(.*)$/.exec(item);
+			if (task) {
+				const boxes = (task[1].match(/\[[ xX]\]/g) ?? [])
+					.map((box) => `<input type="checkbox" disabled${/[xX]/.test(box) ? ' checked' : ''} />`)
+					.join(' ');
+				return `<li class="task">${boxes} ${renderInline(escapeHtml(task[2]))}</li>`;
+			}
+			return `<li>${renderInline(escapeHtml(item))}</li>`;
+		})
 		.join('');
 	return `<ul>${items}</ul>`;
 }

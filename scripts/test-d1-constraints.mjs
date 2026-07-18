@@ -11,7 +11,8 @@ const ids = {
 	membershipB: `membership-b-${suffix}`,
 	characterA: `character-a-${suffix}`,
 	characterB: `character-b-${suffix}`,
-	tenure: `tenure-${suffix}`
+	tenure: `tenure-${suffix}`,
+	session: `session-${suffix}`
 };
 
 execute(
@@ -20,7 +21,9 @@ execute(
 		`INSERT INTO campaigns (id, owner_user_id, name, description, created_at, updated_at) VALUES ('${ids.campaign}', '${ids.owner}', 'D1 Constraint Smoke', '', 100, 100);`,
 		`INSERT INTO characters (id, user_id, data, created_at, updated_at) VALUES ('${ids.characterA}', '${ids.playerA}', '{}', 100, 100), ('${ids.characterB}', '${ids.playerA}', '{}', 100, 100);`,
 		`INSERT INTO campaign_members (id, campaign_id, user_id, joined_at) VALUES ('${ids.membershipA}', '${ids.campaign}', '${ids.playerA}', 100), ('${ids.membershipB}', '${ids.campaign}', '${ids.playerB}', 100);`,
-		`INSERT INTO campaign_adventurer_tenures (id, campaign_id, membership_id, character_id, started_at, started_by_user_id) VALUES ('${ids.tenure}', '${ids.campaign}', '${ids.membershipA}', '${ids.characterA}', 100, '${ids.owner}');`
+		`INSERT INTO campaign_adventurer_tenures (id, campaign_id, membership_id, character_id, started_at, started_by_user_id) VALUES ('${ids.tenure}', '${ids.campaign}', '${ids.membershipA}', '${ids.characterA}', 100, '${ids.owner}');`,
+		`INSERT INTO play_sessions (id, campaign_id, sequence, status, phase, content_pack_id, content_pack_version, procedure_schema_version, content_digest, version, public_state_schema_version, public_state_json, started_at, started_by_user_id) VALUES ('${ids.session}', '${ids.campaign}', 1, 'active', 'crawl', 'hmtw', '3.0.0', 1, '${'0'.repeat(64)}', 0, 1, '{}', 100, '${ids.owner}');`,
+		`INSERT INTO session_commands (id, session_id, command_id, actor_user_id, request_hash, command_type, client_observed_version, structural_precondition_version, expected_version, resulting_version, status, outcome_metadata_json, created_at) VALUES ('command-a-${suffix}', '${ids.session}', 'a', '${ids.owner}', 'hash-a', 'draw', 0, NULL, 0, 1, 'accepted', '{}', 100);`
 	].join('\n')
 );
 
@@ -35,6 +38,10 @@ expectConstraintFailure(
 expectConstraintFailure(
 	`INSERT INTO campaign_adventurer_tenures (id, campaign_id, membership_id, character_id, started_at, started_by_user_id) VALUES ('tenure-membership-duplicate-${suffix}', '${ids.campaign}', '${ids.membershipA}', '${ids.characterB}', 100, '${ids.owner}');`,
 	'active membership tenure'
+);
+expectConstraintFailure(
+	`INSERT INTO session_commands (id, session_id, command_id, actor_user_id, request_hash, command_type, client_observed_version, structural_precondition_version, expected_version, resulting_version, status, outcome_metadata_json, created_at) VALUES ('command-b-${suffix}', '${ids.session}', 'b', '${ids.owner}', 'hash-b', 'draw', 0, NULL, 0, 1, 'accepted', '{}', 100);`,
+	'conflicting accepted session command resulting version'
 );
 
 cleanup();

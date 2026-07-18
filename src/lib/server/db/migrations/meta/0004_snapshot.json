@@ -1,0 +1,2577 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "67bc9f6c-7804-4f28-b041-97808e7ca1cf",
+  "prevId": "cc3fd821-34e0-452d-9237-c27b14971fc3",
+  "tables": {
+    "accounts": {
+      "name": "accounts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_account_id": {
+          "name": "provider_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "token_type": {
+          "name": "token_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "session_state": {
+          "name": "session_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "accounts_user_id_users_id_fk": {
+          "name": "accounts_user_id_users_id_fk",
+          "tableFrom": "accounts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_adventurer_tenures": {
+      "name": "campaign_adventurer_tenures",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "membership_id": {
+          "name": "membership_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "started_by_user_id": {
+          "name": "started_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ended_by_user_id": {
+          "name": "ended_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "end_reason": {
+          "name": "end_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "death_session_id": {
+          "name": "death_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_tenures_campaign_idx": {
+          "name": "campaign_tenures_campaign_idx",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_tenures_membership_idx": {
+          "name": "campaign_tenures_membership_idx",
+          "columns": [
+            "membership_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_tenures_character_idx": {
+          "name": "campaign_tenures_character_idx",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_tenures_started_by_user_idx": {
+          "name": "campaign_tenures_started_by_user_idx",
+          "columns": [
+            "started_by_user_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_tenures_ended_by_user_idx": {
+          "name": "campaign_tenures_ended_by_user_idx",
+          "columns": [
+            "ended_by_user_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_tenures_active_membership_uq": {
+          "name": "campaign_tenures_active_membership_uq",
+          "columns": [
+            "membership_id"
+          ],
+          "isUnique": true,
+          "where": "ended_at IS NULL"
+        },
+        "campaign_tenures_active_character_uq": {
+          "name": "campaign_tenures_active_character_uq",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": true,
+          "where": "ended_at IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "campaign_adventurer_tenures_campaign_id_campaigns_id_fk": {
+          "name": "campaign_adventurer_tenures_campaign_id_campaigns_id_fk",
+          "tableFrom": "campaign_adventurer_tenures",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_adventurer_tenures_membership_id_campaign_members_id_fk": {
+          "name": "campaign_adventurer_tenures_membership_id_campaign_members_id_fk",
+          "tableFrom": "campaign_adventurer_tenures",
+          "tableTo": "campaign_members",
+          "columnsFrom": [
+            "membership_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_adventurer_tenures_character_id_characters_id_fk": {
+          "name": "campaign_adventurer_tenures_character_id_characters_id_fk",
+          "tableFrom": "campaign_adventurer_tenures",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_adventurer_tenures_started_by_user_id_users_id_fk": {
+          "name": "campaign_adventurer_tenures_started_by_user_id_users_id_fk",
+          "tableFrom": "campaign_adventurer_tenures",
+          "tableTo": "users",
+          "columnsFrom": [
+            "started_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_adventurer_tenures_ended_by_user_id_users_id_fk": {
+          "name": "campaign_adventurer_tenures_ended_by_user_id_users_id_fk",
+          "tableFrom": "campaign_adventurer_tenures",
+          "tableTo": "users",
+          "columnsFrom": [
+            "ended_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "campaign_tenures_end_reason_check": {
+          "name": "campaign_tenures_end_reason_check",
+          "value": "\"campaign_adventurer_tenures\".\"end_reason\" IS NULL OR \"campaign_adventurer_tenures\".\"end_reason\" IN ('replaced', 'left', 'removed', 'died', 'corrected')"
+        }
+      }
+    },
+    "campaign_event_secrets": {
+      "name": "campaign_event_secrets",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recipient_user_id": {
+          "name": "recipient_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payload_json": {
+          "name": "payload_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_event_secrets_event_idx": {
+          "name": "campaign_event_secrets_event_idx",
+          "columns": [
+            "event_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_event_secrets_recipient_idx": {
+          "name": "campaign_event_secrets_recipient_idx",
+          "columns": [
+            "recipient_user_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_event_secrets_event_recipient_uq": {
+          "name": "campaign_event_secrets_event_recipient_uq",
+          "columns": [
+            "event_id",
+            "recipient_user_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "campaign_event_secrets_event_id_campaign_events_id_fk": {
+          "name": "campaign_event_secrets_event_id_campaign_events_id_fk",
+          "tableFrom": "campaign_event_secrets",
+          "tableTo": "campaign_events",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_event_secrets_recipient_user_id_users_id_fk": {
+          "name": "campaign_event_secrets_recipient_user_id_users_id_fk",
+          "tableFrom": "campaign_event_secrets",
+          "tableTo": "users",
+          "columnsFrom": [
+            "recipient_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_events": {
+      "name": "campaign_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "membership_id": {
+          "name": "membership_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tenure_id": {
+          "name": "tenure_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "command_id": {
+          "name": "command_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "public_payload_json": {
+          "name": "public_payload_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_events_campaign_cursor_idx": {
+          "name": "campaign_events_campaign_cursor_idx",
+          "columns": [
+            "campaign_id",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_membership_idx": {
+          "name": "campaign_events_membership_idx",
+          "columns": [
+            "membership_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_tenure_idx": {
+          "name": "campaign_events_tenure_idx",
+          "columns": [
+            "tenure_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_character_idx": {
+          "name": "campaign_events_character_idx",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_session_idx": {
+          "name": "campaign_events_session_idx",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_command_idx": {
+          "name": "campaign_events_command_idx",
+          "columns": [
+            "command_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_events_actor_user_idx": {
+          "name": "campaign_events_actor_user_idx",
+          "columns": [
+            "actor_user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "campaign_events_campaign_id_campaigns_id_fk": {
+          "name": "campaign_events_campaign_id_campaigns_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_events_membership_id_campaign_members_id_fk": {
+          "name": "campaign_events_membership_id_campaign_members_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "campaign_members",
+          "columnsFrom": [
+            "membership_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_events_tenure_id_campaign_adventurer_tenures_id_fk": {
+          "name": "campaign_events_tenure_id_campaign_adventurer_tenures_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "campaign_adventurer_tenures",
+          "columnsFrom": [
+            "tenure_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_events_character_id_characters_id_fk": {
+          "name": "campaign_events_character_id_characters_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_events_session_id_play_sessions_id_fk": {
+          "name": "campaign_events_session_id_play_sessions_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "play_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_events_command_id_session_commands_id_fk": {
+          "name": "campaign_events_command_id_session_commands_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "session_commands",
+          "columnsFrom": [
+            "command_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "campaign_events_actor_user_id_users_id_fk": {
+          "name": "campaign_events_actor_user_id_users_id_fk",
+          "tableFrom": "campaign_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_members": {
+      "name": "campaign_members",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "removed_at": {
+          "name": "removed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "removed_by_user_id": {
+          "name": "removed_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_members_campaign_idx": {
+          "name": "campaign_members_campaign_idx",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_members_user_idx": {
+          "name": "campaign_members_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_members_removed_by_user_idx": {
+          "name": "campaign_members_removed_by_user_idx",
+          "columns": [
+            "removed_by_user_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_members_active_user_uq": {
+          "name": "campaign_members_active_user_uq",
+          "columns": [
+            "campaign_id",
+            "user_id"
+          ],
+          "isUnique": true,
+          "where": "left_at IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "campaign_members_campaign_id_campaigns_id_fk": {
+          "name": "campaign_members_campaign_id_campaigns_id_fk",
+          "tableFrom": "campaign_members",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_members_user_id_users_id_fk": {
+          "name": "campaign_members_user_id_users_id_fk",
+          "tableFrom": "campaign_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_members_removed_by_user_id_users_id_fk": {
+          "name": "campaign_members_removed_by_user_id_users_id_fk",
+          "tableFrom": "campaign_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "removed_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_mutation_claims": {
+      "name": "campaign_mutation_claims",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_mutation_claims_campaign_idx": {
+          "name": "campaign_mutation_claims_campaign_idx",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_mutation_claims_character_idx": {
+          "name": "campaign_mutation_claims_character_idx",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "campaign_mutation_claims_campaign_id_campaigns_id_fk": {
+          "name": "campaign_mutation_claims_campaign_id_campaigns_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_mutation_claims_character_id_characters_id_fk": {
+          "name": "campaign_mutation_claims_character_id_characters_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_mutation_claims_actor_user_id_users_id_fk": {
+          "name": "campaign_mutation_claims_actor_user_id_users_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_mutation_receipts": {
+      "name": "campaign_mutation_receipts",
+      "columns": {
+        "claim_id": {
+          "name": "claim_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "campaign_mutation_receipts_claim_id_campaign_mutation_claims_id_fk": {
+          "name": "campaign_mutation_receipts_claim_id_campaign_mutation_claims_id_fk",
+          "tableFrom": "campaign_mutation_receipts",
+          "tableTo": "campaign_mutation_claims",
+          "columnsFrom": [
+            "claim_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaigns": {
+      "name": "campaigns",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "invite_token_prefix": {
+          "name": "invite_token_prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "invite_token_hash": {
+          "name": "invite_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "invite_nonce": {
+          "name": "invite_nonce",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "invite_version": {
+          "name": "invite_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "join_open": {
+          "name": "join_open",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaigns_owner_user_idx": {
+          "name": "campaigns_owner_user_idx",
+          "columns": [
+            "owner_user_id"
+          ],
+          "isUnique": false
+        },
+        "campaigns_invite_token_prefix_idx": {
+          "name": "campaigns_invite_token_prefix_idx",
+          "columns": [
+            "invite_token_prefix"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "campaigns_owner_user_id_users_id_fk": {
+          "name": "campaigns_owner_user_id_users_id_fk",
+          "tableFrom": "campaigns",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "campaigns_invite_version_check": {
+          "name": "campaigns_invite_version_check",
+          "value": "\"campaigns\".\"invite_version\" > 0"
+        },
+        "campaigns_version_check": {
+          "name": "campaigns_version_check",
+          "value": "\"campaigns\".\"version\" > 0"
+        }
+      }
+    },
+    "character_version_claims": {
+      "name": "character_version_claims",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resulting_version": {
+          "name": "resulting_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mutation_kind": {
+          "name": "mutation_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "character_version_claims_character_version_uq": {
+          "name": "character_version_claims_character_version_uq",
+          "columns": [
+            "character_id",
+            "resulting_version"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "character_version_claims_character_id_characters_id_fk": {
+          "name": "character_version_claims_character_id_characters_id_fk",
+          "tableFrom": "character_version_claims",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "character_version_claims_actor_user_id_users_id_fk": {
+          "name": "character_version_claims_actor_user_id_users_id_fk",
+          "tableFrom": "character_version_claims",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "characters": {
+      "name": "characters",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "kith": {
+          "name": "kith",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "life_status": {
+          "name": "life_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'alive'"
+        },
+        "is_draft": {
+          "name": "is_draft",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "share_id": {
+          "name": "share_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "characters_share_id_unique": {
+          "name": "characters_share_id_unique",
+          "columns": [
+            "share_id"
+          ],
+          "isUnique": true
+        },
+        "characters_user_id_idx": {
+          "name": "characters_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "characters_share_id_idx": {
+          "name": "characters_share_id_idx",
+          "columns": [
+            "share_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "characters_user_id_users_id_fk": {
+          "name": "characters_user_id_users_id_fk",
+          "tableFrom": "characters",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "characters_life_status_check": {
+          "name": "characters_life_status_check",
+          "value": "\"characters\".\"life_status\" IN ('alive', 'dead')"
+        }
+      }
+    },
+    "guild_draws": {
+      "name": "guild_draws",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "guild_id": {
+          "name": "guild_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "character_name": {
+          "name": "character_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entry": {
+          "name": "entry",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "guild_draws_guild_id_idx": {
+          "name": "guild_draws_guild_id_idx",
+          "columns": [
+            "guild_id",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "guild_draws_guild_id_guilds_id_fk": {
+          "name": "guild_draws_guild_id_guilds_id_fk",
+          "tableFrom": "guild_draws",
+          "tableTo": "guilds",
+          "columnsFrom": [
+            "guild_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guild_draws_user_id_users_id_fk": {
+          "name": "guild_draws_user_id_users_id_fk",
+          "tableFrom": "guild_draws",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "guild_draws_character_id_characters_id_fk": {
+          "name": "guild_draws_character_id_characters_id_fk",
+          "tableFrom": "guild_draws",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "guild_members": {
+      "name": "guild_members",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "guild_id": {
+          "name": "guild_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "marching_order": {
+          "name": "marching_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "guild_members_guild_idx": {
+          "name": "guild_members_guild_idx",
+          "columns": [
+            "guild_id"
+          ],
+          "isUnique": false
+        },
+        "guild_members_user_idx": {
+          "name": "guild_members_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "guild_members_character_idx": {
+          "name": "guild_members_character_idx",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": false
+        },
+        "guild_members_character_active_uq": {
+          "name": "guild_members_character_active_uq",
+          "columns": [
+            "guild_id",
+            "character_id"
+          ],
+          "isUnique": true,
+          "where": "left_at IS NULL"
+        },
+        "guild_members_user_active_uq": {
+          "name": "guild_members_user_active_uq",
+          "columns": [
+            "guild_id",
+            "user_id"
+          ],
+          "isUnique": true,
+          "where": "left_at IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "guild_members_guild_id_guilds_id_fk": {
+          "name": "guild_members_guild_id_guilds_id_fk",
+          "tableFrom": "guild_members",
+          "tableTo": "guilds",
+          "columnsFrom": [
+            "guild_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guild_members_user_id_users_id_fk": {
+          "name": "guild_members_user_id_users_id_fk",
+          "tableFrom": "guild_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guild_members_character_id_characters_id_fk": {
+          "name": "guild_members_character_id_characters_id_fk",
+          "tableFrom": "guild_members",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "guild_rosters": {
+      "name": "guild_rosters",
+      "columns": {
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "document_json": {
+          "name": "document_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "guild_rosters_campaign_id_campaigns_id_fk": {
+          "name": "guild_rosters_campaign_id_campaigns_id_fk",
+          "tableFrom": "guild_rosters",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "guild_rosters_schema_version_check": {
+          "name": "guild_rosters_schema_version_check",
+          "value": "\"guild_rosters\".\"schema_version\" > 0"
+        },
+        "guild_rosters_version_check": {
+          "name": "guild_rosters_version_check",
+          "value": "\"guild_rosters\".\"version\" > 0"
+        }
+      }
+    },
+    "guilds": {
+      "name": "guilds",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "guildmaster_user_id": {
+          "name": "guildmaster_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "sigil": {
+          "name": "sigil",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "share_id": {
+          "name": "share_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_open": {
+          "name": "is_open",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "guilds_share_id_unique": {
+          "name": "guilds_share_id_unique",
+          "columns": [
+            "share_id"
+          ],
+          "isUnique": true
+        },
+        "guilds_guildmaster_idx": {
+          "name": "guilds_guildmaster_idx",
+          "columns": [
+            "guildmaster_user_id"
+          ],
+          "isUnique": false
+        },
+        "guilds_share_id_idx": {
+          "name": "guilds_share_id_idx",
+          "columns": [
+            "share_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "guilds_guildmaster_user_id_users_id_fk": {
+          "name": "guilds_guildmaster_user_id_users_id_fk",
+          "tableFrom": "guilds",
+          "tableTo": "users",
+          "columnsFrom": [
+            "guildmaster_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "play_sessions": {
+      "name": "play_sessions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "phase": {
+          "name": "phase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "procedure_id": {
+          "name": "procedure_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "content_pack_id": {
+          "name": "content_pack_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_pack_version": {
+          "name": "content_pack_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "procedure_schema_version": {
+          "name": "procedure_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "content_digest": {
+          "name": "content_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "runtime_content_id": {
+          "name": "runtime_content_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "public_state_schema_version": {
+          "name": "public_state_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "public_state_json": {
+          "name": "public_state_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "started_by_user_id": {
+          "name": "started_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ended_by_user_id": {
+          "name": "ended_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "final_public_state_json": {
+          "name": "final_public_state_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "public_history_checksum": {
+          "name": "public_history_checksum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "play_sessions_campaign_idx": {
+          "name": "play_sessions_campaign_idx",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": false
+        },
+        "play_sessions_started_by_user_idx": {
+          "name": "play_sessions_started_by_user_idx",
+          "columns": [
+            "started_by_user_id"
+          ],
+          "isUnique": false
+        },
+        "play_sessions_ended_by_user_idx": {
+          "name": "play_sessions_ended_by_user_idx",
+          "columns": [
+            "ended_by_user_id"
+          ],
+          "isUnique": false
+        },
+        "play_sessions_open_campaign_uq": {
+          "name": "play_sessions_open_campaign_uq",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": true,
+          "where": "status IN ('active', 'frozen')"
+        }
+      },
+      "foreignKeys": {
+        "play_sessions_campaign_id_campaigns_id_fk": {
+          "name": "play_sessions_campaign_id_campaigns_id_fk",
+          "tableFrom": "play_sessions",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "play_sessions_started_by_user_id_users_id_fk": {
+          "name": "play_sessions_started_by_user_id_users_id_fk",
+          "tableFrom": "play_sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "started_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "play_sessions_ended_by_user_id_users_id_fk": {
+          "name": "play_sessions_ended_by_user_id_users_id_fk",
+          "tableFrom": "play_sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "ended_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "play_sessions_status_check": {
+          "name": "play_sessions_status_check",
+          "value": "\"play_sessions\".\"status\" IN ('active', 'ended', 'frozen')"
+        },
+        "play_sessions_phase_check": {
+          "name": "play_sessions_phase_check",
+          "value": "\"play_sessions\".\"phase\" IN ('crawl', 'challenge', 'camp', 'city')"
+        },
+        "play_sessions_sequence_check": {
+          "name": "play_sessions_sequence_check",
+          "value": "\"play_sessions\".\"sequence\" >= 0"
+        },
+        "play_sessions_version_check": {
+          "name": "play_sessions_version_check",
+          "value": "\"play_sessions\".\"version\" >= 0"
+        },
+        "play_sessions_procedure_schema_version_check": {
+          "name": "play_sessions_procedure_schema_version_check",
+          "value": "\"play_sessions\".\"procedure_schema_version\" > 0"
+        },
+        "play_sessions_public_state_schema_version_check": {
+          "name": "play_sessions_public_state_schema_version_check",
+          "value": "\"play_sessions\".\"public_state_schema_version\" > 0"
+        }
+      }
+    },
+    "session_commands": {
+      "name": "session_commands",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "command_id": {
+          "name": "command_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "command_type": {
+          "name": "command_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_observed_version": {
+          "name": "client_observed_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "structural_precondition_version": {
+          "name": "structural_precondition_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expected_version": {
+          "name": "expected_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resulting_version": {
+          "name": "resulting_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "outcome_metadata_json": {
+          "name": "outcome_metadata_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "session_commands_session_idx": {
+          "name": "session_commands_session_idx",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "session_commands_actor_user_idx": {
+          "name": "session_commands_actor_user_idx",
+          "columns": [
+            "actor_user_id"
+          ],
+          "isUnique": false
+        },
+        "session_commands_session_command_uq": {
+          "name": "session_commands_session_command_uq",
+          "columns": [
+            "session_id",
+            "command_id"
+          ],
+          "isUnique": true
+        },
+        "session_commands_resulting_version_uq": {
+          "name": "session_commands_resulting_version_uq",
+          "columns": [
+            "session_id",
+            "resulting_version"
+          ],
+          "isUnique": true,
+          "where": "resulting_version IS NOT NULL"
+        }
+      },
+      "foreignKeys": {
+        "session_commands_session_id_play_sessions_id_fk": {
+          "name": "session_commands_session_id_play_sessions_id_fk",
+          "tableFrom": "session_commands",
+          "tableTo": "play_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "session_commands_actor_user_id_users_id_fk": {
+          "name": "session_commands_actor_user_id_users_id_fk",
+          "tableFrom": "session_commands",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "session_commands_status_check": {
+          "name": "session_commands_status_check",
+          "value": "\"session_commands\".\"status\" IN ('accepted', 'rejected')"
+        },
+        "session_commands_resulting_version_check": {
+          "name": "session_commands_resulting_version_check",
+          "value": "\"session_commands\".\"resulting_version\" IS NULL OR \"session_commands\".\"resulting_version\" = \"session_commands\".\"expected_version\" + 1"
+        },
+        "session_commands_status_resulting_version_check": {
+          "name": "session_commands_status_resulting_version_check",
+          "value": "(\"session_commands\".\"status\" = 'accepted' AND \"session_commands\".\"resulting_version\" IS NOT NULL) OR (\"session_commands\".\"status\" = 'rejected' AND \"session_commands\".\"resulting_version\" IS NULL)"
+        },
+        "session_commands_client_observed_version_check": {
+          "name": "session_commands_client_observed_version_check",
+          "value": "\"session_commands\".\"client_observed_version\" >= 0"
+        },
+        "session_commands_structural_precondition_version_check": {
+          "name": "session_commands_structural_precondition_version_check",
+          "value": "\"session_commands\".\"structural_precondition_version\" IS NULL OR \"session_commands\".\"structural_precondition_version\" >= 0"
+        },
+        "session_commands_expected_version_check": {
+          "name": "session_commands_expected_version_check",
+          "value": "\"session_commands\".\"expected_version\" >= 0"
+        }
+      }
+    },
+    "session_private_states": {
+      "name": "session_private_states",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recipient_user_id": {
+          "name": "recipient_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "private_state_json": {
+          "name": "private_state_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "session_private_states_session_idx": {
+          "name": "session_private_states_session_idx",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "session_private_states_recipient_idx": {
+          "name": "session_private_states_recipient_idx",
+          "columns": [
+            "recipient_user_id"
+          ],
+          "isUnique": false
+        },
+        "session_private_states_session_recipient_uq": {
+          "name": "session_private_states_session_recipient_uq",
+          "columns": [
+            "session_id",
+            "recipient_user_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "session_private_states_session_id_play_sessions_id_fk": {
+          "name": "session_private_states_session_id_play_sessions_id_fk",
+          "tableFrom": "session_private_states",
+          "tableTo": "play_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "session_private_states_recipient_user_id_users_id_fk": {
+          "name": "session_private_states_recipient_user_id_users_id_fk",
+          "tableFrom": "session_private_states",
+          "tableTo": "users",
+          "columnsFrom": [
+            "recipient_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "session_private_states_schema_version_check": {
+          "name": "session_private_states_schema_version_check",
+          "value": "\"session_private_states\".\"schema_version\" > 0"
+        },
+        "session_private_states_session_version_check": {
+          "name": "session_private_states_session_version_check",
+          "value": "\"session_private_states\".\"session_version\" >= 0"
+        }
+      }
+    },
+    "session_runtime_contents": {
+      "name": "session_runtime_contents",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "runtime_content_json": {
+          "name": "runtime_content_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_runtime_contents_session_id_play_sessions_id_fk": {
+          "name": "session_runtime_contents_session_id_play_sessions_id_fk",
+          "tableFrom": "session_runtime_contents",
+          "tableTo": "play_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "session_runtime_contents_schema_version_check": {
+          "name": "session_runtime_contents_schema_version_check",
+          "value": "\"session_runtime_contents\".\"schema_version\" > 0"
+        },
+        "session_runtime_contents_session_version_check": {
+          "name": "session_runtime_contents_session_version_check",
+          "value": "\"session_runtime_contents\".\"session_version\" >= 0"
+        }
+      }
+    },
+    "session_server_states": {
+      "name": "session_server_states",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "server_state_json": {
+          "name": "server_state_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_server_states_session_id_play_sessions_id_fk": {
+          "name": "session_server_states_session_id_play_sessions_id_fk",
+          "tableFrom": "session_server_states",
+          "tableTo": "play_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "session_server_states_schema_version_check": {
+          "name": "session_server_states_schema_version_check",
+          "value": "\"session_server_states\".\"schema_version\" > 0"
+        },
+        "session_server_states_session_version_check": {
+          "name": "session_server_states_session_version_check",
+          "value": "\"session_server_states\".\"session_version\" >= 0"
+        }
+      }
+    },
+    "sessions": {
+      "name": "sessions",
+      "columns": {
+        "session_token": {
+          "name": "session_token",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires": {
+          "name": "expires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "verification_tokens": {
+      "name": "verification_tokens",
+      "columns": {
+        "identifier": {
+          "name": "identifier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires": {
+          "name": "expires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

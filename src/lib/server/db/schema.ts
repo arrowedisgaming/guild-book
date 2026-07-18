@@ -250,7 +250,9 @@ export const campaignAdventurerTenures = sqliteTable(
 	]
 );
 
-/** Monotonic, sanitized campaign lifecycle and synchronization events. */
+/** Monotonic, sanitized campaign cursor: lifecycle events (membership,
+ * tenure, character) plus session lifecycle and accepted-command events
+ * (spec §6.5). `sessionId`/`commandId` are populated only for the latter. */
 export const campaignEvents = sqliteTable(
 	'campaign_events',
 	{
@@ -265,6 +267,10 @@ export const campaignEvents = sqliteTable(
 			onDelete: 'set null'
 		}),
 		characterId: text('character_id').references(() => characters.id, { onDelete: 'set null' }),
+		sessionId: text('session_id').references(() => playSessions.id, { onDelete: 'set null' }),
+		commandId: text('command_id').references(() => sessionCommands.id, {
+			onDelete: 'set null'
+		}),
 		actorUserId: text('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
 		kind: text('kind').notNull(),
 		publicPayloadJson: text('public_payload_json').notNull(),
@@ -275,7 +281,234 @@ export const campaignEvents = sqliteTable(
 		index('campaign_events_membership_idx').on(table.membershipId),
 		index('campaign_events_tenure_idx').on(table.tenureId),
 		index('campaign_events_character_idx').on(table.characterId),
+		index('campaign_events_session_idx').on(table.sessionId),
+		index('campaign_events_command_idx').on(table.commandId),
 		index('campaign_events_actor_user_idx').on(table.actorUserId)
+	]
+);
+
+/** An optional private payload for a single event and recipient (spec
+ * §6.5). Never copied into `campaignEvents.publicPayloadJson`; dropped when
+ * the session ends. */
+export const campaignEventSecrets = sqliteTable(
+	'campaign_event_secrets',
+	{
+		id: text('id').primaryKey(),
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => campaignEvents.id, { onDelete: 'cascade' }),
+		recipientUserId: text('recipient_user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		payloadJson: text('payload_json').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('campaign_event_secrets_event_idx').on(table.eventId),
+		index('campaign_event_secrets_recipient_idx').on(table.recipientUserId),
+		uniqueIndex('campaign_event_secrets_event_recipient_uq').on(
+			table.eventId,
+			table.recipientUserId
+		)
+	]
+);
+
+// ─── Shared tarot table: session snapshots, commands, events ──────
+// Session state is split into public (playSessions.publicStateJson),
+// per-recipient-private (sessionPrivateStates), and server-only
+// (sessionServerStates) JSON fragments so role projections can be rebuilt
+// server-side without ever storing a combined secret blob (spec §6.4-6.6).
+
+/** One play session per campaign; a partial unique index allows only one
+ * active or frozen session at a time. `version` is the compare-and-set
+ * value every accepted `sessionCommands` write advances by exactly one. */
+export const playSessions = sqliteTable(
+	'play_sessions',
+	{
+		id: text('id').primaryKey(),
+		campaignId: text('campaign_id')
+			.notNull()
+			.references(() => campaigns.id, { onDelete: 'cascade' }),
+		sequence: integer('sequence').notNull(),
+		status: text('status').notNull(),
+		phase: text('phase').notNull(),
+		procedureId: text('procedure_id'),
+		contentPackId: text('content_pack_id').notNull(),
+		contentPackVersion: text('content_pack_version').notNull(),
+		procedureSchemaVersion: integer('procedure_schema_version').notNull().default(1),
+		contentDigest: text('content_digest').notNull(),
+		/** Points at `sessionRuntimeContents.sessionId`, set once the runtime
+		 * snapshot is compiled at session start. Not a declared FK: it and
+		 * `sessionRuntimeContents` reference each other, and this column is
+		 * only ever equal to this row's own `id` (see `deathSessionId` above
+		 * for the same forward-reference-avoidance convention). */
+		runtimeContentId: text('runtime_content_id'),
+		version: integer('version').notNull().default(0),
+		publicStateSchemaVersion: integer('public_state_schema_version').notNull().default(1),
+		publicStateJson: text('public_state_json').notNull(),
+		startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+		startedByUserId: text('started_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+		endedAt: integer('ended_at', { mode: 'timestamp' }),
+		endedByUserId: text('ended_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+		finalPublicStateJson: text('final_public_state_json'),
+		publicHistoryChecksum: text('public_history_checksum')
+	},
+	(table) => [
+		index('play_sessions_campaign_idx').on(table.campaignId),
+		index('play_sessions_started_by_user_idx').on(table.startedByUserId),
+		index('play_sessions_ended_by_user_idx').on(table.endedByUserId),
+		uniqueIndex('play_sessions_open_campaign_uq')
+			.on(table.campaignId)
+			.where(sql`status IN ('active', 'frozen')`),
+		check('play_sessions_status_check', sql`${table.status} IN ('active', 'ended', 'frozen')`),
+		check(
+			'play_sessions_phase_check',
+			sql`${table.phase} IN ('crawl', 'challenge', 'camp', 'city')`
+		),
+		check('play_sessions_sequence_check', sql`${table.sequence} >= 0`),
+		check('play_sessions_version_check', sql`${table.version} >= 0`),
+		check(
+			'play_sessions_procedure_schema_version_check',
+			sql`${table.procedureSchemaVersion} > 0`
+		),
+		check(
+			'play_sessions_public_state_schema_version_check',
+			sql`${table.publicStateSchemaVersion} > 0`
+		)
+	]
+);
+
+/** The immutable validated rules snapshot (tarot config, procedure
+ * definitions, modifiers, lookup tables) compiled from bundled content at
+ * session start. One-to-one with `playSessions` via the shared primary key,
+ * matching `guildRosters`'s campaign-keyed convention — this keeps the rules
+ * snapshot and mutable public state from competing for D1's row-size limit. */
+export const sessionRuntimeContents = sqliteTable(
+	'session_runtime_contents',
+	{
+		sessionId: text('session_id')
+			.primaryKey()
+			.references(() => playSessions.id, { onDelete: 'cascade' }),
+		schemaVersion: integer('schema_version').notNull().default(1),
+		sessionVersion: integer('session_version').notNull().default(0),
+		runtimeContentJson: text('runtime_content_json').notNull(),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		check('session_runtime_contents_schema_version_check', sql`${table.schemaVersion} > 0`),
+		check(
+			'session_runtime_contents_session_version_check',
+			sql`${table.sessionVersion} >= 0`
+		)
+	]
+);
+
+/** The one-to-one server-only fragment: ordered draw-pile identities,
+ * shuffle recovery data, and pending identities not owned by any user. Never
+ * projected to a participant; discarded when the session ends. */
+export const sessionServerStates = sqliteTable(
+	'session_server_states',
+	{
+		sessionId: text('session_id')
+			.primaryKey()
+			.references(() => playSessions.id, { onDelete: 'cascade' }),
+		schemaVersion: integer('schema_version').notNull().default(1),
+		sessionVersion: integer('session_version').notNull(),
+		serverStateJson: text('server_state_json').notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		check('session_server_states_schema_version_check', sql`${table.schemaVersion} > 0`),
+		check('session_server_states_session_version_check', sql`${table.sessionVersion} >= 0`)
+	]
+);
+
+/** One validated private projection fragment per `(sessionId,
+ * recipientUserId)` — player hands, private face-down identities, and the
+ * GM's hand. Removed (not archived) when the session ends. */
+export const sessionPrivateStates = sqliteTable(
+	'session_private_states',
+	{
+		id: text('id').primaryKey(),
+		sessionId: text('session_id')
+			.notNull()
+			.references(() => playSessions.id, { onDelete: 'cascade' }),
+		recipientUserId: text('recipient_user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		schemaVersion: integer('schema_version').notNull().default(1),
+		sessionVersion: integer('session_version').notNull(),
+		privateStateJson: text('private_state_json').notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('session_private_states_session_idx').on(table.sessionId),
+		index('session_private_states_recipient_idx').on(table.recipientUserId),
+		uniqueIndex('session_private_states_session_recipient_uq').on(
+			table.sessionId,
+			table.recipientUserId
+		),
+		check('session_private_states_schema_version_check', sql`${table.schemaVersion} > 0`),
+		check('session_private_states_session_version_check', sql`${table.sessionVersion} >= 0`)
+	]
+);
+
+/**
+ * The command journal and idempotency/version-claim ledger (spec §6.5,
+ * §6.6). `(sessionId, commandId)` is the idempotency key. `clientObservedVersion`
+ * is the client's advisory last-seen version (always present); `structuralPreconditionVersion`
+ * is the hard observed-version precondition GM structural commands carry
+ * (present only for those). `expectedVersion`/`resultingVersion` are the
+ * internal versions the server actually applied the write at — accepted
+ * commands claim a unique `(sessionId, resultingVersion)` with
+ * `resultingVersion = expectedVersion + 1`; rejected commands carry no
+ * version claim. The unique claim insert is what turns two competing
+ * writers on SQLite/D1 into a constraint failure for the loser.
+ */
+export const sessionCommands = sqliteTable(
+	'session_commands',
+	{
+		id: text('id').primaryKey(),
+		sessionId: text('session_id')
+			.notNull()
+			.references(() => playSessions.id, { onDelete: 'cascade' }),
+		commandId: text('command_id').notNull(),
+		actorUserId: text('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+		requestHash: text('request_hash').notNull(),
+		commandType: text('command_type').notNull(),
+		clientObservedVersion: integer('client_observed_version').notNull(),
+		structuralPreconditionVersion: integer('structural_precondition_version'),
+		expectedVersion: integer('expected_version').notNull(),
+		resultingVersion: integer('resulting_version'),
+		status: text('status').notNull(),
+		outcomeMetadataJson: text('outcome_metadata_json').notNull().default('{}'),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('session_commands_session_idx').on(table.sessionId),
+		index('session_commands_actor_user_idx').on(table.actorUserId),
+		uniqueIndex('session_commands_session_command_uq').on(table.sessionId, table.commandId),
+		uniqueIndex('session_commands_resulting_version_uq')
+			.on(table.sessionId, table.resultingVersion)
+			.where(sql`resulting_version IS NOT NULL`),
+		check('session_commands_status_check', sql`${table.status} IN ('accepted', 'rejected')`),
+		check(
+			'session_commands_resulting_version_check',
+			sql`${table.resultingVersion} IS NULL OR ${table.resultingVersion} = ${table.expectedVersion} + 1`
+		),
+		check(
+			'session_commands_status_resulting_version_check',
+			sql`(${table.status} = 'accepted' AND ${table.resultingVersion} IS NOT NULL) OR (${table.status} = 'rejected' AND ${table.resultingVersion} IS NULL)`
+		),
+		check(
+			'session_commands_client_observed_version_check',
+			sql`${table.clientObservedVersion} >= 0`
+		),
+		check(
+			'session_commands_structural_precondition_version_check',
+			sql`${table.structuralPreconditionVersion} IS NULL OR ${table.structuralPreconditionVersion} >= 0`
+		),
+		check('session_commands_expected_version_check', sql`${table.expectedVersion} >= 0`)
 	]
 );
 

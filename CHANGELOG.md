@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A server-gated campaign foundation: Game Masters can create guilds, manage
+  revocable invitations, inspect current and historical membership/adventurer
+  tenures, and archive a campaign; players can explicitly join as observers,
+  attach or replace one eligible adventurer, leave, and record or correct
+  character death. Campaign pages and APIs are private/non-cacheable, and the
+  rollout remains off by default behind `CAMPAIGNS_ENABLED` or pilot user IDs.
+- D1/SQLite campaign constraints and conditional mutation claims make invite,
+  membership, tenure, character-life, and session-boundary races atomic. Raw
+  invitation tokens are never stored, and all character writes now use integer
+  version claims.
+
 - The complete test-of-fate resolution engine: favor/disfavor, spending Resolve
   for favor, pushing fate, all three Fool rules, and group tests. `/deck` is now
   its reference client, with favor/disfavor/Resolve controls and a result panel

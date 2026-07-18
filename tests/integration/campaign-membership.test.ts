@@ -17,6 +17,7 @@ import {
 	archiveCampaign,
 	joinCampaignWithInvite,
 	leaveCampaign,
+	previewCampaignInvite,
 	removeCampaignMember
 } from '$lib/server/campaign/membership';
 
@@ -82,6 +83,34 @@ describe('campaign invitation membership lifecycle', () => {
 			created: false,
 			observer: true
 		});
+	});
+
+	it('previews an open invitation without joining and hides owner or closed-link details', async () => {
+		await expect(
+			previewCampaignInvite(db, {
+				token: inviteToken,
+				secret: SECRET,
+				userId: 'player-a'
+			})
+		).resolves.toEqual({ campaignId: 'campaign-a', name: 'The Lantern Guild' });
+		expect(
+			sqlite.prepare('SELECT count(*) AS count FROM campaign_members').get()
+		).toEqual({ count: 0 });
+		await expect(
+			previewCampaignInvite(db, {
+				token: inviteToken,
+				secret: SECRET,
+				userId: 'owner-a'
+			})
+		).resolves.toBeNull();
+		await closeCampaignInvite(db, { campaignId: 'campaign-a', ownerUserId: 'owner-a' });
+		await expect(
+			previewCampaignInvite(db, {
+				token: inviteToken,
+				secret: SECRET,
+				userId: 'player-a'
+			})
+		).resolves.toBeNull();
 	});
 
 	it('atomically joins and attaches an eligible adventurer', async () => {

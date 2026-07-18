@@ -17,6 +17,7 @@ export interface CampaignListItem {
 	version: number;
 	role: 'gm' | 'player';
 	membershipId?: string;
+	archivedAt: Date | null;
 	updatedAt: Date;
 }
 

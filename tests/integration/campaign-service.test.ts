@@ -13,6 +13,7 @@ import {
 	createEmptyGuildRoster,
 	getCampaignInvite,
 	listCampaignsForUser,
+	loadCampaignProjection,
 	openCampaignInvite,
 	rotateCampaignInvite,
 	updateCampaignMetadata,
@@ -287,6 +288,31 @@ describe('campaign foundation service', () => {
 			{ role: 'player', membershipId: 'membership-player' }
 		]);
 		await expect(listCampaignsForUser(db, 'former-a')).resolves.toEqual([]);
+	});
+
+	it('keeps an archived campaign in GM and current-member read projections', async () => {
+		await createFixture(db);
+		sqlite
+			.prepare(
+				'INSERT INTO campaign_members (id, campaign_id, user_id, joined_at) VALUES (?, ?, ?, ?)'
+			)
+			.run('membership-player', 'campaign-a', 'player-a', 100);
+		sqlite.prepare('UPDATE campaigns SET archived_at = ? WHERE id = ?').run(300, 'campaign-a');
+
+		await expect(listCampaignsForUser(db, 'owner-a')).resolves.toMatchObject([
+			{ role: 'gm', archivedAt: new Date(300_000) }
+		]);
+		await expect(listCampaignsForUser(db, 'player-a')).resolves.toMatchObject([
+			{ role: 'player', archivedAt: new Date(300_000) }
+		]);
+		await expect(
+			loadCampaignProjection(db, {
+				kind: 'player',
+				userId: 'player-a',
+				campaignId: 'campaign-a',
+				membershipId: 'membership-player'
+			})
+		).resolves.toMatchObject({ id: 'campaign-a', archivedAt: new Date(300_000) });
 	});
 });
 

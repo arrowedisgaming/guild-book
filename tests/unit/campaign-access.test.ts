@@ -16,7 +16,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('$lib/server/db', () => ({ getDb: mocks.getDb }));
 vi.mock('$lib/server/auth', () => ({ ensureUser: mocks.ensureUser, getEnv: mocks.getEnv }));
 
-import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
+import {
+	campaignHeaders,
+	requireCampaignAccess,
+	requireCampaignReadAccess
+} from '$lib/server/campaign/access';
 import { canAccessCampaignFeature } from '$lib/server/campaign/config';
 
 describe('campaign feature configuration', () => {
@@ -135,6 +139,19 @@ describe('requireCampaignAccess', () => {
 		await expect(requireCampaignAccess(pilotEvent('owner'), 'campaign-a')).resolves.toMatchObject({
 			kind: 'gm'
 		});
+	});
+
+	it('keeps archived campaigns readable for the GM and active member but not mutable', async () => {
+		sqlite.prepare('UPDATE campaigns SET archived_at = 300 WHERE id = ?').run('campaign-a');
+		for (const userId of ['owner', 'member']) {
+			mocks.ensureUser.mockResolvedValue(userId);
+			await expect(requireCampaignReadAccess(enabledEvent(), 'campaign-a')).resolves.toMatchObject({
+				campaignId: 'campaign-a'
+			});
+			await expect(requireCampaignAccess(enabledEvent(), 'campaign-a')).rejects.toMatchObject({
+				status: 404
+			});
+		}
 	});
 
 	it('turns authentication failure into the same resource 404', async () => {

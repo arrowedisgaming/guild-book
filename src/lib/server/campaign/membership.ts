@@ -43,6 +43,21 @@ export type JoinCampaignResult =
 			reason: EligibilityFailure | 'invalid-invite' | 'join-mode-required' | 'conflict';
 	  };
 
+/** Validate an invitation for a signed-in user without creating membership state. */
+export async function previewCampaignInvite(
+	db: AppDb,
+	input: { token: string; secret: string; userId: string }
+): Promise<{ campaignId: string; name: string } | null> {
+	const campaign = await readValidInvite(db, input.token, input.secret);
+	if (!campaign) return null;
+	try {
+		assertCampaignMembershipAllowed(campaign.ownerUserId, input.userId);
+	} catch {
+		return null;
+	}
+	return { campaignId: campaign.id, name: campaign.name };
+}
+
 export async function joinCampaignWithInvite(
 	db: AppDb,
 	input: {
@@ -264,6 +279,7 @@ async function readValidInvite(db: AppDb, token: string, secret: string) {
 	const row = await db
 		.select({
 			id: campaigns.id,
+			name: campaigns.name,
 			ownerUserId: campaigns.ownerUserId,
 			inviteTokenHash: campaigns.inviteTokenHash,
 			inviteTokenPrefix: campaigns.inviteTokenPrefix,

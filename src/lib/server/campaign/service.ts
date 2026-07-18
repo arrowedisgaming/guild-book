@@ -116,6 +116,7 @@ export async function createCampaign(
 			description: input.description,
 			version: 1,
 			role: 'gm' as const,
+			archivedAt: null,
 			updatedAt: now
 		},
 		roster: { version: 1, document },
@@ -131,6 +132,7 @@ export async function listCampaignsForUser(db: AppDb, userId: string): Promise<C
 			name: campaigns.name,
 			description: campaigns.description,
 			version: campaigns.version,
+			archivedAt: campaigns.archivedAt,
 			updatedAt: campaigns.updatedAt,
 			membershipId: campaignMembers.id
 		})
@@ -144,12 +146,7 @@ export async function listCampaignsForUser(db: AppDb, userId: string): Promise<C
 				isNull(campaignMembers.removedAt)
 			)
 		)
-		.where(
-			and(
-				isNull(campaigns.archivedAt),
-				or(eq(campaigns.ownerUserId, userId), isNotNull(campaignMembers.id))
-			)
-		)
+		.where(or(eq(campaigns.ownerUserId, userId), isNotNull(campaignMembers.id)))
 		.orderBy(desc(campaigns.updatedAt));
 
 	return rows.map((row) =>
@@ -160,6 +157,7 @@ export async function listCampaignsForUser(db: AppDb, userId: string): Promise<C
 					description: row.description,
 					version: row.version,
 					role: 'gm',
+					archivedAt: row.archivedAt,
 					updatedAt: row.updatedAt
 				}
 			: {
@@ -169,6 +167,7 @@ export async function listCampaignsForUser(db: AppDb, userId: string): Promise<C
 					version: row.version,
 					role: 'player',
 					membershipId: row.membershipId!,
+					archivedAt: row.archivedAt,
 					updatedAt: row.updatedAt
 				}
 	);
@@ -186,13 +185,14 @@ export async function loadCampaignProjection(
 			version: campaigns.version,
 			joinOpen: campaigns.joinOpen,
 			inviteVersion: campaigns.inviteVersion,
+			archivedAt: campaigns.archivedAt,
 			updatedAt: campaigns.updatedAt,
 			rosterVersion: guildRosters.version,
 			documentJson: guildRosters.documentJson
 		})
 		.from(campaigns)
 		.innerJoin(guildRosters, eq(guildRosters.campaignId, campaigns.id))
-		.where(and(eq(campaigns.id, role.campaignId), isNull(campaigns.archivedAt)))
+		.where(eq(campaigns.id, role.campaignId))
 		.get();
 	if (!row) return null;
 
@@ -204,6 +204,7 @@ export async function loadCampaignProjection(
 		role: role.kind,
 		...(role.kind === 'player' ? { membershipId: role.membershipId } : {}),
 		updatedAt: row.updatedAt,
+		archivedAt: row.archivedAt,
 		...(role.kind === 'gm'
 			? { joinOpen: row.joinOpen, inviteVersion: row.inviteVersion }
 			: {}),

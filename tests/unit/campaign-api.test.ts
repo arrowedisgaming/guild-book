@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
 	getEnv: vi.fn(),
 	requireCampaignFeature: vi.fn(),
 	requireCampaignAccess: vi.fn(),
+	requireCampaignReadAccess: vi.fn(),
 	createCampaign: vi.fn(),
 	listCampaignsForUser: vi.fn(),
 	loadCampaignProjection: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('$lib/server/auth', () => ({ getEnv: mocks.getEnv }));
 vi.mock('$lib/server/campaign/access', () => ({
 	requireCampaignFeature: mocks.requireCampaignFeature,
 	requireCampaignAccess: mocks.requireCampaignAccess,
+	requireCampaignReadAccess: mocks.requireCampaignReadAccess,
 	campaignHeaders: () => ({ 'Cache-Control': 'private, no-store', Vary: 'Cookie' })
 }));
 vi.mock('$lib/server/campaign/service', async (importOriginal) => ({
@@ -54,6 +56,11 @@ describe('campaign HTTP contracts', () => {
 		mocks.getEnv.mockReturnValue('invite-secret');
 		mocks.requireCampaignFeature.mockResolvedValue('owner-a');
 		mocks.requireCampaignAccess.mockResolvedValue({
+			kind: 'gm',
+			userId: 'owner-a',
+			campaignId: 'campaign-a'
+		});
+		mocks.requireCampaignReadAccess.mockResolvedValue({
 			kind: 'gm',
 			userId: 'owner-a',
 			campaignId: 'campaign-a'

@@ -9,6 +9,8 @@ export type CampaignRole =
 	| { kind: 'gm'; userId: string; campaignId: string }
 	| { kind: 'player'; userId: string; campaignId: string; membershipId: string };
 
+const headerInstalledEvents = new WeakSet<object>();
+
 /** Authenticate and enforce the server-only rollout for campaign collections. */
 export async function requireCampaignFeature(event: RequestEvent): Promise<string> {
 	installCampaignHeaders(event);
@@ -31,6 +33,22 @@ export async function requireCampaignAccess(
 	event: RequestEvent,
 	campaignId: string
 ): Promise<CampaignRole> {
+	return resolveCampaignAccess(event, campaignId, false);
+}
+
+/** Resolve read access while retaining archived campaign history for current participants. */
+export async function requireCampaignReadAccess(
+	event: RequestEvent,
+	campaignId: string
+): Promise<CampaignRole> {
+	return resolveCampaignAccess(event, campaignId, true);
+}
+
+async function resolveCampaignAccess(
+	event: RequestEvent,
+	campaignId: string,
+	includeArchived: boolean
+): Promise<CampaignRole> {
 	const userId = await requireCampaignFeature(event);
 
 	const db = await getDb(event);
@@ -50,7 +68,11 @@ export async function requireCampaignAccess(
 				isNull(campaignMembers.removedAt)
 			)
 		)
-		.where(and(eq(campaigns.id, campaignId), isNull(campaigns.archivedAt)))
+		.where(
+			includeArchived
+				? eq(campaigns.id, campaignId)
+				: and(eq(campaigns.id, campaignId), isNull(campaigns.archivedAt))
+		)
 		.get();
 
 	if (!access) throw campaignNotFound();
@@ -73,8 +95,11 @@ export function campaignHeaders(): Record<string, string> {
 	return { 'Cache-Control': 'private, no-store', Vary: 'Cookie' };
 }
 
-function installCampaignHeaders(event: RequestEvent): void {
+
+export function installCampaignHeaders(event: RequestEvent): void {
+	if (headerInstalledEvents.has(event)) return;
 	event.setHeaders?.(campaignHeaders());
+	headerInstalledEvents.add(event);
 }
 
 function campaignNotFound() {

@@ -1,13 +1,17 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
+import {
+	campaignHeaders,
+	requireCampaignAccess,
+	requireCampaignReadAccess
+} from '$lib/server/campaign/access';
 import { loadCampaignProjection, updateCampaignMetadata } from '$lib/server/campaign/service';
 import { archiveCampaign } from '$lib/server/campaign/membership';
 import { getDb } from '$lib/server/db';
 import { updateCampaignSchema } from '$lib/schemas/campaign.schema';
 
 export const GET: RequestHandler = async (event) => {
-	const role = await requireCampaignAccess(event, event.params.id);
+	const role = await requireCampaignReadAccess(event, event.params.id);
 	const campaign = await loadCampaignProjection(await getDb(event), role);
 	if (!campaign) throw error(404, 'Campaign not found');
 	return json({ campaign }, { headers: campaignHeaders() });

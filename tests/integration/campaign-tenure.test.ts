@@ -7,6 +7,10 @@ import { join } from 'node:path';
 import * as schema from '$lib/server/db/schema';
 import { campaignAdventurerTenures } from '$lib/server/db/schema';
 import type { AppDb } from '$lib/server/db';
+import {
+	listEligibleAdventurersForUser,
+	loadCampaignRosterView
+} from '$lib/server/campaign/page-data';
 import { createBlankCharacter } from '$lib/types/character';
 import {
 	attachAdventurer,
@@ -361,6 +365,36 @@ describe('campaign adventurer tenure lifecycle', () => {
 				.prepare('SELECT id, ended_at FROM campaign_adventurer_tenures ORDER BY started_at')
 				.all()
 		).toEqual([{ id: 'tenure-a', ended_at: null }]);
+	});
+
+	it('builds the page roster and filters ineligible adventurers on the server', async () => {
+		seedCharacter(sqlite, 'attached-hero', 'player-a');
+		seedCharacter(sqlite, 'eligible-hero', 'player-a');
+		seedCharacter(sqlite, 'draft-hero', 'player-a', { draft: true });
+		seedCharacter(sqlite, 'dead-hero', 'player-a', { life: { status: 'dead' } });
+		seedCharacter(sqlite, 'archived-hero', 'player-a', { archived: true });
+		await attachAdventurer(db, {
+			campaignId: 'campaign-a',
+			membershipId: 'membership-a',
+			actorUserId: 'player-a',
+			characterId: 'attached-hero',
+			tenureId: 'tenure-a'
+		});
+
+		await expect(listEligibleAdventurersForUser(db, 'player-a')).resolves.toEqual([
+			{ id: 'eligible-hero', name: 'eligible-hero' }
+		]);
+		await expect(loadCampaignRosterView(db, 'campaign-a')).resolves.toMatchObject({
+			members: [{ id: 'membership-a', displayName: 'Guild member' }],
+			tenures: [
+				{
+					id: 'tenure-a',
+					membershipId: 'membership-a',
+					characterName: 'attached-hero',
+					endedAt: null
+				}
+			]
+		});
 	});
 });
 

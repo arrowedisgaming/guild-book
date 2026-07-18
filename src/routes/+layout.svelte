@@ -18,6 +18,7 @@
 			<a href="/deck">Deck</a>
 			{#if data.user}
 				<a href="/characters">My Adventurers</a>
+				{#if data.showCampaignsNav}<a href="/campaigns">Campaigns</a>{/if}
 				<button type="button" class="linkish" onclick={() => signOut({ redirectTo: '/' })}>
 					Sign out
 				</button>

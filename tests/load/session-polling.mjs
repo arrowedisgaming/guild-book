@@ -27,9 +27,12 @@
  * D1 read/write counts: this harness talks HTTP to a Node/better-sqlite3
  * preview server, not a live D1 binding, so it cannot instrument literal D1
  * read/write counts. The "reads"/"writes" reported below are an
- * HTTP-observable proxy (every 200 sync response = one read pass; every
- * accepted command = one read+write transaction) documented as such in the
- * completion record — never presented as measured D1 metrics.
+ * HTTP-observable proxy — every 200/204 sync response is one read, and every
+ * command *attempt* (accepted or rejected) is also counted as one read,
+ * since `executeCommand` always loads current session state to evaluate a
+ * command before it can decide to accept or reject it; every *accepted*
+ * command additionally counts as one write — documented as such in the
+ * completion record, never presented as measured D1 metrics.
  *
  * Self-measurement (diagnostic instrumentation added after the first gate
  * run failed at max=5477ms with uniformly low poll latency — see
@@ -54,6 +57,7 @@
 import { spawn } from 'node:child_process';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { rm } from 'node:fs/promises';
 
 // ---------------------------------------------------------------------------
 // CLI args
@@ -96,6 +100,9 @@ function parseArgs(argv) {
 			case '--jitter-ms':
 				args.jitterMs = Number(next());
 				break;
+			case '--boot-timeout-ms':
+				args.bootTimeoutMs = Number(next());
+				break;
 			case '--help':
 				printHelp();
 				process.exit(0);
@@ -120,6 +127,7 @@ function printHelp() {
   --command-interval-ms <ms>    How often each campaign's GM triggers a visible event (default 5000)
   --poll-interval-ms <ms>       Base poll cadence (default 1000, matches the table UI)
   --jitter-ms <ms>              Extra random jitter added to each poll (default 150)
+  --boot-timeout-ms <ms>        How long to wait for the self-booted server to answer (default 90000)
 `);
 }
 
@@ -160,30 +168,58 @@ async function bootServer(port, bootTimeoutMs) {
 	child.stderr.on('data', (chunk) => process.stderr.write(`[preview] ${chunk}`));
 
 	const baseUrl = `http://127.0.0.1:${port}`;
-	await waitForReady(baseUrl, bootTimeoutMs);
+
+	// Review round 1: if the server never comes up, the previous version left
+	// `child` running with nothing left holding a reference to kill it — an
+	// un-unref'd child process keeps the event loop alive on its own, so the
+	// script hung instead of exiting non-zero (exactly wrong for a nohup'd
+	// background run). Kill it here, before rethrowing, so a boot failure
+	// always terminates cleanly.
+	try {
+		await waitForReady(baseUrl, bootTimeoutMs);
+	} catch (err) {
+		console.error('[load] preview server never became ready — killing it before exiting');
+		await killChildAndCleanup(child, databaseUrl);
+		throw err;
+	}
 	console.log('[load] preview server is ready');
 
 	return {
 		baseUrl,
-		async cleanup() {
-			if (child.exitCode !== null || child.killed) return;
+		cleanup: () => killChildAndCleanup(child, databaseUrl)
+	};
+}
+
+/** Kills the preview server (SIGTERM, then SIGKILL if it's still alive
+ * 500ms later) and removes its per-run fixture DB files. Shared by both the
+ * success-path `cleanup()` and the boot-failure path above so there is one
+ * place that knows how to tear this down. */
+async function killChildAndCleanup(child, databaseUrl) {
+	if (child.exitCode === null && !child.killed) {
+		try {
+			process.kill(-child.pid, 'SIGTERM');
+		} catch {
 			try {
-				process.kill(-child.pid, 'SIGTERM');
-			} catch {
-				try {
-					child.kill('SIGTERM');
-				} catch {
-					// already gone
-				}
-			}
-			await sleep(500);
-			try {
-				if (child.exitCode === null) process.kill(-child.pid, 'SIGKILL');
+				child.kill('SIGTERM');
 			} catch {
 				// already gone
 			}
 		}
-	};
+		await sleep(500);
+		try {
+			if (child.exitCode === null) process.kill(-child.pid, 'SIGKILL');
+		} catch {
+			// already gone
+		}
+	}
+
+	// Review round 1 minor: the per-run fixture DB was never cleaned up —
+	// harmless individually, but a long-lived CI runner would accumulate one
+	// per invocation. better-sqlite3's WAL mode also leaves -shm/-wal
+	// sidecar files alongside the main db file.
+	for (const suffix of ['', '-shm', '-wal']) {
+		await rm(`${databaseUrl}${suffix}`, { force: true }).catch(() => {});
+	}
 }
 
 function runToCompletion(command, args, env) {
@@ -562,18 +598,22 @@ async function main() {
 
 	let serverHandle = null;
 	let baseUrl = opts.baseUrl;
-	if (!baseUrl) {
-		serverHandle = await bootServer(opts.port, opts.bootTimeoutMs);
-		baseUrl = serverHandle.baseUrl;
-	} else {
-		console.log(`[load] using already-running server at ${baseUrl}`);
-	}
-
 	const stats = new Stats();
 	let exitCode = 1;
 	const stopLagSampler = startEventLoopLagSampler(stats);
 
+	// Review round 1: boot now happens INSIDE this try/finally (previously it
+	// sat outside), so that even if something in `bootServer` throws after
+	// partially setting up state, the finally block below still runs — belt
+	// and braces alongside `bootServer`'s own internal kill-on-failure path.
 	try {
+		if (!baseUrl) {
+			serverHandle = await bootServer(opts.port, opts.bootTimeoutMs);
+			baseUrl = serverHandle.baseUrl;
+		} else {
+			console.log(`[load] using already-running server at ${baseUrl}`);
+		}
+
 		console.log(`[load] setting up ${opts.campaigns} campaigns...`);
 		const campaigns = await Promise.all(
 			Array.from({ length: opts.campaigns }, (_, index) => setupCampaign(baseUrl, index))
@@ -641,7 +681,14 @@ function report(stats, opts) {
 	const estimatedWrites = stats.commandAccepted;
 
 	const maxVisibilityMs = visibility.max ?? 0;
-	const visibilityOk = visibility.count === 0 || maxVisibilityMs <= 2000;
+	// Review round 1: the previous `visibility.count === 0 || maxVisibilityMs
+	// <= 2000` short-circuit reported PASS if zero commands were ever
+	// accepted (e.g. every command request errored, or a config mistake
+	// meant the GM never had permission) — a gate that measured nothing
+	// should never silently pass. Both an accepted command AND at least one
+	// resulting visibility observation are required for a genuine PASS.
+	const measuredAnything = stats.commandAccepted > 0 && visibility.count > 0;
+	const visibilityOk = measuredAnything && maxVisibilityMs <= 2000;
 	const errorRateOk = errorRate <= 0.001;
 
 	console.log('');
@@ -694,7 +741,13 @@ function report(stats, opts) {
 	console.log('');
 	console.log(`overall requests: ${totalRequests}, overall errors: ${totalErrors}, error rate: ${(errorRate * 100).toFixed(4)}%`);
 	console.log('');
-	console.log(`Gate: max visible-change latency <= 2000ms? ${visibilityOk ? 'PASS' : 'FAIL'} (max observed ${fmt(maxVisibilityMs)}ms)`);
+	if (!measuredAnything) {
+		console.log(
+			`Gate: max visible-change latency <= 2000ms? FAIL (measured nothing — ${stats.commandAccepted} commands accepted, ${visibility.count} visibility observations; a gate that observed no accepted change cannot certify the visibility budget)`
+		);
+	} else {
+		console.log(`Gate: max visible-change latency <= 2000ms? ${visibilityOk ? 'PASS' : 'FAIL'} (max observed ${fmt(maxVisibilityMs)}ms)`);
+	}
 	console.log(`Gate: error rate <= 0.1%? ${errorRateOk ? 'PASS' : 'FAIL'} (observed ${(errorRate * 100).toFixed(4)}%)`);
 	console.log('');
 

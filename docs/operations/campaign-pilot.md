@@ -244,9 +244,16 @@ other two clients' next poll.
 
 Two ways to run it, both supported (controller amendment 1):
 
-**Self-booted (default)** — the script seeds a fixture SQLite DB, runs
+**Self-booted (default)** — the script seeds a fixture SQLite DB at
+`.tmp/guild-book-load-<run-id>.db` (a fresh, uniquely-named file per
+invocation, never `local.db` or the e2e suite's fixture DB), runs
 `npm run build`, starts `vite preview`, waits for it to answer, runs the
-load window, then tears the preview server down:
+load window, then tears the preview server down and deletes that run's DB
+file (including its WAL/SHM sidecars) — whether the run passed, failed, or
+the server never came up in the first place. A boot failure kills the
+spawned server and exits non-zero rather than hanging (fixed in review round
+1 after the initial version could leave an unreachable child process
+holding the script open indefinitely):
 
 ```bash
 node tests/load/session-polling.mjs                      # full 10-minute gate
@@ -310,3 +317,14 @@ lag is genuinely elevated at the same timestamps as the outliers (the report
 prints this correlation automatically whenever any observation exceeds
 2000ms), the honest fix is a fairer harness — e.g. spreading clients across
 `worker_threads` or separate processes — not raising the 2-second threshold.
+
+### 7.2 The gate cannot pass on an empty measurement
+
+Review round 1 also caught a loophole in the original gate logic: it treated
+zero visibility observations as an automatic PASS (nothing to fail on), so a
+run that measured nothing at all — every command request erroring, or a
+config mistake leaving the GM without permission to issue `end-round` —
+would have reported success. The gate now requires **both** at least one
+accepted command **and** at least one visibility observation before it will
+report anything other than an explicit `FAIL (measured nothing — ...)`. A
+green run must have actually measured something.

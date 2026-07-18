@@ -203,7 +203,7 @@ Raw numbers, unedited:
 - Poll traffic: 14,956 requests, 2159 200s, 12,797 204s (85.56%), 0 errors, latency p50 4.9ms / p95 12.3ms / p99 17.5ms / max 61.7ms.
 - Commands: 1071 total, 1071 accepted, 0 errors, latency p50 16.0ms / p95 20.8ms / p99 25.1ms / max 48.6ms.
 - Time-to-visible-event: 2142 observations, p50 518ms / p95 1014ms / p99 1087ms / **max 1147ms**. 0 observations over 1500ms; 0 over 2000ms.
-- Harness event-loop lag: 11,829 samples, p50 1.0ms / p95 2.4ms / p99 2.8ms / max 88.6ms. Only 2 of 11,829 samples exceeded the 50ms logging threshold (88.6ms and 50.1ms, both at 20:18:00Z) — even that small spike sits nowhere near the visibility observations recorded in the same second (566-1065ms, ordinary range). The report's automatic >2000ms outlier-correlation section had nothing to list, since no observation crossed that threshold.
+- Harness event-loop lag: 11,829 samples, p50 1.0ms / p95 2.4ms / p99 2.8ms / max 88.6ms. Only 2 of 11,829 samples exceeded the 50ms logging threshold (88.6ms and 50.1ms, both at 20:18:00.2-0.8Z) — even that small spike sits nowhere near the five visibility observations recorded within that same second (20:18:00.030-20:18:00.500Z: 566-910ms, ordinary range). The report's automatic >2000ms outlier-correlation section had nothing to list, since no observation crossed that threshold.
 - HTTP-observable D1 read/write proxy (not literal D1 instrumentation — see the script's file header): ~16,027 estimated reads, 1071 estimated writes.
 - Overall error rate: 0.0000%.
 - **Gate: max visible-change latency ≤ 2000ms? PASS (max observed 1147.0ms). Error rate gate: PASS (0.0000%).**

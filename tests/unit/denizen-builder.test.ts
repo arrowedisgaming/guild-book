@@ -16,12 +16,14 @@ import {
 	needsPersonSeed,
 	clearPersonState,
 	setPersonKith,
+	setPersonKin,
+	personHasTalent,
+	togglePersonTalent,
 	setPersonWoundTracking,
 	personTracksWounds,
-	assignPersonSpreadValue,
-	PERSON_STAT_NOTE
+	assignPersonSpreadValue
 } from '$lib/engine/denizen-builder';
-import { getDenizenThemes, getDenizenThreats, getKiths } from '$lib/server/content/loader';
+import { getDenizenThemes, getDenizenThreats, getKiths, getTalents } from '$lib/server/content/loader';
 
 const themes = getDenizenThemes();
 const threats = getDenizenThreats();
@@ -496,10 +498,11 @@ describe('denizen builder — person seeding', () => {
 		expect(draft.kind).toBe('person');
 		expect(draft.threatId).toBeNull();
 		expect(draft.attributes).toEqual({ swords: '4', pentacles: '3', cups: '2', wands: '1' });
-		// HD pre-filled for simplicity; the statNote explains the GM may change it.
+		// HD pre-filled for simplicity; the Customize step explains it — the
+		// stat block itself carries no boilerplate note.
 		expect(draft.health).toBe('5');
 		expect(draft.defense).toBe('1');
-		expect(draft.statNote).toBe(PERSON_STAT_NOTE);
+		expect(draft.statNote).toBe('');
 		expect(draft.pools).toEqual([]);
 	});
 
@@ -566,12 +569,12 @@ describe('denizen builder — person kith and spread', () => {
 });
 
 describe('denizen builder — materializing a person', () => {
-	it('omits the threat key entirely and keeps the person stat note', () => {
+	it('omits the threat key and carries no boilerplate stat note', () => {
 		const denizen = toDenizenDefinition({ ...seedPerson(), name: 'Odo' });
 		expect(denizen.theme).toBe('man');
 		expect('threat' in denizen).toBe(false);
-		expect(denizen.statNote).toBe(PERSON_STAT_NOTE);
-		// Simple default HD carries through (the statNote explains it).
+		expect('statNote' in denizen).toBe(false);
+		// Simple default HD carries through.
 		expect(denizen.health).toBe(5);
 		expect(denizen.defense).toBe(1);
 	});
@@ -589,7 +592,8 @@ describe('denizen builder — person wound tracking', () => {
 		expect(tracking.health).toBe('*');
 		const note = tracking.notes.find((n) => n.name === 'Wounds')!;
 		expect(note.text).toMatch(/notch a piece of armor/i);
-		expect(note.text).toMatch(/Death’s Door/);
+		expect(note.text).toMatch(/Death's Door/);
+		expect(note.text).toMatch(/- \[ \] notch a piece of armor/); // rendered as a checklist
 
 		const off = setPersonWoundTracking(tracking, false);
 		expect(personTracksWounds(off)).toBe(false);
@@ -605,6 +609,47 @@ describe('denizen builder — person wound tracking', () => {
 		draft = setPersonWoundTracking(draft, false);
 		expect(draft.health).toBe('8');
 		expect(personTracksWounds(draft)).toBe(false);
+	});
+
+	it('restores a pre-toggle custom Health, not the default', () => {
+		// User set Health 7, tried wound tracking, changed their mind.
+		let draft = { ...seedPerson(), health: '7' };
+		draft = setPersonWoundTracking(draft, true);
+		expect(draft.health).toBe('*');
+		draft = setPersonWoundTracking(draft, false);
+		expect(draft.health).toBe('7');
+		expect(draft.healthBeforeWounds).toBe('');
+	});
+
+	it('kin selection keeps a single arete-talent note in sync', () => {
+		const kith = kiths[0];
+		const kin = kith.kins.find((k) => k.areteTalentId)!;
+		const arete = getTalents().find((t) => t.id === kin.areteTalentId)!;
+
+		let draft = setPersonKith(seedPerson(), kith);
+		draft = setPersonKin(draft, kin, arete);
+		expect(draft.kinId).toBe(kin.id);
+		expect(draft.notes.filter((n) => n.name.startsWith('Arete talent:'))).toHaveLength(1);
+		expect(draft.notes.some((n) => n.name === `Arete talent: ${arete.name}`)).toBe(true);
+
+		// Clearing the kin removes the note; changing kith clears kin too.
+		expect(setPersonKin(draft, null, null).notes.some((n) => n.name.startsWith('Arete'))).toBe(false);
+		const rekithed = setPersonKith(draft, kiths[1]);
+		expect(rekithed.kinId).toBeNull();
+		expect(rekithed.notes.some((n) => n.name.startsWith('Arete'))).toBe(false);
+	});
+
+	it('talents toggle on and off as notes', () => {
+		const talent = getTalents()[0];
+		let draft = togglePersonTalent(seedPerson(), talent, true);
+		expect(personHasTalent(draft, talent)).toBe(true);
+		expect(draft.notes.some((n) => n.name === `Talent: ${talent.name}`)).toBe(true);
+
+		draft = togglePersonTalent(draft, talent, true); // no doubling
+		expect(draft.notes.filter((n) => n.name === `Talent: ${talent.name}`)).toHaveLength(1);
+
+		draft = togglePersonTalent(draft, talent, false);
+		expect(personHasTalent(draft, talent)).toBe(false);
 	});
 
 	it('a wound-tracking person still materializes and passes stat warnings', () => {

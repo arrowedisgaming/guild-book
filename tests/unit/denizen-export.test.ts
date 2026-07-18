@@ -93,7 +93,6 @@ describe('denizen markdown export', () => {
 		expect(md).toContain('_Man_');
 		expect(md).not.toContain('_Man _');
 		expect(md).not.toContain('threat:');
-		expect(md).toContain('Person — built as a character.');
 	});
 
 	it('renders builder-made pools and special rules, never a blank HD pair', () => {

@@ -15,12 +15,16 @@
 		seedPersonFromTheme,
 		clearPersonState,
 		setPersonKith,
+		setPersonKin,
+		personHasTalent,
+		togglePersonTalent,
 		setPersonWoundTracking,
 		personTracksWounds,
 		assignPersonSpreadValue,
 		PERSON_SPREAD,
 		type DenizenDraft
 	} from '$lib/engine/denizen-builder';
+	import { highestSuit } from '$lib/engine/attributes';
 	import { SUIT_IDS, type SuitId } from '$lib/types/common';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
@@ -74,15 +78,26 @@
 		}
 	});
 
-	// Steps past Threat need both templates; re-seed stats when the pair changes.
+	// Steps past Threat need both templates; changing the pair stashes the
+	// outgoing work and restores anything built earlier on the new pair, so
+	// flipping between templates never loses either side's customization.
 	$effect(() => {
 		if (stepIndex >= 3 && theme && !personMode && threat && needsReseed(draft)) {
-			// Reseeding replaces the pool array — drop pool-scoped edit and
-			// scratch state so half-typed text can't attach to the new pools.
+			// Swapping the pool array out — drop pool-scoped edit and scratch
+			// state so half-typed text can't attach to the incoming pools.
 			editing = null;
 			poolCustom = {};
-			denizenBuilder.updateDraft((d) => seedFromTemplates(d, theme, threat));
-			announce(`Stat block seeded from ${theme.name} ${threat.name}.`);
+			denizenBuilder.reseedPair(`${theme.id}|${threat.id}`, (stashed, current) =>
+				stashed
+					? {
+							...carryIdentity(stashed, current),
+							kind: 'creature',
+							themeId: theme.id,
+							threatId: threat.id
+						}
+					: seedFromTemplates(current, theme, threat)
+			);
+			announce(`Stat block for ${theme.name} ${threat.name} — earlier work on this pair is kept.`);
 		}
 	});
 
@@ -105,7 +120,7 @@
 		if (theme && personMode && draft.kind !== 'person') {
 			denizenBuilder.swapMode('person', (stashed, current) =>
 				stashed
-					? { ...carryIdentity(stashed, current), themeId: current.themeId }
+					? { ...carryIdentity(stashed, current), kind: 'person', themeId: current.themeId }
 					: seedPersonFromTheme(current, theme)
 			);
 			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
@@ -113,7 +128,7 @@
 		if (theme && !personMode && draft.kind === 'person') {
 			denizenBuilder.swapMode('creature', (stashed, current) =>
 				stashed
-					? { ...carryIdentity(stashed, current), themeId: current.themeId }
+					? { ...carryIdentity(stashed, current), kind: 'creature', themeId: current.themeId }
 					: clearPersonState(current)
 			);
 			announce('Creature path — your person work is kept and restored if you switch back.');
@@ -247,8 +262,40 @@
 		denizenBuilder.updateDraft((d) => setPersonKith(d, kith));
 	}
 
+	let chosenKith = $derived(data.kiths.find((k) => k.id === draft.kithId) ?? null);
+
+	function chooseKin(kinId: string) {
+		const kin = kinId ? (chosenKith?.kins.find((k) => k.id === kinId) ?? null) : null;
+		const arete = kin?.areteTalentId
+			? (data.talents.find((t) => t.id === kin.areteTalentId) ?? null)
+			: null;
+		denizenBuilder.updateDraft((d) => setPersonKin(d, kin, arete));
+	}
+
 	function assignSpread(suit: SuitId, value: number) {
 		denizenBuilder.updateDraft((d) => assignPersonSpreadValue(d, suit, value));
+	}
+
+	// The person's path follows their highest attribute (the 4); its talents
+	// are offered as checkboxes, the other paths' behind collapsed dropdowns.
+	let personPath = $derived.by(() => {
+		const suit = highestSuit(
+			Object.fromEntries(SUIT_IDS.map((s) => [s, Number(draft.attributes[s]) || 0])) as Record<
+				SuitId,
+				number
+			>
+		);
+		return data.paths.find((p) => p.suit === suit);
+	});
+
+	function pathTalents(talentIds: string[]) {
+		return talentIds
+			.map((id) => data.talents.find((t) => t.id === id))
+			.filter((t): t is NonNullable<typeof t> => Boolean(t));
+	}
+
+	function toggleTalent(talent: (typeof data.talents)[number], enabled: boolean) {
+		denizenBuilder.updateDraft((d) => togglePersonTalent(d, talent, enabled));
 	}
 
 	// Per-pool "add ability" form state, keyed by pool index.
@@ -517,6 +564,71 @@
 				</label>
 			{/each}
 		</div>
+		{#if chosenKith}
+			<label class="field">
+				<span>Kin (adds the kin's arete talent as a note)</span>
+				<select
+					value={draft.kinId ?? ''}
+					onchange={(e) => chooseKin(e.currentTarget.value)}
+					aria-label="Kin"
+				>
+					<option value="">No kin</option>
+					{#each chosenKith.kins as kin (kin.id)}
+						<option value={kin.id}>{kin.name}</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
+
+		<h3>Talents</h3>
+		<p class="guidance">
+			People have talents like any character. The path matching their highest attribute is open
+			below; other paths' talents are behind the dropdowns. Each picked talent becomes a note.
+		</p>
+		{#if personPath}
+			<h4>{personPath.name} — their path (highest attribute)</h4>
+			<ul class="options">
+				{#each pathTalents(personPath.talentIds) as talent (talent.id)}
+					<li>
+						<label>
+							<input
+								type="checkbox"
+								checked={personHasTalent(draft, talent)}
+								onchange={(e) => toggleTalent(talent, e.currentTarget.checked)}
+							/>
+							<span>
+								<strong>{abilityLabel(talent.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(talent.description)}</span>
+							</span>
+						</label>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		{#each data.paths.filter((p) => p.id !== personPath?.id) as path (path.id)}
+			<details class="offpath">
+				<summary>{path.name} talents (off-path)</summary>
+				<ul class="options">
+					{#each pathTalents(path.talentIds) as talent (talent.id)}
+						<li>
+							<label>
+								<input
+									type="checkbox"
+									checked={personHasTalent(draft, talent)}
+									onchange={(e) => toggleTalent(talent, e.currentTarget.checked)}
+								/>
+								<span>
+									<strong>{abilityLabel(talent.name)}</strong>
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+									<span class="inline-md">{@html renderMarkdown(talent.description)}</span>
+								</span>
+							</label>
+						</li>
+					{/each}
+				</ul>
+			</details>
+		{/each}
 	{:else if !templatesChosen}
 		<p class="empty">Choose a theme and a threat first.</p>
 	{:else if stepId === 'customize'}
@@ -524,10 +636,10 @@
 		{#if personMode}
 			<p>
 				The stat block below was seeded as a <strong>{theme?.name}</strong> adversary. Change any
-				detail to fit your concept — the book explicitly blesses it. The GM doesn't normally
-				track people with Health and Defense (people take Wounds, like adventurers) — the values
-				are pre-filled for simplicity, so change or clear them freely, or track Wounds properly
-				with the option below.
+				detail to fit your concept — the book explicitly blesses it. The GM normally tracks
+				denizens with Health and Defense while characters take Wounds. H/D values are pre-filled
+				for simplicity, but you can select the option to track Wounds like an adventurer if you
+				prefer.
 			</p>
 		{:else}
 			<p>
@@ -982,6 +1094,16 @@
 		align-items: baseline;
 		margin: 0.75rem 0;
 		font-size: 0.9rem;
+	}
+	.offpath {
+		border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+		padding: 0.4rem 0;
+	}
+	.offpath summary {
+		font-family: var(--font-subhead);
+		font-size: 0.95rem;
+		cursor: pointer;
+		color: var(--ink-soft);
 	}
 	.pool-editor {
 		margin: 1rem 0;

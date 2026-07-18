@@ -73,14 +73,24 @@ export interface DenizenBuilderState {
 	currentStepId: BuilderStepId;
 	draft: DenizenDraft;
 	modeStash: ModeStash;
+	/**
+	 * Creature work parked per template pair ("themeId|threatId"): changing
+	 * templates stashes the outgoing draft and restores earlier work on the
+	 * newly chosen pair instead of reseeding it away.
+	 */
+	pairStash: Record<string, DenizenDraft>;
 }
+
+/** Belt-and-braces bound — there are only ~20 usable template pairs. */
+const MAX_PAIR_STASHES = 24;
 
 function createInitialState(): DenizenBuilderState {
 	return {
 		version: BUILDER_STATE_VERSION,
 		currentStepId: 'concept',
 		draft: createBlankDraft(),
-		modeStash: { creature: null, person: null }
+		modeStash: { creature: null, person: null },
+		pairStash: {}
 	};
 }
 
@@ -106,6 +116,15 @@ function loadFromStorage(): DenizenBuilderState {
 		// Stored drafts are untrusted (older builds, manual edits) — rebuild
 		// field by field instead of spreading a cast object into the state.
 		const stash = (state.modeStash ?? {}) as Record<string, unknown>;
+		const rawPairs =
+			typeof state.pairStash === 'object' && state.pairStash !== null
+				? (state.pairStash as Record<string, unknown>)
+				: {};
+		const pairStash = Object.fromEntries(
+			Object.entries(rawPairs)
+				.slice(0, MAX_PAIR_STASHES)
+				.map(([key, value]) => [key, sanitizeDraft(value)])
+		);
 		return {
 			version: BUILDER_STATE_VERSION,
 			currentStepId: sanitizeStepId(state.currentStepId ?? state.currentStep),
@@ -113,7 +132,8 @@ function loadFromStorage(): DenizenBuilderState {
 			modeStash: {
 				creature: stash.creature ? sanitizeDraft(stash.creature) : null,
 				person: stash.person ? sanitizeDraft(stash.person) : null
-			}
+			},
+			pairStash
 		};
 	} catch {
 		return createInitialState();
@@ -136,6 +156,30 @@ function createBuilderStore() {
 
 		goToStep(stepId: BuilderStepId) {
 			update((s) => ({ ...s, currentStepId: stepId }));
+		},
+
+		/**
+		 * Change creature templates: the outgoing draft is stashed under the
+		 * pair its stats were seeded from, and `build` receives any earlier
+		 * work on the newly chosen pair (consumed on restore).
+		 */
+		reseedPair(
+			pairKey: string,
+			build: (stashed: DenizenDraft | null, current: DenizenDraft) => DenizenDraft
+		) {
+			update((s) => {
+				const pairs = { ...s.pairStash };
+				const outgoingKey =
+					s.draft.kind === 'creature' && s.draft.seededFrom
+						? `${s.draft.seededFrom.themeId}|${s.draft.seededFrom.threatId}`
+						: null;
+				if (outgoingKey && Object.keys(pairs).length < MAX_PAIR_STASHES) {
+					pairs[outgoingKey] = s.draft;
+				}
+				const stashed = pairs[pairKey] ?? null;
+				delete pairs[pairKey];
+				return { ...s, draft: build(stashed, s.draft), pairStash: pairs };
+			});
 		},
 
 		/**

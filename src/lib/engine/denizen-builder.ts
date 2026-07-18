@@ -639,6 +639,50 @@ export function draftStatReminders(draft: DenizenDraft): string[] {
 	return reminders;
 }
 
+/**
+ * Turn a bestiary entry into an editable draft — "save as custom, pre-filled".
+ * The inverse of `toDenizenDefinition`: stats back to strings, pools to pool
+ * drafts, abilities copied. `seededFrom` matches the entry's templates so
+ * loading it never triggers a reseed.
+ */
+export function draftFromDefinition(denizen: DenizenDefinition): DenizenDraft {
+	const toDraftStat = (value: DenizenStatValue | undefined): string =>
+		value === undefined ? '' : String(value);
+	return {
+		...createBlankDraft(),
+		kind: denizen.threat ? 'creature' : 'person',
+		name: denizen.name,
+		flavor: denizen.flavor,
+		themeId: denizen.theme || null,
+		threatId: denizen.threat || null,
+		seededFrom: denizen.theme ? { themeId: denizen.theme, threatId: denizen.threat ?? '' } : null,
+		attributes: {
+			swords: toDraftStat(denizen.attributes.swords),
+			pentacles: toDraftStat(denizen.attributes.pentacles),
+			cups: toDraftStat(denizen.attributes.cups),
+			wands: toDraftStat(denizen.attributes.wands)
+		},
+		health: toDraftStat(denizen.health),
+		defense: toDraftStat(denizen.defense),
+		statNote: denizen.statNote ?? '',
+		likes: (denizen.likes ?? []).join(', '),
+		hates: (denizen.hates ?? []).join(', '),
+		notes: [...(denizen.notes ?? [])],
+		lesserDooms: [...(denizen.lesserDooms ?? [])],
+		greaterDooms: [...(denizen.greaterDooms ?? [])],
+		pools: (denizen.pools ?? []).map((pool) => ({
+			name: pool.name,
+			health: toDraftStat(pool.health),
+			defense: toDraftStat(pool.defense),
+			text: pool.text ?? '',
+			notes: [...(pool.notes ?? [])],
+			lesserDooms: [...(pool.lesserDooms ?? [])],
+			greaterDooms: [...(pool.greaterDooms ?? [])]
+		})),
+		specialRules: denizen.specialRules ?? ''
+	};
+}
+
 /** True when a pool draft carries no user input at all (the seeded blank). */
 function isBlankPool(pool: DenizenPoolDraft): boolean {
 	return (

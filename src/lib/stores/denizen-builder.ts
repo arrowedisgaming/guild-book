@@ -206,6 +206,20 @@ function createBuilderStore() {
 		},
 
 		/**
+		 * Start a fresh draft from prepared content (e.g. a bestiary entry) —
+		 * not tied to a saved row, so saving creates a new denizen.
+		 */
+		startFrom(draft: DenizenDraft) {
+			update((s) => ({
+				...s,
+				draft,
+				editingId: null,
+				modeStash: { creature: null, person: null },
+				currentStepId: 'review'
+			}));
+		},
+
+		/**
 		 * Load a stored draft for editing (sanitized — server rows are data).
 		 * Clears the mode stash: the loaded row is a fresh editing context.
 		 */

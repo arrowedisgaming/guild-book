@@ -131,6 +131,34 @@ export const campaigns = sqliteTable(
 	]
 );
 
+/**
+ * A conditional lifecycle claim is inserted only while every command guard is
+ * still true. The matching receipt has a foreign key to this row, so a
+ * zero-row conditional claim aborts the whole SQLite transaction or D1 batch.
+ */
+export const campaignMutationClaims = sqliteTable(
+	'campaign_mutation_claims',
+	{
+		id: text('id').primaryKey(),
+		campaignId: text('campaign_id').references(() => campaigns.id, { onDelete: 'cascade' }),
+		characterId: text('character_id').references(() => characters.id, { onDelete: 'cascade' }),
+		kind: text('kind').notNull(),
+		actorUserId: text('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [
+		index('campaign_mutation_claims_campaign_idx').on(table.campaignId),
+		index('campaign_mutation_claims_character_idx').on(table.characterId)
+	]
+);
+
+/** Required foreign-key proof that a conditional lifecycle claim was won. */
+export const campaignMutationReceipts = sqliteTable('campaign_mutation_receipts', {
+	claimId: text('claim_id')
+		.primaryKey()
+		.references(() => campaignMutationClaims.id, { onDelete: 'cascade' })
+});
+
 /** The shared, owner-edited Guild Roster document for one campaign. */
 export const guildRosters = sqliteTable(
 	'guild_rosters',

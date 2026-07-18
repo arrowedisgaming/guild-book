@@ -49,11 +49,14 @@ describe('denizen builder — template seeding', () => {
 		expect(draft.attributes.swords).toBe('3');
 	});
 
-	it('keeps a pools threat’s pick instructions out of the stat note', () => {
-		// "Choose 1 attribute to increase to 6…" is build-time guidance — the
-		// Customize step shows it, the finished stat block doesn't carry it.
+	it('seeds the pools stat note but keeps pick instructions out of it', () => {
+		// The "Special — …named pools…" text is stat-block content and seeds
+		// the note box; "Choose 1 attribute…" lives in chooseAttribute and is
+		// Customize guidance only.
 		const lordDraft = seedFromTemplates(createBlankDraft(), theme('undead'), threat('dungeon-lord'));
-		expect(lordDraft.statNote).toBe('');
+		expect(lordDraft.statNote).toMatch(/named pools of Health and Defense/);
+		expect(lordDraft.statNote).not.toMatch(/Choose 1 attribute/);
+		expect(threat('dungeon-lord').chooseAttribute).toMatch(/Choose 1 attribute to increase to 6/);
 	});
 
 	it('clears a stale stat note when reseeding', () => {

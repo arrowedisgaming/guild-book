@@ -253,8 +253,14 @@ export interface DenizenThreatDefinition {
 	attributes?: DenizenAttributes;
 	health?: DenizenStatValue;
 	defense?: DenizenStatValue;
-	/** Explains irregular stats, e.g. "Choose 1 attribute to increase to 6". */
+	/** Explains irregular stats — stat-block content that survives export. */
 	statNote?: string;
+	/**
+	 * Build-time pick instruction verbatim from the book, e.g. "Choose 1
+	 * attribute to increase to 6." — guidance while building, never part of
+	 * the finished stat block.
+	 */
+	chooseAttribute?: string;
 	notes?: DenizenAbility[];
 	/** The book marks some threat notes optional ("(Optional)"). */
 	notesOptional?: boolean;

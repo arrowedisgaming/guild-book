@@ -70,10 +70,11 @@ describe('denizen markdown export', () => {
 		expect(md).toContain('> [!sidebar] Killing the Vampire');
 	});
 
-	it('omits a built dungeon lord’s blank HD and template pick instructions', () => {
+	it('keeps the pools stat note but omits blank HD and pick instructions', () => {
 		const md = exportDenizenToMarkdown(builtLord, 'Sorcerous', 'Dungeon Lord');
-		// The "Choose 1 attribute…" instruction is Customize guidance, not
-		// stat-block content — it never reaches the export.
+		// The "Special — …named pools…" note is stat-block content; the
+		// "Choose 1 attribute…" instruction is Customize guidance only.
+		expect(md).toContain('named pools of Health and Defense');
 		expect(md).not.toContain('Choose 1 attribute to increase to 6');
 		expect(md).not.toContain('Health/Defense: /');
 		expect(md).not.toContain('hd: "/"');
@@ -127,11 +128,12 @@ describe('denizen PDF export', () => {
 		expect(flattened).toContain('Torso  Health/Defense: 5/10');
 	});
 
-	it('omits a built dungeon lord’s blank HD and template pick instructions', () => {
+	it('keeps the pools stat note but omits blank HD and pick instructions', () => {
 		const doc = buildDenizenDocDefinition(builtLord, 'Sorcerous', 'Dungeon Lord');
 		const flattened = JSON.stringify(doc);
+		expect(flattened).toContain('named pools of Health and Defense');
 		expect(flattened).not.toContain('Choose 1 attribute to increase to 6');
-		expect(flattened).not.toContain('Health/Defense');
+		expect(flattened).not.toContain('Health/Defense:');
 	});
 
 	it('renders builder-made pools and special rules, never a blank HD pair', () => {

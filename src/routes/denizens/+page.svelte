@@ -142,6 +142,7 @@
 					{#if threat.health !== undefined && threat.defense !== undefined}
 						<p><strong>HD</strong> {threat.health}/{threat.defense}</p>
 					{/if}
+					{#if threat.chooseAttribute}<p><em>{threat.chooseAttribute}</em></p>{/if}
 					{#if threat.statNote}<p><em>{threat.statNote}</em></p>{/if}
 					{@render abilityList(
 						threat.notesOptional ? 'Notes (Optional)' : 'Notes',

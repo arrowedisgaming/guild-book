@@ -366,6 +366,7 @@
 							</span>
 						{/if}
 						{#if option.statNote}<span class="pick-meta"><em>{option.statNote}</em></span>{/if}
+						{#if option.chooseAttribute}<span class="pick-meta"><em>{option.chooseAttribute}</em></span>{/if}
 					</label>
 				{:else}
 					<div class="pick-card unavailable">
@@ -400,10 +401,10 @@
 				This creature's Health and Defense live in named pools — you'll build them on the
 				<strong>Pools</strong> step.
 			</p>
-			{#if threat?.statNote}
-				<!-- Build-time instruction from the template, not stat-block content. -->
-				<p class="guidance"><em>{threat.statNote}</em></p>
-			{/if}
+		{/if}
+		{#if threat?.chooseAttribute}
+			<!-- Build-time pick instruction from the template, not stat-block content. -->
+			<p class="guidance"><em>{threat.chooseAttribute}</em></p>
 		{/if}
 		{#each statWarnings as warning (warning)}
 			<p class="warning" role="alert">{warning}</p>

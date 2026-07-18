@@ -286,6 +286,7 @@ export const denizenThreatSchema = z
 		health: denizenHealthSchema.optional(),
 		defense: denizenDefenseSchema.optional(),
 		statNote: z.string().optional(),
+		chooseAttribute: z.string().optional(),
 		notes: z.array(denizenAbilitySchema).optional(),
 		notesOptional: z.boolean().optional(),
 		greaterDooms: z.array(denizenAbilitySchema).optional(),

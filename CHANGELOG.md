@@ -15,11 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "make actual characters" advice as an adversary path. Choosing it swaps the
   wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread
   assigned by swap, an optional flavour-only kith recorded as a stat-block
-  note, HD pre-filled for simplicity (with an optional switch to proper
-  Wounds tracking and a note listing the book's wound options), and custom
+  note, a kin whose arete talent joins the block, path talents offered from
+  the path matching their highest attribute (other paths behind dropdowns),
+  HD pre-filled for simplicity (with an optional switch to proper Wounds
+  tracking and a checklist note of the book's wound options), and custom
   gimmick dooms instead of template pick-lists. Exports omit the threat line
-  entirely for people. Switching between person and creature themes stashes
-  and restores each side's work instead of discarding it.
+  entirely for people. Switching themes — person to creature or between
+  creature template pairs — stashes and restores each side's work instead
+  of discarding it.
 - **Dungeon lords in the denizen builder**: threats fought in named pools of
   Health and Defense are now fully buildable. A new Pools step (shown only for
   pool-based threats) adds, names, reorders, and removes pools, each with its

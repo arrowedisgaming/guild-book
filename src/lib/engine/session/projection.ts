@@ -9,6 +9,9 @@
 import type {
 	CardId,
 	CardSlot,
+	HiddenCardSlot,
+	OwnedPrivateZone,
+	PublicPrivateZoneCardBacks,
 	PublicSessionZoneView,
 	SessionActor,
 	SessionEngineStateV1,
@@ -19,6 +22,7 @@ import type {
 	UserId,
 	VisibleCardSlot
 } from '$lib/types/session';
+import { legalCommandsForActor } from './reducer';
 
 export type SessionProjection = SessionPlayerProjection | SessionGmProjection;
 
@@ -61,16 +65,32 @@ function playerHandCounts(state: SessionEngineStateV1): Record<UserId, number> {
 	return counts;
 }
 
+function isCardBackZone(zone: OwnedPrivateZone): zone is OwnedPrivateZone & { kind: 'player-facedown' | 'player-prepared' } {
+	return zone.kind === 'player-facedown' || zone.kind === 'player-prepared';
+}
+
+/**
+ * The public "card-back projection" of every face-down/prepared zone (spec
+ * §8.2) — one `HiddenCardSlot` per card, for every owner, always concealed
+ * here regardless of who's viewing. This is what lets any participant see
+ * *that* another player has N cards face-down without learning which cards;
+ * the owner's own real identities come from `privateFacedown`/
+ * `privatePrepared` on their own `SessionPlayerProjection`, not from here.
+ */
+function buildPrivateZoneCardBacks(state: SessionEngineStateV1): PublicPrivateZoneCardBacks[] {
+	return state.privateZones.filter(isCardBackZone).map((zone) => ({
+		id: zone.id,
+		kind: zone.kind,
+		ownerUserId: zone.ownerUserId,
+		cards: zone.cards.map((): HiddenCardSlot => ({ hidden: true }))
+	}));
+}
+
 function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCatalog): SessionPublicProjection {
 	return {
 		sessionId: state.sessionId,
 		version: state.version,
 		phase: state.phase,
-		// The pure engine only ever runs against an active session; lifecycle
-		// status (frozen/ended) lives outside `SessionEngineStateV1`, tracked
-		// by the command service (Task 5), which overwrites this field when
-		// assembling the outer `SessionProjectionEnvelope`.
-		status: 'active',
 		procedure: state.procedure
 			? {
 					procedureId: state.procedure.procedureId,
@@ -84,6 +104,7 @@ function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCa
 		playerDiscardTop: topSlot(state.playerDiscard, catalog),
 		gmHandCount: state.gmHand.length,
 		playerHandCounts: playerHandCounts(state),
+		privateZoneCardBacks: buildPrivateZoneCardBacks(state),
 		publicZones: state.publicZones.map((zone) => buildPublicZoneView(zone, catalog)),
 		pendingZoneCounts: state.pendingZones.map((zone) => ({ id: zone.id, deck: zone.deck, count: zone.cards.length }))
 	};
@@ -99,14 +120,25 @@ function ownedZoneCards(state: SessionEngineStateV1, ownerUserId: UserId, kind: 
  * (a GM) — never a player's private identities, never a GM peek at a
  * player's hand beyond its count (spec §8.2). Every field below is an
  * explicit allowlist copy; nothing is cloned-then-deleted.
+ *
+ * `legalCommands` comes straight from `legalCommandsForActor` — the same
+ * coarse, role-based authorization gate `reduceSession` itself checks first
+ * — so a client renders controls from the engine's own answer, never a
+ * client-side guess. It is deliberately coarse: it lists command *types* the
+ * actor's role may attempt right now, not whether any specific zone/card
+ * instance of that command would be legal (that still depends on the
+ * command's own `sourceZoneId`/`cardId`/etc., which only `reduceSession`
+ * can evaluate).
  */
 export function projectForActor(state: SessionEngineStateV1, actor: SessionActor, catalog: TarotCardCatalog): SessionProjection {
 	const publicProjection = buildPublicProjection(state, catalog);
+	const legalCommands = legalCommandsForActor(actor);
 
 	if (actor.kind === 'gm') {
 		const gmProjection: SessionGmProjection = {
 			public: publicProjection,
-			gmHand: visibleSlots(state.gmHand, catalog)
+			gmHand: visibleSlots(state.gmHand, catalog),
+			legalCommands
 		};
 		return gmProjection;
 	}
@@ -115,7 +147,8 @@ export function projectForActor(state: SessionEngineStateV1, actor: SessionActor
 		public: publicProjection,
 		privateHand: visibleSlots(ownedZoneCards(state, actor.userId, 'player-hand'), catalog),
 		privateFacedown: visibleSlots(ownedZoneCards(state, actor.userId, 'player-facedown'), catalog),
-		privatePrepared: visibleSlots(ownedZoneCards(state, actor.userId, 'player-prepared'), catalog)
+		privatePrepared: visibleSlots(ownedZoneCards(state, actor.userId, 'player-prepared'), catalog),
+		legalCommands
 	};
 	return playerProjection;
 }

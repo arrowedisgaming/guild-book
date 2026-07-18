@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { projectForActor } from '$lib/engine/session/projection';
+import { legalCommandsForActor } from '$lib/engine/session/reducer';
 import { fixtureWithHands, makeSessionCatalogFixture, makeSessionFixture } from '../../fixtures/session';
 import type { SessionActor, SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
 
@@ -68,6 +69,85 @@ describe('projectForActor — player projection scoping', () => {
 	});
 });
 
+describe('projectForActor — private-zone card backs (spec §8.2)', () => {
+	const catalog = makeSessionCatalogFixture();
+
+	it("shows another player's face-down cards as hidden slots — count visible, identity never", () => {
+		const state = fixtureWithHands({ playerA: [], playerB: [] });
+		const buried = state.playerDraw.pop();
+		const revealedElsewhere = state.playerDraw.pop();
+		if (!buried || !revealedElsewhere) throw new Error('fixture empty');
+		state.privateZones.push({ id: 'facedown:playerB', kind: 'player-facedown', ownerUserId: 'playerB', cards: [buried, revealedElsewhere] });
+
+		const projectionA = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+
+		expect(projectionA.public.privateZoneCardBacks).toEqual([
+			{ id: 'facedown:playerB', kind: 'player-facedown', ownerUserId: 'playerB', cards: [{ hidden: true }, { hidden: true }] }
+		]);
+		expect(JSON.stringify(projectionA)).not.toContain(buried);
+		expect(JSON.stringify(projectionA)).not.toContain(revealedElsewhere);
+	});
+
+	it("still shows the owner's own face-down zone as hidden backs in the shared public section — real identities live only in privateFacedown", () => {
+		const state = fixtureWithHands({ playerA: [] });
+		const cardId = state.playerDraw.pop();
+		if (!cardId) throw new Error('fixture empty');
+		state.privateZones.push({ id: 'facedown:playerA', kind: 'player-facedown', ownerUserId: 'playerA', cards: [cardId] });
+
+		const projection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+
+		expect(projection.public.privateZoneCardBacks).toEqual([
+			{ id: 'facedown:playerA', kind: 'player-facedown', ownerUserId: 'playerA', cards: [{ hidden: true }] }
+		]);
+		expect(projection.privateFacedown).toEqual([{ hidden: false, id: cardId, label: cardId, imageKey: cardId, value: 0 }]);
+	});
+
+	it('the GM sees the same card backs as a player — never real identities via the shared section', () => {
+		const state = fixtureWithHands({ playerA: [] });
+		const cardId = state.playerDraw.pop();
+		if (!cardId) throw new Error('fixture empty');
+		state.privateZones.push({ id: 'prepared:playerA', kind: 'player-prepared', ownerUserId: 'playerA', cards: [cardId] });
+
+		const gmProjection = projectForActor(state, GM, catalog) as SessionGmProjection;
+		expect(gmProjection.public.privateZoneCardBacks).toEqual([
+			{ id: 'prepared:playerA', kind: 'player-prepared', ownerUserId: 'playerA', cards: [{ hidden: true }] }
+		]);
+		expect(JSON.stringify(gmProjection.public)).not.toContain(cardId);
+	});
+
+	it('omits player-hand zones — those are already represented by playerHandCounts', () => {
+		const state = fixtureWithHands({ playerA: ['cups-i'] });
+		const projection = projectForActor(state, GM, catalog) as SessionGmProjection;
+		expect(projection.public.privateZoneCardBacks).toEqual([]);
+	});
+});
+
+describe('projectForActor — legalCommands (Step 4: projected controls, not client-side guesses)', () => {
+	const catalog = makeSessionCatalogFixture();
+
+	it("lists only the command types legal for the actor's role, matching legalCommandsForActor", () => {
+		const state = makeSessionFixture();
+		const playerProjection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+		const gmProjection = projectForActor(state, GM, catalog) as SessionGmProjection;
+
+		expect(playerProjection.legalCommands).toEqual(legalCommandsForActor(PLAYER_A));
+		expect(gmProjection.legalCommands).toEqual(legalCommandsForActor(GM));
+	});
+
+	it("differs between roles where authority differs — GM-only structural commands are absent from a player's list", () => {
+		const state = makeSessionFixture();
+		const playerProjection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+		const gmProjection = projectForActor(state, GM, catalog) as SessionGmProjection;
+
+		for (const gmOnly of ['deal', 'begin-procedure', 'advance-procedure', 'complete-procedure', 'end-round', 'apply-correction']) {
+			expect(gmProjection.legalCommands).toContain(gmOnly);
+			expect(playerProjection.legalCommands).not.toContain(gmOnly);
+		}
+		expect(playerProjection.legalCommands).toContain('play');
+		expect(gmProjection.legalCommands).toContain('play');
+	});
+});
+
 describe('projectForActor — shared public projection', () => {
 	const catalog = makeSessionCatalogFixture();
 
@@ -120,12 +200,6 @@ describe('projectForActor — shared public projection', () => {
 		state.procedure = { procedureId: 'augury', stepIndex: 2, pendingZoneIds: [] };
 		const projection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
 		expect(projection.public.procedure).toEqual({ procedureId: 'augury', stepIndex: 2, pendingZoneIds: [] });
-	});
-
-	it('always reports status active — the pure engine only runs against an active session', () => {
-		const state = makeSessionFixture();
-		const projection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
-		expect(projection.public.status).toBe('active');
 	});
 
 	it('sums multiple player-hand zones for the same owner into one count', () => {

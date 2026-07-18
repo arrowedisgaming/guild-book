@@ -210,6 +210,11 @@ export type SessionCommand =
 	| EndRoundCommand
 	| ApplyCorrectionCommand;
 
+/** Just the discriminant — used by projections to list which command types
+ * an actor may currently attempt (`legalCommandsForActor`), without needing
+ * a full command payload. */
+export type SessionCommandType = SessionCommand['type'];
+
 // ---------------------------------------------------------------------------
 // Frozen contracts (roadmap Cross-Increment Contract Freeze). Copied verbatim
 // — do NOT use a single-field `observedVersion` form anywhere.
@@ -298,14 +303,33 @@ export interface PublicSessionZoneView {
 }
 
 /**
+ * The public "card-back projection" of one private face-down/prepared zone
+ * (spec §8.2: "private face-down or prepared areas with a public card-back
+ * projection"). `cards` is always `HiddenCardSlot[]` here — one opaque back
+ * per card, so viewers can see *how many* and where, never identities. This
+ * is shared verbatim across every role's projection (including the zone's
+ * own owner); an owner sees their own real identities separately, via
+ * `SessionPlayerProjection.privateFacedown`/`privatePrepared`.
+ */
+export interface PublicPrivateZoneCardBacks {
+	id: string;
+	kind: 'player-facedown' | 'player-prepared';
+	ownerUserId: UserId;
+	cards: HiddenCardSlot[];
+}
+
+/**
  * Everyone at the table sees this. `playerHandCounts` is public information
- * (spec §8.2) — hand counts never move to a private section.
+ * (spec §8.2) — hand counts never move to a private section. Session
+ * lifecycle status (active/frozen/ended) is deliberately absent: the pure
+ * engine state has no such field (it's a persistence concern the Task 5
+ * command service tracks alongside/inside the envelope it returns), so the
+ * pure projector must not fabricate one.
  */
 export interface SessionPublicProjection {
 	sessionId: string;
 	version: number;
 	phase: SessionPhase;
-	status: SessionStatus;
 	procedure: PublicProcedureView | null;
 	majorDrawCount: number;
 	majorDiscardTop: CardSlot | null;
@@ -313,23 +337,29 @@ export interface SessionPublicProjection {
 	playerDiscardTop: CardSlot | null;
 	gmHandCount: number;
 	playerHandCounts: Record<UserId, number>;
+	privateZoneCardBacks: PublicPrivateZoneCardBacks[];
 	publicZones: PublicSessionZoneView[];
 	pendingZoneCounts: Array<{ id: string; deck: 'major' | 'player'; count: number }>;
 }
 
 /** A player's projection: the shared public view plus only that player's own
- * private identities. */
+ * private identities, plus the command types they may currently attempt
+ * (`legalCommandsForActor` — coarse, role-based; a specific command instance
+ * can still be rejected on its own zone/card legality). */
 export interface SessionPlayerProjection {
 	public: SessionPublicProjection;
 	privateHand: CardSlot[];
 	privateFacedown: CardSlot[];
 	privatePrepared: CardSlot[];
+	legalCommands: SessionCommandType[];
 }
 
 /** The GM's projection: the shared public view plus only the GM hand and
- * GM-private procedure detail. Never a player's private identities. */
+ * GM-private procedure detail, plus the command types the GM may currently
+ * attempt. Never a player's private identities. */
 export interface SessionGmProjection {
 	public: SessionPublicProjection;
 	gmHand: CardSlot[];
 	gmPrivateProcedure?: unknown;
+	legalCommands: SessionCommandType[];
 }

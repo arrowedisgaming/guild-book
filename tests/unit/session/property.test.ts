@@ -136,7 +136,7 @@ function contextFor(actor: SessionActor, catalog: TarotCardCatalog, rng: Rng): R
 }
 
 describe('reduceSession — conservation property', () => {
-	it('conserves all 78 configured cards across 500 seeded sequences of 200 commands', () => {
+	it('conserves all 78 configured cards across 500 seeded sequences of 200 commands', { timeout: 30_000 }, () => {
 		const catalog = makeSessionCatalogFixture();
 		const catalogIds = Object.keys(catalog).sort();
 

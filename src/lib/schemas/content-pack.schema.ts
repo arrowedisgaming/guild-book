@@ -273,7 +273,7 @@ export const denizenThemeSchema = z.object({
 	notes: z.array(denizenAbilitySchema).optional(),
 	lesserDooms: z.array(denizenAbilitySchema).optional(),
 	chooseLesserDooms: z.string().optional(),
-	builderMode: z.enum(['standard', 'unsupported']).optional(),
+	builderMode: z.enum(['standard', 'person', 'unsupported']).optional(),
 	builderNote: z.string().optional()
 });
 

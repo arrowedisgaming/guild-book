@@ -5,6 +5,7 @@ import { characters } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { migrateCharacterData } from '$lib/engine/character-migration';
 import { buildCharacterView } from '$lib/server/character/view';
+import { getUserId } from '$lib/server/auth';
 import {
 	getContentPack,
 	getTalents,
@@ -15,8 +16,7 @@ import {
 
 /** Owner-only adventurer sheet with editing, play tracking, and exports. */
 export const load: PageServerLoad = async (event) => {
-	const session = await event.locals.auth();
-	const userId = session?.user?.id;
+	const userId = await getUserId(event);
 	if (!userId) throw redirect(302, `/login?callbackUrl=/sheet/${event.params.id}`);
 
 	const db = await getDb(event);

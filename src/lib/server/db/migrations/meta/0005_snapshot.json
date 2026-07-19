@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b1657a36-9c80-4703-b361-2c0fad122755",
-  "prevId": "563f56f0-99d8-480d-adb6-dd505948775a",
+  "id": "cc3fd821-34e0-452d-9237-c27b14971fc3",
+  "prevId": "b1657a36-9c80-4703-b361-2c0fad122755",
   "tables": {
     "accounts": {
       "name": "accounts",
@@ -623,6 +623,144 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_mutation_claims": {
+      "name": "campaign_mutation_claims",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "campaign_id": {
+          "name": "campaign_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "character_id": {
+          "name": "character_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "campaign_mutation_claims_campaign_idx": {
+          "name": "campaign_mutation_claims_campaign_idx",
+          "columns": [
+            "campaign_id"
+          ],
+          "isUnique": false
+        },
+        "campaign_mutation_claims_character_idx": {
+          "name": "campaign_mutation_claims_character_idx",
+          "columns": [
+            "character_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "campaign_mutation_claims_campaign_id_campaigns_id_fk": {
+          "name": "campaign_mutation_claims_campaign_id_campaigns_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "campaigns",
+          "columnsFrom": [
+            "campaign_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_mutation_claims_character_id_characters_id_fk": {
+          "name": "campaign_mutation_claims_character_id_characters_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "characters",
+          "columnsFrom": [
+            "character_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "campaign_mutation_claims_actor_user_id_users_id_fk": {
+          "name": "campaign_mutation_claims_actor_user_id_users_id_fk",
+          "tableFrom": "campaign_mutation_claims",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "campaign_mutation_receipts": {
+      "name": "campaign_mutation_receipts",
+      "columns": {
+        "claim_id": {
+          "name": "claim_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "campaign_mutation_receipts_claim_id_campaign_mutation_claims_id_fk": {
+          "name": "campaign_mutation_receipts_claim_id_campaign_mutation_claims_id_fk",
+          "tableFrom": "campaign_mutation_receipts",
+          "tableTo": "campaign_mutation_claims",
+          "columnsFrom": [
+            "claim_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

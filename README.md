@@ -11,8 +11,9 @@ built for the tarot-driven dungeon crawler by Joshua McCrowell.
 - **Adventurer creator** — a guided, content-pack-driven wizard for building a character.
 - **Rules reference** — a browsable, searchable reference.
 - **Virtual tarot deck** — HMTW's core resolution tool, usable during creation and standalone.
-- Sign in with **Google** or **Discord**; save adventurers, export to PDF or Markdown, and
-  share read-only links.
+- Build and export adventurers or denizens to PDF or Markdown without an account.
+- Sign in with **Google** or **Discord** to save adventurers and share read-only links;
+  signed-in users can link both providers to one account.
 
 ## Stack
 
@@ -33,6 +34,21 @@ credentials provider on `/login`.
 
 Useful scripts: `npm run check` (types), `npm run test` (Vitest), `npm run test:e2e`
 (Playwright).
+
+### Auth migration rollout
+
+Before applying the auth account-linking migrations to D1, run the read-only preflight:
+
+```bash
+npm run db:auth:preflight:d1:remote
+npm run db:migrate:d1:remote
+```
+
+Both preflight result sets must be empty. The migrations keep existing users and
+adventurers, normalize stored and incoming email casing, permanently enforce normalized
+email uniqueness, and prevent one Google or Discord identity from being attached to
+multiple local accounts. Rotate `AUTH_SECRET` once during rollout to sign out all existing
+sessions; the application also rejects legacy or deleted-user session tokens.
 
 ## Content packs
 

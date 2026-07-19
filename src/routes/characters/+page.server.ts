@@ -2,12 +2,12 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { characters } from '$lib/server/db/schema';
+import { getUserId } from '$lib/server/auth';
 import { and, desc, eq } from 'drizzle-orm';
 
 /** "My Adventurers" — the signed-in user's saved characters. */
 export const load: PageServerLoad = async (event) => {
-	const session = await event.locals.auth();
-	const userId = session?.user?.id;
+	const userId = await getUserId(event);
 	if (!userId) throw redirect(302, '/login?callbackUrl=/characters');
 
 	const db = await getDb(event);

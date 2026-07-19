@@ -14,6 +14,7 @@
 		publicProjection,
 		role,
 		canDeal,
+		dealDisabled = false,
 		canEndRound,
 		onDeal,
 		onEndRound,
@@ -22,6 +23,7 @@
 		publicProjection: SessionPublicProjection;
 		role: 'gm' | 'player';
 		canDeal: boolean;
+		dealDisabled?: boolean;
 		canEndRound: boolean;
 		onDeal: () => void | Promise<void>;
 		onEndRound: () => void | Promise<void>;
@@ -32,7 +34,7 @@
 <div class="mobile-drawers" data-testid="mobile-drawers">
 	<details>
 		<summary>Phase &amp; decks</summary>
-		<PhaseRail {publicProjection} {role} {canDeal} {canEndRound} {onDeal} {onEndRound} />
+		<PhaseRail {publicProjection} {role} {canDeal} {dealDisabled} {canEndRound} {onDeal} {onEndRound} />
 	</details>
 	<details>
 		<summary>Table log</summary>

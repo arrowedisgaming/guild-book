@@ -79,7 +79,12 @@ interface CommandResponseBody {
 }
 
 const SYNC_ERROR_MESSAGE = 'Unable to refresh the campaign table';
-const COMMAND_ERROR_MESSAGE = 'That action could not be completed';
+/** Exported so callers that must reject a command client-side before it ever
+ * reaches `sendCommand` (e.g. TableShell's "no eligible hands to deal to"
+ * guard) can surface the exact same fixed, generic string `performSend`
+ * uses for a server rejection — one error message, one source of truth,
+ * never a bespoke string that might drift or leak detail. */
+export const COMMAND_ERROR_MESSAGE = 'That action could not be completed';
 
 export function createCampaignSessionStore(
 	campaignId: string,

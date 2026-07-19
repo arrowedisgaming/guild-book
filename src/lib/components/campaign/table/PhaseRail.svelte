@@ -12,6 +12,7 @@
 		publicProjection,
 		role,
 		canDeal,
+		dealDisabled = false,
 		canEndRound,
 		onDeal,
 		onEndRound
@@ -19,6 +20,11 @@
 		publicProjection: SessionPublicProjection;
 		role: 'gm' | 'player';
 		canDeal: boolean;
+		/** True when `canDeal` is legal in principle but there is currently no
+		 * eligible destination hand (e.g. no other members connected yet) — the
+		 * button stays visible but disabled with a hint, rather than either
+		 * silently no-oping (the bug this fixes) or disappearing entirely. */
+		dealDisabled?: boolean;
 		canEndRound: boolean;
 		onDeal: () => void | Promise<void>;
 		onEndRound: () => void | Promise<void>;
@@ -67,7 +73,14 @@
 		<section aria-label="Table controls">
 			<h3>Controls</h3>
 			{#if canDeal}
-				<button type="button" onclick={onDeal}>Deal a card to each hand</button>
+				<button
+					type="button"
+					disabled={dealDisabled}
+					title={dealDisabled ? 'No other hands to deal to yet' : undefined}
+					onclick={onDeal}
+				>
+					Deal a card to each hand
+				</button>
 			{/if}
 			{#if canEndRound}
 				<button type="button" onclick={onEndRound}>End round</button>
@@ -120,5 +133,9 @@
 		padding: 0.45rem 0.75rem;
 		font-family: var(--font-subhead);
 		cursor: pointer;
+	}
+	button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>

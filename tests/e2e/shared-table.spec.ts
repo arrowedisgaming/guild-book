@@ -188,4 +188,68 @@ test.describe('shared table sync', () => {
 
 		await gm.close();
 	});
+
+	test('the private hand scrolls horizontally instead of overflowing its border once it holds many cards', async ({
+		browser
+	}) => {
+		// Bug fix (UI issue 1): the hand strip had no overflow handling, so more
+		// than 4-5 cards spilled visually past the section border rather than
+		// staying contained. Cheap DOM/style assertions — no need to actually
+		// scroll or screenshot — confirm the container both declares horizontal
+		// scrolling and genuinely has more content than it can show at once.
+		const gm = await browser.newContext();
+		const gmPage = await gm.newPage();
+		await signInAs(gmPage, 'Overflow GM');
+
+		const invite = await createCampaignAndReadInvite(gmPage, 'Overflow Table');
+		void invite; // solo GM is enough to fill their own hand.
+
+		await gmPage.goto(`/campaigns/${campaignIdFromUrl(gmPage.url())}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		const drawButton = gmPage.getByRole('button', { name: 'Draw a card' });
+		await expect(drawButton).toBeVisible();
+
+		const handCards = gmPage.locator('[data-testid="hand-card"]');
+		for (let drawn = 1; drawn <= 12; drawn += 1) {
+			await drawButton.click();
+			await expect(handCards).toHaveCount(drawn);
+		}
+
+		const cardsContainer = gmPage.locator('[data-testid="private-hand"] .cards');
+		await expect(cardsContainer).toHaveCSS('overflow-x', 'auto');
+
+		const { scrollWidth, clientWidth } = await cardsContainer.evaluate((el) => ({
+			scrollWidth: el.scrollWidth,
+			clientWidth: el.clientWidth
+		}));
+		expect(scrollWidth).toBeGreaterThan(clientWidth);
+
+		await gm.close();
+	});
+
+	test('the deal button is disabled with a hint when no other hands are connected yet', async ({ browser }) => {
+		// Bug fix (UI issue 2a): with no other campaign members, `dealToHands`
+		// has no valid destination — the button must say so up front instead of
+		// silently no-oping on click.
+		const gm = await browser.newContext();
+		const gmPage = await gm.newPage();
+		await signInAs(gmPage, 'Deal Guard GM');
+
+		await createCampaignAndReadInvite(gmPage, 'Deal Guard Table'); // no one joins
+		const campaignId = campaignIdFromUrl(gmPage.url());
+
+		await gmPage.goto(`/campaigns/${campaignId}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+
+		const dealButton = gmPage.getByRole('button', { name: 'Deal a card to each hand' });
+		await expect(dealButton).toBeVisible();
+		await expect(dealButton).toBeDisabled();
+		await expect(dealButton).toHaveAttribute('title', 'No other hands to deal to yet');
+		// Nothing to reject once the button is genuinely disabled — the generic
+		// error banner must not appear on page load either.
+		await expect(gmPage.locator('.action-error')).toHaveCount(0);
+
+		await gm.close();
+	});
 });

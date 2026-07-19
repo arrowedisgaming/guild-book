@@ -165,4 +165,120 @@ test.describe('shared table privacy', () => {
 		await playerA.close();
 		await playerB.close();
 	});
+
+	test('play, discard, and face-down-then-reveal each disclose exactly what they should to every other client', async ({
+		browser
+	}) => {
+		// UI issue 3: per-card Play/Play-face-down/Discard/Reveal controls were
+		// entirely missing, so nothing exercised the projection's disclosure
+		// rules for a *moved* card (as opposed to a freshly drawn one). Checked
+		// at the DOM level, same discipline as the test above: a public move
+		// (play, discard) must show the same face to every client; a face-down
+		// placement must show only a back to everyone but the owner; a reveal
+		// must disclose the identity to every client, but only after the
+		// `reveal` command actually lands.
+		const gm = await browser.newContext();
+		const playerA = await browser.newContext();
+		const playerB = await browser.newContext();
+		const gmPage = await gm.newPage();
+		const playerAPage = await playerA.newPage();
+		const playerBPage = await playerB.newPage();
+
+		await signInAs(gmPage, 'Actions GM');
+		await signInAs(playerAPage, 'Actions Player A');
+		await signInAs(playerBPage, 'Actions Player B');
+
+		const invite = await createCampaignAndReadInvite(gmPage, 'Actions Table');
+		const campaignId = campaignIdFromUrl(gmPage.url());
+		await joinCampaign(playerAPage, invite);
+		await joinCampaign(playerBPage, invite);
+
+		await gmPage.goto(`/campaigns/${campaignId}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+
+		await playerAPage.goto(`/campaigns/${campaignId}/table`);
+		await playerBPage.goto(`/campaigns/${campaignId}/table`);
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+
+		// Player A draws three cards to act on — one each for play, face-down
+		// (then reveal), and discard.
+		const drawButton = playerAPage.getByRole('button', { name: 'Draw a card' });
+		for (let drawn = 1; drawn <= 3; drawn += 1) {
+			await drawButton.click();
+			await expect(playerAPage.locator('[data-testid="hand-card"]')).toHaveCount(drawn);
+		}
+		const handCards = playerAPage.locator('[data-testid="hand-card"]');
+
+		// --- Play: a public move — every client sees the same face ---
+		const playedLabel = await handCards.first().locator('.card').getAttribute('aria-label');
+		expect(playedLabel).toBeTruthy();
+		await handCards.first().getByRole('button', { name: 'Play', exact: true }).click();
+		await expect(handCards).toHaveCount(2);
+
+		const playedCardSelector = '[data-testid="public-table"] div[aria-label="Played"] .cards .card';
+		for (const page of [playerAPage, playerBPage, gmPage]) {
+			await expect(page.locator(playedCardSelector)).toHaveCount(1, { timeout: CROSS_CLIENT_BUDGET_MS });
+			await expect(page.locator(playedCardSelector)).toHaveAttribute('aria-label', playedLabel as string);
+		}
+
+		// --- Play face down: only the owner sees a face; everyone else sees an
+		// opaque back, the same "Private effects" projection `PublicTable`
+		// already renders for every private facedown/prepared zone ---
+		await handCards.first().getByRole('button', { name: 'Play face down', exact: true }).click();
+		await expect(handCards).toHaveCount(1);
+
+		const ownFacedown = playerAPage.locator('[data-testid="private-facedown"] [data-testid="facedown-card"] .card');
+		await expect(ownFacedown).toHaveCount(1);
+		await expect(ownFacedown).not.toHaveClass(/back/);
+		const facedownCardId = await ownFacedown.getAttribute('data-card-id');
+		expect(facedownCardId).toBeTruthy();
+
+		// Only Player A's facedown pile grew — the others' stay at 0, so this
+		// text is unambiguous.
+		for (const page of [playerBPage, gmPage]) {
+			await expect(page.getByText('Face-down (1)', { exact: true })).toBeVisible({
+				timeout: CROSS_CLIENT_BUDGET_MS
+			});
+			const content = await page.content();
+			expect(content).not.toContain(facedownCardId as string);
+		}
+
+		// --- Reveal: the one command whose entire purpose is disclosure — the
+		// card id must now reach every client's event log ---
+		await playerAPage
+			.locator('[data-testid="private-facedown"] [data-testid="facedown-card"]')
+			.getByRole('button', { name: 'Reveal', exact: true })
+			.click();
+
+		for (const page of [playerBPage, gmPage]) {
+			await expect(page.locator('[data-testid="event-log"]')).toContainText(facedownCardId as string, {
+				timeout: CROSS_CLIENT_BUDGET_MS
+			});
+		}
+
+		// --- Discard: a public-top pile — the discarded face becomes every
+		// client's visible "top of the player discard" card ---
+		const discardedLabel = await handCards.first().locator('.card').getAttribute('aria-label');
+		expect(discardedLabel).toBeTruthy();
+		await handCards.first().getByRole('button', { name: 'Discard', exact: true }).click();
+		await expect(handCards).toHaveCount(0);
+
+		const playerDiscardTopSelector =
+			'[data-testid="phase-rail"] section[aria-label="Player deck"] .discard-top .card';
+		for (const page of [playerAPage, playerBPage, gmPage]) {
+			await expect(page.locator(playerDiscardTopSelector)).toHaveAttribute('aria-label', discardedLabel as string, {
+				timeout: CROSS_CLIENT_BUDGET_MS
+			});
+		}
+
+		await gm.close();
+		await playerA.close();
+		await playerB.close();
+	});
 });

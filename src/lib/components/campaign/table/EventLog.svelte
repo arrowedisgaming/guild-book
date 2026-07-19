@@ -17,6 +17,14 @@
 			if (typeof payload.count === 'number') parts.push(`(${payload.count})`);
 			if (typeof payload.destinationZoneId === 'string') parts.push(`→ ${payload.destinationZoneId}`);
 			else if (typeof payload.zoneId === 'string') parts.push(`@ ${payload.zoneId}`);
+			// `reveal`'s public payload deliberately carries the card id — per
+			// `card-commands.ts`'s `handleReveal`, disclosure is the whole point
+			// of the command, unlike every other move/draw event, whose public
+			// payload never carries an identity for a hidden destination. This is
+			// therefore the one event kind this log may show a card id for.
+			if (event.kind === 'card-revealed' && typeof payload.cardId === 'string') {
+				parts.push(`— ${payload.cardId}`);
+			}
 		}
 		return parts.join(' ');
 	}

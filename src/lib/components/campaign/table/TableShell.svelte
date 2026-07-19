@@ -81,24 +81,29 @@
 	);
 
 	/**
-	 * Scope call (see the UI-fixes report): `card-commands.ts`'s
-	 * `actorMayAccessZone` lets a player act only on a private zone they own,
-	 * so a player-initiated `transfer` into *another* player's hand is always
-	 * rejected server-side — only the GM may move a card into someone else's
-	 * private zone (deliberate per that module's doc comment). The one
-	 * transfer destination a player can legally reach that Play/Play-face-
-	 * down don't already cover is their own prepared zone. The GM's broader
-	 * reach (full authority over every zone) is used here instead to offer
-	 * "hand this card to a specific player's hand" — every entry below is
-	 * derived from the projection's own `public.playerHandCounts`/`otherHands`,
-	 * never guessed.
+	 * Scope call (see the UI-fixes report, corrected after review): a player-
+	 * initiated `transfer` into another player's hand is always rejected —
+	 * `card-commands.ts`'s `actorMayAccessZone` lets a player act only on a
+	 * private zone they own — so a player's only reachable transfer
+	 * destination beyond what Play/Play-face-down already cover is their own
+	 * prepared zone.
+	 *
+	 * The GM has no `transfer` control at all. It isn't just an authorization
+	 * question — a "GM hands a card to a player's hand" control can *never*
+	 * succeed regardless of who's allowed to attempt it: `gmHand` only ever
+	 * holds major-deck cards, every `hand:<userId>` zone is declared
+	 * player-deck-only (`zones.ts`'s `listZoneDescriptors`), and
+	 * `handleGenericMove`'s deck check (`card-commands.ts:328-330`,
+	 * `destination.deck !== 'both' && cardEntry.deck !== destination.deck`)
+	 * rejects every cross-deck move. That's also rules-correct: players hold
+	 * minors + the Fool, the GM holds majors — `transfer` exists for
+	 * player-to-player moves (Counsel/High Chant/Guardian Angel-style), not
+	 * for the GM to deal a major into a player's hand (that's what `deal`
+	 * is for). So the GM simply gets no Transfer control — Play/Play face
+	 * down/Discard/Reveal only.
 	 */
 	const transferTargets = $derived(
-		role === 'gm'
-			? otherHands.map((hand) => ({ zoneId: `hand:${hand.id}`, label: `${hand.id}'s hand` }))
-			: ownPreparedZoneId
-				? [{ zoneId: ownPreparedZoneId, label: 'Your prepared items' }]
-				: []
+		role === 'player' && ownPreparedZoneId ? [{ zoneId: ownPreparedZoneId, label: 'Your prepared items' }] : []
 	);
 
 	const dealTargetZoneIds = $derived(Object.keys(session.projection.public.playerHandCounts).map((id) => `hand:${id}`));

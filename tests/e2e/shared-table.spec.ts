@@ -224,6 +224,14 @@ test.describe('shared table sync', () => {
 		}));
 		expect(scrollWidth).toBeGreaterThan(clientWidth);
 
+		// Review fix: a GM "Transfer" control can never succeed — `gmHand` is
+		// major-deck-only, every `hand:<userId>` zone is player-deck-only, and
+		// `handleGenericMove`'s deck check rejects every cross-deck move — so
+		// the GM must have no Transfer button on any hand card, only
+		// Play/Play-face-down/Discard.
+		await expect(handCards.getByRole('button', { name: 'Transfer', exact: false })).toHaveCount(0);
+		await expect(handCards.first().getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+
 		await gm.close();
 	});
 

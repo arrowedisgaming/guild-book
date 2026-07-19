@@ -21,6 +21,7 @@
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
+		type LifecycleAction,
 		type SendCommandResult,
 		type TableSession,
 		type WireSessionEventLike
@@ -32,14 +33,18 @@
 		userId,
 		session,
 		events,
-		onSendCommand
+		onSendCommand,
+		onSendLifecycleAction
 	}: {
 		role: 'gm' | 'player';
 		userId: string;
 		session: TableSession;
 		events: WireSessionEventLike[];
 		onSendCommand: (command: SessionCommand, expectedStructuralVersion?: number) => Promise<SendCommandResult>;
+		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
 	} = $props();
+
+	const sessionStatus = $derived(session.status);
 
 	// Zone ids follow the seeding convention in
 	// `src/lib/server/session/repository.ts`'s `standardPrivateZonesForMember`
@@ -150,6 +155,21 @@
 		actionError = result.ok ? null : (result.message ?? null);
 	}
 
+	async function freezeTable(): Promise<void> {
+		const result = await onSendLifecycleAction('freeze');
+		actionError = result.ok ? null : (result.message ?? null);
+	}
+
+	async function recoverTable(): Promise<void> {
+		const result = await onSendLifecycleAction('recover');
+		actionError = result.ok ? null : (result.message ?? null);
+	}
+
+	async function endSession(): Promise<void> {
+		const result = await onSendLifecycleAction('end');
+		actionError = result.ok ? null : (result.message ?? null);
+	}
+
 	async function playCard(cardId: string): Promise<void> {
 		const result = await onSendCommand({
 			type: 'play',
@@ -215,6 +235,12 @@
 </script>
 
 <div class="table-shell" data-testid="table-shell">
+	{#if sessionStatus === 'frozen'}
+		<p class="frozen-banner" role="status" data-testid="frozen-banner">
+			The GM has frozen the table.{role === 'player' ? ' Actions are paused until they resume it.' : ''}
+		</p>
+	{/if}
+
 	{#if actionError}
 		<p class="action-error" role="alert">{actionError}</p>
 	{/if}
@@ -229,6 +255,10 @@
 				{canEndRound}
 				onDeal={dealToHands}
 				onEndRound={endRound}
+				{sessionStatus}
+				onFreeze={freezeTable}
+				onRecover={recoverTable}
+				onEndSession={endSession}
 			/>
 			<div class="table-column">
 				<PublicTable publicProjection={session.projection.public} {otherHands} />
@@ -266,6 +296,10 @@
 				{canEndRound}
 				onDeal={dealToHands}
 				onEndRound={endRound}
+				{sessionStatus}
+				onFreeze={freezeTable}
+				onRecover={recoverTable}
+				onEndSession={endSession}
 				{events}
 			/>
 			<PrivateHand
@@ -302,6 +336,14 @@
 		border: 1px solid color-mix(in oklab, #b3261e 60%, transparent);
 		color: #b3261e;
 		font-size: 0.85rem;
+	}
+	.frozen-banner {
+		margin: 0;
+		padding: 0.6rem 0.9rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
+		background: color-mix(in oklab, var(--accent) 12%, transparent);
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
 	}
 	.desktop-layout {
 		display: grid;

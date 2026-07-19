@@ -30,6 +30,11 @@ import type { CardSlot, SessionCommand, SessionStatus } from '$lib/types/session
 import type { SessionProjection } from '$lib/engine/session/projection';
 import type { DrawnCard } from '$lib/tarot/protocol';
 
+/** GM-only structural transitions the shared table exposes via
+ * `sendLifecycleAction` — mirrors `PATCH /sessions/[sessionId]`'s
+ * `action` enum exactly (see that route's `patchSchema`). */
+export type LifecycleAction = 'freeze' | 'recover' | 'end';
+
 export interface WireSessionEventLike {
 	id: number;
 	sessionId: string | null;
@@ -76,6 +81,19 @@ interface SyncResponseBody {
 interface CommandResponseBody {
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+}
+
+/** Shape of `PATCH /api/campaigns/[id]/sessions/[sessionId]` (see that
+ * route's `patchSchema`/handlers) — deliberately narrower than
+ * `CommandResponseBody`: the lifecycle endpoint takes no client-minted
+ * `commandId` (its Zod schema is `.strict()` over `{action, expectedVersion}`
+ * only — an extra field would 400), and `end` has no fresh projection to
+ * return (the session is gone), only a `publicHistoryChecksum`. */
+interface LifecycleResponseBody {
+	success?: boolean;
+	action?: LifecycleAction;
+	session?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+	publicHistoryChecksum?: string;
 }
 
 const SYNC_ERROR_MESSAGE = 'Unable to refresh the campaign table';
@@ -309,6 +327,79 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/** GM lifecycle transitions (freeze/recover/end) against
+	 * `PATCH /sessions/[sessionId]`. Same dedup/error-surfacing conventions as
+	 * `sendCommand` above — a second call for the same action at the same
+	 * observed version reuses the in-flight promise via the shared `pending`
+	 * map, and every failure (network error, non-2xx, or a body without
+	 * `success: true`) collapses to the fixed `COMMAND_ERROR_MESSAGE`, never a
+	 * server response body. Unlike `sendCommand`, there is no client-minted
+	 * `commandId` on the wire — the route's schema is `.strict()` and doesn't
+	 * accept one; the commandId is minted server-side inside `lifecycle.ts`. */
+	function sendLifecycleAction(action: LifecycleAction): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+
+		const key = canonicalLifecycleKey(action, session.sessionVersion);
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+
+		const promise = performLifecycleSend(session.sessionId, action, session.sessionVersion).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performLifecycleSend(
+		sessionId: string,
+		action: LifecycleAction,
+		expectedVersion: number
+	): Promise<SendCommandResult> {
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify({ action, expectedVersion })
+			});
+			// Unlike `commands`, this route throws a SvelteKit `error()` (400/404)
+			// or a plain 409 for a rejected action — there's no in-band `outcome`
+			// to read on failure, so a non-2xx status is itself the rejection
+			// signal.
+			if (!response.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+
+			const body = (await response.json().catch(() => null)) as LifecycleResponseBody | null;
+			if (!body?.success) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+
+			if (snapshot.session && snapshot.session.sessionId === sessionId) {
+				if (action === 'end') {
+					// No live projection survives an end — same one-way transition
+					// `isOlderSessionVersion` already treats as never stale.
+					snapshot = { ...snapshot, session: null };
+				} else if (
+					body.session &&
+					!isOlderSessionVersion(snapshot.session.sessionVersion, body.session.sessionVersion)
+				) {
+					snapshot = {
+						...snapshot,
+						session: {
+							...snapshot.session,
+							status: action === 'freeze' ? 'frozen' : 'active',
+							sessionVersion: body.session.sessionVersion,
+							campaignCursor: body.session.campaignCursor,
+							projection: body.session.projection
+						}
+					};
+				}
+			}
+
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	return {
 		get snapshot() {
 			return snapshot;
@@ -330,6 +421,7 @@ export function createCampaignSessionStore(
 		},
 		poll,
 		sendCommand,
+		sendLifecycleAction,
 		refreshNow,
 		start,
 		stop
@@ -355,6 +447,14 @@ function isOlderSessionVersion(currentVersion: number | undefined, incomingVersi
 
 function canonicalCommandKey(command: SessionCommand, expectedStructuralVersion?: number): string {
 	return JSON.stringify({ command, expectedStructuralVersion });
+}
+
+/** Same in-flight-dedup key convention as `canonicalCommandKey`, scoped to
+ * the lifecycle action + the version it was issued against so a duplicate
+ * "End session" click before the first response lands reuses the same
+ * promise instead of firing a second PATCH. */
+function canonicalLifecycleKey(action: LifecycleAction, expectedVersion: number): string {
+	return JSON.stringify({ lifecycle: action, expectedVersion });
 }
 
 function randomCommandId(): string {

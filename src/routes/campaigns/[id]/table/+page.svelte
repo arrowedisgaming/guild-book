@@ -49,6 +49,7 @@
 			{session}
 			events={store.events}
 			onSendCommand={store.sendCommand}
+			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
 	{:else if data.role === 'gm'}
 		<section class="no-session">

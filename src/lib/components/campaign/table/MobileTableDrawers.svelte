@@ -7,7 +7,7 @@
 	 */
 	import PhaseRail from './PhaseRail.svelte';
 	import EventLog from './EventLog.svelte';
-	import type { SessionPublicProjection } from '$lib/types/session';
+	import type { SessionPublicProjection, SessionStatus } from '$lib/types/session';
 	import type { WireSessionEventLike } from '$lib/stores/campaign-session.svelte';
 
 	let {
@@ -18,6 +18,10 @@
 		canEndRound,
 		onDeal,
 		onEndRound,
+		sessionStatus,
+		onFreeze,
+		onRecover,
+		onEndSession,
 		events
 	}: {
 		publicProjection: SessionPublicProjection;
@@ -27,6 +31,10 @@
 		canEndRound: boolean;
 		onDeal: () => void | Promise<void>;
 		onEndRound: () => void | Promise<void>;
+		sessionStatus: SessionStatus;
+		onFreeze: () => void | Promise<void>;
+		onRecover: () => void | Promise<void>;
+		onEndSession: () => void | Promise<void>;
 		events: WireSessionEventLike[];
 	} = $props();
 </script>
@@ -34,7 +42,19 @@
 <div class="mobile-drawers" data-testid="mobile-drawers">
 	<details>
 		<summary>Phase &amp; decks</summary>
-		<PhaseRail {publicProjection} {role} {canDeal} {dealDisabled} {canEndRound} {onDeal} {onEndRound} />
+		<PhaseRail
+			{publicProjection}
+			{role}
+			{canDeal}
+			{dealDisabled}
+			{canEndRound}
+			{onDeal}
+			{onEndRound}
+			{sessionStatus}
+			{onFreeze}
+			{onRecover}
+			{onEndSession}
+		/>
 	</details>
 	<details>
 		<summary>Table log</summary>

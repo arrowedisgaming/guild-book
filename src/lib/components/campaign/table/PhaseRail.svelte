@@ -6,7 +6,7 @@
 	 */
 	import { renderableCard } from '$lib/stores/campaign-session.svelte';
 	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
-	import type { SessionPublicProjection } from '$lib/types/session';
+	import type { SessionPublicProjection, SessionStatus } from '$lib/types/session';
 
 	let {
 		publicProjection,
@@ -15,7 +15,11 @@
 		dealDisabled = false,
 		canEndRound,
 		onDeal,
-		onEndRound
+		onEndRound,
+		sessionStatus,
+		onFreeze,
+		onRecover,
+		onEndSession
 	}: {
 		publicProjection: SessionPublicProjection;
 		role: 'gm' | 'player';
@@ -28,7 +32,24 @@
 		canEndRound: boolean;
 		onDeal: () => void | Promise<void>;
 		onEndRound: () => void | Promise<void>;
+		/** Only 'active' | 'frozen' ever reach this component — `TableShell`
+		 * only renders it while a session is open. */
+		sessionStatus: SessionStatus;
+		onFreeze: () => void | Promise<void>;
+		onRecover: () => void | Promise<void>;
+		onEndSession: () => void | Promise<void>;
 	} = $props();
+
+	// Two-click confirm, not a browser `confirm()` dialog (those block the
+	// E2E automation harness) — clicking "End session" reveals a confirm row
+	// instead of firing the PATCH immediately, since it permanently purges
+	// every player's private state.
+	let confirmingEnd = $state(false);
+
+	async function confirmEndSession(): Promise<void> {
+		confirmingEnd = false;
+		await onEndSession();
+	}
 
 	const majorDiscard = $derived(renderableCard(publicProjection.majorDiscardTop));
 	const playerDiscard = $derived(renderableCard(publicProjection.playerDiscardTop));
@@ -69,7 +90,7 @@
 		</section>
 	{/if}
 
-	{#if role === 'gm' && (canDeal || canEndRound)}
+	{#if role === 'gm'}
 		<section aria-label="Table controls">
 			<h3>Controls</h3>
 			{#if canDeal}
@@ -84,6 +105,24 @@
 			{/if}
 			{#if canEndRound}
 				<button type="button" onclick={onEndRound}>End round</button>
+			{/if}
+
+			{#if sessionStatus === 'active'}
+				<button type="button" onclick={onFreeze}>Freeze table</button>
+			{:else if sessionStatus === 'frozen'}
+				<button type="button" onclick={onRecover}>Resume table</button>
+			{/if}
+
+			{#if !confirmingEnd}
+				<button type="button" class="end-session" onclick={() => (confirmingEnd = true)}>End session</button>
+			{:else}
+				<div class="confirm-end" data-testid="end-session-confirm">
+					<p>End the session? Every private hand is permanently cleared.</p>
+					<div class="confirm-actions">
+						<button type="button" class="end-session" onclick={confirmEndSession}>Confirm end</button>
+						<button type="button" onclick={() => (confirmingEnd = false)}>Cancel</button>
+					</div>
+				</div>
 			{/if}
 		</section>
 	{/if}
@@ -137,5 +176,25 @@
 	button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+	button.end-session {
+		border-color: color-mix(in oklab, #b3261e 55%, transparent);
+		color: #b3261e;
+	}
+	.confirm-end {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.6rem;
+		border: 1px solid color-mix(in oklab, #b3261e 45%, transparent);
+	}
+	.confirm-end p {
+		margin: 0;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+	}
+	.confirm-actions {
+		display: flex;
+		gap: 0.5rem;
 	}
 </style>

@@ -260,4 +260,113 @@ test.describe('shared table sync', () => {
 
 		await gm.close();
 	});
+
+	test('GM freeze/recover/end lifecycle, and restarting the session seeds a hand for a mid-session late joiner', async ({
+		browser
+	}) => {
+		// The user's actual repro: a member who joins *after* the GM has
+		// already started a session never gets a `hand:<userId>` zone (only
+		// members active at `startSession` time are seeded one) — the remedy is
+		// ending and restarting the session, which reseeds zones for every
+		// currently-active member. This test exercises the full GM lifecycle
+		// surface end-to-end and confirms that remedy actually works.
+		const gm = await browser.newContext();
+		const playerA = await browser.newContext();
+		const playerB = await browser.newContext();
+		const gmPage = await gm.newPage();
+		const playerAPage = await playerA.newPage();
+		const playerBPage = await playerB.newPage();
+
+		await signInAs(gmPage, 'Lifecycle GM');
+		await signInAs(playerAPage, 'Lifecycle Player A');
+		await signInAs(playerBPage, 'Lifecycle Player B');
+
+		const invite = await createCampaignAndReadInvite(gmPage, 'Lifecycle Table');
+		const campaignId = campaignIdFromUrl(gmPage.url());
+		await joinCampaign(playerAPage, invite);
+		await playerAPage.goto(`/campaigns/${campaignId}/table`);
+		await expect(playerAPage.getByText('Waiting for the GM to start a session.')).toBeVisible();
+
+		// GM starts the first session before Player B joins.
+		await gmPage.goto(`/campaigns/${campaignId}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+
+		// Player B — the late joiner — joins mid-session.
+		await joinCampaign(playerBPage, invite);
+		await playerBPage.goto(`/campaigns/${campaignId}/table`);
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+
+		// Confirms the repro: the late joiner's hand zone was never seeded for
+		// this session, so a draw is rejected — gracefully, via the store's
+		// fixed generic error, never a raw server message.
+		await playerBPage.getByRole('button', { name: 'Draw a card' }).click();
+		await expect(playerBPage.locator('.action-error')).toBeVisible();
+		await expect(playerBPage.locator('[data-testid="hand-card"]')).toHaveCount(0);
+
+		// --- GM freezes the table ---
+		await gmPage.getByRole('button', { name: 'Freeze table' }).click();
+		await expect(gmPage.getByTestId('frozen-banner')).toBeVisible();
+		await expect(playerAPage.getByTestId('frozen-banner')).toBeVisible({ timeout: CROSS_CLIENT_BUDGET_MS });
+
+		// A player command against a frozen session still fails gracefully.
+		await playerAPage.getByRole('button', { name: 'Draw a card' }).click();
+		await expect(playerAPage.locator('.action-error')).toBeVisible();
+		await expect(playerAPage.locator('[data-testid="hand-card"]')).toHaveCount(0);
+
+		// --- GM recovers ---
+		await gmPage.getByRole('button', { name: 'Resume table' }).click();
+		await expect(gmPage.getByTestId('frozen-banner')).toHaveCount(0);
+		await expect(playerAPage.getByTestId('frozen-banner')).toHaveCount(0, { timeout: CROSS_CLIENT_BUDGET_MS });
+
+		// Play works again once recovered.
+		await playerAPage.getByRole('button', { name: 'Draw a card' }).click();
+		await expect(playerAPage.locator('[data-testid="hand-card"] .card')).toHaveCount(1);
+
+		// The GM's own session-version snapshot only advances on its next poll
+		// — wait for it to observe Player A's draw before ending, so the GM's
+		// `expectedVersion` on the end PATCH isn't stale against the version
+		// the draw just claimed (a real 409 the store would otherwise surface
+		// as a generic, unhelpful failure here).
+		await expect(gmPage.locator('[data-testid="other-hand-back"] .card')).toHaveCount(1, {
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+
+		// --- GM ends the session, via the required inline confirm (no
+		// browser confirm() dialog — those block the automation harness) ---
+		await expect(gmPage.getByTestId('end-session-confirm')).toHaveCount(0);
+		await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
+		await expect(gmPage.getByTestId('end-session-confirm')).toBeVisible();
+		await gmPage.getByRole('button', { name: 'Confirm end' }).click();
+
+		// All three contexts land back at the no-open-session state.
+		await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible();
+		await expect(playerAPage.getByText('Waiting for the GM to start a session.')).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+		await expect(playerBPage.getByText('Waiting for the GM to start a session.')).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+
+		// --- GM starts a fresh session — Player B is now an active member as
+		// of *this* session's start, so their hand zone is seeded this time. ---
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({
+			timeout: CROSS_CLIENT_BUDGET_MS
+		});
+		await playerBPage.getByRole('button', { name: 'Draw a card' }).click();
+		await expect(playerBPage.locator('[data-testid="hand-card"] .card')).toHaveCount(1);
+		await expect(playerBPage.locator('.action-error')).toHaveCount(0);
+
+		await gm.close();
+		await playerA.close();
+		await playerB.close();
+	});
 });

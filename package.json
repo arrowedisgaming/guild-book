@@ -1,6 +1,6 @@
 {
 	"name": "guild-book",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"private": true,
 	"description": "A His Majesty the Worm adventurer creator and rules reference. SvelteKit monolith, content-pack driven, tarot-based, Adherent of the Worm licence-compliant.",
 	"license": "GPL-3.0-or-later",

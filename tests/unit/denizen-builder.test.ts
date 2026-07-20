@@ -255,6 +255,15 @@ describe('denizen builder — stat warnings', () => {
 			`The Crown: Health is normally a number or ∞ — don't forget a note explaining what "?" means.`
 		]);
 	});
+
+	it("a pool's own Wounds note explains its '*' Health", () => {
+		const starPool = { ...createBlankPoolDraft(), name: 'The Crown', health: '*', defense: '3' };
+		expect(draftStatReminders({ ...createBlankDraft(), pools: [starPool] })).toEqual([
+			`The Crown: Health is normally a number or ∞ — don't forget a note explaining what "*" means.`
+		]);
+		const explained = { ...starPool, notes: [{ name: 'Wounds', text: 'Track wounds instead.' }] };
+		expect(draftStatReminders({ ...createBlankDraft(), pools: [explained] })).toEqual([]);
+	});
 });
 
 // --- pools (dungeon lords) ---------------------------------------------------

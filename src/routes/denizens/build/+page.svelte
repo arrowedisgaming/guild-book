@@ -63,6 +63,10 @@
 	// Steps past Threat need both templates; re-seed stats when the pair changes.
 	$effect(() => {
 		if (stepIndex >= 3 && theme && threat && needsReseed(draft)) {
+			// Reseeding replaces the pool array — drop pool-scoped edit and
+			// scratch state so half-typed text can't attach to the new pools.
+			editing = null;
+			poolCustom = {};
 			denizenBuilder.updateDraft((d) => seedFromTemplates(d, theme, threat));
 			announce(`Stat block seeded from ${theme.name} ${threat.name}.`);
 		}
@@ -79,6 +83,8 @@
 
 	function confirmStartOver() {
 		if (!confirm('Discard this denizen and start over?')) return;
+		editing = null;
+		poolCustom = {};
 		denizenBuilder.reset();
 		announce('Denizen builder reset.');
 	}
@@ -414,7 +420,7 @@
 			<!-- Build-time pick instruction from the template, not stat-block content. -->
 			<p class="guidance"><em>{threat.chooseAttribute}</em></p>
 		{/if}
-		{#each statMessages as warning (warning)}
+		{#each statMessages as warning}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		{#if draft.statNote || threat?.statNote}
@@ -460,7 +466,7 @@
 			and dooms. Each can be attacked separately — as long as a pool stands, the creature keeps
 			its abilities. Make it clear what each pool is and what defeating it means.
 		</p>
-		{#each statMessages as warning (warning)}
+		{#each statMessages as warning}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		{#each draft.pools as pool, pi (pi)}
@@ -550,7 +556,7 @@
 		</div>
 	{:else if stepId === 'review'}
 		<h2>Review</h2>
-		{#each statMessages as warning (warning)}
+		{#each statMessages as warning}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />

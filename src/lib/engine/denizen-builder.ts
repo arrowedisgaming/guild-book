@@ -349,22 +349,25 @@ export function draftStatWarnings(
  */
 export function draftStatReminders(draft: DenizenDraft): string[] {
 	const reminders: string[] = [];
-	// A '*' Health is self-explanatory while a "Wounds" note is present.
-	const explained = draft.notes.some((n) => n.name === 'Wounds');
-	const check = (value: string, label: string, where: string) => {
+	// A '*' Health is self-explanatory while a "Wounds" note is present —
+	// either on the denizen itself or on the pool carrying the '*'.
+	const hasWoundsNote = (notes: DenizenDraft['notes']) => notes.some((n) => n.name === 'Wounds');
+	const explained = hasWoundsNote(draft.notes);
+	const check = (value: string, label: string, where: string, isExplained: boolean) => {
 		const trimmed = value.trim();
 		if (trimmed === '' || Number.isFinite(Number(trimmed)) || trimmed === '∞') return;
-		if (label === 'Health' && trimmed === '*' && explained) return;
+		if (label === 'Health' && trimmed === '*' && isExplained) return;
 		reminders.push(
 			`${where}${label} is normally a number or ∞ — don't forget a note explaining what "${trimmed}" means.`
 		);
 	};
-	check(draft.health, 'Health', '');
-	check(draft.defense, 'Defense', '');
+	check(draft.health, 'Health', '', explained);
+	check(draft.defense, 'Defense', '', explained);
 	draft.pools.forEach((pool, index) => {
 		const label = pool.name.trim() || `Pool ${index + 1}`;
-		check(pool.health, 'Health', `${label}: `);
-		check(pool.defense, 'Defense', `${label}: `);
+		const poolExplained = explained || hasWoundsNote(pool.notes);
+		check(pool.health, 'Health', `${label}: `, poolExplained);
+		check(pool.defense, 'Defense', `${label}: `, poolExplained);
 	});
 	return reminders;
 }

@@ -229,6 +229,18 @@
 				"challenge-greater-dooms"
 			],
 			"modifierIds": [],
+			"params": {
+				"cardsPerInitiativeTurn": 1,
+				"actionExcludesMinorAction": true,
+				"gmPlayBudget": 1,
+				"gmDiscardsLimitedByHand": true,
+				"fool": {
+					"pairedPlayRequired": true,
+					"grantsExtraTurn": true,
+					"extraTurnMinorActions": 0,
+					"reshuffleBoundary": "end-round"
+				}
+			},
 			"steps": [
 				{
 					"id": "deal-players",

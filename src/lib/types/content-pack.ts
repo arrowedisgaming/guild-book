@@ -689,6 +689,16 @@ export interface TarotProcedureDefinition {
 	ruleEntryIds: string[];
 	steps: TarotProcedureStepDefinition[];
 	modifierIds: string[];
+	/**
+	 * Free-form procedure-level configuration values (budgets, fixed rule
+	 * constants) that don't fit the step/effect vocabulary above. Generic here
+	 * deliberately — only `challenge-round` populates it today (its
+	 * per-turn/GM budgets and the Fool's interrupt rules; see
+	 * `src/lib/engine/session/procedures/challenge/schema.ts`'s
+	 * `challengeRoundParamsSchema`), and other procedures should keep omitting
+	 * it rather than growing ad hoc fields on every procedure shape.
+	 */
+	params?: Record<string, unknown>;
 }
 
 /**

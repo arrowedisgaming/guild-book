@@ -664,7 +664,11 @@ export const tarotProcedureDefinitionSchema = z.object({
 	invokedFrom: z.tuple([tarotSourceRefSchema]).rest(tarotSourceRefSchema),
 	ruleEntryIds: z.array(z.string()),
 	steps: z.array(tarotProcedureStepDefinitionSchema),
-	modifierIds: z.array(z.string())
+	modifierIds: z.array(z.string()),
+	/** Generic passthrough — see `TarotProcedureDefinition.params`. Specific
+	 * procedures validate their own shape downstream (e.g. the Challenge
+	 * engine's `challengeRoundParamsSchema`). */
+	params: z.record(z.string(), z.unknown()).optional()
 });
 
 const tarotLookupKeySchema = z.union([

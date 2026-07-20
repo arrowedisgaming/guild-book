@@ -6,9 +6,15 @@
  *
  * Two rosters place Initiative: players, one card each from their own hand
  * (minor deck), and the GM, one card from `gmHand` (major deck) for each
- * `enemyFacts` entry — `challenge-play-initiative`: "The GM will play one
- * Initiative card for each significant character or group of characters
- * they control." `enemyFacts` already *is* that roster of groups.
+ * `enemyFacts` ENTRY (not per `count`) — `challenge-play-initiative`: "The GM
+ * will play one Initiative card for each significant character or group of
+ * characters they control." `enemyFacts` already *is* that roster of
+ * significant characters/groups; `count` (`types.ts`) is how many enemies an
+ * entry represents for the *hand-size formula*'s headcount
+ * (`deal.ts`'s `calculateGmHandSize`), not for how many Initiative cards it
+ * needs — a group of twelve imps entered as one entry with `count: 12` still
+ * places exactly one card here, which is the entire point of the "or group"
+ * clause.
  *
  * Both kinds of placement stage a card facedown in a zone the public
  * projection already surfaces an occupied-but-hidden placeholder for with

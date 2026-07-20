@@ -45,30 +45,51 @@ const LARGER_THAN_HUMAN_SIZE_ID = 'larger-than-human';
  * per Increment 3 Task 2's binding override O1 — the plan's original
  * signature/body were both wrong (see the brief). Every number comes from
  * `params` (hydrated from content by `buildChallengeConfig`); this function
- * only does the counting/thresholding the rule text describes:
+ * only does the counting/thresholding the rule text describes.
+ *
+ * `enemies` entries are groups, not individual creatures (`types.ts`'s
+ * `ChallengeEnemyFact` doc comment) — this formula therefore reads
+ * *headcount* as the sum of every entry's `count`, not `enemies.length`
+ * (a coordinator-identified defect: `enemies.length` and `placeGmInitiative`
+ * both reading an entry as "one enemy" made the rulebook's own worked
+ * example — twelve imps as one group needing only one Initiative card —
+ * impossible to represent correctly at both consumers simultaneously):
  *
  * ```
  * base
  * + (distinct enemy types) * perEnemyType
- * + (enemies.length >  adventurerCount)     ? enemiesOutnumberAdventurers : 0
- * + (enemies.length >= 2 * adventurerCount) ? enemiesDoubleAdventurers    : 0
- * + (enemies larger than human, count) * perLargerThanHumanEnemy
- * + (any elite present)        ? eliteEnemyPresent  : 0   (once, not per-enemy)
- * + (any dungeon lord present) ? dungeonLordPresent : 0   (once, not per-enemy)
+ * + (totalCount >  adventurerCount)     ? enemiesOutnumberAdventurers : 0
+ * + (totalCount >= 2 * adventurerCount) ? enemiesDoubleAdventurers    : 0
+ * + (headcount of enemies larger than human) * perLargerThanHumanEnemy
+ * + (any elite present)        ? eliteEnemyPresent  : 0   (once, not per-head)
+ * + (any dungeon lord present) ? dungeonLordPresent : 0   (once, not per-head)
  * ```
  *
- * Rulebook worked examples (both required, O1): 12 imps vs 4 adventurers → 6
- * (3 base + 1 one type + 1 outnumber + 1 double); 7 imps vs 4 adventurers → 5
- * (3 base + 1 one type + 1 outnumber; 7 < 8 so NOT double — pins `>=`, rules
- * out `>`).
+ * where `totalCount = sum(enemies.map(e => e.count))`. Distinct-type
+ * counting and the elite/dungeon-lord presence flags are NOT headcount-
+ * weighted — a type is counted once regardless of how many individuals share
+ * it, and presence is presence, not a per-head bonus — only the
+ * outnumber/double thresholds and `perLargerThanHumanEnemy` scale with
+ * `count`.
+ *
+ * Rulebook worked examples (both required, O1), now expressed as the single
+ * group entries the book actually describes: `[{typeIds:['imp'], count:12}]`
+ * vs 4 adventurers → 6 (3 base + 1 one type + 1 outnumber + 1 double);
+ * `[{typeIds:['imp'], count:7}]` vs 4 adventurers → 5 (3 base + 1 one type +
+ * 1 outnumber; 7 < 8 so NOT double — pins `>=`, rules out `>`). Both now also
+ * require exactly ONE `placeGmInitiative` call (`initiative.ts`) — one
+ * group, one card — proving the two consumers agree.
  */
 export function calculateGmHandSize(
 	params: GmHandFormulaParams,
 	input: { enemies: ChallengeStateV1['enemyFacts']; adventurerCount: number }
 ): number {
 	const { enemies, adventurerCount } = input;
+	const totalCount = enemies.reduce((sum, enemy) => sum + enemy.count, 0);
 	const enemyTypeCount = new Set(enemies.flatMap((enemy) => enemy.typeIds)).size;
-	const largerThanHumanCount = enemies.filter((enemy) => enemy.size === LARGER_THAN_HUMAN_SIZE_ID).length;
+	const largerThanHumanCount = enemies
+		.filter((enemy) => enemy.size === LARGER_THAN_HUMAN_SIZE_ID)
+		.reduce((sum, enemy) => sum + enemy.count, 0);
 	const anyElite = enemies.some((enemy) => enemy.threat === ELITE_THREAT_ID);
 	const anyDungeonLord = enemies.some((enemy) => enemy.threat === DUNGEON_LORD_THREAT_ID);
 
@@ -76,8 +97,8 @@ export function calculateGmHandSize(
 		0,
 		params.base +
 			enemyTypeCount * params.perEnemyType +
-			(enemies.length > adventurerCount ? params.enemiesOutnumberAdventurers : 0) +
-			(enemies.length >= 2 * adventurerCount ? params.enemiesDoubleAdventurers : 0) +
+			(totalCount > adventurerCount ? params.enemiesOutnumberAdventurers : 0) +
+			(totalCount >= 2 * adventurerCount ? params.enemiesDoubleAdventurers : 0) +
 			largerThanHumanCount * params.perLargerThanHumanEnemy +
 			(anyElite ? params.eliteEnemyPresent : 0) +
 			(anyDungeonLord ? params.dungeonLordPresent : 0)

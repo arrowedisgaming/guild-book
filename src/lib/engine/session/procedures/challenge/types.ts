@@ -84,15 +84,39 @@ export interface ChallengeConfig {
 	fool: ChallengeFoolConfig;
 }
 
-/** One enemy fact entered by the GM at round start. `size`/`threat`/
+/**
+ * One enemy fact entered by the GM at round start. `size`/`threat`/
  * `typeIds` are content lookup ids the (later) GM hand formula and typed
  * Doom predicates key off of — validated against content, not enumerated
- * here. */
+ * here.
+ *
+ * An entry is **one significant character OR one group of characters**
+ * (`challenge-play-initiative`: "The GM will play one Initiative card for
+ * each significant character or group of characters they control") —
+ * `count` is how many individual enemies that entry represents (>= 1). Two
+ * consumers read this differently and both are correct: Initiative
+ * (`initiative.ts`'s `placeGmInitiative`) needs one card per *entry*
+ * regardless of `count` — twelve imps entered as one group still needs only
+ * one card, which is the entire point of the "or group" clause. The GM
+ * hand-size formula (`deal.ts`'s `calculateGmHandSize`) needs the total
+ * *headcount* — `enemies.length` alone undercounts a grouped entry, so it
+ * sums every entry's `count` instead. Distinct-type counting and the
+ * elite/dungeon-lord presence flags are unaffected by `count` (a type is
+ * still counted once no matter how many individuals share it; presence is
+ * presence, not a per-head bonus) — only the outnumber/double thresholds and
+ * `perLargerThanHumanEnemy` are headcount-weighted. Do not represent "twelve
+ * imps" as twelve separate entries to route around this — that was tried and
+ * is exactly the shape this field exists to prevent (Increment 3 Task 2
+ * coordinator follow-up).
+ */
 export interface ChallengeEnemyFact {
 	id: string;
 	size: string;
 	threat: string;
 	typeIds: string[];
+	/** How many individual enemies this entry (one significant character or
+	 * one group) represents. Always >= 1. */
+	count: number;
 }
 
 /** One seat in the revealed Initiative order. */

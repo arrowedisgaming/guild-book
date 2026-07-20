@@ -29,13 +29,15 @@ function playerActor(tenureId: string): SessionActor {
 	return { kind: 'player', userId: tenureId };
 }
 
+/** ONE group entry representing `count` imps — exactly how the rulebook's
+ * own worked example states it ("twelve imps facing four adventurers"): one
+ * significant group, `count: 12`, not twelve separate entries. Representing
+ * it as twelve separate entries was tried and found to be the coordinator-
+ * identified defect this `count` field exists to prevent (see `types.ts`'s
+ * `ChallengeEnemyFact` doc comment) — `enemies.length` and
+ * `placeGmInitiative` must agree on what one entry means. */
 function makeImpFacts(count: number): ChallengeEnemyFact[] {
-	return Array.from({ length: count }, (_, i) => ({
-		id: `imp-${i + 1}`,
-		size: 'human',
-		threat: 'minion',
-		typeIds: ['imp']
-	}));
+	return [{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count }];
 }
 
 function handCount(state: SessionEngineStateV1, tenureId: string): number {
@@ -85,22 +87,31 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 	}
 
 	describe('calculateGmHandSize (O1 — required rulebook fixtures)', () => {
-		it('12 imps vs 4 adventurers → 6 (3 base + 1 one type + 1 outnumber + 1 double)', () => {
-			expect(
-				calculateGmHandSize(config.gmHandFormula, { enemies: makeImpFacts(12), adventurerCount: 4 })
-			).toBe(6);
+		it('12 imps as ONE group entry vs 4 adventurers → 6 (3 base + 1 one type + 1 outnumber + 1 double)', () => {
+			const enemies = makeImpFacts(12);
+			expect(enemies).toHaveLength(1); // one group entry, not twelve — the point of `count`
+			expect(calculateGmHandSize(config.gmHandFormula, { enemies, adventurerCount: 4 })).toBe(6);
 		});
 
-		it('7 imps vs 4 adventurers → 5 (3 base + 1 one type + 1 outnumber; NOT double)', () => {
-			expect(
-				calculateGmHandSize(config.gmHandFormula, { enemies: makeImpFacts(7), adventurerCount: 4 })
-			).toBe(5);
+		it('7 imps as ONE group entry vs 4 adventurers → 5 (3 base + 1 one type + 1 outnumber; NOT double)', () => {
+			const enemies = makeImpFacts(7);
+			expect(enemies).toHaveLength(1);
+			expect(calculateGmHandSize(config.gmHandFormula, { enemies, adventurerCount: 4 })).toBe(5);
 		});
 
-		it('counts elite/dungeon-lord presence once, not per enemy', () => {
+		it('weights perLargerThanHumanEnemy by count, not by entry (a group of 3 ogres scores 3x)', () => {
 			const enemies: ChallengeEnemyFact[] = [
-				{ id: 'e1', size: 'human', threat: 'elite', typeIds: ['ogre'] },
-				{ id: 'e2', size: 'human', threat: 'elite', typeIds: ['ogre'] }
+				{ id: 'ogre-trio', size: 'larger-than-human', threat: 'minion', typeIds: ['ogre'], count: 3 }
+			];
+			// base 3 + perEnemyType 1 (one type) + perLargerThanHumanEnemy 1 * 3 = 7.
+			// totalCount=3 vs adventurerCount=4: neither outnumber (3>4 false) nor double (3>=8 false).
+			expect(calculateGmHandSize(config.gmHandFormula, { enemies, adventurerCount: 4 })).toBe(7);
+		});
+
+		it('counts elite/dungeon-lord presence once, not per enemy or per count', () => {
+			const enemies: ChallengeEnemyFact[] = [
+				{ id: 'e1', size: 'human', threat: 'elite', typeIds: ['ogre'], count: 1 },
+				{ id: 'e2', size: 'human', threat: 'elite', typeIds: ['ogre'], count: 1 }
 			];
 			// base 3 + perEnemyType 1 (one type) + eliteEnemyPresent 2 (once) = 6,
 			// NOT 3 + 1 + 2 + 2 = 8.
@@ -210,40 +221,45 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 
-		it('recalculates the GM hand size fresh each round as enemies dwindle', () => {
-			// Deliberately small (not the O1 12/7-imp fixtures, which are
-			// already covered above in isolation): this test's job is to prove
-			// recalculation happens round-over-round through the FULL
-			// begin→deal→place→reveal→cleanup→deal pipeline, which now also
-			// requires one GM Initiative placement per enemy fact — so the
-			// enemy count here stays within what a freshly dealt GM hand can
-			// always cover.
-			const round1Enemies: ChallengeEnemyFact[] = [
-				{ id: 'ogre-1', size: 'human', threat: 'minion', typeIds: ['ogre'] },
-				{ id: 'ogre-2', size: 'human', threat: 'minion', typeIds: ['ogre'] }
-			];
-			const expectedRound1 = calculateGmHandSize(config.gmHandFormula, { enemies: round1Enemies, adventurerCount: TENURE_IDS.length });
+		it('recalculates the GM hand size fresh each round as the imp group dwindles (O1, full pipeline)', () => {
+			// The book's own worked example, now representable exactly as it's
+			// stated ("twelve imps facing four adventurers" / "the adventurers
+			// reduce the number of imps to seven"): ONE group entry per round,
+			// not one entry per creature. This is the assertion that proves
+			// `calculateGmHandSize` (headcount via `count`) and
+			// `placeGmInitiative` (one card per entry) finally agree on what an
+			// `enemyFacts` entry means — round 1 needs exactly one GM Initiative
+			// placement for twelve imps, and round 2 needs exactly one for seven.
+			const round1Enemies = makeImpFacts(12);
+			expect(round1Enemies).toHaveLength(1);
 
 			const { state, gmCtx } = begin('dwindle', round1Enemies);
 			const round1 = dealRound(state, gmCtx);
 			if (!round1.ok) throw round1;
-			expect(round1.state.gmHand).toHaveLength(expectedRound1);
+			expect(round1.state.gmHand).toHaveLength(6); // O1 fixture
 
 			const placed = placeAllInitiative(round1.state, 'dwindle');
+			// Exactly one GM Initiative card was placed for the whole imp group:
+			// gmHand lost exactly one card, not twelve.
+			expect(placed.gmHand).toHaveLength(round1.state.gmHand.length - 1);
 			const revealed = revealInitiative(placed, gmCtx);
 			if (!revealed.ok) throw revealed;
+			expect(readChallengeState(revealed.state)?.initiativeOrder.filter((e) => e.tenureId === 'imp-swarm')).toHaveLength(1);
 
-			const cleaned = cleanupRound(revealed.state, gmCtx, { enemyFacts: [] });
+			const round2Enemies = makeImpFacts(7);
+			expect(round2Enemies).toHaveLength(1);
+			const cleaned = cleanupRound(revealed.state, gmCtx, { enemyFacts: round2Enemies });
 			if (!cleaned.ok) throw cleaned;
 			expect(readChallengeState(cleaned.state)).toMatchObject({ stage: 'deal', round: 2 });
 			expectConserved(cleaned.state, catalog);
 
 			const round2 = dealRound(cleaned.state, ctxFor(GM, catalog, config, 'dwindle-round-2'));
 			if (!round2.ok) throw round2;
-			const expectedRound2 = calculateGmHandSize(config.gmHandFormula, { enemies: [], adventurerCount: TENURE_IDS.length });
-			expect(round2.state.gmHand).toHaveLength(expectedRound2);
-			expect(expectedRound2).toBeLessThan(expectedRound1); // proves recalculation, not a stale cached value
-			expectConserved(round2.state, catalog);
+			expect(round2.state.gmHand).toHaveLength(5); // O1 fixture
+
+			const placed2 = placeAllInitiative(round2.state, 'dwindle-round-2');
+			expect(placed2.gmHand).toHaveLength(round2.state.gmHand.length - 1); // still exactly one card
+			expectConserved(placed2, catalog);
 		});
 	});
 
@@ -409,7 +425,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			return { state: dealResult.state, gmCtx };
 		}
 
-		const oneOgre: ChallengeEnemyFact[] = [{ id: 'ogre-1', size: 'human', threat: 'minion', typeIds: ['ogre'] }];
+		const oneOgre: ChallengeEnemyFact[] = [{ id: 'ogre-1', size: 'human', threat: 'minion', typeIds: ['ogre'], count: 1 }];
 
 		it('places one card per enemy fact from gmHand into a GM-only pending zone', () => {
 			const { state, gmCtx } = dealtWithEnemies('gm-initiative-place', oneOgre);

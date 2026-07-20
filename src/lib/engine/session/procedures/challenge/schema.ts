@@ -130,12 +130,16 @@ export const challengeStageSchema = z.enum([
 	'complete'
 ]);
 
+/** Mirrors `ChallengeEnemyFact`. `count` is the entry's headcount (one
+ * significant character or one group — see that type's doc comment) and
+ * must be a positive integer; `count: 0` or negative is rejected. */
 const challengeEnemyFactSchema = z
 	.object({
 		id: z.string().trim().min(1),
 		size: z.string().trim().min(1),
 		threat: z.string().trim().min(1),
-		typeIds: z.array(z.string().trim().min(1))
+		typeIds: z.array(z.string().trim().min(1)),
+		count: z.number().int().positive()
 	})
 	.strict();
 

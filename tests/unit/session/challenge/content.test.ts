@@ -142,7 +142,7 @@ describe('ChallengeStateV1 schema (Step 3 + O4/O5)', () => {
 		round: 1,
 		participantTenureIds: ['tenure-1', 'tenure-2'],
 		pendingJoinTenureIds: [],
-		enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'] }],
+		enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'], count: 1 }],
 		initiativeOrder: [{ tenureId: 'tenure-1', cardZoneId: 'zone-1', revealed: true }],
 		activeTurnIndex: 0,
 		turnKind: 'normal',
@@ -181,5 +181,19 @@ describe('ChallengeStateV1 schema (Step 3 + O4/O5)', () => {
 	it('rejects an unknown stage', () => {
 		const invalid = { ...validState, stage: 'not-a-real-stage' };
 		expect(challengeStateV1Schema.safeParse(invalid).success).toBe(false);
+	});
+
+	it('rejects an enemy fact with count < 1 (Increment 3 Task 2 coordinator follow-up)', () => {
+		const zero = {
+			...validState,
+			enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'], count: 0 }]
+		};
+		expect(challengeStateV1Schema.safeParse(zero).success).toBe(false);
+
+		const negative = {
+			...validState,
+			enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'], count: -1 }]
+		};
+		expect(challengeStateV1Schema.safeParse(negative).success).toBe(false);
 	});
 });

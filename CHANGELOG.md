@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-19
+
 ### Added
 
 - A server-gated campaign foundation: Game Masters can create guilds, manage
@@ -19,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   membership, tenure, character-life, and session-boundary races atomic. Raw
   invitation tokens are never stored, and all character writes now use integer
   version claims.
+- A live shared tarot table for campaigns: the GM starts a session and every
+  attached adventurer plays at one synchronized board. The server owns all 78
+  cards — shuffles, draws, and destinations — and each browser receives only a
+  role projection: your own hand's faces, card backs and counts for everything
+  hidden, and the public zones (initiative, played, revealed, inspiration).
+  Cards move through a generic command set (draw, deal, play, place face down,
+  reveal, discard, transfer, mulligan, end round) driven by the projection's
+  legal actions; the GM can freeze, resume, and end the table, and ending purges
+  every unrevealed secret and leaves a public-only history. Changes reach every
+  visible table within two seconds over plain polling — no WebSockets — and
+  polling pauses in hidden tabs. Session rules are pinned at start from an
+  immutable content snapshot, so a mid-campaign content update never changes a
+  live table. Commands are idempotent (a double-click or retry applies once) and
+  every card mutation is a single atomic version claim on both SQLite and D1;
+  privacy is enforced by construction and guarded by canary tests across
+  response bodies, headers, errors, logs, and event rows. Remains gated behind
+  `CAMPAIGNS_ENABLED` / pilot user IDs.
 
 - The complete test-of-fate resolution engine: favor/disfavor, spending Resolve
   for favor, pushing fate, all three Fool rules, and group tests. `/deck` is now

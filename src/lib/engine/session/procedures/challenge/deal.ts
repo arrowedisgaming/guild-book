@@ -90,11 +90,27 @@ export function calculateGmHandSize(
  * many destinations), and `calculateGmHandSize(...)`-many major cards to the
  * GM hand — recalculated fresh from the *current* `enemyFacts`/participant
  * count every time this runs, per O1/step2 ("Check to see which are
- * applicable at the start of each round"). Both target counts are dealt as
- * flat totals into hands emptied by the previous round's cleanup (Ch7:
- * "players always draw four Challenge cards" / "the GM will draw 5 cards at
- * the beginning of the next round" — both stated as flat per-round totals,
- * not top-ups), so `countPerDestination` on the resulting public
+ * applicable at the start of each round").
+ *
+ * Both target counts are dealt as FLAT totals, not top-ups, into hands
+ * emptied by the previous round's cleanup — confirmed against two rule
+ * entries (not just inferred from wording, per the controller's concern-1
+ * follow-up):
+ *
+ *   `challenge-draw-cards`: "At the beginning of each round, each player
+ *   draws four Challenge cards from the minor arcana deck."
+ *
+ *   `challenge-end-the-round`: "Any remaining Challenge cards in your hand
+ *   are discarded. The players and the GM draw more Challenge cards and
+ *   begin a new round."
+ *
+ * The second entry is `cleanupRound`'s (`reducer.ts`) authority for
+ * discarding hand contents at the round boundary — do not "fix" that back
+ * toward a top-up model; it was checked, not guessed. (The same rule's
+ * "Facedown actions are left facedown" is why `cleanupRound` never sweeps a
+ * facedown/prepared zone by kind — see that function's doc comment.)
+ *
+ * Because dealing is flat, `countPerDestination` on the resulting public
  * `cards-dealt` event already IS the calculated target, satisfying "preserve
  * the calculated target in public state for audit without revealing the GM
  * hand" with no extra state field. GM-only (dealing is a GM-only structural

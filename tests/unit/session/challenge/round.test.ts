@@ -4,6 +4,7 @@ import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/s
 import type { ChallengeConfig, ChallengeEnemyFact } from '$lib/engine/session/procedures/challenge/types';
 import {
 	beginChallenge,
+	challengeGmInitiativeZoneId,
 	challengeHandZoneId,
 	challengeInitiativeFacedownZoneId,
 	CHALLENGE_INITIATIVE_ZONE_ID,
@@ -13,7 +14,7 @@ import {
 	type ChallengeReduceContext
 } from '$lib/engine/session/procedures/challenge/reducer';
 import { calculateGmHandSize, dealRound } from '$lib/engine/session/procedures/challenge/deal';
-import { placeInitiative, revealInitiative } from '$lib/engine/session/procedures/challenge/initiative';
+import { placeGmInitiative, placeInitiative, revealInitiative } from '$lib/engine/session/procedures/challenge/initiative';
 import { assertSessionInvariants } from '$lib/engine/session/invariants';
 import { findZoneDescriptor } from '$lib/engine/session/state';
 import { projectForActor } from '$lib/engine/session/projection';
@@ -55,6 +56,33 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 	const catalog = makeRichSessionCatalogFixture();
 	const { procedures, formulas } = getTarotProcedures();
 	const config = buildChallengeConfig(procedures, formulas);
+
+	/** Places Initiative for EVERY current participant tenure (from their own
+	 * hand) AND every current enemy fact (from `gmHand`) — the precondition
+	 * `revealInitiative` now requires for both rosters. Enemy-fact counts used
+	 * across this file are deliberately kept small enough that
+	 * `calculateGmHandSize`'s target always covers one card per enemy fact
+	 * (the O1 12-imp/7-imp fixtures stay isolated `calculateGmHandSize` unit
+	 * tests below precisely so they never have to satisfy that constraint). */
+	function placeAllInitiative(state: SessionEngineStateV1, seed: string): SessionEngineStateV1 {
+		const challenge = readChallengeState(state);
+		if (!challenge) throw new Error('placeAllInitiative: no active Challenge round');
+
+		let working = state;
+		for (const tenureId of challenge.participantTenureIds) {
+			const hand = findZoneDescriptor(working, challengeHandZoneId(tenureId))!;
+			const placed = placeInitiative(working, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, seed));
+			if (!placed.ok) throw placed;
+			working = placed.state;
+		}
+		for (const enemy of challenge.enemyFacts) {
+			const cardId = working.gmHand[0];
+			const placed = placeGmInitiative(working, enemy.id, cardId, ctxFor(GM, catalog, config, seed));
+			if (!placed.ok) throw placed;
+			working = placed.state;
+		}
+		return working;
+	}
 
 	describe('calculateGmHandSize (O1 — required rulebook fixtures)', () => {
 		it('12 imps vs 4 adventurers → 6 (3 base + 1 one type + 1 outnumber + 1 double)', () => {
@@ -182,40 +210,48 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 
-		it('recalculates the GM hand size fresh each round as enemies dwindle (O1)', () => {
-			const { state, gmCtx } = begin('dwindle', makeImpFacts(12));
+		it('recalculates the GM hand size fresh each round as enemies dwindle', () => {
+			// Deliberately small (not the O1 12/7-imp fixtures, which are
+			// already covered above in isolation): this test's job is to prove
+			// recalculation happens round-over-round through the FULL
+			// begin→deal→place→reveal→cleanup→deal pipeline, which now also
+			// requires one GM Initiative placement per enemy fact — so the
+			// enemy count here stays within what a freshly dealt GM hand can
+			// always cover.
+			const round1Enemies: ChallengeEnemyFact[] = [
+				{ id: 'ogre-1', size: 'human', threat: 'minion', typeIds: ['ogre'] },
+				{ id: 'ogre-2', size: 'human', threat: 'minion', typeIds: ['ogre'] }
+			];
+			const expectedRound1 = calculateGmHandSize(config.gmHandFormula, { enemies: round1Enemies, adventurerCount: TENURE_IDS.length });
+
+			const { state, gmCtx } = begin('dwindle', round1Enemies);
 			const round1 = dealRound(state, gmCtx);
 			if (!round1.ok) throw round1;
-			expect(round1.state.gmHand).toHaveLength(6);
+			expect(round1.state.gmHand).toHaveLength(expectedRound1);
 
-			// Place + reveal Initiative for every participant so cleanup is legal.
-			let afterPlacement = round1.state;
-			for (const tenureId of TENURE_IDS) {
-				const hand = findZoneDescriptor(afterPlacement, challengeHandZoneId(tenureId))!;
-				const placed = placeInitiative(afterPlacement, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, 'dwindle'));
-				if (!placed.ok) throw placed;
-				afterPlacement = placed.state;
-			}
-			const revealed = revealInitiative(afterPlacement, gmCtx);
+			const placed = placeAllInitiative(round1.state, 'dwindle');
+			const revealed = revealInitiative(placed, gmCtx);
 			if (!revealed.ok) throw revealed;
 
-			const cleaned = cleanupRound(revealed.state, gmCtx, { enemyFacts: makeImpFacts(7) });
+			const cleaned = cleanupRound(revealed.state, gmCtx, { enemyFacts: [] });
 			if (!cleaned.ok) throw cleaned;
 			expect(readChallengeState(cleaned.state)).toMatchObject({ stage: 'deal', round: 2 });
 			expectConserved(cleaned.state, catalog);
 
 			const round2 = dealRound(cleaned.state, ctxFor(GM, catalog, config, 'dwindle-round-2'));
 			if (!round2.ok) throw round2;
-			expect(round2.state.gmHand).toHaveLength(5); // O1 fixture: 7 imps vs 4 adventurers
+			const expectedRound2 = calculateGmHandSize(config.gmHandFormula, { enemies: [], adventurerCount: TENURE_IDS.length });
+			expect(round2.state.gmHand).toHaveLength(expectedRound2);
+			expect(expectedRound2).toBeLessThan(expectedRound1); // proves recalculation, not a stale cached value
 			expectConserved(round2.state, catalog);
 		});
 	});
 
 	describe('initiative placement + reveal', () => {
-		function dealt(seed: string) {
+		function dealt(seed: string, enemyFacts: ChallengeEnemyFact[] = makeImpFacts(4)) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: makeImpFacts(4) }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -223,7 +259,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		}
 
 		it('places a card facedown; the public projection shows an occupied card back nobody but the owner can hydrate', () => {
-			const { state, gmCtx } = dealt('placement');
+			const { state } = dealt('placement');
 			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!;
 			const cardId = hand.cards[0];
 
@@ -269,7 +305,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 
-		it('rejects revealing before every active participant has placed', () => {
+		it('rejects revealing before every active participant (and every enemy fact) has placed', () => {
 			const { state, gmCtx } = dealt('reveal-incomplete');
 			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!;
 			const placed = placeInitiative(state, 'tenure-1', hand.cards[0], ctxFor(playerActor('tenure-1'), catalog, config, 'reveal-incomplete'));
@@ -278,15 +314,10 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 
-		it('reveals every placed card into the public Initiative zone, sorted ascending by value, and advances the stage', () => {
-			const { state, gmCtx } = dealt('reveal');
-			let working = state;
-			for (const tenureId of TENURE_IDS) {
-				const hand = findZoneDescriptor(working, challengeHandZoneId(tenureId))!;
-				const placed = placeInitiative(working, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, 'reveal'));
-				if (!placed.ok) throw placed;
-				working = placed.state;
-			}
+		it('reveals every placed card (players AND GM enemy groups) into the public Initiative zone, sorted ascending by value, and advances the stage', () => {
+			const enemyFacts = makeImpFacts(4);
+			const { state, gmCtx } = dealt('reveal', enemyFacts);
+			const working = placeAllInitiative(state, 'reveal');
 
 			const revealed = revealInitiative(working, gmCtx);
 			expect(revealed.ok).toBe(true);
@@ -294,8 +325,12 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 
 			const challenge = readChallengeState(revealed.state);
 			expect(challenge?.stage).toBe('initiative-reveal');
-			expect(challenge?.initiativeOrder).toHaveLength(TENURE_IDS.length);
+			expect(challenge?.initiativeOrder).toHaveLength(TENURE_IDS.length + enemyFacts.length);
 			expect(challenge?.initiativeOrder.every((entry) => entry.revealed && entry.cardZoneId === CHALLENGE_INITIATIVE_ZONE_ID)).toBe(true);
+			// Every enemy fact's id shows up somewhere in the revealed order.
+			for (const enemy of enemyFacts) {
+				expect(challenge?.initiativeOrder.some((entry) => entry.tenureId === enemy.id)).toBe(true);
+			}
 
 			// The public initiative zone's card order must be non-decreasing by value.
 			const publicZone = findZoneDescriptor(revealed.state, CHALLENGE_INITIATIVE_ZONE_ID)!;
@@ -304,15 +339,20 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 				expect(values[i]).toBeGreaterThanOrEqual(values[i - 1]);
 			}
 
-			// Every private facedown zone is now empty (card conservation: moved, not cloned).
+			// Every private/pending facedown zone is now empty (card
+			// conservation: moved, not cloned) — both player and GM rosters.
 			for (const tenureId of TENURE_IDS) {
 				const facedown = findZoneDescriptor(revealed.state, challengeInitiativeFacedownZoneId(tenureId))!;
+				expect(facedown.cards).toHaveLength(0);
+			}
+			for (const enemy of enemyFacts) {
+				const facedown = findZoneDescriptor(revealed.state, challengeGmInitiativeZoneId(enemy.id))!;
 				expect(facedown.cards).toHaveLength(0);
 			}
 			expectConserved(revealed.state, catalog);
 		});
 
-		it('breaks tied card values by stable roster order', () => {
+		it('breaks tied card values by a stable default roster order, but surfaces the tie for the table to adjudicate rather than presenting it as resolved', () => {
 			// Build a state directly (bypassing the random deal) with two
 			// participants tied on the SAME rank across different suits.
 			const state = makeSessionFixture('tie-break');
@@ -343,12 +383,129 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 
 			const revealed = revealInitiative(placedState, gmCtx);
 			if (!revealed.ok) throw revealed;
+
+			// A stable, deterministic default order still exists in state —
+			// Task 3's turn loop needs something concrete to iterate — but it
+			// is a default, not a proclaimed ruling.
 			const order = readChallengeState(revealed.state)!.initiativeOrder.map((entry) => entry.tenureId);
 			expect(order).toEqual(['tenure-1', 'tenure-2', 'tenure-3', 'tenure-4']);
+
+			// The tie itself is surfaced publicly so the table can adjudicate
+			// it themselves (Ch7 "Tied Initiative": a table decision, not an
+			// engine ruling), not silently absorbed into that default order.
+			const revealEvent = revealed.events.find((event) => event.kind === 'challenge-initiative-revealed');
+			expect(revealEvent?.publicPayload).toMatchObject({ tiedGroups: [['tenure-2', 'tenure-3']] });
+		});
+	});
+
+	describe('GM Initiative (enemy groups)', () => {
+		function dealtWithEnemies(seed: string, enemyFacts: ChallengeEnemyFact[]) {
+			const state = makeSessionFixture(seed);
+			const gmCtx = ctxFor(GM, catalog, config, seed);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
+			if (!begun.ok) throw begun;
+			const dealResult = dealRound(begun.state, gmCtx);
+			if (!dealResult.ok) throw dealResult;
+			return { state: dealResult.state, gmCtx };
+		}
+
+		const oneOgre: ChallengeEnemyFact[] = [{ id: 'ogre-1', size: 'human', threat: 'minion', typeIds: ['ogre'] }];
+
+		it('places one card per enemy fact from gmHand into a GM-only pending zone', () => {
+			const { state, gmCtx } = dealtWithEnemies('gm-initiative-place', oneOgre);
+			const cardId = state.gmHand[0];
+
+			const placed = placeGmInitiative(state, 'ogre-1', cardId, gmCtx);
+			expect(placed.ok).toBe(true);
+			if (!placed.ok) return;
+
+			expect(placed.state.gmHand).not.toContain(cardId);
+			const pendingZone = findZoneDescriptor(placed.state, challengeGmInitiativeZoneId('ogre-1'));
+			expect(pendingZone?.cards).toEqual([cardId]);
+			expect(readChallengeState(placed.state)?.initiativeOrder).toContainEqual({
+				tenureId: 'ogre-1',
+				cardZoneId: challengeGmInitiativeZoneId('ogre-1'),
+				revealed: false
+			});
+			expectConserved(placed.state, catalog);
+		});
+
+		it('is publicly visible only as an occupied-but-hidden pending-zone count; no player projection can hydrate it', () => {
+			const { state, gmCtx } = dealtWithEnemies('gm-initiative-privacy', oneOgre);
+			const cardId = state.gmHand[0];
+			const placed = placeGmInitiative(state, 'ogre-1', cardId, gmCtx);
+			if (!placed.ok) throw placed;
+
+			const pendingCount = projectForActor(placed.state, playerActor('tenure-1'), catalog).public.pendingZoneCounts.find(
+				(zone) => zone.id === challengeGmInitiativeZoneId('ogre-1')
+			);
+			expect(pendingCount).toMatchObject({ deck: 'major', count: 1 });
+
+			for (const actor of [playerActor('tenure-1'), playerActor('tenure-2'), GM]) {
+				const projection = projectForActor(placed.state, actor, catalog);
+				expect(JSON.stringify(projection)).not.toContain(cardId);
+			}
+			expectConserved(placed.state, catalog);
+		});
+
+		it('rejects a non-GM actor', () => {
+			const { state } = dealtWithEnemies('gm-initiative-not-gm', oneOgre);
+			const result = placeGmInitiative(state, 'ogre-1', state.gmHand[0], ctxFor(playerActor('tenure-1'), catalog, config, 'gm-initiative-not-gm'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
+		});
+
+		it('rejects an enemy fact id that is not part of the current round', () => {
+			const { state, gmCtx } = dealtWithEnemies('gm-initiative-unknown', oneOgre);
+			const result = placeGmInitiative(state, 'not-a-real-enemy', state.gmHand[0], gmCtx);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('rejects placing Initiative twice for the same enemy fact', () => {
+			const { state, gmCtx } = dealtWithEnemies('gm-initiative-twice', oneOgre);
+			const first = placeGmInitiative(state, 'ogre-1', state.gmHand[0], gmCtx);
+			if (!first.ok) throw first;
+			const second = placeGmInitiative(first.state, 'ogre-1', first.state.gmHand[0], gmCtx);
+			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('appears in the revealed public Initiative order alongside player Initiative', () => {
+			const { state, gmCtx } = dealtWithEnemies('gm-initiative-reveal', oneOgre);
+			const cardId = state.gmHand[0];
+			const gmPlaced = placeGmInitiative(state, 'ogre-1', cardId, gmCtx);
+			if (!gmPlaced.ok) throw gmPlaced;
+
+			let working = gmPlaced.state;
+			for (const tenureId of TENURE_IDS) {
+				const hand = findZoneDescriptor(working, challengeHandZoneId(tenureId))!;
+				const placed = placeInitiative(working, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, 'gm-initiative-reveal'));
+				if (!placed.ok) throw placed;
+				working = placed.state;
+			}
+
+			const revealed = revealInitiative(working, gmCtx);
+			expect(revealed.ok).toBe(true);
+			if (!revealed.ok) return;
+
+			const challenge = readChallengeState(revealed.state);
+			const ogreEntry = challenge?.initiativeOrder.find((entry) => entry.tenureId === 'ogre-1');
+			expect(ogreEntry).toMatchObject({ revealed: true, cardZoneId: CHALLENGE_INITIATIVE_ZONE_ID });
+
+			const publicZone = findZoneDescriptor(revealed.state, CHALLENGE_INITIATIVE_ZONE_ID)!;
+			expect(publicZone.cards).toContain(cardId);
+
+			// Gone from gmHand and from the pending zone — moved, not cloned.
+			expect(revealed.state.gmHand).not.toContain(cardId);
+			expect(findZoneDescriptor(revealed.state, challengeGmInitiativeZoneId('ogre-1'))?.cards).toHaveLength(0);
+
+			expectConserved(revealed.state, catalog);
 		});
 	});
 
 	describe('cleanupRound', () => {
+		// Small, non-O1 enemy counts: cleanup tests exercise the boundary
+		// mechanics, not the hand-formula's exact numbers (covered above), and
+		// now every enemy fact needs its own GM Initiative placement before a
+		// reveal can precede cleanup.
 		function readyForCleanup(seed: string, enemyFacts: ChallengeEnemyFact[]) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
@@ -357,20 +514,14 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
 
-			let working = dealResult.state;
-			for (const tenureId of TENURE_IDS) {
-				const hand = findZoneDescriptor(working, challengeHandZoneId(tenureId))!;
-				const placed = placeInitiative(working, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, seed));
-				if (!placed.ok) throw placed;
-				working = placed.state;
-			}
+			const working = placeAllInitiative(dealResult.state, seed);
 			const revealed = revealInitiative(working, gmCtx);
 			if (!revealed.ok) throw revealed;
 			return { state: revealed.state, gmCtx };
 		}
 
 		it('discards hand and Initiative cards, increments the round, and resets per-round state', () => {
-			const { state, gmCtx } = readyForCleanup('cleanup', makeImpFacts(12));
+			const { state, gmCtx } = readyForCleanup('cleanup', makeImpFacts(2));
 			const before = readChallengeState(state)!;
 
 			const cleaned = cleanupRound(state, gmCtx);
@@ -395,7 +546,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		});
 
 		it('admits pending join tenures into the next round and provisions their zones', () => {
-			const { state, gmCtx } = readyForCleanup('cleanup-join', makeImpFacts(12));
+			const { state, gmCtx } = readyForCleanup('cleanup-join', makeImpFacts(2));
 			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-5'] });
 
 			const cleaned = cleanupRound(withPendingJoin, gmCtx);
@@ -428,13 +579,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(dealResult.state.reshuffleAtBoundary).toEqual({ major: true, player: true });
 			const playerDrawBefore = dealResult.state.playerDraw.slice();
 
-			let working = dealResult.state;
-			for (const tenureId of TENURE_IDS) {
-				const hand = findZoneDescriptor(working, challengeHandZoneId(tenureId))!;
-				const placed = placeInitiative(working, tenureId, hand.cards[0], ctxFor(playerActor(tenureId), catalog, config, seed));
-				if (!placed.ok) throw placed;
-				working = placed.state;
-			}
+			const working = placeAllInitiative(dealResult.state, seed);
 			const revealed = revealInitiative(working, gmCtx);
 			if (!revealed.ok) throw revealed;
 			expect(revealed.state.reshuffleAtBoundary).toEqual({ major: true, player: true });
@@ -447,7 +592,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		});
 
 		it('rejects a non-GM actor', () => {
-			const { state, gmCtx } = readyForCleanup('cleanup-not-gm', makeImpFacts(12));
+			const { state, gmCtx } = readyForCleanup('cleanup-not-gm', makeImpFacts(2));
 			const result = cleanupRound(state, { ...gmCtx, actor: playerActor('tenure-1') });
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});

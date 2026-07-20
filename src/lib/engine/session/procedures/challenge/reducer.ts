@@ -68,6 +68,25 @@ export function challengeInitiativeFacedownZoneId(tenureId: string): string {
 	return `challenge-initiative-facedown:${tenureId}`;
 }
 
+/**
+ * A GM-controlled enemy fact's pre-reveal facedown Initiative zone (Ch7
+ * `challenge-play-initiative`: "The GM will play one Initiative card for
+ * each significant character or group of characters they control" —
+ * `enemyFacts` is exactly that roster of groups, per the coordinator's
+ * concern-2 guidance). Unlike a player's facedown zone this can't live in
+ * `state.privateZones` — every entry there is unconditionally tagged
+ * `owner: {kind: 'player', ...}` by `zones.ts`'s `listZoneDescriptors`, and
+ * the GM is not a player. `state.pendingZones` is the correct generic
+ * primitive instead: `visibility: 'hidden'`, GM-only access
+ * (`actorMayAccessZone`), and — like every pending zone — the public
+ * projection's `pendingZoneCounts` already surfaces an occupied-but-hidden
+ * count for it with zero projection-layer changes, the pending-zone analog
+ * of a player's facedown "card back."
+ */
+export function challengeGmInitiativeZoneId(enemyFactId: string): string {
+	return `challenge-gm-initiative-facedown:${enemyFactId}`;
+}
+
 function reject(code: SessionRejection['code'], message: string): SessionReduceResult {
 	return { ok: false, rejection: { code, message } };
 }
@@ -144,6 +163,23 @@ function ensureInitiativeZone(state: SessionEngineStateV1): SessionEngineStateV1
 	};
 }
 
+/** Creates any missing GM-private enemy-Initiative pending zones for
+ * `enemyFactIds`, idempotently — mirrors `ensureParticipantZones`, called
+ * both at setup and again at round cleanup once the next round's
+ * `enemyFacts` are known (a shrinking/growing enemy roster changes which
+ * zones are needed; a stale zone for a no-longer-present enemy is simply
+ * never placed into or read again). */
+function ensureEnemyInitiativeZones(state: SessionEngineStateV1, enemyFactIds: readonly string[]): SessionEngineStateV1 {
+	let pendingZones = state.pendingZones;
+	for (const enemyFactId of enemyFactIds) {
+		const zoneId = challengeGmInitiativeZoneId(enemyFactId);
+		if (!pendingZones.some((zone) => zone.id === zoneId)) {
+			pendingZones = pendingZones.concat({ id: zoneId, deck: 'major', cards: [] });
+		}
+	}
+	return pendingZones === state.pendingZones ? state : { ...state, pendingZones };
+}
+
 /** The GM-supplied inputs that start a Challenge round (Ch7 step 0, "Set the
  * scene" — the GM has already framed the scene and knows who's fighting).
  * Not a `SessionCommand` variant: these values have no home in the generic
@@ -183,6 +219,7 @@ export function beginChallenge(
 
 	let nextState = ensureParticipantZones(beginResult.state, participantTenureIds);
 	nextState = ensureInitiativeZone(nextState);
+	nextState = ensureEnemyInitiativeZones(nextState, command.enemyFacts.map((enemy) => enemy.id));
 
 	const challenge: ChallengeStateV1 = {
 		schemaVersion: 1,
@@ -216,7 +253,22 @@ export function beginChallenge(
  * doesn't exist yet in Task 2 (Task 3 owns plays) — swept generically, by
  * kind, so cleanup keeps working once Task 3 starts populating it, with no
  * change needed here. `revealed`/`inspiration` are deliberately absent (O6:
- * "leaves ... inspiration zones untouched"). */
+ * "leaves ... inspiration zones untouched").
+ *
+ * Sustained `player-facedown`/`player-prepared` zones (a future task's
+ * "held" defensive/prepared actions — e.g. Dodge, Aim) are absent from this
+ * sweep too, and deliberately never swept by kind at all: rule
+ * `challenge-end-the-round` is explicit — "Facedown actions are left
+ * facedown" — only hands and the played/Initiative public zones clear at the
+ * round boundary. Task 2 never creates a sustained facedown/prepared zone of
+ * its own, so there is nothing here for this task to leave alone beyond not
+ * reaching for it; this note exists so a later task adding one doesn't need
+ * to re-derive the rule. The per-tenure Initiative *placement* zone
+ * (`challengeInitiativeFacedownZoneId`, `player-facedown`-kind) and the
+ * per-enemy one (`challengeGmInitiativeZoneId`, a GM-only pending zone) are
+ * already empty by the time cleanup runs — `revealInitiative` transfers
+ * their one card out at reveal — so neither needs an explicit sweep entry
+ * either. */
 const CLEANUP_SWEPT_PUBLIC_ZONE_KINDS = new Set(['played', 'initiative']);
 
 export interface CleanupRoundOptions {
@@ -285,7 +337,9 @@ export function cleanupRound(
 	events.push(...endRoundResult.events);
 
 	const nextParticipantTenureIds = [...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds];
+	const nextEnemyFacts = options.enemyFacts ?? challenge.enemyFacts;
 	nextState = ensureParticipantZones(nextState, nextParticipantTenureIds);
+	nextState = ensureEnemyInitiativeZones(nextState, nextEnemyFacts.map((enemy) => enemy.id));
 
 	const nextChallenge: ChallengeStateV1 = {
 		...challenge,
@@ -293,7 +347,7 @@ export function cleanupRound(
 		round: challenge.round + 1,
 		participantTenureIds: nextParticipantTenureIds,
 		pendingJoinTenureIds: [],
-		enemyFacts: options.enemyFacts ?? challenge.enemyFacts,
+		enemyFacts: nextEnemyFacts,
 		initiativeOrder: [],
 		activeTurnIndex: null,
 		turnKind: null,

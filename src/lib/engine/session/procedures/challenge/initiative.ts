@@ -4,18 +4,40 @@
  * UI/DB/network imports (see
  * `tests/unit/session/import-boundaries.test.ts`).
  *
- * Placement stages a player's chosen card facedown in a private zone (the
- * shared engine's generic `player-facedown` zone kind, so the existing
- * projection layer already surfaces a public "occupied card back" for it
- * with zero changes — see `projection.ts`'s `buildPrivateZoneCardBacks`).
- * Reveal transfers every placed card into the one shared public Initiative
- * zone — a `transfer` into a public zone is itself the disclosure event
- * (`card-commands.ts`'s `buildMoveEvent` discloses whenever the destination
- * is public), so no separate `reveal` command is needed — then reorders that
- * zone to the round's actual turn sequence: ascending by card value ("the GM
- * counts up from lowest card (I) through the highest card (king)",
- * `challenge-take-turns`), tied entries broken by roster order
- * (`participantTenureIds` order) exactly as `types.ts` mandates.
+ * Two rosters place Initiative: players, one card each from their own hand
+ * (minor deck), and the GM, one card from `gmHand` (major deck) for each
+ * `enemyFacts` entry — `challenge-play-initiative`: "The GM will play one
+ * Initiative card for each significant character or group of characters
+ * they control." `enemyFacts` already *is* that roster of groups.
+ *
+ * Both kinds of placement stage a card facedown in a zone the public
+ * projection already surfaces an occupied-but-hidden placeholder for with
+ * zero projection-layer changes: a player's card goes to a
+ * `player-facedown` private zone (`projection.ts`'s
+ * `buildPrivateZoneCardBacks`); the GM's card, which cannot live in
+ * `state.privateZones` (every entry there is unconditionally owned by a
+ * player — see `reducer.ts`'s `challengeGmInitiativeZoneId`), goes to a
+ * `pendingZones` entry instead (`projection.ts`'s `buildPublicProjection`'s
+ * `pendingZoneCounts`). Reveal transfers every placed card (both rosters)
+ * into the one shared public Initiative zone — a `transfer` into a public
+ * zone is itself the disclosure event (`card-commands.ts`'s
+ * `buildMoveEvent` discloses whenever the destination is public), so no
+ * separate `reveal` command is needed — then reorders that zone to a stable
+ * default turn sequence: ascending by card value ("the GM counts up from
+ * lowest card (I) through the highest card (king)", `challenge-take-turns`).
+ *
+ * Ties are NOT auto-resolved. `challenge-play-initiative`'s "Tied
+ * Initiative" section makes a tie a table decision, not an engine ruling:
+ * "Players with the same Initiative decide among themselves who will
+ * declare their actions first. If there is a tie between a GM character and
+ * an adventurer, the GM determines who declares first." `initiativeOrder`
+ * still needs *some* concrete sequence (Task 3's turn loop has to iterate
+ * something, and tests need a deterministic order to assert against), so
+ * ties break by combined roster order (`participantTenureIds` then
+ * `enemyFacts` order) as a practical default — but that default is never
+ * presented as a ruling: `revealInitiative`'s public event additionally
+ * carries `tiedGroups`, the id groups that share a value, so the table can
+ * see a tie exists and adjudicate it themselves.
  */
 
 import { findZoneDescriptor } from '../../state';
@@ -24,6 +46,7 @@ import type { CardId, SessionEngineStateV1, SessionEvent } from '$lib/types/sess
 import type { ChallengeInitiativeEntry, ChallengeStateV1 } from './types';
 import {
 	CHALLENGE_INITIATIVE_ZONE_ID,
+	challengeGmInitiativeZoneId,
 	challengeHandZoneId,
 	challengeInitiativeFacedownZoneId,
 	readChallengeState,
@@ -33,6 +56,7 @@ import {
 	type SessionReduceResult
 } from './reducer';
 import { assertSessionInvariants } from '../../invariants';
+import { FIXED_ZONE_IDS } from '../../zones';
 
 /**
  * A participant places `cardId` (which must currently be in their own dealt
@@ -86,12 +110,77 @@ export function placeInitiative(
 }
 
 /**
- * GM-only batch reveal: every active participant must have placed first.
- * Transfers each placed card into the shared public Initiative zone (which
- * discloses it), reorders that zone to the round's real turn sequence, and
- * rewrites `initiativeOrder` to the revealed, sorted order. Advances
- * `stage` to `'initiative-reveal'` — starting `'turns'` itself (turn index,
- * turn kind) is Task 3's job, out of this task's scope (O5).
+ * The GM places `cardId` (which must currently be in `gmHand`, hence major
+ * deck) facedown as the Initiative for `enemyFactId` — one of the current
+ * round's `enemyFacts` entries, i.e. one "significant character or group of
+ * characters" the GM controls (`challenge-play-initiative`). GM-only;
+ * rejects an unknown `enemyFactId` or a repeat placement for the same one
+ * this round. Uses `initiativeOrder`'s `tenureId` field to key the entry by
+ * `enemyFactId` — the field is a plain participant-or-enemy roster key, not
+ * restricted to player tenures (see `types.ts`'s doc comment).
+ */
+export function placeGmInitiative(
+	state: SessionEngineStateV1,
+	enemyFactId: string,
+	cardId: CardId,
+	context: ChallengeReduceContext
+): SessionReduceResult {
+	if (context.actor.kind !== 'gm') {
+		return reject('not-authorized', 'only the GM may place an enemy Initiative');
+	}
+	const challenge = readChallengeState(state);
+	if (!challenge) return reject('illegal-command', 'no active Challenge round');
+	if (challenge.stage !== 'initiative-placement') {
+		return reject('illegal-command', `cannot place Initiative during stage ${challenge.stage}`);
+	}
+	if (!challenge.enemyFacts.some((enemy) => enemy.id === enemyFactId)) {
+		return reject('illegal-command', `${enemyFactId} is not a current Challenge enemy fact`);
+	}
+	if (challenge.initiativeOrder.some((entry) => entry.tenureId === enemyFactId)) {
+		return reject('illegal-command', `${enemyFactId} has already placed Initiative this round`);
+	}
+
+	const transferResult = reduceSession(
+		state,
+		{
+			type: 'transfer',
+			sourceZoneId: FIXED_ZONE_IDS.gmHand,
+			cardId,
+			destinationZoneId: challengeGmInitiativeZoneId(enemyFactId)
+		},
+		context
+	);
+	if (!transferResult.ok) return transferResult;
+
+	const nextChallenge: ChallengeStateV1 = {
+		...challenge,
+		initiativeOrder: [
+			...challenge.initiativeOrder,
+			{ tenureId: enemyFactId, cardZoneId: challengeGmInitiativeZoneId(enemyFactId), revealed: false }
+		]
+	};
+	const nextState = writeChallengeState(transferResult.state, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
+	return { ok: true, state: nextState, events: transferResult.events };
+}
+
+/** The combined roster order ties break by: players first (their configured
+ * order), then enemy groups (their configured order) — a practical,
+ * deterministic default only; see the file header re: ties never being an
+ * engine ruling. */
+function combinedRosterOrder(challenge: ChallengeStateV1): string[] {
+	return [...challenge.participantTenureIds, ...challenge.enemyFacts.map((enemy) => enemy.id)];
+}
+
+/**
+ * GM-only batch reveal: every active participant AND every current enemy
+ * fact must have placed first. Transfers each placed card into the shared
+ * public Initiative zone (which discloses it), reorders that zone to a
+ * stable default turn sequence, and rewrites `initiativeOrder` to the
+ * revealed, sorted order. Advances `stage` to `'initiative-reveal'` —
+ * starting `'turns'` itself (turn index, turn kind, and what an enemy does
+ * when its Initiative comes up — `challenge-enemy-actions`) is Task 3's job,
+ * out of this task's scope (O5).
  */
 export function revealInitiative(state: SessionEngineStateV1, context: ChallengeReduceContext): SessionReduceResult {
 	if (context.actor.kind !== 'gm') {
@@ -103,9 +192,8 @@ export function revealInitiative(state: SessionEngineStateV1, context: Challenge
 		return reject('illegal-command', `cannot reveal Initiative during stage ${challenge.stage}`);
 	}
 
-	const missing = challenge.participantTenureIds.filter(
-		(tenureId) => !challenge.initiativeOrder.some((entry) => entry.tenureId === tenureId)
-	);
+	const requiredKeys = combinedRosterOrder(challenge);
+	const missing = requiredKeys.filter((key) => !challenge.initiativeOrder.some((entry) => entry.tenureId === key));
 	if (missing.length > 0) {
 		return reject('illegal-command', `Initiative not yet placed for: ${missing.join(', ')}`);
 	}
@@ -132,7 +220,7 @@ export function revealInitiative(state: SessionEngineStateV1, context: Challenge
 		events.push(...transferResult.events);
 	}
 
-	const rosterIndex = new Map(challenge.participantTenureIds.map((tenureId, index) => [tenureId, index]));
+	const rosterIndex = new Map(requiredKeys.map((key, index) => [key, index]));
 	const sortedEntries = [...challenge.initiativeOrder].sort((a, b) => {
 		const valueA = context.runtime.catalog[placedCardIds[a.tenureId]]?.value ?? 0;
 		const valueB = context.runtime.catalog[placedCardIds[b.tenureId]]?.value ?? 0;
@@ -162,9 +250,22 @@ export function revealInitiative(state: SessionEngineStateV1, context: Challenge
 	nextState = writeChallengeState(nextState, nextChallenge);
 	assertSessionInvariants(nextState, context.runtime.catalog);
 
+	// Groups of two-or-more ids that share a card value — a real Ch7 tie the
+	// table must adjudicate (see the file header), surfaced here rather than
+	// silently resolved by the stable sort above.
+	const byValue = new Map<number, string[]>();
+	for (const entry of sortedEntries) {
+		const value = context.runtime.catalog[placedCardIds[entry.tenureId]]?.value ?? 0;
+		(byValue.get(value) ?? byValue.set(value, []).get(value)!).push(entry.tenureId);
+	}
+	const tiedGroups = [...byValue.values()].filter((group) => group.length > 1);
+
 	events.push({
 		kind: 'challenge-initiative-revealed',
-		publicPayload: { order: revealedOrder.map((entry) => ({ tenureId: entry.tenureId, cardId: placedCardIds[entry.tenureId] })) }
+		publicPayload: {
+			order: revealedOrder.map((entry) => ({ tenureId: entry.tenureId, cardId: placedCardIds[entry.tenureId] })),
+			tiedGroups
+		}
 	});
 
 	return { ok: true, state: nextState, events };

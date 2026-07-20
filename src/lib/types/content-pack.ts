@@ -287,8 +287,9 @@ export interface DenizenThreatDefinition {
 export interface DenizenPool {
 	id: string;
 	name: string;
-	health: DenizenStatValue;
-	defense: DenizenStatValue;
+	/** Present as a pair or not at all — a half-pair pool omits both (like top-level HD). */
+	health?: DenizenStatValue;
+	defense?: DenizenStatValue;
 	/** Markdown — what defeating (or wearing, or burning…) this pool means. */
 	text?: string;
 	notes?: DenizenAbility[];

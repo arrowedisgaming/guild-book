@@ -19,11 +19,15 @@
 		headingLevel?: number;
 	} = $props();
 
-	const hd = (health: DenizenStatValue, defense: DenizenStatValue) => `${health}/${defense}`;
+	const hd = (health: DenizenStatValue | undefined, defense: DenizenStatValue | undefined) =>
+		`${health}/${defense}`;
 
-	/** In-progress builder drafts can hold a blank half — never render "3/" or "/". */
-	const hasHd = (health: DenizenStatValue, defense: DenizenStatValue) =>
-		String(health).trim() !== '' && String(defense).trim() !== '';
+	/** A pool may omit its HD pair, and in-progress drafts can hold a blank half — never render "3/" or "/". */
+	const hasHd = (health: DenizenStatValue | undefined, defense: DenizenStatValue | undefined) =>
+		health !== undefined &&
+		defense !== undefined &&
+		String(health).trim() !== '' &&
+		String(defense).trim() !== '';
 </script>
 
 {#snippet abilities(title: string, list: DenizenAbility[] | undefined)}

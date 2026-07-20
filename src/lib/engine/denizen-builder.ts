@@ -383,11 +383,14 @@ function isBlankPool(pool: DenizenPoolDraft): boolean {
 }
 
 function toPool(pool: DenizenPoolDraft, index: number): DenizenPool {
+	// Health/Defense travel as a pair — a half-filled pool omits both rather than
+	// materializing a blank string (mirrors the top-level pattern in
+	// toDenizenDefinition). The warnings already flag the incomplete pair.
+	const hasHdPair = pool.health.trim() !== '' && pool.defense.trim() !== '';
 	return {
 		id: `custom-pool-${index + 1}`,
 		name: pool.name.trim() || `Pool ${index + 1}`,
-		health: toStatValue(pool.health),
-		defense: toStatValue(pool.defense),
+		...(hasHdPair ? { health: toStatValue(pool.health), defense: toStatValue(pool.defense) } : {}),
 		...(pool.text.trim() ? { text: pool.text.trim() } : {}),
 		...(pool.notes.length > 0 ? { notes: pool.notes } : {}),
 		...(pool.lesserDooms.length > 0 ? { lesserDooms: pool.lesserDooms } : {}),
@@ -401,7 +404,12 @@ export function toDenizenDefinition(draft: DenizenDraft): DenizenDefinition {
 	const exaggeration = draft.exaggeration.trim();
 	const composed =
 		concept && exaggeration ? `${concept} — but ${exaggeration}.` : concept || exaggeration;
-	const pools = draft.pools.filter((pool) => !isBlankPool(pool)).map(toPool);
+	// Keep each pool's original draft index so ids/names (custom-pool-N, "Pool N")
+	// match the Pools-step UI, which numbers by unfiltered position.
+	const pools = draft.pools
+		.map((pool, index) => ({ pool, index }))
+		.filter(({ pool }) => !isBlankPool(pool))
+		.map(({ pool, index }) => toPool(pool, index));
 
 	return {
 		id: 'custom-denizen',

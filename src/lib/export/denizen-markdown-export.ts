@@ -73,9 +73,10 @@ export function exportDenizenToMarkdown(
 	);
 
 	for (const pool of denizen.pools ?? []) {
-		// Builder drafts can hold an incomplete pair — omit HD rather than render "3/" or "/".
+		// A pool may omit its HD pair, and builder drafts can hold an incomplete
+		// pair — omit HD rather than render "3/", "/", or "undefined/undefined".
 		const poolHd =
-			String(pool.health).trim() !== '' && String(pool.defense).trim() !== ''
+			pool.health !== undefined && pool.defense !== undefined
 				? ` — Health/Defense: ${pool.health}/${pool.defense}`
 				: '';
 		lines.push(`### ${pool.name}${poolHd}`, '');

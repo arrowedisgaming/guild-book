@@ -155,6 +155,15 @@ describe('denizens — stat invariants enforced by the schema', () => {
 			}).success
 		).toBe(true);
 	});
+
+	it('rejects top-level Health/Defense and pools together (mutually exclusive)', () => {
+		expect(
+			denizenDefinitionSchema.safeParse({
+				...valid,
+				pools: [{ id: 'core', name: 'Core', health: 1, defense: 0 }]
+			}).success
+		).toBe(false);
+	});
 });
 
 describe('denizens — transcription spot checks', () => {

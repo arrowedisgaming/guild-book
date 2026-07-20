@@ -404,6 +404,29 @@ describe('denizen builder — materializing pools', () => {
 		expect(toDenizenDefinition(draft).pools?.[0].name).toBe('Pool 1');
 	});
 
+	it('omits both HD stats for a half-filled pool instead of materializing a blank', () => {
+		// Health entered, Defense left blank: the pool survives (it is not fully
+		// blank) but must not emit defense: '' — omit both, like top-level HD.
+		const draft = updatePool(seedLord(), 0, () =>
+			filledPool({ name: 'The Crown', health: '6', defense: '' })
+		);
+		const pool = toDenizenDefinition(draft).pools?.[0];
+		expect(pool).toEqual({ id: 'custom-pool-1', name: 'The Crown' });
+		expect('health' in pool!).toBe(false);
+		expect('defense' in pool!).toBe(false);
+	});
+
+	it('numbers surviving pools by their original index, not their post-filter position', () => {
+		// A blank pool ahead of a filled one must not renumber the filled pool —
+		// its id/name stay in step with the Pools-step UI (unfiltered index).
+		const draft = {
+			...seedLord(),
+			pools: [createBlankPoolDraft(), filledPool({ name: '' })]
+		};
+		const pool = toDenizenDefinition(draft).pools?.[0];
+		expect(pool).toMatchObject({ id: 'custom-pool-2', name: 'Pool 2' });
+	});
+
 	it('emits trimmed special rules and omits them when blank', () => {
 		const draft = { ...seedLord(), specialRules: '  The lord regrows lost pools at dawn. ' };
 		expect(toDenizenDefinition(draft).specialRules).toBe('The lord regrows lost pools at dawn.');

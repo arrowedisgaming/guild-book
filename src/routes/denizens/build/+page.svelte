@@ -170,13 +170,17 @@
 
 	function handleRemovePool(index: number) {
 		const label = draft.pools[index]?.name.trim() || `Pool ${index + 1}`;
-		editing = null; // indices shift — drop any in-flight pool ability edit
+		// Indices shift — drop any in-flight pool ability edit and the index-keyed
+		// "add ability" scratch inputs, so half-typed text can't attach to another pool.
+		editing = null;
+		poolCustom = {};
 		denizenBuilder.updateDraft((d) => removePool(d, index));
 		announce(`${label} removed.`);
 	}
 
 	function handleMovePool(index: number, direction: -1 | 1) {
 		editing = null;
+		poolCustom = {};
 		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
 	}
 
@@ -501,7 +505,7 @@
 						<button type="button" onclick={() => handleMovePool(pi, -1)} disabled={pi === 0} aria-label={`Move pool ${pi + 1} up`}>↑ Move up</button>
 						<button type="button" onclick={() => handleMovePool(pi, 1)} disabled={pi === draft.pools.length - 1} aria-label={`Move pool ${pi + 1} down`}>↓ Move down</button>
 					{/if}
-					<button type="button" class="remove" onclick={() => handleRemovePool(pi)}>Remove pool</button>
+					<button type="button" class="remove" onclick={() => handleRemovePool(pi)} aria-label={`Remove pool ${pi + 1}`}>Remove pool</button>
 				</div>
 			</fieldset>
 		{/each}

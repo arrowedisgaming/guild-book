@@ -80,8 +80,9 @@ describe('denizens — book irregularities survive the schema', () => {
 
 	it('marks pool-based and description-only templates for the builder', () => {
 		const threats = Object.fromEntries(getDenizenThreats().map((t) => [t.id, t]));
+		// Pool-based threats are builder-supported (the Pools step) — no note.
 		expect(threats['dungeon-lord'].builderMode).toBe('pools');
-		expect(threats['dungeon-lord'].builderNote).toMatch(/pool editing/);
+		expect(threats['dungeon-lord'].builderNote).toBeUndefined();
 		for (const id of ['minion', 'brute', 'strategist', 'elite']) {
 			expect(threats[id].builderMode, id).toBeUndefined();
 		}
@@ -153,6 +154,15 @@ describe('denizens — stat invariants enforced by the schema', () => {
 				pools: [{ id: 'core', name: 'Core', health: 1, defense: 0 }]
 			}).success
 		).toBe(true);
+	});
+
+	it('rejects top-level Health/Defense and pools together (mutually exclusive)', () => {
+		expect(
+			denizenDefinitionSchema.safeParse({
+				...valid,
+				pools: [{ id: 'core', name: 'Core', health: 1, defense: 0 }]
+			}).success
+		).toBe(false);
 	});
 });
 

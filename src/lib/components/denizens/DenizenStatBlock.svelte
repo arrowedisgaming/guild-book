@@ -19,7 +19,15 @@
 		headingLevel?: number;
 	} = $props();
 
-	const hd = (health: DenizenStatValue, defense: DenizenStatValue) => `${health}/${defense}`;
+	const hd = (health: DenizenStatValue | undefined, defense: DenizenStatValue | undefined) =>
+		`${health}/${defense}`;
+
+	/** A pool may omit its HD pair, and in-progress drafts can hold a blank half — never render "3/" or "/". */
+	const hasHd = (health: DenizenStatValue | undefined, defense: DenizenStatValue | undefined) =>
+		health !== undefined &&
+		defense !== undefined &&
+		String(health).trim() !== '' &&
+		String(defense).trim() !== '';
 </script>
 
 {#snippet abilities(title: string, list: DenizenAbility[] | undefined)}
@@ -82,7 +90,11 @@
 
 	{#each denizen.pools ?? [] as pool (pool.id)}
 		<section class="pool">
-			<h4 class="pool-name">{pool.name} — Health/Defense: {hd(pool.health, pool.defense)}</h4>
+			<h4 class="pool-name">
+				{pool.name}{hasHd(pool.health, pool.defense)
+					? ` — Health/Defense: ${hd(pool.health, pool.defense)}`
+					: ''}
+			</h4>
 			{#if pool.text}
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 				{@html renderMarkdown(pool.text)}

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dungeon lords in the denizen builder**: threats fought in named pools of
+  Health and Defense are now fully buildable. A new Pools step (shown only for
+  pool-based threats) adds, names, reorders, and removes pools, each with its
+  own HD pair, defeat text, notes, and lesser/greater dooms; Customize gains a
+  special-rules field and drops top-level HD for these threats. Pool invariants
+  from the book surface as live warnings (every pool a complete HD pair, at
+  least one pool, no top-level HD alongside pools), and exports never render a
+  blank pool HD. Builder position is now persisted by step id so the
+  mode-dependent step path survives reloads and threat switches; existing
+  drafts migrate in place.
+
 ## [0.2.0] - 2026-07-19
 
 ### Added

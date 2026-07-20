@@ -73,7 +73,13 @@ export function exportDenizenToMarkdown(
 	);
 
 	for (const pool of denizen.pools ?? []) {
-		lines.push(`### ${pool.name} — Health/Defense: ${pool.health}/${pool.defense}`, '');
+		// A pool may omit its HD pair, and builder drafts can hold an incomplete
+		// pair — omit HD rather than render "3/", "/", or "undefined/undefined".
+		const poolHd =
+			pool.health !== undefined && pool.defense !== undefined
+				? ` — Health/Defense: ${pool.health}/${pool.defense}`
+				: '';
+		lines.push(`### ${pool.name}${poolHd}`, '');
 		if (pool.text) lines.push(pool.text, '');
 		lines.push(
 			...abilitySection('Notes', pool.notes),

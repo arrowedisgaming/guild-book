@@ -286,6 +286,7 @@ export const denizenThreatSchema = z
 		health: denizenHealthSchema.optional(),
 		defense: denizenDefenseSchema.optional(),
 		statNote: z.string().optional(),
+		chooseAttribute: z.string().optional(),
 		notes: z.array(denizenAbilitySchema).optional(),
 		notesOptional: z.boolean().optional(),
 		greaterDooms: z.array(denizenAbilitySchema).optional(),
@@ -333,10 +334,17 @@ export const denizenDefinitionSchema = z
 	})
 	.superRefine((denizen, ctx) => {
 		requireHdPair(denizen, ctx);
-		if (denizen.health === undefined && (denizen.pools?.length ?? 0) === 0) {
+		const hasPools = (denizen.pools?.length ?? 0) > 0;
+		if (denizen.health === undefined && !hasPools) {
 			ctx.addIssue({
 				code: 'custom',
 				message: 'A denizen needs either top-level Health/Defense or at least one pool'
+			});
+		}
+		if (denizen.health !== undefined && hasPools) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Top-level Health/Defense and pools are mutually exclusive'
 			});
 		}
 	});

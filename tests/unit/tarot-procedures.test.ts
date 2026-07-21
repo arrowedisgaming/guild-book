@@ -289,7 +289,13 @@ describe('tarot procedure catalog', () => {
 		});
 		expect(modifier('challenge-stun')).toMatchObject({
 			behaviorId: 'forced-hand-discard',
-			params: { immediate: true, discard: 'entire-hand' }
+			// Content fix (pack v3.3.0, Increment 3 Task 4 review round 2): Ch1
+			// "Effects" says "immediately choose and discard a Challenge card
+			// from your hand" — ONE player-chosen card, not the entire hand.
+			// The pack originally shipped `discard: 'entire-hand'`, an
+			// Increment 0b authoring bug that made Stun far stronger than the
+			// printed rule.
+			params: { immediate: true, discard: 'one-card', playerChooses: true }
 		});
 	});
 

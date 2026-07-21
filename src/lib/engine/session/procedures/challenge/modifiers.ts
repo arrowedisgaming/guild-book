@@ -246,65 +246,77 @@ export function applyBlackHoney(
 /**
  * Stun (Ch1 "Effects", `effects`): "When Stunned, immediately choose and
  * discard a Challenge card from your hand ... It is an instantaneous
- * effect." GM-only (an effect inflicted BY the GM's enemy ON a participant,
- * mirroring `applyGmPlay`'s Doom-tier framing). No stage gate — the rule
- * text's own "immediately"/"instantaneous" language argues AGAINST inventing
- * one, and content's `immediate: true` agrees (Increment 3 Task 4 review,
- * Minor 6: an earlier version wrongly required `stage === 'turns'`, an
- * engine-asserted restriction with no source). Deliberately does NOT reuse
- * the generic `discard` command's own per-card event (each of which would
- * publicly disclose that card's identity, since the destination discard pile
- * is `'public-top'` visibility — `card-commands.ts`'s `buildMoveEvent`
- * discloses whenever a destination is public) — the underlying discards
- * still run (conservation holds, invariants still checked), but only a
- * single hand-crafted summary event with a COUNT is returned, per O3: "the
- * same discipline applies to stun: it emits a public count, never the
- * identities of cards that were not already public."
+ * effect." The CHOICE of which card belongs to the affected (stunned)
+ * player, not the GM or the engine — content originally shipped
+ * `discard: 'entire-hand'`, a content-authoring bug from Increment 0b that
+ * made Stun far stronger than the printed rule (a whole hand, not one
+ * player-chosen card). Fixed in content (pack v3.3.0, this task's one
+ * approved content change): `discard: 'one-card'` plus `playerChooses: true`.
+ * No stage gate — the rule text's own "immediately"/"instantaneous" language
+ * argues AGAINST inventing one, and content's `immediate: true` agrees
+ * (Increment 3 Task 4 review, Minor 6: an earlier version wrongly required
+ * `stage === 'turns'`, an engine-asserted restriction with no source).
+ *
+ * Authorization mirrors every other player-choice function in this module:
+ * the TARGET (resolved through `tenureOwners`, never by comparing
+ * `actor.userId` to a tenure id — O7) chooses their own card, or the GM acts
+ * with full authority as usual (e.g. narrating the choice for an away
+ * player) — a single step, not a GM-applies/target-responds handshake; the
+ * book's own "immediately" argues against splitting this into two commands.
+ *
+ * Deliberately does NOT reuse the generic `discard` command's own event
+ * (which would publicly disclose the card's identity, since the destination
+ * discard pile is `'public-top'` visibility — `card-commands.ts`'s
+ * `buildMoveEvent` discloses whenever a destination is public) — the
+ * underlying discard still runs (conservation holds, invariants still
+ * checked), but only a hand-crafted summary event with a COUNT is returned,
+ * per O3: "the same discipline applies to stun: it emits a public count,
+ * never the identities of cards that were not already public."
  *
  * That guarantee is about the EVENT stream only (Increment 3 Task 4 review,
  * Minor 4) — it does not and cannot suppress the shared engine's own
- * pre-existing `'public-top'` zone model: once the discards land, the LAST
- * card discarded genuinely becomes the discard pile's visible top card in
- * every projection (`projection.ts`'s `playerDiscardTop`), exactly as it
- * would for any other discard. That state-level exposure is accepted,
- * inherited from the generic discard primitive, not something this modifier
- * introduces or could suppress without redesigning the shared zone-visibility
- * model — see `modifiers.test.ts`'s explicit projection assertion.
+ * pre-existing `'public-top'` zone model: the discarded card genuinely
+ * becomes the discard pile's visible top card in every projection
+ * (`projection.ts`'s `playerDiscardTop`), exactly as it would for any other
+ * discard. That state-level exposure is accepted, inherited from the
+ * generic discard primitive, not something this modifier introduces or
+ * could suppress without redesigning the shared zone-visibility model — see
+ * `modifiers.test.ts`'s explicit projection assertion.
  */
 export function applyStun(
 	state: SessionEngineStateV1,
 	targetTenureId: string,
+	cardId: CardId,
 	params: ForcedHandDiscardParams,
 	context: ChallengeReduceContext
 ): SessionReduceResult {
-	if (context.actor.kind !== 'gm') return reject('not-authorized', 'only the GM may inflict Stun');
 	const challenge = readChallengeState(state);
 	if (!challenge) return reject('illegal-command', 'no active Challenge round');
-	if (!challenge.participantTenureIds.includes(targetTenureId)) {
-		return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
+	const owner = challenge.tenureOwners[targetTenureId];
+	if (!owner) return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
+	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
+		return reject('not-authorized', 'a player may only choose their own Stun discard');
 	}
 
 	const handZoneId = challengeHandZoneId(targetTenureId);
 	const hand = findZoneDescriptor(state, handZoneId);
-	const cardsToDiscard = hand?.cards.slice() ?? [];
-
-	let nextState = state;
-	for (const cardId of cardsToDiscard) {
-		const discardResult = reduceSession(
-			nextState,
-			{ type: 'discard', sourceZoneId: handZoneId, cardId, destinationZoneId: FIXED_ZONE_IDS.playerDiscard },
-			context
-		);
-		if (!discardResult.ok) return discardResult;
-		nextState = discardResult.state;
+	if (!hand || !hand.cards.includes(cardId)) {
+		return reject('illegal-command', `${targetTenureId} does not hold the named card`);
 	}
-	assertSessionInvariants(nextState, context.runtime.catalog);
+
+	const discardResult = reduceSession(
+		state,
+		{ type: 'discard', sourceZoneId: handZoneId, cardId, destinationZoneId: FIXED_ZONE_IDS.playerDiscard },
+		context
+	);
+	if (!discardResult.ok) return discardResult;
+	assertSessionInvariants(discardResult.state, context.runtime.catalog);
 
 	const event: SessionEvent = {
 		kind: 'challenge-stun-applied',
-		publicPayload: { targetTenureId, count: cardsToDiscard.length, immediate: params.immediate, discard: params.discard }
+		publicPayload: { targetTenureId, count: 1, immediate: params.immediate, discard: params.discard }
 	};
-	return { ok: true, state: nextState, events: [event] };
+	return { ok: true, state: discardResult.state, events: [event] };
 }
 
 // ---------------------------------------------------------------------------
@@ -514,23 +526,32 @@ export function applyGuardianAngel(
 /**
  * Consumes an active Guardian Angel ward: "At their discretion, they can
  * flip the card up and use its value to either Dodge or Riposte" (Appendix A
- * Sorcery, "Guardian Angel"). Flipping it up is a reveal — same mechanic as
- * every other discard-into-a-public-top-pile reveal in this module — and per
- * Ch7 "Dodge"/"Riposte" ("Once your Dodge card is resolved, discard the
- * card" / "Once your Riposte card is resolved, discard the card"), the card
- * this bonus attaches to is discarded once that defensive action resolves —
- * the SAME rule, since the Guardian Angel card only ever contributes its
- * value to one of those two actions, never stands alone. Flips the
- * `ChallengeModifierState` instance to `'resolved'` (ending its `maxInstances`
- * lockout and letting the target's zone stop holding it) — added per
- * Increment 3 Task 4 review, Important 2: without a consuming counterpart,
- * `cleanupRound` carrying the `'active'` instance forward across every
- * subsequent round would have made the caster's `maxInstances` cap and the
- * warded card itself permanently unusable. The book is silent on whether the
- * card must be discarded to the SAME pile as any other Challenge card (no
- * special disposition is stated for a spent Guardian Angel card) — this
- * follows the general Dodge/Riposte discard rule since that is the action it
- * augments, not an invented special case.
+ * Sorcery, "Guardian Angel" — `rules.json`'s `sorcery-guardian-angel` entry).
+ * Flipping it up is a reveal — same mechanic as every other discard-into-a-
+ * public-top-pile reveal in this module. Content's own `duration: 'until-
+ * used'` (that same rule entry: "This spell lasts until used") IS the
+ * consuming trigger this function models: once flipped up and used, the
+ * spell's own stated lifetime is over, so the card is discarded and the
+ * modifier instance flips to `'resolved'`. This is also consistent with the
+ * general facedown-card lifecycle every OTHER facedown action in this
+ * engine already follows (`rules.json`'s `challenge-facedown-cards` entry:
+ * "Facedown cards remain in play until they're activated, you replace them
+ * with another action, you discard it, or the Challenge Phase ends") — a
+ * Guardian Angel card, once flipped/activated, does not remain in play.
+ *
+ * (Increment 3 Task 4 review, Important 2/round-2 finding: an earlier
+ * version of this comment quoted "Once your Dodge/Riposte card is resolved,
+ * discard the card" as if verbatim from Ch7 — that sentence does not appear
+ * in the shipped pack and could not be corroborated, so it has been removed.
+ * The behavior above is unchanged and is supported by the TWO citations in
+ * this comment instead.)
+ *
+ * Flips the `ChallengeModifierState` instance to `'resolved'` (ending its
+ * `maxInstances` lockout and letting the target's zone stop holding it) —
+ * added per Increment 3 Task 4 review, Important 2: without a consuming
+ * counterpart, `cleanupRound` carrying the `'active'` instance forward
+ * across every subsequent round would have made the caster's `maxInstances`
+ * cap and the warded card itself permanently unusable.
  *
  * `chosenAction` records which of the two allowed actions it was used for
  * (`allowedActions: 'dodge-or-riposte'`) for audit/typed-data purposes only —
@@ -810,16 +831,20 @@ export function applyGuard(
 // ---------------------------------------------------------------------------
 
 /**
- * The typed Challenge modifier commands (binding Step 2 shape). Not wired
- * into `SessionCommand`/`command-service.ts` — that union is the frozen
- * Cross-Increment Contract and explicitly must not be altered by later tasks
- * (`session.ts`'s file header). These variants describe the surface
- * `applyChallengeModifierCommand` (below) dispatches onto the `apply*`/
- * `prepareAim`/`resolveAim`/`counselTransfer` functions above.
+ * The typed Challenge modifier commands (binding Step 2 shape, with one
+ * necessary evolution: `apply-stun` gained `cardId` — round-2 review, Item 1
+ * fixed a real content bug where Stun discarded the entire hand instead of
+ * one player-chosen card, so the command naming WHICH card is discarded no
+ * longer optional). Not wired into `SessionCommand`/`command-service.ts` —
+ * that union is the frozen Cross-Increment Contract and explicitly must not
+ * be altered by later tasks (`session.ts`'s file header). These variants
+ * describe the surface `applyChallengeModifierCommand` (below) dispatches
+ * onto the `apply*`/`prepareAim`/`resolveAim`/`counselTransfer` functions
+ * above.
  */
 export type ChallengeModifierCommand =
 	| { type: 'apply-black-honey'; targetTenureId: string }
-	| { type: 'apply-stun'; targetTenureId: string }
+	| { type: 'apply-stun'; targetTenureId: string; cardId: string }
 	| { type: 'apply-brainfever'; targetTenureId: string }
 	| { type: 'counsel-transfer'; recipientUserId: string; cardId: string }
 	| { type: 'guardian-angel'; targetTenureId: string; cardId: string }
@@ -833,6 +858,13 @@ export type ChallengeModifierCommand =
 export interface ChallengeModifierDerivationCaps {
 	counselMaxUsesPerRound: CounselTransferParams['maxUsesPerRound'];
 	guardianAngelMaxInstances: GuardianAngelParams['maxInstances'];
+	/** Caller-attested equipment the engine cannot verify (O2: "a projection
+	 * input, not something to fabricate") — round-2 review, Item 3: without
+	 * these, `aim-prepare`/`replace-initiative-with-shield` were offered
+	 * regardless of whether the player actually has the required item,
+	 * guaranteeing a downstream rejection. */
+	hasBow?: boolean;
+	hasShield?: boolean;
 }
 
 /**
@@ -868,10 +900,23 @@ export function legalChallengeModifierCommands(
 ): ChallengeModifierCommand['type'][] {
 	const challenge = readChallengeState(state);
 	if (!challenge) return [];
+	// A `'complete'` Challenge offers nothing — every command below would be
+	// meaningless (there is no more hand/turn/round to act within) even
+	// though nothing currently transitions a live round to this stage
+	// (round-2 review finding: `apply-stun` was previously offered here
+	// unconditionally, a real "always offered, always fails downstream" gap
+	// of exactly the kind O2 warns Task 6 about).
+	if (challenge.stage === 'complete') return [];
+
+	const blackHoneyAlreadyEatenByEveryone = challenge.participantTenureIds.every((tenureId) =>
+		challenge.modifiers.some(
+			(modifier) => modifier.modifierId === CHALLENGE_BLACK_HONEY_ID && modifier.targetTenureId === tenureId && modifier.status === 'resolved'
+		)
+	);
 
 	if (actor.kind === 'gm') {
 		const legal: ChallengeModifierCommand['type'][] = ['apply-stun'];
-		if (challenge.stage === 'deal') legal.push('apply-black-honey');
+		if (challenge.stage === 'deal' && !blackHoneyAlreadyEatenByEveryone) legal.push('apply-black-honey');
 		if (challenge.stage === 'initiative-placement') legal.push('apply-brainfever');
 		return legal;
 	}
@@ -879,7 +924,16 @@ export function legalChallengeModifierCommands(
 	const tenureId = tenureIdForUser(challenge, actor.userId);
 	if (!tenureId) return [];
 
-	const legal: ChallengeModifierCommand['type'][] = [];
+	// Stun's choice belongs to the TARGET (Ch1 "Effects": "immediately choose
+	// and discard a Challenge card from your hand") — offered to every
+	// participant unconditionally (round-2 review, Item 1), mirroring
+	// Counsel's "any time during a Challenge" timing: neither is gated to the
+	// actor's own active turn, and this engine does not track WHO is
+	// currently Stunned (O6 — status application is not modeled), so, like
+	// the GM's own always-offered `apply-stun`, this is offered whenever a
+	// round is active rather than fabricating a "you must actually be
+	// Stunned right now" precondition this engine has no state for.
+	const legal: ChallengeModifierCommand['type'][] = ['apply-stun'];
 
 	const counselUsesThisRound = challenge.modifiers.filter(
 		(modifier) => modifier.modifierId === CHALLENGE_COUNSEL_ID && modifier.ownerTenureId === tenureId && modifier.status === 'resolved'
@@ -892,8 +946,12 @@ export function legalChallengeModifierCommands(
 			(modifier) => modifier.modifierId === CHALLENGE_GUARDIAN_ANGEL_ID && modifier.ownerTenureId === tenureId && modifier.status === 'active'
 		).length;
 		if (activeGuardianAngels < caps.guardianAngelMaxInstances) legal.push('guardian-angel');
-		legal.push('aim-prepare');
-		legal.push('replace-initiative-with-shield');
+		// Equipment the engine cannot verify is a PROJECTION INPUT (O2), so it
+		// belongs in the derivation, not just the downstream reject — round-2
+		// review, Item 3: without this, a bowless/shieldless player was
+		// offered a button that would always fail once pressed.
+		if (caps.hasBow) legal.push('aim-prepare');
+		if (caps.hasShield) legal.push('replace-initiative-with-shield');
 	}
 
 	return legal;
@@ -939,7 +997,9 @@ export function applyChallengeModifierCommand(
 ): SessionReduceResult {
 	const caps: ChallengeModifierDerivationCaps = {
 		counselMaxUsesPerRound: materials.counsel.maxUsesPerRound,
-		guardianAngelMaxInstances: materials.guardianAngel.maxInstances
+		guardianAngelMaxInstances: materials.guardianAngel.maxInstances,
+		hasBow: materials.hasBow,
+		hasShield: materials.hasShield
 	};
 	const legal = legalChallengeModifierCommands(state, context.actor, caps);
 	if (!legal.includes(command.type)) {
@@ -958,7 +1018,7 @@ export function applyChallengeModifierCommand(
 		case 'apply-black-honey':
 			return applyBlackHoney(state, command.targetTenureId, materials.blackHoney, context);
 		case 'apply-stun':
-			return applyStun(state, command.targetTenureId, materials.stun, context);
+			return applyStun(state, command.targetTenureId, command.cardId, materials.stun, context);
 		case 'apply-brainfever':
 			return applyBrainfever(state, command.targetTenureId, materials.brainfever, context);
 		case 'counsel-transfer':

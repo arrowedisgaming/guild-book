@@ -150,12 +150,14 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 	 * builds this same shape internally from `materials`). */
 	const derivationCaps = {
 		counselMaxUsesPerRound: counselParams.maxUsesPerRound,
-		guardianAngelMaxInstances: guardianAngelParams.maxInstances
+		guardianAngelMaxInstances: guardianAngelParams.maxInstances,
+		hasBow: true,
+		hasShield: true
 	};
 
 	it('every modifier lookup narrows to its expected params shape (content-integrity guard)', () => {
 		expect(blackHoneyParams).toEqual({ normalCards: 4, optionalCards: 5, teethLostFrom: 1, teethLostTo: 4 });
-		expect(stunParams).toEqual({ immediate: true, discard: 'entire-hand' });
+		expect(stunParams).toEqual({ immediate: true, discard: 'one-card', playerChooses: true });
 		expect(guardParams).toEqual({ requiresShield: true, anySuit: true, actionBudget: 'miscellaneous', discardsOldInitiative: true });
 	});
 
@@ -277,72 +279,79 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 	// -------------------------------------------------------------------------
 
 	describe('applyStun', () => {
-		it('immediately discards the affected eligible hand cards and emits a public COUNT, not identities that were not otherwise public (Step 1 / O3)', () => {
+		it("discards exactly the ONE card the target chooses (content bug fix: Ch1 \"Effects\" says \"a Challenge card,\" not the entire hand) and emits a public COUNT, never identity (Step 1 / O3)", () => {
 			const { state, gmCtx } = readyTwoPlayerTurns('stun-basic', ['swords-vii', 'cups-ii'], ['pentacles-iv', 'cups-iii']);
 			const hand2Before = findZoneDescriptor(state, challengeHandZoneId('tenure-2'))!.cards.slice();
-			expect(hand2Before.length).toBeGreaterThan(0);
+			expect(hand2Before).toEqual(['pentacles-iv', 'cups-iii']);
 
-			const result = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			const result = applyStun(state, 'tenure-2', 'cups-iii', stunParams, gmCtx);
 			expect(result.ok).toBe(true);
 			if (!result.ok) return;
 
-			expect(findZoneDescriptor(result.state, challengeHandZoneId('tenure-2'))?.cards).toEqual([]);
+			// Exactly the CHOSEN card is gone; the rest of the hand survives.
+			expect(findZoneDescriptor(result.state, challengeHandZoneId('tenure-2'))?.cards).toEqual(['pentacles-iv']);
 			expect(result.events).toHaveLength(1);
 			expect(result.events[0]).toMatchObject({
 				kind: 'challenge-stun-applied',
-				publicPayload: { targetTenureId: 'tenure-2', count: hand2Before.length }
+				publicPayload: { targetTenureId: 'tenure-2', count: 1 }
 			});
-			// Canary: none of the discarded cards' identities leaked into the
-			// public payload, even though they DID land in a public-top discard
-			// pile (the underlying per-card discards are never surfaced as
-			// separate events here — see `modifiers.ts`'s doc comment).
+			// Canary: the discarded card's identity never leaked into the public
+			// payload, even though it DID land in a public-top discard pile (the
+			// underlying discard is never surfaced as a separate event here —
+			// see `modifiers.ts`'s doc comment).
 			const serializedPublic = JSON.stringify(result.events[0].publicPayload);
-			for (const cardId of hand2Before) expect(serializedPublic).not.toContain(cardId);
+			expect(serializedPublic).not.toContain('cups-iii');
 			expect(result.events[0].privatePayloads).toBeUndefined();
 
 			// Minor 4 (review): the event-layer guarantee above is NOT a
 			// state-layer one — the shared engine's own `'public-top'` discard
-			// pile model means ONE of the discarded cards genuinely becomes
-			// public via every projection's `playerDiscardTop` (which of the
-			// discarded cards ends up "on top" is this engine's own pre-
-			// existing discard-pile convention, not something Stun controls).
-			// Asserted explicitly (rather than left implicit) so this reads as
-			// an accepted, documented exposure, not a stronger guarantee than
-			// the code gives.
+			// pile model means the discarded card genuinely becomes public via
+			// every projection's `playerDiscardTop`. Asserted explicitly so this
+			// reads as an accepted, documented exposure, not a stronger
+			// guarantee than the code gives.
 			const publicProjection = projectForActor(result.state, GM, catalog).public;
-			expect(publicProjection.playerDiscardTop?.hidden).toBe(false);
-			expect(hand2Before).toContain((publicProjection.playerDiscardTop as { id: string }).id);
+			expect(publicProjection.playerDiscardTop).toMatchObject({ hidden: false, id: 'cups-iii' });
 
 			expectConserved(result.state, catalog);
 		});
 
-		it('emits count: 0 and conserves cards when the target already has an empty hand (Minor 9 edge case)', () => {
+		it('the target may choose their own Stun discard directly (round-2 review, Item 1: the choice belongs to the affected player, not only the GM)', () => {
+			const { state, p2Ctx } = readyTwoPlayerTurns('stun-target-chooses', ['swords-vii'], ['pentacles-iv', 'cups-iii']);
+			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, p2Ctx);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(findZoneDescriptor(result.state, challengeHandZoneId('tenure-2'))?.cards).toEqual(['cups-iii']);
+			expectConserved(result.state, catalog);
+		});
+
+		it('rejects choosing a card the target does not hold (Minor 9 edge case, e.g. an already-empty hand)', () => {
 			const { state, gmCtx } = readyTwoPlayerTurns('stun-empty-hand', [], []);
 			expect(findZoneDescriptor(state, challengeHandZoneId('tenure-2'))?.cards).toEqual([]);
 
-			const result = applyStun(state, 'tenure-2', stunParams, gmCtx);
-			expect(result.ok).toBe(true);
-			if (!result.ok) return;
-			expect(result.events).toEqual([
-				expect.objectContaining({ kind: 'challenge-stun-applied', publicPayload: expect.objectContaining({ targetTenureId: 'tenure-2', count: 0 }) })
-			]);
-			expectConserved(result.state, catalog);
+			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, gmCtx);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not hold') } });
+			expectConserved(state, catalog);
 		});
 
-		it('rejects a non-GM actor', () => {
-			const { state } = readyTwoPlayerTurns('stun-not-gm', ['swords-vii'], ['pentacles-iv']);
-			const result = applyStun(state, 'tenure-2', stunParams, ctxFor(playerActor('tenure-1'), catalog, config, 'stun-not-gm'));
+		it('rejects a player choosing a discard on behalf of a tenure they do not own, distinctly from the not-held-card guard (test discrimination)', () => {
+			const { state } = readyTwoPlayerTurns('stun-not-owner', ['swords-vii'], ['pentacles-iv']);
+			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, ctxFor(playerActor('tenure-1'), catalog, config, 'stun-not-owner'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 
-		it('carries no invented stage restriction — Ch1 "Effects" says Stun is immediate/instantaneous, so the GM may apply it at ANY stage of an active Challenge (Minor 6)', () => {
+		it('carries no invented stage restriction — Ch1 "Effects" says Stun is immediate/instantaneous, so it may be applied at ANY stage of an active Challenge (Minor 6)', () => {
 			const { state: dealStage, gmCtx: dealGmCtx } = beginTwoPlayer('stun-any-stage-deal');
 			expect(readChallengeState(dealStage)?.stage).toBe('deal');
-			expect(applyStun(dealStage, 'tenure-1', stunParams, dealGmCtx).ok).toBe(true);
+			// Nothing has been dealt yet at `'deal'` — the target's hand is
+			// empty, so there is no card to choose; this proves the STAGE is
+			// not what rejects (message is about the missing card, not stage).
+			const dealAttempt = applyStun(dealStage, 'tenure-1', 'swords-i', stunParams, dealGmCtx);
+			expect(dealAttempt).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not hold') } });
 
 			const { state: placementStage, gmCtx: placementGmCtx } = dealtTwoPlayer('stun-any-stage-placement');
 			expect(readChallengeState(placementStage)?.stage).toBe('initiative-placement');
-			expect(applyStun(placementStage, 'tenure-1', stunParams, placementGmCtx).ok).toBe(true);
+			const heldCard = findZoneDescriptor(placementStage, challengeHandZoneId('tenure-1'))!.cards[0];
+			expect(applyStun(placementStage, 'tenure-1', heldCard, stunParams, placementGmCtx).ok).toBe(true);
 		});
 	});
 
@@ -547,12 +556,39 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expect(activeCountAfterResolve).toBeLessThan(guardianAngelParams.maxInstances);
 		});
 
-		it('rejects resolving a Guardian Angel that has already been resolved (no double-consumption)', () => {
+		it('rejects resolving a Guardian Angel that has already been resolved (no double-consumption) — the card is gone, so this pins the ZONE-membership guard specifically (round-2 review, Item 3: distinct from the separate instance-lookup guard below)', () => {
 			const { state, p2Ctx } = castGuardianAngel('guardian-angel-resolve-twice');
 			const first = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
 			if (!first.ok) throw first;
 			const second = resolveGuardianAngel(first.state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
-			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(second).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('has no Guardian Angel card') }
+			});
+		});
+
+		it('rejects resolving a card that IS still physically present but has no matching active modifier instance — an inconsistent state only constructed here to isolate the instance-lookup guard from the zone-membership guard above (round-2 review, Item 3)', () => {
+			const { state } = castGuardianAngel('guardian-angel-resolve-orphan-card');
+			const p2Ctx = ctxFor(playerActor('tenure-2'), catalog, config, 'guardian-angel-resolve-orphan-card');
+
+			// Directly plant a real, catalog-valid card into tenure-2's Guardian
+			// Angel zone WITHOUT registering a matching `ChallengeModifierState`
+			// instance — not reachable through any real command, only
+			// constructed to prove the instance-lookup guard fires on its own.
+			const orphanCardId = findZoneDescriptor(state, challengeHandZoneId('tenure-2'))!.cards[0];
+			const gaZoneId = challengeGuardianAngelZoneId('tenure-2');
+			const withOrphanCard: SessionEngineStateV1 = {
+				...state,
+				privateZones: state.privateZones
+					.map((zone) => (zone.id === challengeHandZoneId('tenure-2') ? { ...zone, cards: zone.cards.filter((id) => id !== orphanCardId) } : zone))
+					.map((zone) => (zone.id === gaZoneId ? { ...zone, cards: zone.cards.concat(orphanCardId) } : zone))
+			};
+
+			const result = resolveGuardianAngel(withOrphanCard, 'tenure-2', orphanCardId, 'dodge', p2Ctx);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('has no active Guardian Angel instance') }
+			});
 		});
 
 		it('rejects a non-owning player resolving another tenure\'s ward', () => {
@@ -771,13 +807,14 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 
 			const tenure1Legal = legalChallengeModifierCommands(state, playerActor('tenure-1'), derivationCaps);
 			expect(tenure1Legal).toEqual(
-				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer'])
+				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer', 'apply-stun'])
 			);
 
 			// tenure-2 is NOT the active seat — none of the own-turn actions are
-			// offered to them, but Counsel still is.
+			// offered to them, but Counsel and Stun (the choice belongs to
+			// whoever is targeted, "any time during a Challenge") still are.
 			const tenure2Legal = legalChallengeModifierCommands(state, playerActor('tenure-2'), derivationCaps);
-			expect(tenure2Legal).toEqual(['counsel-transfer']);
+			expect(tenure2Legal).toEqual(['apply-stun', 'counsel-transfer']);
 
 			// The GM sees none of the player-only commands.
 			expect(legalChallengeModifierCommands(state, GM, derivationCaps)).not.toEqual(
@@ -796,6 +833,40 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 
 		it('returns an empty set when no Challenge round is active', () => {
 			expect(legalChallengeModifierCommands(makeSessionFixture('legal-no-round'), GM, derivationCaps)).toEqual([]);
+		});
+
+		it('excludes aim-prepare/replace-initiative-with-shield when the player lacks the equipment (round-2 review, Item 3 — equipment is a projection input)', () => {
+			const { state } = readyTwoPlayerTurns('legal-equipment', ['wands-v'], ['pentacles-iv']);
+			const bothMissing = { ...derivationCaps, hasBow: false, hasShield: false };
+			const legal = legalChallengeModifierCommands(state, playerActor('tenure-1'), bothMissing);
+			expect(legal).not.toContain('aim-prepare');
+			expect(legal).not.toContain('replace-initiative-with-shield');
+			// Guardian Angel needs neither, so it's still offered.
+			expect(legal).toContain('guardian-angel');
+		});
+
+		it('excludes apply-black-honey once every participant has already eaten it this round (round-2 review, Item 3)', () => {
+			const { state, gmCtx } = beginTwoPlayer('legal-black-honey-all-eaten');
+			expect(legalChallengeModifierCommands(state, GM, derivationCaps)).toContain('apply-black-honey');
+
+			const eaten1 = applyBlackHoney(state, 'tenure-1', blackHoneyParams, gmCtx);
+			if (!eaten1.ok) throw eaten1;
+			// Only tenure-1 has eaten — tenure-2 still could, so it's still offered.
+			expect(legalChallengeModifierCommands(eaten1.state, GM, derivationCaps)).toContain('apply-black-honey');
+
+			const eaten2 = applyBlackHoney(eaten1.state, 'tenure-2', blackHoneyParams, gmCtx);
+			if (!eaten2.ok) throw eaten2;
+			// Now EVERY participant has eaten — offering it again would always fail.
+			expect(legalChallengeModifierCommands(eaten2.state, GM, derivationCaps)).not.toContain('apply-black-honey');
+		});
+
+		it("returns an empty set once the Challenge stage is 'complete' (round-2 review, Item 3 — apply-stun was previously offered here unconditionally)", () => {
+			const { state } = readyTwoPlayerTurns('legal-complete-stage', ['wands-v'], ['pentacles-iv']);
+			const challenge = readChallengeState(state)!;
+			const completedState = writeChallengeState(state, { ...challenge, stage: 'complete' });
+
+			expect(legalChallengeModifierCommands(completedState, GM, derivationCaps)).toEqual([]);
+			expect(legalChallengeModifierCommands(completedState, playerActor('tenure-1'), derivationCaps)).toEqual([]);
 		});
 	});
 

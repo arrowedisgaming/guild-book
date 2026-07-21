@@ -11,7 +11,7 @@ import {
 } from '$lib/engine/session/procedures/challenge/reducer';
 import { dealRound } from '$lib/engine/session/procedures/challenge/deal';
 import { placeInitiative, revealInitiative } from '$lib/engine/session/procedures/challenge/initiative';
-import { counselTransfer, CHALLENGE_COUNSEL_ID } from '$lib/engine/session/procedures/challenge/transfers';
+import { counselTransfer, movePrivateCard, CHALLENGE_COUNSEL_ID } from '$lib/engine/session/procedures/challenge/transfers';
 import { findModifierParams } from '$lib/engine/session/procedures/challenge/modifiers';
 import { assertSessionInvariants } from '$lib/engine/session/invariants';
 import { findZoneDescriptor } from '$lib/engine/session/state';
@@ -218,5 +218,60 @@ describe('Counsel — private-transfer (Increment 3 Task 4)', () => {
 		expect(cleaned.ok).toBe(true);
 		if (!cleaned.ok) return;
 		expect(readChallengeState(cleaned.state)?.modifiers).toEqual([]);
+	});
+
+	describe('movePrivateCard — direct tests (round-2 review, Item 3: exported, so pinned directly)', () => {
+		it('moves the named card from source to destination', () => {
+			const { state } = dealtThreePlayer('move-private-card-ok');
+			const senderZoneId = challengeHandZoneId('tenure-1');
+			const recipientZoneId = challengeHandZoneId('tenure-2');
+			const cardId = findZoneDescriptor(state, senderZoneId)!.cards[0];
+
+			const result = movePrivateCard(state, senderZoneId, recipientZoneId, cardId);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(findZoneDescriptor(result.state, senderZoneId)?.cards).not.toContain(cardId);
+			expect(findZoneDescriptor(result.state, recipientZoneId)?.cards).toContain(cardId);
+			expectConserved(result.state, catalog);
+		});
+
+		it('rejects source === destination', () => {
+			const { state } = dealtThreePlayer('move-private-card-same-zone');
+			const zoneId = challengeHandZoneId('tenure-1');
+			const cardId = findZoneDescriptor(state, zoneId)!.cards[0];
+			expect(movePrivateCard(state, zoneId, zoneId, cardId)).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('different zones') }
+			});
+		});
+
+		it('rejects a missing source zone', () => {
+			const { state } = dealtThreePlayer('move-private-card-no-source');
+			const cardId = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!.cards[0];
+			expect(movePrivateCard(state, 'not-a-real-zone', challengeHandZoneId('tenure-2'), cardId)).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('source zone not found') }
+			});
+		});
+
+		it('rejects a card not present in the source zone', () => {
+			const { state } = dealtThreePlayer('move-private-card-not-held');
+			const senderZoneId = challengeHandZoneId('tenure-1');
+			const notHeld = findZoneDescriptor(state, challengeHandZoneId('tenure-2'))!.cards[0];
+			expect(movePrivateCard(state, senderZoneId, challengeHandZoneId('tenure-2'), notHeld)).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('not present in source zone') }
+			});
+		});
+
+		it('rejects a missing destination zone', () => {
+			const { state } = dealtThreePlayer('move-private-card-no-destination');
+			const senderZoneId = challengeHandZoneId('tenure-1');
+			const cardId = findZoneDescriptor(state, senderZoneId)!.cards[0];
+			expect(movePrivateCard(state, senderZoneId, 'not-a-real-zone', cardId)).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('destination zone not found') }
+			});
+		});
 	});
 });

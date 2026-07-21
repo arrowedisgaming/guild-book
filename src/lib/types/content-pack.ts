@@ -855,7 +855,8 @@ export interface GuardianAngelParams {
 
 export interface ForcedHandDiscardParams {
 	immediate: boolean;
-	discard: 'entire-hand';
+	discard: 'one-card';
+	playerChooses: boolean;
 }
 
 /** A typed rule hook a procedure composes; content supplies behavior parameters. */

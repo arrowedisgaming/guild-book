@@ -815,7 +815,8 @@ export const sessionModifierDefinitionSchema = z.discriminatedUnion('behaviorId'
 		params: z
 			.object({
 				immediate: z.boolean(),
-				discard: z.literal('entire-hand')
+				discard: z.literal('one-card'),
+				playerChooses: z.boolean()
 			})
 			.strict()
 	})

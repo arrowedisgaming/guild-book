@@ -6116,7 +6116,8 @@
 			"behaviorId": "forced-hand-discard",
 			"params": {
 				"immediate": true,
-				"discard": "entire-hand"
+				"discard": "one-card",
+				"playerChooses": true
 			}
 		}
 	],

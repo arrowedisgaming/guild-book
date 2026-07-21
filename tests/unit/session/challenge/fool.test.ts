@@ -97,6 +97,15 @@ describe('The Fool interrupt (O5)', () => {
 		expectConserved(result.state, catalog);
 	});
 
+	it('tags the fool-interrupt-played event with tenureId, matching every sibling Challenge event (coordinator follow-up #6)', () => {
+		const { state, playerCtx } = readyWithFoolInHand('fool-tenure-tag');
+		const result = playFool(state, 'tenure-1', 'cups-v', playerCtx);
+		if (!result.ok) throw result;
+
+		const foolEvent = result.events.find((event) => event.kind === 'fool-interrupt-played');
+		expect(foolEvent?.publicPayload).toMatchObject({ tenureId: 'tenure-1' });
+	});
+
 	it('moves both the Fool and the paired card to the public played zone, conserving every card', () => {
 		const { state, playerCtx } = readyWithFoolInHand('fool-conserve');
 		const result = playFool(state, 'tenure-1', 'cups-v', playerCtx);

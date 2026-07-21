@@ -72,8 +72,10 @@ export interface CommandHandlerContext {
 	rng: Rng;
 }
 
-/** The Fool's stable content-pack card id (spec §8.2). */
-const FOOL_CARD_ID = 'fool';
+/** The Fool's stable content-pack card id (spec §8.2). Exported so procedure
+ * modules (e.g. `challenge/fool.ts`, `challenge/turns.ts`) reference the same
+ * single source of truth for this id rather than duplicating the literal. */
+export const FOOL_CARD_ID = 'fool';
 
 const FIXED_ZONE_FIELDS = ['majorDraw', 'majorDiscard', 'playerDraw', 'playerDiscard', 'gmHand'] as const;
 type FixedZoneField = (typeof FIXED_ZONE_FIELDS)[number];

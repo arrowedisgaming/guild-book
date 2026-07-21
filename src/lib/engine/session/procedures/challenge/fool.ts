@@ -39,17 +39,12 @@
 
 import { findZoneDescriptor } from '../../state';
 import { reduceSession } from '../../reducer';
+import { FOOL_CARD_ID } from '../../card-commands';
 import { assertSessionInvariants } from '../../invariants';
 import type { CardId, SessionEngineStateV1, SessionEvent } from '$lib/types/session';
 import type { ChallengeInitiativeEntry, ChallengeStateV1 } from './types';
 import { challengeHandZoneId, readChallengeState, reject, writeChallengeState, type ChallengeReduceContext, type SessionReduceResult } from './reducer';
 import { applyPlayerAction, activeTurnEntry, ensurePlayedZone, isRejection, requirePlayerTurn, CHALLENGE_PLAYED_ZONE_ID } from './turns';
-
-/** The Fool's stable content-pack card id — mirrors `card-commands.ts`'s
- * private `FOOL_CARD_ID` constant (spec §8.2); duplicated locally rather than
- * imported since that constant isn't exported (it's an internal detail of
- * the shared move-command handler, not part of its public surface). */
-const FOOL_CARD_ID = 'fool';
 
 /**
  * Plays the Fool from `tenureId`'s hand paired with `pairedCardId` (which
@@ -95,7 +90,14 @@ export function playFool(
 		context
 	);
 	if (!foolMove.ok) return foolMove;
-	const foolEvents: SessionEvent[] = foolMove.events.map((event) => ({ ...event, kind: 'fool-interrupt-played' }));
+	// Every sibling Challenge event tags its acting tenure (`spendCard`'s
+	// `extraPublicPayload`) — do the same here so a reader (Task 6's UI) never
+	// has to infer whose Fool this was from event ordering alone.
+	const foolEvents: SessionEvent[] = foolMove.events.map((event) => ({
+		...event,
+		kind: 'fool-interrupt-played',
+		publicPayload: { ...(event.publicPayload as Record<string, unknown>), tenureId }
+	}));
 
 	// 2. The paired card — resolved exactly like a normal action (this turn's
 	// one-card budget genuinely is spent here).

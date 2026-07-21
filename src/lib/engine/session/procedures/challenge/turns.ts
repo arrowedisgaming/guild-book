@@ -50,6 +50,7 @@
  */
 
 import { reduceSession } from '../../reducer';
+import { FOOL_CARD_ID } from '../../card-commands';
 import { assertSessionInvariants } from '../../invariants';
 import { FIXED_ZONE_IDS } from '../../zones';
 import type { SuitId } from '$lib/types/common';
@@ -305,6 +306,18 @@ function spendCard(
 	const budget = challenge.budgets[options.budgetKey];
 	if (!budget) throw new Error(`spendCard: no budget tracked for ${options.budgetKey}`);
 
+	// The Fool is never spent as an ordinary action or minor action — Ch7 is
+	// explicit that it is "always played in conjunction with another card"
+	// (`challenge-the-fool`). `fool.ts`'s `playFool` is the only legal path
+	// for it; a lone Fool reaching here (via `applyPlayerAction`,
+	// `applyPlayerMinorAction`, or any future caller of `spendCard`) is
+	// rejected outright, independent of budget/suit state. `fool.ts` itself
+	// never triggers this — it validates the paired card is NOT the Fool
+	// before ever calling `applyPlayerAction` for it.
+	if (options.cardId === FOOL_CARD_ID) {
+		return reject('illegal-command', 'the Fool cannot be played as an ordinary action or minor action — play it via the paired-play command instead');
+	}
+
 	if (options.actionKind === 'minor-action' && budget.actionTaken) {
 		return reject('illegal-command', 'cannot perform a minor action after taking an action this turn');
 	}
@@ -523,6 +536,15 @@ export function applyGmDiscard(state: SessionEngineStateV1, cardId: CardId, cont
  * redraw-same-count, reshuffle-if-needed — so this composes it rather than
  * reimplementing it), leaving every in-play card (Initiative placements,
  * already-played cards) untouched since only the `gmHand` zone is named.
+ *
+ * A mulligan against an ALREADY-EMPTY `gmHand` is a legal no-op at the
+ * shared engine layer (`handleMulligan` discards/redraws zero cards), but it
+ * is NOT a meaningful use of the GM's once-per-round elective — there was no
+ * "hand that's mostly greater dooms" to mulligan away. `mulliganUsedThisRound`
+ * is therefore only set when there was actually something to discard;
+ * calling this against an empty hand still succeeds (and is still reported
+ * to the caller) but leaves the real elective available for later in the
+ * round.
  */
 export function applyGmMulligan(state: SessionEngineStateV1, context: ChallengeReduceContext): SessionReduceResult {
 	if (context.actor.kind !== 'gm') return reject('not-authorized', 'only the GM may mulligan');
@@ -533,10 +555,12 @@ export function applyGmMulligan(state: SessionEngineStateV1, context: ChallengeR
 		return reject('illegal-command', 'the GM mulligan has already been used this round');
 	}
 
+	const handWasEmpty = state.gmHand.length === 0;
+
 	const mulliganResult = reduceSession(state, { type: 'mulligan', zoneId: FIXED_ZONE_IDS.gmHand }, context);
 	if (!mulliganResult.ok) return mulliganResult;
 
-	const nextChallenge: ChallengeStateV1 = { ...challenge, mulliganUsedThisRound: true };
+	const nextChallenge: ChallengeStateV1 = { ...challenge, mulliganUsedThisRound: !handWasEmpty };
 	const nextState = writeChallengeState(mulliganResult.state, nextChallenge);
 	assertSessionInvariants(nextState, context.runtime.catalog);
 

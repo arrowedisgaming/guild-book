@@ -4,9 +4,11 @@ import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/s
 import type { ChallengeConfig, ChallengeEnemyFact } from '$lib/engine/session/procedures/challenge/types';
 import {
 	beginChallenge,
+	CHALLENGE_INITIATIVE_ZONE_ID,
 	challengeHandZoneId,
 	cleanupRound,
 	readChallengeState,
+	writeChallengeState,
 	type ChallengeReduceContext
 } from '$lib/engine/session/procedures/challenge/reducer';
 import { dealRound } from '$lib/engine/session/procedures/challenge/deal';
@@ -193,6 +195,17 @@ describe('Challenge turns — plays, discards, Dooms, budgets', () => {
 			const result = applyPlayerAction(state, 'tenure-1', 'swords-vii', ctxFor({ kind: 'player', userId: 'user-bob' }, catalog, config, 'action-not-owner'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
+
+		it('rejects the Fool played as an ordinary lone action (coordinator follow-up #1 — challenge-the-fool: "always played in conjunction with another card")', () => {
+			const { state, playerCtx } = readySoloTurn('action-lone-fool', ['fool', 'cups-ii', 'wands-iii', 'pentacles-iv']);
+			const result = applyPlayerAction(state, 'tenure-1', 'fool', playerCtx);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('paired-play') }
+			});
+			// No partial state: the hand still holds the Fool, untouched.
+			expect(findZoneDescriptor(state, challengeHandZoneId('tenure-1'))?.cards).toContain('fool');
+		});
 	});
 
 	describe('applyPlayerMinorAction — suit MUST match (O4)', () => {
@@ -215,13 +228,44 @@ describe('Challenge turns — plays, discards, Dooms, budgets', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 
-		it('rejects a minor action after the player has already taken a full action this turn (O1)', () => {
+		it('rejects a minor action after the player has already taken a full action this turn (realistic sequence, O1)', () => {
 			const { state, playerCtx } = readySoloTurn('minor-after-action', ['swords-vii', 'cups-ii', 'wands-iii', 'pentacles-iv']);
 			const acted = applyPlayerAction(state, 'tenure-1', 'swords-vii', playerCtx);
 			if (!acted.ok) throw acted;
 
 			const minor = applyPlayerMinorAction(acted.state, 'tenure-1', 'cups-ii', 'cups', playerCtx);
 			expect(minor).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('the action/minor-action exclusion fires on its own, independent of the one-card cap (coordinator follow-up #2)', () => {
+			// The realistic-sequence test above is byte-identical (same
+			// rejection code) to a plain cap-exhaustion rejection, since under
+			// the current content cardsPerInitiativeTurn is 1 — so it would
+			// still pass even if the exclusion check were deleted. Force
+			// `actionTaken: true` while `cardsThisTurn` stays 0 — a combination
+			// normal play can never produce under that config — to prove the
+			// EXCLUSION rule rejects this on its own, not the numeric cap.
+			const { state, playerCtx } = readySoloTurn('minor-exclusion-only', ['swords-vii', 'cups-ii', 'wands-iii', 'pentacles-iv']);
+			const challenge = readChallengeState(state)!;
+			const forced = writeChallengeState(state, {
+				...challenge,
+				budgets: { ...challenge.budgets, 'tenure-1': { cardsThisTurn: 0, actionTaken: true, discards: null } }
+			});
+
+			const minor = applyPlayerMinorAction(forced, 'tenure-1', 'cups-ii', 'cups', playerCtx);
+			expect(minor).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: 'cannot perform a minor action after taking an action this turn' }
+			});
+		});
+
+		it('rejects the Fool as a minor action too (same `spendCard` guard as the ordinary-action path, coordinator follow-up #1/#5)', () => {
+			const { state, playerCtx } = readySoloTurn('minor-lone-fool', ['fool', 'cups-ii', 'wands-iii', 'pentacles-iv']);
+			const result = applyPlayerMinorAction(state, 'tenure-1', 'fool', 'cups', playerCtx);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('paired-play') }
+			});
 		});
 	});
 
@@ -309,7 +353,56 @@ describe('Challenge turns — plays, discards, Dooms, budgets', () => {
 			expect(result.state.gmHand).toHaveLength(2); // gmHand held exactly ['magician', 'devil'] at this point
 			expect(result.state.gmHand).not.toEqual(['magician', 'devil']); // discarded and redrawn, not the same cards
 			expect(readChallengeState(result.state)?.mulliganUsedThisRound).toBe(true);
+
+			// (coordinator follow-up #4) The already-in-play Initiative card
+			// ('high-priestess', placed for the ogre and already revealed into
+			// the shared public Initiative zone BEFORE the mulligan) is
+			// asserted DIRECTLY to still be exactly where it was — not just
+			// inferred from `expectConserved`, which would still pass if it had
+			// moved somewhere else legal instead of staying put.
+			expect(findZoneDescriptor(result.state, CHALLENGE_INITIATIVE_ZONE_ID)?.cards).toContain('high-priestess');
+
 			expectConserved(result.state, catalog);
+		});
+
+		it('keeps GM hand identities GM-only in the mulligan event (coordinator follow-up #3): public payload carries no card ids, only privatePayloads keyed to the GM does', () => {
+			const { state, gmCtx } = readyGmTurnFirst('mulligan-privacy', ['magician', 'devil']);
+			const result = applyGmMulligan(state, gmCtx);
+			if (!result.ok) throw result;
+
+			const mulliganEvent = result.events.find((event) => event.kind === 'zone-mulliganed');
+			expect(mulliganEvent).toBeDefined();
+			expect(mulliganEvent?.publicPayload).not.toHaveProperty('cardIds');
+			expect(mulliganEvent?.publicPayload).not.toHaveProperty('discardedCardIds');
+			expect(mulliganEvent?.publicPayload).not.toHaveProperty('drawnCardIds');
+			expect(JSON.stringify(mulliganEvent?.publicPayload)).not.toMatch(/magician|devil|high-priestess/);
+
+			expect(mulliganEvent?.privatePayloads).toBeDefined();
+			expect(mulliganEvent?.privatePayloads?.[GM.userId]).toMatchObject({
+				discardedCardIds: expect.arrayContaining(['magician', 'devil'])
+			});
+		});
+
+		it('does NOT consume the once-per-round marker on a no-op mulligan against an already-empty GM hand (coordinator follow-up #5, decided: a no-op should not burn the elective)', () => {
+			const { state, gmCtx } = readyGmTurnFirst('mulligan-empty', []);
+			expect(state.gmHand).toEqual([]);
+
+			const result = applyGmMulligan(state, gmCtx);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(readChallengeState(result.state)?.mulliganUsedThisRound).toBe(false);
+			expectConserved(result.state, catalog);
+
+			// The real elective is still available afterward — a later,
+			// non-empty mulligan still succeeds and NOW consumes it, proving the
+			// earlier no-op never spent it.
+			const secondGmCtx = gmCtx;
+			const withACard = forceGmHand(result.state, ['magician']);
+			const secondResult = applyGmMulligan(withACard, secondGmCtx);
+			expect(secondResult.ok).toBe(true);
+			if (!secondResult.ok) return;
+			expect(readChallengeState(secondResult.state)?.mulliganUsedThisRound).toBe(true);
+			expectConserved(secondResult.state, catalog);
 		});
 
 		it('rejects a second mulligan the same round', () => {

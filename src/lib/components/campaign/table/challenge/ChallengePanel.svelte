@@ -18,6 +18,7 @@
 	import TurnControls from './TurnControls.svelte';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 	import type { ChallengeGmProjection } from '$lib/engine/session/procedures/challenge/projection';
+	import { CHALLENGE_GM_TENURE_ID } from '$lib/engine/session/procedures/challenge/reducer';
 	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 	import type { SendCommandResult, TableSession, WireSessionEventLike } from '$lib/stores/campaign-session.svelte';
 	import type { SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
@@ -28,6 +29,7 @@
 		session,
 		events,
 		challengeRoster,
+		enemyThreatOptions,
 		onSendChallengeCommand
 	}: {
 		role: 'gm' | 'player';
@@ -35,6 +37,7 @@
 		session: TableSession;
 		events: WireSessionEventLike[];
 		challengeRoster: ActiveChallengeTenureView[];
+		enemyThreatOptions: { id: string; name: string }[];
 		onSendChallengeCommand: (command: ChallengeCommand, commandId?: string) => Promise<SendCommandResult>;
 	} = $props();
 
@@ -129,6 +132,33 @@
 		}
 		return '';
 	});
+
+	/**
+	 * Public turn/budget counters (Step 2, review round: previously omitted
+	 * entirely — `challenge.budgets` was carried in the projection but shown
+	 * nowhere, so a player had no way to see how many cards they could still
+	 * spend this turn). Driven ENTIRELY from projection fields — `budgets`,
+	 * `activeTurnIndex`, `initiativeOrder`, and the content-hydrated caps
+	 * (`cardsPerInitiativeTurn`/`gmPlayBudget`, both O1-safe: game rules, not
+	 * secret) — never a client-side legality computation. Visible to every
+	 * viewer regardless of role, since none of this is per-actor secret.
+	 */
+	const activeTurnBudget = $derived.by(() => {
+		if (!challenge || challenge.activeTurnIndex === null) return null;
+		const entry = challenge.initiativeOrder[challenge.activeTurnIndex];
+		if (!entry) return null;
+		const isParticipant = challenge.participantTenureIds.includes(entry.tenureId);
+		const budgetKey = isParticipant ? entry.tenureId : CHALLENGE_GM_TENURE_ID;
+		const budget = challenge.budgets[budgetKey];
+		if (!budget) return null;
+		return {
+			turnNumber: challenge.activeTurnIndex + 1,
+			turnCount: challenge.initiativeOrder.length,
+			cardsThisTurn: budget.cardsThisTurn,
+			cap: isParticipant ? challenge.cardsPerInitiativeTurn : challenge.gmPlayBudget,
+			actionTaken: budget.actionTaken
+		};
+	});
 </script>
 
 {#if visible}
@@ -149,9 +179,18 @@
 		{#if challenge && challenge.initiativeOrder.length > 0}
 			<ol class="initiative-order" aria-label="Initiative order" data-testid="initiative-order">
 				{#each challenge.initiativeOrder as entry (entry.index)}
-					<InitiativeRow {entry} tenureOwners={challenge.tenureOwners} viewerUserId={userId} isActive={challenge.activeTurnIndex === entry.index} />
+					<InitiativeRow {entry} tenureOwners={challenge.tenureOwners} roster={challengeRoster} viewerUserId={userId} isActive={challenge.activeTurnIndex === entry.index} />
 				{/each}
 			</ol>
+		{/if}
+
+		{#if activeTurnBudget}
+			<p class="turn-budget" data-testid="turn-budget-counter">
+				Turn {activeTurnBudget.turnNumber} of {activeTurnBudget.turnCount} — {activeTurnBudget.cardsThisTurn} of {activeTurnBudget.cap} card{activeTurnBudget.cap ===
+				1
+					? ''
+					: 's'} played this turn{activeTurnBudget.actionTaken ? ' (action taken)' : ''}
+			</p>
 		{/if}
 
 		{#if challenge}
@@ -164,6 +203,7 @@
 				challenge={challenge as ChallengeGmProjection | null}
 				{legalCommands}
 				roster={challengeRoster}
+				{enemyThreatOptions}
 				{actionRunner}
 			/>
 		{/if}
@@ -175,6 +215,7 @@
 				genericProjection={session.projection as SessionPlayerProjection | SessionGmProjection}
 				{challenge}
 				{legalCommands}
+				roster={challengeRoster}
 				{actionRunner}
 			/>
 		{/if}
@@ -219,6 +260,11 @@
 	.stage {
 		margin: 0;
 		font-family: var(--font-subhead);
+		color: var(--ink-soft);
+	}
+	.turn-budget {
+		margin: 0;
+		font-size: 0.85rem;
 		color: var(--ink-soft);
 	}
 	.initiative-order {

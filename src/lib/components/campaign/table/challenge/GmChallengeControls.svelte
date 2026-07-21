@@ -13,6 +13,7 @@
 	import { renderableCard } from '$lib/stores/campaign-session.svelte';
 	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
+	import { DEFAULT_ENEMY_SIZE_ID, LARGER_THAN_HUMAN_SIZE_ID } from '$lib/engine/session/procedures/challenge/deal';
 	import type { ChallengeGmProjection, ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
 	import type { ChallengeEnemyFact } from '$lib/engine/session/procedures/challenge/types';
 	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
@@ -24,12 +25,19 @@
 		challenge,
 		legalCommands,
 		roster,
+		enemyThreatOptions,
 		actionRunner
 	}: {
 		genericProjection: SessionGmProjection;
 		challenge: ChallengeProjection | null;
 		legalCommands: ChallengeCommand['type'][];
 		roster: ActiveChallengeTenureView[];
+		/** `denizens.json`'s real `threats` catalog (review round: `threat` was
+		 * previously free text — a typo like `Elite` silently scored as no
+		 * threat at all, since `deal.ts`'s formula compares exactly against
+		 * these ids). Rendered as a `<select>` so an invalid value is
+		 * unrepresentable. */
+		enemyThreatOptions: { id: string; name: string }[];
 		actionRunner: ChallengeActionRunner;
 	} = $props();
 
@@ -48,7 +56,15 @@
 	interface EnemyFactDraft {
 		id: string;
 		typeIds: string;
-		size: string;
+		/** Review round: `size` was free text, but `deal.ts`'s hand-size
+		 * formula only ever distinguishes ONE thing about it — whether it
+		 * equals the engine's `LARGER_THAN_HUMAN_SIZE_ID` sentinel exactly (the
+		 * book itself leaves every other size distinction to GM narrative
+		 * judgment, per that constant's own doc comment — there is no content
+		 * catalog of sizes to select from, unlike `threat`). A checkbox makes
+		 * the one mechanically meaningful value unrepresentable-wrong instead
+		 * of typeable-wrong. */
+		largerThanHuman: boolean;
 		threat: string;
 		count: number;
 	}
@@ -64,11 +80,29 @@
 	}
 
 	function addEnemyDraft(): void {
-		enemyDrafts = [...enemyDrafts, { id: `enemy-${enemyDrafts.length + 1}`, typeIds: '', size: 'human', threat: 'minion', count: 1 }];
+		enemyDrafts = [
+			...enemyDrafts,
+			{
+				id: `enemy-${enemyDrafts.length + 1}`,
+				typeIds: '',
+				largerThanHuman: false,
+				threat: enemyThreatOptions[0]?.id ?? '',
+				count: 1
+			}
+		];
 	}
 
 	function removeEnemyDraft(index: number): void {
 		enemyDrafts = enemyDrafts.filter((_draft, i) => i !== index);
+	}
+
+	/** Clearing the headcount field (or typing something non-numeric) binds
+	 * `draft.count` to `NaN` — review round: `Math.max(1, Math.floor(NaN))`
+	 * is itself `NaN`, silently producing an invalid `count` the server would
+	 * reject with only a generic error. Falls back to the minimum legal
+	 * headcount (1) instead of propagating `NaN`. */
+	function sanitizedCount(rawCount: number): number {
+		return Number.isFinite(rawCount) ? Math.max(1, Math.floor(rawCount)) : 1;
 	}
 
 	async function beginChallenge(): Promise<void> {
@@ -80,13 +114,13 @@
 		}
 		const enemyFacts: ChallengeEnemyFact[] = enemyDrafts.map((draft) => ({
 			id: draft.id.trim(),
-			size: draft.size.trim(),
+			size: draft.largerThanHuman ? LARGER_THAN_HUMAN_SIZE_ID : DEFAULT_ENEMY_SIZE_ID,
 			threat: draft.threat.trim(),
 			typeIds: draft.typeIds
 				.split(',')
 				.map((typeId) => typeId.trim())
 				.filter((typeId) => typeId.length > 0),
-			count: Math.max(1, Math.floor(draft.count))
+			count: sanitizedCount(draft.count)
 		}));
 		await actionRunner.run({ type: 'begin-challenge', participantTenureIds, tenureOwners, enemyFacts });
 	}
@@ -163,8 +197,15 @@
 					<div class="enemy-draft" data-testid="enemy-draft-row">
 						<input aria-label="Enemy id" bind:value={draft.id} placeholder="id" />
 						<input aria-label="Enemy type ids (comma-separated)" bind:value={draft.typeIds} placeholder="type ids, comma-separated" />
-						<input aria-label="Enemy size" bind:value={draft.size} placeholder="size (e.g. larger-than-human)" />
-						<input aria-label="Enemy threat" bind:value={draft.threat} placeholder="threat (e.g. elite, dungeon-lord)" />
+						<label class="larger-than-human">
+							<input type="checkbox" aria-label="Larger than a human" bind:checked={draft.largerThanHuman} />
+							Larger than a human
+						</label>
+						<select aria-label="Enemy threat" bind:value={draft.threat}>
+							{#each enemyThreatOptions as option (option.id)}
+								<option value={option.id}>{option.name}</option>
+							{/each}
+						</select>
 						<input aria-label="Enemy headcount" type="number" min="1" bind:value={draft.count} />
 						<button type="button" onclick={() => removeEnemyDraft(index)}>Remove</button>
 					</div>
@@ -293,6 +334,16 @@
 	.enemy-draft input {
 		flex: 1 1 8rem;
 	}
+	.larger-than-human {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		flex: 1 1 auto;
+		font-size: 0.85rem;
+	}
+	.larger-than-human input {
+		flex: 0 0 auto;
+	}
 	.enemy-placement,
 	.gm-discard {
 		display: flex;
@@ -325,6 +376,10 @@
 	button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+	button:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
 	}
 	.action-error {
 		margin: 0;

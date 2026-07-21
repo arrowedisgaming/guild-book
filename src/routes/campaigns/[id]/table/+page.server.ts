@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { requireCampaignAccess } from '$lib/server/campaign/access';
 import { loadCampaignProjection } from '$lib/server/campaign/service';
 import { loadActiveChallengeRoster } from '$lib/server/campaign/page-data';
+import { getDenizenThreats } from '$lib/server/content/loader';
 import { getDb, getDbContext } from '$lib/server/db';
 import { startSession } from '$lib/server/session/lifecycle';
 import { loadChallengeProjectionsForActor } from '$lib/server/session/challenge-command-service';
@@ -56,12 +57,21 @@ export const load: PageServerLoad = async (event) => {
 
 	const initial: SessionSyncSnapshot = { cursor, events: [], session };
 
+	// The GM's "Begin Challenge" enemy-fact form needs the real `threat`
+	// values (review round: previously free text, so a typo like `Elite`
+	// silently scored as no threat at all — `deal.ts`'s
+	// `calculateGmHandSize` compares exactly against these ids). Sourced from
+	// `denizens.json`'s own `threats` catalog, never re-typed in the
+	// component. Trivial/cached, safe to compute unconditionally.
+	const enemyThreatOptions = getDenizenThreats().map((threat) => ({ id: threat.id, name: threat.name }));
+
 	return {
 		campaignId: event.params.id,
 		campaignName: campaign.name,
 		role: role.kind,
 		userId: role.userId,
 		challengeRoster,
+		enemyThreatOptions,
 		initial
 	};
 };

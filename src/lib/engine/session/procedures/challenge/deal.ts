@@ -37,8 +37,19 @@ const DUNGEON_LORD_THREAT_ID = 'dungeon-lord';
  * to count; anything else (including the unmarked default, e.g. `'human'`)
  * does not. Not a rule constant — a recognized identifier, same spirit as
  * `ELITE_THREAT_ID` above.
+ *
+ * Exported (review round) so `GmChallengeControls.svelte`'s enemy-fact form
+ * can render the ONE mechanically meaningful size distinction as a checkbox
+ * ("larger than a human" / not) rather than a free-text field a GM could
+ * mistype into silently scoring nothing — the component imports this
+ * constant rather than re-typing the string itself (O2: no game rules in
+ * components).
  */
-const LARGER_THAN_HUMAN_SIZE_ID = 'larger-than-human';
+export const LARGER_THAN_HUMAN_SIZE_ID = 'larger-than-human';
+/** The unmarked default `size` value — anything not
+ * `LARGER_THAN_HUMAN_SIZE_ID` scores identically to this, so it is the
+ * canonical "not larger than human" value a UI should send. */
+export const DEFAULT_ENEMY_SIZE_ID = 'human';
 
 /**
  * The GM Challenge hand-size formula (rule `challenge-gm-hand-size`),

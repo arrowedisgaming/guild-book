@@ -70,13 +70,29 @@ function collectResponses(page: Page): string[] {
  * `.mname` span) is still tag-bounded (`>...canary...<`). A Roman-numeral
  * collision, by construction, always fails a boundary check on at least one
  * side (the extra numeral character continues the SAME word), so anchoring
- * the match to word boundaries (`\b`) keeps every genuine leak detectable
- * while rejecting every numeral-nesting false positive — verified directly
+ * the match rejects every numeral-nesting false positive — verified directly
  * against all four reproduced instances above.
+ *
+ * Uses explicit negative lookaround (`(?<![\w-])`/`(?![\w-])`), not plain
+ * `\b` (review round): `\b` is a WORD-TRANSITION boundary, so its behavior at
+ * the very start/end of the match depends on whether the canary's OWN first/
+ * last character is itself a word character. Every canary today (card ids
+ * like `wands-vi`, labels like `"VI of Wands"`) starts and ends with one, so
+ * `\b` happened to work — but that is an assumption about canary SHAPE, not
+ * something this function should silently rely on: a future canary
+ * beginning or ending in punctuation would make `\b` require a preceding/
+ * following WORD character for a boundary to exist at all, silently missing
+ * a genuine occurrence immediately after another non-word delimiter (a false
+ * negative — undetected leak — the worst failure mode for a privacy check).
+ * Lookaround anchors on the SURROUNDING characters directly regardless of
+ * the canary's own shape, and still includes `-` alongside `\w` so the
+ * Roman-numeral nesting guard above is unaffected (a card id's internal
+ * hyphen, e.g. `wands-vi` inside `wands-vii`, still fails the lookahead
+ * because the character right after is `i`, a word character).
  */
 function canaryLeaked(haystack: string, canary: string): boolean {
 	const escaped = canary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	return new RegExp(`\\b${escaped}\\b`).test(haystack);
+	return new RegExp(`(?<![\\w-])${escaped}(?![\\w-])`).test(haystack);
 }
 
 /**

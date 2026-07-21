@@ -13,6 +13,7 @@
 	import { challengeHandZoneId } from '$lib/engine/session/procedures/challenge/reducer';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 	import type { ChallengePlayerProjection, ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
+	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 	import type { SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
 	import type { ChallengeActionRunner } from './challenge-action.svelte';
 
@@ -22,6 +23,7 @@
 		genericProjection,
 		challenge,
 		legalCommands,
+		roster,
 		actionRunner
 	}: {
 		role: 'gm' | 'player';
@@ -29,6 +31,10 @@
 		genericProjection: SessionPlayerProjection | SessionGmProjection;
 		challenge: ChallengeProjection;
 		legalCommands: ChallengeCommand['type'][];
+		/** Real character names for the target/recipient selects below (review
+		 * round: these previously showed raw tenure/user ids). Non-secret
+		 * campaign membership data — see `loadActiveChallengeRoster`. */
+		roster: ActiveChallengeTenureView[];
 		actionRunner: ChallengeActionRunner;
 	} = $props();
 
@@ -43,6 +49,14 @@
 			? ((genericProjection as SessionPlayerProjection).privateHandsByZoneId[challengeHandZoneId(actingTenureId)] ?? [])
 			: []
 	);
+
+	function tenureLabel(tenureId: string): string {
+		return roster.find((r) => r.tenureId === tenureId)?.characterName ?? tenureId;
+	}
+
+	function userLabel(uid: string): string {
+		return roster.find((r) => r.userId === uid)?.characterName ?? 'Another adventurer';
+	}
 
 	/** Every other participant's owning userId (Counsel targets a USER, and
 	 * the rule excludes self — "another adventurer"). */
@@ -115,7 +129,7 @@
 				<select aria-label="Black Honey target" bind:value={blackHoneyTarget}>
 					<option value="">Choose a participant</option>
 					{#each challenge.participantTenureIds as tenureId (tenureId)}
-						<option value={tenureId}>{tenureId}</option>
+						<option value={tenureId}>{tenureLabel(tenureId)}</option>
 					{/each}
 				</select>
 				<button type="button" disabled={actionRunner.pending || !blackHoneyTarget} onclick={applyBlackHoney}>Apply</button>
@@ -128,7 +142,7 @@
 				<select aria-label="Stun target" bind:value={stunTarget}>
 					<option value="">Choose a participant</option>
 					{#each challenge.participantTenureIds as tenureId (tenureId)}
-						<option value={tenureId}>{tenureId}</option>
+						<option value={tenureId}>{tenureLabel(tenureId)}</option>
 					{/each}
 				</select>
 				<button type="button" disabled={actionRunner.pending || !stunTarget} onclick={recordStun}>Record Stun</button>
@@ -156,7 +170,7 @@
 				<select aria-label="Brainfever target" bind:value={brainfeverTarget}>
 					<option value="">Choose a participant</option>
 					{#each challenge.participantTenureIds as tenureId (tenureId)}
-						<option value={tenureId}>{tenureId}</option>
+						<option value={tenureId}>{tenureLabel(tenureId)}</option>
 					{/each}
 				</select>
 				<button type="button" disabled={actionRunner.pending || !brainfeverTarget} onclick={applyBrainfever}>Apply</button>
@@ -169,7 +183,7 @@
 				<select aria-label="Counsel recipient" bind:value={counselRecipient}>
 					<option value="">Choose a player</option>
 					{#each otherParticipantUserIds as recipientUserId (recipientUserId)}
-						<option value={recipientUserId}>{recipientUserId}</option>
+						<option value={recipientUserId}>{userLabel(recipientUserId)}</option>
 					{/each}
 				</select>
 				<select aria-label="Card to hand over" bind:value={counselCard}>
@@ -192,7 +206,7 @@
 				<select aria-label="Guardian Angel target" bind:value={guardianAngelTarget}>
 					<option value="">Choose a target</option>
 					{#each challenge.participantTenureIds as tenureId (tenureId)}
-						<option value={tenureId}>{tenureId}</option>
+						<option value={tenureId}>{tenureLabel(tenureId)}</option>
 					{/each}
 				</select>
 				<select aria-label="Card to cast Guardian Angel with" bind:value={guardianAngelCard}>
@@ -279,6 +293,10 @@
 	button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+	button:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
 	}
 	.action-error {
 		margin: 0;

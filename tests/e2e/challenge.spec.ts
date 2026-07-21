@@ -78,7 +78,7 @@ test.describe('guided Challenge table', () => {
 		await beginChallenge(gmPage, ['Mara Vey', 'Toma Dree'], {
 			id: 'ogre-1',
 			typeIds: 'ogre',
-			size: 'human',
+			largerThanHuman: false,
 			threat: 'minion',
 			count: '1'
 		});

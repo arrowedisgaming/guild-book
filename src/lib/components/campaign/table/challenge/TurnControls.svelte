@@ -14,6 +14,7 @@
 	 */
 	import { renderableCard } from '$lib/stores/campaign-session.svelte';
 	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
+	import { FOOL_CARD_ID } from '$lib/engine/session/card-commands';
 	import { challengeHandZoneId } from '$lib/engine/session/procedures/challenge/reducer';
 	import { SUIT_IDS, SUIT_LABELS, type SuitId } from '$lib/types/common';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
@@ -63,20 +64,30 @@
 	// Active-turn actions
 	// -----------------------------------------------------------------------
 
-	const activeEntry = $derived(challenge.activeTurnIndex !== null ? challenge.initiativeOrder[challenge.activeTurnIndex] : null);
-
-	/** True only when the VIEWER controls the currently-active seat — their
-	 * own tenure (player) or the GM's own active enemy (GM). */
-	const controlsActiveTurn = $derived.by(() => {
-		if (!activeEntry) return false;
-		if (role === 'player') return actingTenureId !== null && activeEntry.tenureId === actingTenureId;
-		return !challenge.participantTenureIds.includes(activeEntry.tenureId);
-	});
-
 	const canPlay = $derived(has(role === 'gm' ? 'gm-play' : 'play-action'));
 	const canMinorAction = $derived(has(role === 'gm' ? 'gm-minor-action' : 'play-minor-action'));
 	const canPlayFool = $derived(role === 'player' && has('play-fool'));
 	const canEndTurn = $derived(has('end-turn'));
+
+	/**
+	 * Whether THIS viewer has any card-spending action of their own to take
+	 * right now — gates the hand-of-cards listing below. Review round fix:
+	 * this used to be decided by a client-computed `controlsActiveTurn`
+	 * (comparing the viewer's own tenure/role against
+	 * `challenge.activeTurnIndex`'s entry) that hid the ENTIRE section
+	 * whenever it was false — but `legalChallengeBaseCommands` already offers
+	 * the GM `end-turn` whenever ANY turn is active (their own oversight
+	 * authority to end anyone's turn — `turns.ts`'s `endTurn` itself
+	 * authorizes this), independent of whose turn it is. Gating on
+	 * `controlsActiveTurn` silently hid that legitimate GM override during a
+	 * PLAYER's active turn — legality logic in a component, against O1.
+	 * `canPlay`/`canMinorAction`/`canPlayFool` are themselves already
+	 * correctly actor/stage/turn-scoped by the server (each only ever true
+	 * when it genuinely is this viewer's own moment), so no separate
+	 * client-side "is it my turn" check is needed for them at all.
+	 */
+	const hasOwnTurnActions = $derived(canPlay || canMinorAction || canPlayFool);
+	const showTurnSection = $derived(hasOwnTurnActions || canEndTurn);
 
 	let selectedSuit = $state<SuitId>('swords');
 	let foolArmed = $state(false);
@@ -133,7 +144,7 @@
 	</section>
 {/if}
 
-{#if controlsActiveTurn}
+{#if showTurnSection}
 	<section class="turn-controls" data-testid="turn-controls" aria-label="Your turn">
 		{#if canPlayFool}
 			<button
@@ -159,32 +170,34 @@
 			</label>
 		{/if}
 
-		{#if ownHand.length === 0}
-			<p class="empty">No Challenge cards in hand.</p>
-		{:else}
-			<ul class="hand">
-				{#each ownHand as slot, index (index)}
-					{@const rendered = renderableCard(slot)}
-					{@const cardId = slot.hidden ? undefined : slot.id}
-					<li data-testid="turn-hand-card">
-						<TarotCard card={rendered.card} faceDown={rendered.faceDown} size="sm" />
-						{#if cardId}
-							{#if foolArmed}
-								{#if cardId !== 'fool'}
-									<button type="button" disabled={actionRunner.pending} onclick={() => pairWithFool(cardId)}> Pair with Fool </button>
-								{/if}
-							{:else}
-								{#if canPlay}
-									<button type="button" disabled={actionRunner.pending} onclick={() => playAction(cardId)}>Play</button>
-								{/if}
-								{#if canMinorAction}
-									<button type="button" disabled={actionRunner.pending} onclick={() => playMinorAction(cardId)}>Minor action</button>
+		{#if hasOwnTurnActions}
+			{#if ownHand.length === 0}
+				<p class="empty">No Challenge cards in hand.</p>
+			{:else}
+				<ul class="hand">
+					{#each ownHand as slot, index (index)}
+						{@const rendered = renderableCard(slot)}
+						{@const cardId = slot.hidden ? undefined : slot.id}
+						<li data-testid="turn-hand-card">
+							<TarotCard card={rendered.card} faceDown={rendered.faceDown} size="sm" />
+							{#if cardId}
+								{#if foolArmed}
+									{#if cardId !== FOOL_CARD_ID}
+										<button type="button" disabled={actionRunner.pending} onclick={() => pairWithFool(cardId)}> Pair with Fool </button>
+									{/if}
+								{:else}
+									{#if canPlay}
+										<button type="button" disabled={actionRunner.pending} onclick={() => playAction(cardId)}>Play</button>
+									{/if}
+									{#if canMinorAction}
+										<button type="button" disabled={actionRunner.pending} onclick={() => playMinorAction(cardId)}>Minor action</button>
+									{/if}
 								{/if}
 							{/if}
-						{/if}
-					</li>
-				{/each}
-			</ul>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		{/if}
 
 		{#if canEndTurn}

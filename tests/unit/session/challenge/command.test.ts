@@ -10,6 +10,7 @@ import { getTarotProcedures } from '$lib/server/content/loader';
 import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/schema';
 import type { ChallengeConfig, ChallengeEnemyFact } from '$lib/engine/session/procedures/challenge/types';
 import { readChallengeState, type ChallengeReduceContext } from '$lib/engine/session/procedures/challenge/reducer';
+import { applyPlayerAction } from '$lib/engine/session/procedures/challenge/turns';
 import {
 	applyChallengeCommand,
 	buildChallengeModifierMaterials,
@@ -186,10 +187,92 @@ describe('Challenge command surface (Increment 3 Task 6)', () => {
 		const gmCtx = ctxFor(GM, catalog, config, seed);
 		// No active round yet — every base command except `begin-challenge` (and
 		// every modifier command) must be rejected outright.
+		//
+		// NOTE (review round, O9): this case alone does NOT discriminate the
+		// gate (`command.ts`'s `if (!legal.includes(command.type))`) from
+		// `dealRound`'s OWN "no active Challenge round" guard — both reject
+		// identically here, so this test still passes with the gate deleted.
+		// `guard-coverage.test.ts` proves `dealRound` rejects this exact state
+		// unaided. The test immediately below this one is the discriminating
+		// case: it constructs a state the underlying MECHANISM would accept,
+		// so only the gate's own rejection can make it pass.
 		const result = applyChallengeCommand(state, { type: 'deal-round' }, materials, gmCtx);
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
 		expect(result.rejection.code).toBe('illegal-command');
+	});
+
+	it('rejects a command the underlying mechanism would ACCEPT but the derived legal set does not offer — the gate does real work, not merely mirror each command\'s own guard (O9)', () => {
+		// `spendCard` (`turns.ts`) rejects a second MINOR action once
+		// `actionTaken` is true, but never checks `actionTaken` for a second
+		// FULL action — only the numeric cap (`cardsThisTurn >= cap`). With the
+		// real content pack's `cardsPerInitiativeTurn: 1`, that gap is
+		// unreachable (one card already exhausts the cap, so the cap check
+		// alone would also reject a second action — no case exists where the
+		// gate's `illegal-command` differs from what `spendCard` would have
+		// said anyway). Raising the cap to 2 — a value the type permits even
+		// though no real content uses it — makes the gap reachable: after one
+		// full action, `cardsThisTurn` is 1, still under a cap of 2, so
+		// `spendCard` would happily accept a SECOND full action. The
+		// derivation still correctly withholds `play-action` once
+		// `actionTaken` is true regardless of the cap — so only the gate
+		// stands between "mechanism would accept" and "actually rejected."
+		const seed = 'command-gate-not-mirrored';
+		const raisedCap: ChallengeConfig = { ...config, cardsPerInitiativeTurn: 2 };
+		const state = makeSessionFixture(seed);
+		const gmCtx = ctxFor(GM, catalog, raisedCap, seed);
+		const begun = applyChallengeCommand(
+			state,
+			{ type: 'begin-challenge', participantTenureIds: ['tenure-1'], tenureOwners: { 'tenure-1': 'user-alice' }, enemyFacts: [] },
+			materials,
+			gmCtx
+		);
+		if (!begun.ok) throw begun;
+		const dealt = applyChallengeCommand(begun.state, { type: 'deal-round' }, materials, gmCtx);
+		if (!dealt.ok) throw dealt;
+		const forced = forceHand(dealt.state, 'tenure-1', ['wands-king', 'swords-vii', 'cups-ii']);
+		const aliceCtx = ctxFor(ALICE, catalog, raisedCap, seed);
+		const placed = applyChallengeCommand(forced, { type: 'place-initiative', tenureId: 'tenure-1', cardId: 'wands-king' }, materials, aliceCtx);
+		if (!placed.ok) throw placed;
+		const revealed = applyChallengeCommand(placed.state, { type: 'reveal-initiative' }, materials, gmCtx);
+		if (!revealed.ok) throw revealed;
+		const begunTurns = applyChallengeCommand(revealed.state, { type: 'begin-turns' }, materials, gmCtx);
+		if (!begunTurns.ok) throw begunTurns;
+
+		// Alice takes her one full action this turn: budget becomes
+		// {cardsThisTurn: 1, actionTaken: true} — still under the raised cap.
+		const firstAction = applyChallengeCommand(
+			begunTurns.state,
+			{ type: 'play-action', tenureId: 'tenure-1', cardId: 'swords-vii' },
+			materials,
+			aliceCtx
+		);
+		if (!firstAction.ok) throw firstAction;
+
+		// The derivation correctly withholds a second `play-action`...
+		expect(legalChallengeBaseCommands(firstAction.state, ALICE, raisedCap)).not.toContain('play-action');
+
+		// ...but calling the underlying mechanism DIRECTLY (bypassing the gate
+		// entirely) for that same second action succeeds — proving this is a
+		// real gap the gate alone closes, not a case every mechanism already
+		// guards redundantly.
+		const mechanismDirect = applyPlayerAction(firstAction.state, 'tenure-1', 'cups-ii', aliceCtx);
+		expect(mechanismDirect.ok).toBe(true);
+
+		// Through the real entry point, the SAME second action is rejected —
+		// by the gate, with a message only the gate produces (never
+		// `spendCard`'s own "no card budget remaining"/"cannot perform a minor
+		// action..." text, since the mechanism itself never even runs).
+		const secondAction = applyChallengeCommand(
+			firstAction.state,
+			{ type: 'play-action', tenureId: 'tenure-1', cardId: 'cups-ii' },
+			materials,
+			aliceCtx
+		);
+		expect(secondAction.ok).toBe(false);
+		if (secondAction.ok) return;
+		expect(secondAction.rejection.code).toBe('illegal-command');
+		expect(secondAction.rejection.message).toBe('play-action is not currently offered to this actor');
 	});
 
 	describe('O1 footgun — hasBow/hasShield fail closed (must be threaded through, not merely defaulted)', () => {

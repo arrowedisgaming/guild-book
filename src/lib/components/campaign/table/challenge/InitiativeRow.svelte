@@ -12,26 +12,40 @@
 	 * the entry it follows and shares every one of those fields with it; only
 	 * `index` stays unique per rendered slot). A face-down entry's
 	 * `aria-label` names the owner and seat POSITION, never a card identity.
+	 *
+	 * `roster` (review round: previously rendered `Player <uuid>` to screen
+	 * readers) supplies real character names — sourced from
+	 * `loadActiveChallengeRoster`, non-secret campaign membership — so a seat
+	 * label reads as a name, never a raw user/tenure id. Still carries no card
+	 * identity; only WHO occupies the seat.
 	 */
 	import { renderableCard } from '$lib/stores/campaign-session.svelte';
 	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
 	import type { ChallengeInitiativeSlotView } from '$lib/engine/session/procedures/challenge/projection';
+	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 
 	let {
 		entry,
 		tenureOwners,
+		roster,
 		viewerUserId,
 		isActive
 	}: {
 		entry: ChallengeInitiativeSlotView;
 		tenureOwners: Record<string, string>;
+		roster: ActiveChallengeTenureView[];
 		viewerUserId: string;
 		isActive: boolean;
 	} = $props();
 
 	const ownerUserId = $derived(tenureOwners[entry.tenureId]);
+	const character = $derived(roster.find((r) => r.tenureId === entry.tenureId));
 	const seatLabel = $derived(
-		ownerUserId ? (ownerUserId === viewerUserId ? 'You' : `Player ${ownerUserId}`) : `GM entry (${entry.tenureId})`
+		ownerUserId
+			? ownerUserId === viewerUserId
+				? 'You'
+				: (character?.characterName ?? 'Another adventurer')
+			: `Enemy (${entry.tenureId})`
 	);
 	const rendered = $derived(renderableCard(entry.card));
 	const faceDownLabel = $derived(`${seatLabel} — Initiative, seat ${entry.index + 1}, face down`);

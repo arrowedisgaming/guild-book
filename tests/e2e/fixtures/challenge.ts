@@ -15,7 +15,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * command handler (and the resulting store/DOM update) has not necessarily
  * landed yet, so the NEXT check can read the pre-command DOM, "confirm" the
  * same seat is still active, and then have the real response land mid
- * re-interaction — tearing down the `{#if controlsActiveTurn}` block out
+ * re-interaction — tearing down the `turn-controls` section out
  * from under an in-flight Playwright action ("element was detached from the
  * DOM, retrying"). `clickCommand` below waits for the actual
  * `/challenge-commands` response before returning, so every helper here
@@ -72,7 +72,11 @@ export function campaignIdFromUrl(url: string): string {
 export async function beginChallenge(
 	gmPage: Page,
 	characterNames: string[],
-	enemy?: { id: string; typeIds: string; size: string; threat: string; count: string }
+	// `size`/`threat` are no longer free text in the UI (review round: a
+	// typo silently mis-scored the GM hand-size formula) — `largerThanHuman`
+	// drives the checkbox, `threat` selects one of the content pack's real
+	// `denizens.json` threat ids (e.g. `'minion'`).
+	enemy?: { id: string; typeIds: string; largerThanHuman?: boolean; threat: string; count: string }
 ): Promise<void> {
 	await expect(gmPage.getByTestId('begin-challenge-form')).toBeVisible();
 	for (const name of characterNames) {
@@ -83,8 +87,8 @@ export async function beginChallenge(
 		const row = gmPage.getByTestId('enemy-draft-row').first();
 		await row.getByLabel('Enemy id').fill(enemy.id);
 		await row.getByLabel('Enemy type ids (comma-separated)').fill(enemy.typeIds);
-		await row.getByLabel('Enemy size').fill(enemy.size);
-		await row.getByLabel('Enemy threat').fill(enemy.threat);
+		if (enemy.largerThanHuman) await row.getByLabel('Larger than a human').check();
+		await row.getByLabel('Enemy threat').selectOption(enemy.threat);
 		await row.getByLabel('Enemy headcount').fill(enemy.count);
 	}
 	await clickCommand(gmPage, gmPage.getByTestId('begin-challenge-button'));
@@ -158,6 +162,26 @@ async function anyPageShowsTurnControls(pages: Page[], timeoutMs: number): Promi
 	}
 }
 
+/**
+ * Waits up to `timeoutMs` for SOME page in `pages` to show `turn-controls`
+ * WITH real cards (`turn-hand-card`) — the genuinely active participant's
+ * own turn, as opposed to the GM's bare oversight override (see
+ * `playAllTurns`'s doc comment). Polling, not a one-shot check: the actual
+ * active participant's own client only learns of a NEW active turn via
+ * their own next `/sync` poll (up to ~1.15s away), which can easily still
+ * be in flight the instant this looks. */
+async function findActingPage(pages: Page[], timeoutMs: number): Promise<Page | null> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		for (const page of pages) {
+			if (!(await page.getByTestId('turn-controls').isVisible().catch(() => false))) continue;
+			if ((await page.getByTestId('turn-hand-card').count()) > 0) return page;
+		}
+		if (Date.now() > deadline) return null;
+		await pages[0].waitForTimeout(150);
+	}
+}
+
 /** Whichever of `pages` currently shows `turn-controls` takes its turn:
  * plays its first hand card if a "Play" button is offered, then ends the
  * turn — UNLESS that hand holds the Fool, in which case it pairs the Fool
@@ -168,30 +192,61 @@ async function anyPageShowsTurnControls(pages: Page[], timeoutMs: number): Promi
  * which page is active next — see the file header for why that matters.
  * Loops until no page shows `turn-controls` at all (turns exhausted for
  * this round — robust to a Fool-inserted extra turn changing the total
- * count). */
+ * count).
+ *
+ * Root-cause note (review round, `TurnControls.svelte`'s O1 fix): the GM's
+ * `turn-controls` section is now visible whenever `end-turn` is offered —
+ * which `legalChallengeBaseCommands` offers the GM for ANY active turn (their
+ * own oversight authority to end anyone's turn), not only their own enemy's.
+ * So during an ordinary PLAYER's turn, the GM's page ALSO shows
+ * `turn-controls` — a bare "End turn" override, no hand cards — often before
+ * the actually-active player's OWN client has even polled its new turn into
+ * view. A first attempt at this fix picked whichever page merely had
+ * `turn-hand-card`S *right now*, falling back to the GM's override the
+ * instant no page had any yet — but that raced the active player's own poll
+ * every time and let the GM's override silently end EVERY turn in the round
+ * before any player ever got to act (confirmed by direct reproduction: the
+ * GM's page cycled through all three Initiative seats itself, `stage` never
+ * advancing on either player's OWN client, which stayed on "Initiative
+ * revealed" for the whole round). `findActingPage` above polls for a page
+ * with real cards for a real budget (letting the active client's own poll
+ * catch up) before this function ever falls back to ending whichever bare
+ * `turn-controls` is visible at all. */
 export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promise<void>): Promise<void> {
 	while (await anyPageShowsTurnControls(pages, 6000)) {
 		let acted = false;
-		for (const page of pages) {
-			if (!(await page.getByTestId('turn-controls').isVisible().catch(() => false))) continue;
-			const foolCard = page.getByTestId('turn-hand-card').locator('[data-card-id="fool"]');
-			if ((await foolCard.count()) > 0 && (await page.getByTestId('play-fool-toggle').count()) > 0) {
-				await page.getByTestId('play-fool-toggle').click();
-				const pairButton = page.getByTestId('turn-hand-card').getByRole('button', { name: 'Pair with Fool' }).first();
-				await clickCommand(page, pairButton);
-				if (onFool) await onFool(page);
-				await clickCommand(page, page.getByTestId('end-turn-button'));
+		const actingPage = await findActingPage(pages, 4000);
+
+		if (actingPage) {
+			const handCards = actingPage.getByTestId('turn-hand-card');
+			const foolCard = handCards.locator('[data-card-id="fool"]');
+			if ((await foolCard.count()) > 0 && (await actingPage.getByTestId('play-fool-toggle').count()) > 0) {
+				await actingPage.getByTestId('play-fool-toggle').click();
+				const pairButton = actingPage.getByTestId('turn-hand-card').getByRole('button', { name: 'Pair with Fool' }).first();
+				await clickCommand(actingPage, pairButton);
+				if (onFool) await onFool(actingPage);
+				await clickCommand(actingPage, actingPage.getByTestId('end-turn-button'));
 			} else {
-				const handCards = page.getByTestId('turn-hand-card');
-				if ((await handCards.count()) > 0) {
-					const playButton = handCards.first().getByRole('button', { name: 'Play', exact: true });
-					if (await playButton.isVisible().catch(() => false)) await clickCommand(page, playButton);
-				}
-				await clickCommand(page, page.getByTestId('end-turn-button'));
+				const playButton = handCards.first().getByRole('button', { name: 'Play', exact: true });
+				if (await playButton.isVisible().catch(() => false)) await clickCommand(actingPage, playButton);
+				await clickCommand(actingPage, actingPage.getByTestId('end-turn-button'));
 			}
 			acted = true;
-			break;
+		} else {
+			// No page showed real cards within budget — a genuinely
+			// empty-handed active turn, or nothing left but the GM's
+			// oversight override. Either way, end whichever `turn-controls`
+			// is visible at all.
+			for (const page of pages) {
+				if (!(await page.getByTestId('turn-controls').isVisible().catch(() => false))) continue;
+				if (await page.getByTestId('end-turn-button').isVisible().catch(() => false)) {
+					await clickCommand(page, page.getByTestId('end-turn-button'));
+					acted = true;
+				}
+				break;
+			}
 		}
+
 		if (!acted) break;
 	}
 }

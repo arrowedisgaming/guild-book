@@ -94,7 +94,11 @@ function isRateLimited(request: Request, clientAddress: string): boolean {
 	}
 
 	bucket.count += 1;
-	const maxWrites = pathname.includes(CHALLENGE_COMMANDS_PATH_SEGMENT) ? RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS : RATE_LIMIT_MAX_WRITES;
+	// `endsWith`, not `includes` (review round): the route is always
+	// `.../challenge-commands` at the END of the path — an exact structural
+	// match, not merely a substring that some unrelated future path could
+	// coincidentally contain in its middle.
+	const maxWrites = pathname.endsWith(CHALLENGE_COMMANDS_PATH_SEGMENT) ? RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS : RATE_LIMIT_MAX_WRITES;
 	return bucket.count > maxWrites;
 }
 

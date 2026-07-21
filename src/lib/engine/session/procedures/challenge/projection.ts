@@ -92,6 +92,14 @@ interface ChallengeSharedView {
 	activeTurnIndex: number | null;
 	turnKind: ChallengeTurnKind | null;
 	budgets: Record<string, ChallengeParticipantBudget>;
+	/** The content-driven per-turn caps `budgets[*].cardsThisTurn` is measured
+	 * against (`ChallengeConfig.cardsPerInitiativeTurn`/`gmPlayBudget`) — game
+	 * rules, not secret, and carried here (review round: "Step 2 requires
+	 * public turn/budget counters") so a component can render "N of CAP cards
+	 * played this turn" without inventing its own copy of a content-hydrated
+	 * number. */
+	cardsPerInitiativeTurn: number;
+	gmPlayBudget: number;
 	mulliganUsedThisRound: boolean;
 	modifiers: ChallengeModifierView[];
 	/** O1's `projection.controls` — render buttons ONLY from this list, never
@@ -163,6 +171,8 @@ export function projectChallengeForActor(
 		activeTurnIndex: challenge.activeTurnIndex,
 		turnKind: challenge.turnKind,
 		budgets: challenge.budgets,
+		cardsPerInitiativeTurn: config.cardsPerInitiativeTurn,
+		gmPlayBudget: config.gmPlayBudget,
 		mulliganUsedThisRound: challenge.mulliganUsedThisRound,
 		modifiers: challenge.modifiers.map(stripModifier),
 		legalCommands: legalChallengeCommands(state, actor, config, modifierCaps)

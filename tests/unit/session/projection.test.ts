@@ -233,6 +233,58 @@ describe('projectForActor — shared public projection', () => {
 	});
 });
 
+describe('projectForActor — per-zone hand fields (Increment 3 Task 5, O2)', () => {
+	const catalog = makeSessionCatalogFixture();
+
+	// The exact scenario tenure-keying exists for (Increment 3 Task 2
+	// resolution 8 / Task 5 O2): one USER owning two DIFFERENT tenure-keyed
+	// hand zones at once — e.g. a dead adventurer's not-yet-swept zone
+	// alongside a freshly-dealt replacement's. `playerHandCounts`/
+	// `privateHand` are documented (previous test, above) to merge these; the
+	// additive per-zone-id fields must NOT.
+	it('keeps two hand zones for the same owner distinct by zone id — never merged, even though the aggregate fields still merge them', () => {
+		const state = fixtureWithHands({ playerA: ['cups-i'] });
+		const secondCard = state.playerDraw.pop();
+		if (!secondCard) throw new Error('fixture empty');
+		state.privateZones.push({
+			id: 'hand:tenure-replacement',
+			kind: 'player-hand',
+			ownerUserId: 'playerA',
+			cards: [secondCard]
+		});
+
+		const playerProjection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+		const gmProjection = projectForActor(state, GM, catalog) as SessionGmProjection;
+
+		// Per-zone: distinct, never merged.
+		expect(playerProjection.privateHandsByZoneId).toEqual({
+			'hand:playerA': [{ hidden: false, id: 'cups-i', label: 'cups-i', imageKey: 'cups-i', value: 0 }],
+			'hand:tenure-replacement': [{ hidden: false, id: secondCard, label: secondCard, imageKey: secondCard, value: 0 }]
+		});
+		expect(gmProjection.public.playerHandCountsByZoneId).toEqual({
+			'hand:playerA': 1,
+			'hand:tenure-replacement': 1
+		});
+
+		// Documented pre-existing behavior (unchanged, previous test): the
+		// aggregate fields still merge by owner — this fix is additive, not a
+		// rewrite of the existing owner-keyed shape (O2/brief: "a rewrite of
+		// the ownership model is not something to undertake unilaterally").
+		expect(gmProjection.public.playerHandCounts.playerA).toBe(2);
+		expect(playerProjection.privateHand.map((slot) => (slot.hidden ? null : slot.id)).sort()).toEqual(
+			['cups-i', secondCard].sort()
+		);
+	});
+
+	it('omits a zone id entirely from privateHandsByZoneId for a different owner — never leaks another player\'s per-zone hand', () => {
+		const state = fixtureWithHands({ playerA: ['cups-i'], playerB: ['swords-x'] });
+		const projection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
+
+		expect(Object.keys(projection.privateHandsByZoneId)).toEqual(['hand:playerA']);
+		expect(JSON.stringify(projection.privateHandsByZoneId)).not.toContain('swords-x');
+	});
+});
+
 describe('projectForActor — hydration from a rich runtime catalog (Task 4 metadata)', () => {
 	const richCatalog = makeRichSessionCatalogFixture();
 

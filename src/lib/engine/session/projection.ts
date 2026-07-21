@@ -77,6 +77,18 @@ function playerHandCounts(state: SessionEngineStateV1): Record<UserId, number> {
 	return counts;
 }
 
+/** Additive (O2): the same hand-count information as `playerHandCounts`, but
+ * keyed by zone id instead of summed by owner — see
+ * `SessionPublicProjection.playerHandCountsByZoneId`'s doc comment. */
+function playerHandCountsByZoneId(state: SessionEngineStateV1): Record<string, number> {
+	const counts: Record<string, number> = {};
+	for (const zone of state.privateZones) {
+		if (zone.kind !== 'player-hand') continue;
+		counts[zone.id] = zone.cards.length;
+	}
+	return counts;
+}
+
 function isCardBackZone(zone: OwnedPrivateZone): zone is OwnedPrivateZone & { kind: 'player-facedown' | 'player-prepared' } {
 	return zone.kind === 'player-facedown' || zone.kind === 'player-prepared';
 }
@@ -116,6 +128,7 @@ function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCa
 		playerDiscardTop: topSlot(state.playerDiscard, catalog),
 		gmHandCount: state.gmHand.length,
 		playerHandCounts: playerHandCounts(state),
+		playerHandCountsByZoneId: playerHandCountsByZoneId(state),
 		privateZoneCardBacks: buildPrivateZoneCardBacks(state),
 		publicZones: state.publicZones.map((zone) => buildPublicZoneView(zone, catalog)),
 		pendingZoneCounts: state.pendingZones.map((zone) => ({ id: zone.id, deck: zone.deck, count: zone.cards.length }))
@@ -124,6 +137,18 @@ function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCa
 
 function ownedZoneCards(state: SessionEngineStateV1, ownerUserId: UserId, kind: string): CardId[] {
 	return state.privateZones.filter((zone) => zone.ownerUserId === ownerUserId && zone.kind === kind).flatMap((zone) => zone.cards);
+}
+
+/** Additive (O2): the actor's own `player-hand` zones, keyed by zone id
+ * instead of flattened into one array — see
+ * `SessionPlayerProjection.privateHandsByZoneId`'s doc comment. */
+function ownedHandsByZoneId(state: SessionEngineStateV1, ownerUserId: UserId, catalog: TarotCardCatalog): Record<string, CardSlot[]> {
+	const out: Record<string, CardSlot[]> = {};
+	for (const zone of state.privateZones) {
+		if (zone.kind !== 'player-hand' || zone.ownerUserId !== ownerUserId) continue;
+		out[zone.id] = visibleSlots(zone.cards, catalog);
+	}
+	return out;
 }
 
 /** GM-only hydration of every pending zone's real card contents (see
@@ -168,6 +193,7 @@ export function projectForActor(state: SessionEngineStateV1, actor: SessionActor
 		privateHand: visibleSlots(ownedZoneCards(state, actor.userId, 'player-hand'), catalog),
 		privateFacedown: visibleSlots(ownedZoneCards(state, actor.userId, 'player-facedown'), catalog),
 		privatePrepared: visibleSlots(ownedZoneCards(state, actor.userId, 'player-prepared'), catalog),
+		privateHandsByZoneId: ownedHandsByZoneId(state, actor.userId, catalog),
 		legalCommands
 	};
 	return playerProjection;

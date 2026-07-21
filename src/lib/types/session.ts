@@ -369,6 +369,20 @@ export interface SessionPublicProjection {
 	playerDiscardTop: CardSlot | null;
 	gmHandCount: number;
 	playerHandCounts: Record<UserId, number>;
+	/**
+	 * Additive (Increment 3 Task 5, O2). `playerHandCounts` sums every
+	 * `player-hand` zone a user owns into one figure — correct for every
+	 * procedure before Challenge, where a user never owns more than one hand
+	 * zone at once. Challenge's tenure-keyed hand zones
+	 * (`challengeHandZoneId`) break that assumption: on death a user can
+	 * transiently own a dead tenure's zone alongside a replacement's, and the
+	 * two must never be reported as one merged count. Keyed by zone id (not
+	 * owner), so any consumer that knows which zone id belongs to which
+	 * tenure (or player) can read that seat's count specifically, without
+	 * disturbing `playerHandCounts` for every existing non-Challenge
+	 * consumer.
+	 */
+	playerHandCountsByZoneId: Record<string, number>;
 	privateZoneCardBacks: PublicPrivateZoneCardBacks[];
 	publicZones: PublicSessionZoneView[];
 	pendingZoneCounts: Array<{ id: string; deck: 'major' | 'player'; count: number }>;
@@ -383,6 +397,17 @@ export interface SessionPlayerProjection {
 	privateHand: CardSlot[];
 	privateFacedown: CardSlot[];
 	privatePrepared: CardSlot[];
+	/**
+	 * Additive (Increment 3 Task 5, O2's shared-projection fix). `privateHand`
+	 * flat-maps every `player-hand` zone this actor owns into one merged
+	 * array — the same undifferentiated-merge gap `playerHandCountsByZoneId`
+	 * fixes for counts, but for identities. Keyed by zone id so a caller who
+	 * knows a specific tenure's hand zone id (`challengeHandZoneId(tenureId)`)
+	 * can read exactly that tenure's cards, never a dead tenure's leftover
+	 * cards merged in with a replacement's. `privateHand` is unchanged and
+	 * kept for every existing (non-Challenge) consumer.
+	 */
+	privateHandsByZoneId: Record<string, CardSlot[]>;
 	legalCommands: SessionCommandType[];
 }
 

@@ -10,8 +10,17 @@
  */
 
 import { nanoid } from 'nanoid';
+import { and, eq, exists } from 'drizzle-orm';
 import type { AppDb } from '$lib/server/db';
 import { runAtomic, isUniqueConstraintError, type AppDbContext } from '$lib/server/db/atomic';
+import { runCampaignAtomic, type CampaignAtomicStatement } from '$lib/server/campaign/atomic';
+import { campaignEvents, playSessions, sessionPrivateStates, sessionServerStates } from '$lib/server/db/schema';
+import { migrateCharacterData } from '$lib/engine/character-migration';
+import {
+	challengeDeathStatements,
+	readChallengeDeathContext,
+	type ChallengeDeathContext
+} from '$lib/server/campaign/tenure';
 import { sessionCommandEnvelopeSchema } from '$lib/schemas/session.schema';
 import { sha256Hex, canonicalJsonStringify } from '$lib/server/content/canonical-json';
 import { toSessionEngineRuntime } from '$lib/server/content/session-runtime';
@@ -19,6 +28,12 @@ import { reduceSession, type ReduceContext } from '$lib/engine/session/reducer';
 import { projectForActor, type SessionProjection } from '$lib/engine/session/projection';
 import { SessionInvariantError } from '$lib/engine/session/invariants';
 import { makeRng } from '$lib/engine/rng';
+import {
+	admitPendingJoinTenure,
+	markTenureDead,
+	type ChallengeReduceContext
+} from '$lib/engine/session/procedures/challenge/reducer';
+import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/schema';
 import {
 	buildAcceptedCommandStatements,
 	buildRejectedCommandStatements,
@@ -28,6 +43,7 @@ import {
 	loadSessionSummary,
 	recordFreshCursorHintAfterCommit,
 	resolveSessionActor,
+	splitEngineState,
 	SessionLoadIntegrityError,
 	SessionNotFoundError,
 	type LoadedSession
@@ -444,4 +460,369 @@ export async function loadProjectionForActor(
 		}
 		return null;
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Challenge death (Increment 3 Task 5, O4)
+//
+// A DIFFERENT atomic-write path from `executeCommand` above, by design: an
+// accepted `SessionCommand` only ever touches session-engine tables, so
+// `buildAcceptedCommandStatements` + `runAtomic` (raw statements) is the
+// right tool. Marking a participating adventurer dead ALSO has to claim the
+// character version, update its life JSON/status, end its tenure, and free
+// membership eligibility — campaign/character tables `$lib/server/campaign/
+// tenure.ts` already writes via Drizzle + `runCampaignAtomic` (Increment 1's
+// established conditional-claim pattern). Rather than bridge two different
+// low-level execution engines for one write, this path expresses the
+// session-fragment side ALSO as plain Drizzle statements (mirroring
+// `buildAcceptedCommandStatements`'s content, just not its raw-SQL idiom) so
+// everything — character claim, character update, tenure end, session
+// fragments, and the redaction/death events — runs through ONE
+// `runCampaignAtomic` call. `$lib/server/character/life.ts`'s
+// `markCharacterDead` is untouched: it remains the out-of-session/no-active-
+// procedure death path.
+// ---------------------------------------------------------------------------
+
+export interface ChallengeDeathInput {
+	db: AppDb;
+	campaignId: string;
+	sessionId: string;
+	/** The dying tenure — a `campaignAdventurerTenures.id`, never a user id
+	 * (O1/O7). */
+	tenureId: string;
+	actorUserId: string;
+	now?: Date;
+}
+
+export type ChallengeDeathFailureReason =
+	| 'not-found'
+	| 'not-authorized'
+	| 'illegal-command'
+	| 'version-conflict'
+	| 'conflict';
+
+export type ChallengeDeathOutcome =
+	| { ok: true; sessionVersion: number; characterVersion: number; endedTenureId: string }
+	| { ok: false; reason: ChallengeDeathFailureReason; message?: string };
+
+type BuildChallengeDeathStatementsResult =
+	| {
+			ok: true;
+			statements: CampaignAtomicStatement[];
+			expectedSessionVersion: number;
+			expectedCharacterVersion: number;
+			nextSessionVersion: number;
+			nextCharacterVersion: number;
+	  }
+	| { ok: false; reason: ChallengeDeathFailureReason; message?: string };
+
+/**
+ * Builds (but does NOT run) the full atomic statement list for a Challenge
+ * death, WITHOUT mutating anything — separated from `executeChallengeDeath`
+ * so a caller (this module's own tests, `tests/integration/
+ * challenge-death.test.ts`) can inject a failure at any one statement and
+ * prove the whole batch rolls back, exactly like `session-atomicity.test.ts`
+ * already does for `buildAcceptedCommandStatements`.
+ *
+ * Validates and rejects (never throws on caller input — O5) at every step:
+ * actor resolution, session load/status, tenure/character eligibility, and
+ * the pure `markTenureDead` reducer's own authorization/stage checks are ALL
+ * evaluated before a single statement is built.
+ */
+export async function buildChallengeDeathStatements(
+	input: ChallengeDeathInput
+): Promise<BuildChallengeDeathStatementsResult> {
+	const { db } = input;
+	const now = input.now ?? new Date();
+
+	const actor = await resolveSessionActor(db, input.campaignId, input.actorUserId);
+	if (!actor) return { ok: false, reason: 'not-authorized' };
+
+	let loaded: LoadedSession;
+	try {
+		loaded = await loadSessionForReduce(db, input.sessionId);
+	} catch (cause) {
+		if (cause instanceof SessionNotFoundError || cause instanceof SessionLoadIntegrityError) {
+			return { ok: false, reason: 'not-found' };
+		}
+		throw cause;
+	}
+	if (loaded.campaignId !== input.campaignId) return { ok: false, reason: 'not-found' };
+	if (loaded.status !== 'active') {
+		return { ok: false, reason: 'illegal-command', message: `session is ${loaded.status}, no commands are accepted` };
+	}
+
+	const deathContext = await readChallengeDeathContext(db, input.tenureId);
+	if (!deathContext || deathContext.campaignId !== input.campaignId) {
+		return { ok: false, reason: 'not-found' };
+	}
+
+	const config = buildChallengeConfig(loaded.runtimeContent.procedures, loaded.runtimeContent.formulas);
+	const rng = makeRng(deriveAttemptSeed(loaded.shuffleSeed, loaded.currentVersion, 1));
+	const context: ChallengeReduceContext = { actor, runtime: toSessionEngineRuntime(loaded.runtimeContent), rng, config };
+
+	const reduceResult = markTenureDead(loaded.engineState, input.tenureId, context);
+	if (!reduceResult.ok) {
+		return {
+			ok: false,
+			reason: reduceResult.rejection.code === 'not-authorized' ? 'not-authorized' : 'illegal-command',
+			message: reduceResult.rejection.message
+		};
+	}
+
+	const nextSessionVersion = loaded.currentVersion + 1;
+	const nextCharacterVersion = deathContext.characterVersion + 1;
+	const finalState: SessionEngineStateV1 = { ...reduceResult.state, version: nextSessionVersion };
+	const { publicFragment, serverFragment, privateFragmentsByRecipient } = splitEngineState(
+		finalState,
+		loaded.shuffleSeed,
+		loaded.gmUserId,
+		loaded.recipientUserIds
+	);
+
+	const claimId = nanoid();
+	const sessionGuard = exists(
+		db
+			.select({ id: playSessions.id })
+			.from(playSessions)
+			.where(and(eq(playSessions.id, input.sessionId), eq(playSessions.version, loaded.currentVersion)))
+	);
+
+	const statements: CampaignAtomicStatement[] = [
+		...challengeDeathStatements(db, {
+			claimId,
+			campaignId: input.campaignId,
+			characterId: deathContext.characterId,
+			tenureId: input.tenureId,
+			actorUserId: input.actorUserId,
+			sessionId: input.sessionId,
+			characterDataJson: buildDeadCharacterDataJson(
+				deathContext,
+				input.campaignId,
+				input.sessionId,
+				input.actorUserId,
+				now
+			),
+			expectedCharacterVersion: deathContext.characterVersion,
+			now,
+			sessionGuard
+		}),
+		db
+			.update(playSessions)
+			.set({
+				version: nextSessionVersion,
+				phase: finalState.phase,
+				procedureId: finalState.procedure?.procedureId ?? null,
+				publicStateJson: JSON.stringify(publicFragment)
+			})
+			.where(and(eq(playSessions.id, input.sessionId), eq(playSessions.version, loaded.currentVersion))),
+		db
+			.update(sessionServerStates)
+			.set({ sessionVersion: nextSessionVersion, serverStateJson: JSON.stringify(serverFragment), updatedAt: now })
+			.where(eq(sessionServerStates.sessionId, input.sessionId))
+	];
+
+	for (const [recipientUserId, fragment] of privateFragmentsByRecipient) {
+		statements.push(
+			db
+				.update(sessionPrivateStates)
+				.set({ sessionVersion: nextSessionVersion, privateStateJson: JSON.stringify(fragment), updatedAt: now })
+				.where(and(eq(sessionPrivateStates.sessionId, input.sessionId), eq(sessionPrivateStates.recipientUserId, recipientUserId)))
+		);
+	}
+
+	for (const event of reduceResult.events) {
+		if (event.privatePayloads) {
+			// Never reachable today (every card leaving a hand during death
+			// lands in a PUBLIC discard pile — `card-commands.ts`'s
+			// `buildMoveEvent` only attaches `privatePayloads` for a private
+			// destination), but guarded rather than silently dropped: this path
+			// has no `campaign_event_secrets` writer, and dropping a private
+			// payload silently would be worse than failing loudly.
+			throw new Error(`buildChallengeDeathStatements: unexpected private payload on event ${event.kind}`);
+		}
+		statements.push(
+			db.insert(campaignEvents).values({
+				campaignId: input.campaignId,
+				membershipId: deathContext.membershipId,
+				tenureId: input.tenureId,
+				characterId: deathContext.characterId,
+				sessionId: input.sessionId,
+				actorUserId: input.actorUserId,
+				kind: event.kind,
+				publicPayloadJson: JSON.stringify(event.publicPayload),
+				createdAt: now
+			})
+		);
+	}
+
+	statements.push(
+		db.insert(campaignEvents).values({
+			campaignId: input.campaignId,
+			membershipId: deathContext.membershipId,
+			tenureId: input.tenureId,
+			characterId: deathContext.characterId,
+			sessionId: input.sessionId,
+			actorUserId: input.actorUserId,
+			kind: 'adventurer.died',
+			publicPayloadJson: JSON.stringify({
+				membershipId: deathContext.membershipId,
+				characterId: deathContext.characterId,
+				sessionId: input.sessionId
+			}),
+			createdAt: now
+		})
+	);
+
+	return {
+		ok: true,
+		statements,
+		expectedSessionVersion: loaded.currentVersion,
+		expectedCharacterVersion: deathContext.characterVersion,
+		nextSessionVersion,
+		nextCharacterVersion
+	};
+}
+
+function buildDeadCharacterDataJson(
+	context: ChallengeDeathContext,
+	campaignId: string,
+	sessionId: string,
+	actorUserId: string,
+	now: Date
+): string {
+	let migrated;
+	try {
+		migrated = migrateCharacterData(JSON.parse(context.characterDataJson));
+	} catch {
+		migrated = migrateCharacterData(null);
+	}
+	migrated.life = {
+		status: 'dead',
+		diedAt: now.toISOString(),
+		campaignId,
+		sessionId,
+		markedByUserId: actorUserId
+	};
+	return JSON.stringify(migrated);
+}
+
+/** Re-reads current character/tenure/session state after a failed commit to
+ * classify WHY (never surfaced to the caller as a bare crash unless it truly
+ * is unexplained) — mirrors `$lib/server/character/life.ts`'s
+ * `classifyDeathWriteFailure`. Returns `null` (meaning: rethrow, this is a
+ * genuinely unexpected failure) when none of the known causes explain it. */
+async function classifyChallengeDeathFailure(
+	input: ChallengeDeathInput,
+	expected: { characterVersion: number; sessionVersion: number }
+): Promise<ChallengeDeathOutcome | null> {
+	const context = await readChallengeDeathContext(input.db, input.tenureId);
+	if (!context) return { ok: false, reason: 'conflict', message: 'the tenure or character changed before this death could commit' };
+	if (context.characterVersion !== expected.characterVersion) {
+		return { ok: false, reason: 'version-conflict', message: `character is now at version ${context.characterVersion}` };
+	}
+	try {
+		const reloaded = await loadSessionForReduce(input.db, input.sessionId);
+		if (reloaded.currentVersion !== expected.sessionVersion) {
+			return { ok: false, reason: 'conflict', message: 'the session advanced before this death could commit' };
+		}
+	} catch {
+		return { ok: false, reason: 'conflict', message: 'the session changed before this death could commit' };
+	}
+	return null;
+}
+
+/**
+ * Runs `buildChallengeDeathStatements` and commits it as ONE atomic write
+ * (O4). Reclassifies a failed commit via `classifyChallengeDeathFailure`
+ * rather than letting a lost-race constraint violation surface as a raw
+ * throw.
+ */
+export async function executeChallengeDeath(input: ChallengeDeathInput): Promise<ChallengeDeathOutcome> {
+	const built = await buildChallengeDeathStatements(input);
+	if (!built.ok) return built;
+
+	try {
+		await runCampaignAtomic(input.db, built.statements);
+	} catch (cause) {
+		const classified = await classifyChallengeDeathFailure(input, {
+			characterVersion: built.expectedCharacterVersion,
+			sessionVersion: built.expectedSessionVersion
+		});
+		if (classified) return classified;
+		throw cause;
+	}
+
+	return {
+		ok: true,
+		sessionVersion: built.nextSessionVersion,
+		characterVersion: built.nextCharacterVersion,
+		endedTenureId: input.tenureId
+	};
+}
+
+// ---------------------------------------------------------------------------
+// Boundary-only replacement admission (Increment 3 Task 5, O3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds the (Drizzle-compatible) statements needed to register `tenureId`
+ * as a Challenge pending joiner in `sessionId` — `[]` when there is no
+ * active session, the session isn't `'active'`, there is no active Challenge
+ * round, or `tenureId` is already known (already an active participant or
+ * already pending; `admitPendingJoinTenure` is idempotent). Intended as the
+ * `buildChallengeJoinStatements` callback `$lib/server/campaign/tenure.ts`'s
+ * `attachAdventurer` accepts, so tenure creation and pending-join
+ * registration commit in ONE transaction.
+ */
+export async function buildPendingChallengeJoinStatements(input: {
+	db: AppDb;
+	sessionId: string;
+	tenureId: string;
+}): Promise<CampaignAtomicStatement[]> {
+	let loaded: LoadedSession;
+	try {
+		loaded = await loadSessionForReduce(input.db, input.sessionId);
+	} catch {
+		return [];
+	}
+	if (loaded.status !== 'active') return [];
+
+	const catalog = toSessionEngineRuntime(loaded.runtimeContent).catalog;
+	const reduceResult = admitPendingJoinTenure(loaded.engineState, input.tenureId, catalog);
+	if (!reduceResult.ok || reduceResult.state === loaded.engineState) return [];
+
+	const nextVersion = loaded.currentVersion + 1;
+	const finalState: SessionEngineStateV1 = { ...reduceResult.state, version: nextVersion };
+	const { publicFragment, serverFragment, privateFragmentsByRecipient } = splitEngineState(
+		finalState,
+		loaded.shuffleSeed,
+		loaded.gmUserId,
+		loaded.recipientUserIds
+	);
+
+	const statements: CampaignAtomicStatement[] = [
+		input.db
+			.update(playSessions)
+			.set({
+				version: nextVersion,
+				phase: finalState.phase,
+				procedureId: finalState.procedure?.procedureId ?? null,
+				publicStateJson: JSON.stringify(publicFragment)
+			})
+			.where(and(eq(playSessions.id, input.sessionId), eq(playSessions.version, loaded.currentVersion))),
+		input.db
+			.update(sessionServerStates)
+			.set({ sessionVersion: nextVersion, serverStateJson: JSON.stringify(serverFragment) })
+			.where(eq(sessionServerStates.sessionId, input.sessionId))
+	];
+	for (const [recipientUserId, fragment] of privateFragmentsByRecipient) {
+		statements.push(
+			input.db
+				.update(sessionPrivateStates)
+				.set({ sessionVersion: nextVersion, privateStateJson: JSON.stringify(fragment) })
+				.where(and(eq(sessionPrivateStates.sessionId, input.sessionId), eq(sessionPrivateStates.recipientUserId, recipientUserId)))
+		);
+	}
+	return statements;
 }

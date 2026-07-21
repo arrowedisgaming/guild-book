@@ -20,7 +20,8 @@ import type {
 	CardId,
 	SessionEngineStateV1,
 	SessionEvent,
-	SessionRejection
+	SessionRejection,
+	TarotCardCatalog
 } from '$lib/types/session';
 import { z } from 'zod';
 import { assertSessionInvariants } from '../../invariants';
@@ -710,4 +711,200 @@ function discardOneCard(
 	const entry = context.runtime.catalog[cardId];
 	const destinationZoneId = entry?.deck === 'player' ? FIXED_ZONE_IDS.playerDiscard : FIXED_ZONE_IDS.majorDiscard;
 	return reduceSession(state, { type: 'discard', sourceZoneId: zoneId, cardId, destinationZoneId }, context);
+}
+
+// ---------------------------------------------------------------------------
+// Death and legal replacement joins (Increment 3 Task 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every Challenge-owned PRIVATE zone id a dying tenure might currently hold,
+ * computed fresh from `tenureId` itself — deliberately NOT found by scanning
+ * `state.privateZones` for a matching `ownerUserId`. `tenureOwners` keys
+ * private-zone ownership by USER, and the same user may simultaneously own
+ * another (replacement) tenure's zones (O2's whole reason tenure-keyed zone
+ * ids exist — see `challengeHandZoneId`'s doc comment); scanning by owner
+ * would wrongly sweep a still-live tenure's zones too. Computing the exact
+ * ids for exactly this `tenureId` is what keeps the two separable. Includes
+ * every private zone kind a Challenge participant can hold across Tasks 2-4:
+ * the hand, the pre-reveal Initiative facedown, the prepared Aim, this
+ * tenure's own Guardian Angel ward (as TARGET), and its (always-transient,
+ * normally already-empty) Guardian Angel casting staging zone.
+ */
+function deathOwnedZoneIds(tenureId: string): string[] {
+	return [
+		challengeHandZoneId(tenureId),
+		challengeInitiativeFacedownZoneId(tenureId),
+		challengeAimZoneId(tenureId),
+		challengeGuardianAngelZoneId(tenureId),
+		challengeGuardianAngelStagingZoneId(tenureId)
+	];
+}
+
+/**
+ * Marks a participating adventurer's tenure dead within an active Challenge
+ * round: discards every card in the dying tenure's owned private zones to
+ * its own deck's discard pile (card conservation — O5), removes those now-
+ * empty zone descriptors, discards their revealed Initiative card (if any)
+ * from the shared public Initiative zone, and removes the tenure from
+ * `participantTenureIds`/`budgets`/`initiativeOrder`/`tiedGroups`/any
+ * modifier instance that names it as owner or target. This is the
+ * session-engine HALF of "mark a participating adventurer dead" (brief O4) —
+ * the character-life/tenure-ended/membership-eligibility half is the
+ * server's job (`$lib/server/campaign/tenure.ts` /
+ * `$lib/server/session/command-service.ts`), committed in the SAME atomic
+ * write as this function's resulting state so neither half can land without
+ * the other.
+ *
+ * Deliberately does NOT model health, wounds, damage, or *why* the tenure
+ * died — that is fiction outside this engine's scope (O5/O7); this function
+ * is bookkeeping only, exactly as the brief specifies: "tenure ended, zones
+ * redacted, eligibility freed," never the story.
+ *
+ * Authorization mirrors every other per-tenure Challenge action
+ * (`requirePlayerTurn`, `placeInitiative`): the GM may always act, and a
+ * player may only mark their OWN tenure dead — resolved through
+ * `tenureOwners`, never by comparing `actor.userId` to `tenureId` directly
+ * (O1/O7).
+ *
+ * Rejects marking the tenure whose turn is CURRENTLY active dead outright —
+ * an engine-bookkeeping convenience (not a rulebook citation; the book is
+ * silent on mid-turn death), so the caller ends that turn first
+ * (`turns.ts`'s `endTurn`) before removing its seat, keeping
+ * `activeTurnIndex` bookkeeping unambiguous: no other seat's turn can ever be
+ * "currently active" at the removed index, so a plain index shift (decrement
+ * once for every removed seat before it, otherwise unchanged) is always
+ * correct — no branch is needed for "the active seat just got removed."
+ */
+export function markTenureDead(
+	state: SessionEngineStateV1,
+	tenureId: string,
+	context: ChallengeReduceContext
+): SessionReduceResult {
+	const challenge = readChallengeState(state);
+	if (!challenge) return reject('illegal-command', 'no active Challenge round');
+	if (!challenge.participantTenureIds.includes(tenureId)) {
+		return reject('illegal-command', `${tenureId} is not an active Challenge participant`);
+	}
+	const owner = challenge.tenureOwners[tenureId];
+	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
+		return reject('not-authorized', 'a player may only mark their own tenure dead');
+	}
+	const activeEntry =
+		challenge.activeTurnIndex !== null ? challenge.initiativeOrder[challenge.activeTurnIndex] : undefined;
+	if (activeEntry?.tenureId === tenureId) {
+		return reject(
+			'illegal-command',
+			`cannot mark ${tenureId} dead while its turn is active — end the turn first`
+		);
+	}
+
+	let nextState = state;
+	const events: SessionEvent[] = [];
+
+	for (const zoneId of deathOwnedZoneIds(tenureId)) {
+		const zone = findZoneDescriptor(nextState, zoneId);
+		if (!zone) continue;
+		for (const cardId of zone.cards.slice()) {
+			const discardResult = discardOneCard(nextState, zoneId, cardId, context);
+			if (!discardResult.ok) return discardResult;
+			nextState = discardResult.state;
+			events.push(...discardResult.events);
+		}
+		nextState = { ...nextState, privateZones: nextState.privateZones.filter((existing) => existing.id !== zoneId) };
+	}
+
+	// A REVEALED Initiative card lives in the one shared public Initiative
+	// zone alongside every other tenure's/enemy's revealed card — discard it
+	// there BY CARD ID, never by sweeping the whole zone. An unrevealed entry
+	// needs no separate handling here: its card sits in
+	// `challengeInitiativeFacedownZoneId(tenureId)`, already swept above.
+	const initiativeEntry = challenge.initiativeOrder.find((entry) => entry.tenureId === tenureId);
+	if (initiativeEntry?.revealed && initiativeEntry.cardId !== undefined) {
+		const discardResult = discardOneCard(nextState, initiativeEntry.cardZoneId, initiativeEntry.cardId, context);
+		if (!discardResult.ok) return discardResult;
+		nextState = discardResult.state;
+		events.push(...discardResult.events);
+	}
+
+	const removedIndex = challenge.initiativeOrder.findIndex((entry) => entry.tenureId === tenureId);
+	const nextInitiativeOrder = challenge.initiativeOrder.filter((entry) => entry.tenureId !== tenureId);
+	// The active seat can never BE the removed one (rejected above), so this
+	// is always a plain "did a seat before the active one disappear" shift.
+	const nextActiveTurnIndex =
+		challenge.activeTurnIndex === null || removedIndex === -1 || removedIndex >= challenge.activeTurnIndex
+			? challenge.activeTurnIndex
+			: challenge.activeTurnIndex - 1;
+
+	const nextTiedGroups = challenge.tiedGroups
+		.map((group) => group.filter((id) => id !== tenureId))
+		.filter((group) => group.length > 1);
+
+	const nextBudgets = Object.fromEntries(
+		Object.entries(challenge.budgets).filter(([budgetKey]) => budgetKey !== tenureId)
+	);
+	const nextModifiers = challenge.modifiers.filter(
+		(modifier) => modifier.ownerTenureId !== tenureId && modifier.targetTenureId !== tenureId
+	);
+
+	const nextChallenge: ChallengeStateV1 = {
+		...challenge,
+		participantTenureIds: challenge.participantTenureIds.filter((id) => id !== tenureId),
+		initiativeOrder: nextInitiativeOrder,
+		activeTurnIndex: nextActiveTurnIndex,
+		tiedGroups: nextTiedGroups,
+		budgets: nextBudgets,
+		modifiers: nextModifiers
+	};
+	nextState = writeChallengeState(nextState, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
+
+	events.push({ kind: 'challenge-participant-died', publicPayload: { tenureId, round: challenge.round } });
+
+	return { ok: true, state: nextState, events };
+}
+
+/**
+ * Registers `tenureId` as a pending Challenge joiner (brief Step 2 / O3): a
+ * newly attached/replaced tenure created WHILE a Challenge round is active
+ * does not participate immediately — no hand is dealt and no private zone is
+ * created for it — until `cleanupRound` (Task 2) admits
+ * `pendingJoinTenureIds` into `participantTenureIds` at the next round
+ * boundary. This function performs ONLY the "get it into the pending list"
+ * half; `cleanupRound` already owns admission (composed with, not
+ * reimplemented — O3).
+ *
+ * A no-op (returns `state` UNCHANGED, `ok: true`) rather than a rejection
+ * when there is no active Challenge round at all — outside Challenge a
+ * replacement participates immediately by the active procedure's own rules
+ * (brief Step 2's first sentence), which is simply "nothing for this
+ * Challenge-specific function to do," never an error. Likewise idempotent
+ * when `tenureId` is already known (an active participant OR already
+ * pending) — calling this twice for the same tenure is not a conflict.
+ *
+ * Takes a bare `catalog` (not a full `ChallengeReduceContext`) because this
+ * is system-triggered bookkeeping alongside a campaign-level tenure
+ * attach/replace action, not an actor-authorized `SessionCommand` — there is
+ * no player/GM authorization gate here, matching the plan's own framing that
+ * this is the "session cleanup port" doing its job, not a table participant
+ * issuing a command.
+ */
+export function admitPendingJoinTenure(
+	state: SessionEngineStateV1,
+	tenureId: string,
+	catalog: TarotCardCatalog
+): SessionReduceResult {
+	const challenge = readChallengeState(state);
+	if (!challenge) return { ok: true, state, events: [] };
+	if (challenge.participantTenureIds.includes(tenureId) || challenge.pendingJoinTenureIds.includes(tenureId)) {
+		return { ok: true, state, events: [] };
+	}
+
+	const nextChallenge: ChallengeStateV1 = {
+		...challenge,
+		pendingJoinTenureIds: [...challenge.pendingJoinTenureIds, tenureId]
+	};
+	const nextState = writeChallengeState(state, nextChallenge);
+	assertSessionInvariants(nextState, catalog);
+	return { ok: true, state: nextState, events: [] };
 }

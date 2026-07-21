@@ -28,6 +28,8 @@
 
 import type { CardSlot, SessionCommand, SessionStatus } from '$lib/types/session';
 import type { SessionProjection } from '$lib/engine/session/projection';
+import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
+import type { ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
 import type { DrawnCard } from '$lib/tarot/protocol';
 
 /** GM-only structural transitions the shared table exposes via
@@ -49,6 +51,25 @@ export interface TableSession {
 	sessionVersion: number;
 	campaignCursor: number;
 	projection: SessionProjection;
+	/**
+	 * Additive (Increment 3 Task 6): the Challenge procedure's OWN
+	 * actor-scoped projection slice, alongside the generic one above — `null`
+	 * whenever no Challenge round is active. This is NOT part of the frozen
+	 * `SessionProjectionEnvelope`/`SessionPlayerProjection`/`SessionGmProjection`
+	 * contract (`$lib/types/session.ts`'s file header) — a parallel, additive
+	 * slice specific to this one procedure (see
+	 * `challenge-command-service.ts`'s file header), carried through the same
+	 * sync/command wire responses this store already reads.
+	 */
+	challengeProjection: ChallengeProjection | null;
+	/**
+	 * Additive (Increment 3 Task 6): the full legal Challenge command set for
+	 * the viewer right now, computed server-side independent of whether a
+	 * round is active (`challengeProjection` is `null` before one exists, but
+	 * the GM still needs a server-computed "may I begin one?" — O1). Render
+	 * controls from this, never from a client-side guess.
+	 */
+	challengeLegalCommands: ChallengeCommand['type'][];
 }
 
 export interface SessionSyncSnapshot {
@@ -81,6 +102,15 @@ interface SyncResponseBody {
 interface CommandResponseBody {
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+}
+
+/** Response shape of `POST .../challenge-commands` — the generic projection
+ * envelope PLUS the Challenge-specific slice, both fresh. */
+interface ChallengeCommandResponseBody {
+	outcome?: { ok: boolean };
+	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+	challengeProjection?: ChallengeProjection | null;
+	challengeLegalCommands?: ChallengeCommand['type'][];
 }
 
 /** Shape of `PATCH /api/campaigns/[id]/sessions/[sessionId]` (see that
@@ -327,6 +357,70 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/**
+	 * Sends one Challenge command (Increment 3 Task 6) against
+	 * `POST .../challenge-commands` — parallel to `sendCommand` above, never a
+	 * replacement for it (ordinary session commands still go through
+	 * `sendCommand`). Per O1: `commandId` is the ONE UUID for this user
+	 * intent — a caller (a Challenge component) mints it once per attempt and
+	 * passes the SAME id back in on a retry rather than minting a fresh one,
+	 * so a retried request after a transient failure is genuinely idempotent
+	 * at the server. When omitted, a fresh id is minted (the first attempt).
+	 */
+	function sendChallengeCommand(command: ChallengeCommand, commandId?: string): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+
+		const key = `challenge:${JSON.stringify(command)}`;
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+
+		const id = commandId ?? randomCommandId();
+		const promise = performChallengeSend(session.sessionId, id, command).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performChallengeSend(sessionId: string, commandId: string, command: ChallengeCommand): Promise<SendCommandResult> {
+		const envelope = { commandId, observedSessionVersion: snapshot.session?.sessionVersion ?? 0, command };
+
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}/challenge-commands`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify(envelope)
+			});
+			const body = (await response.json().catch(() => null)) as ChallengeCommandResponseBody | null;
+
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
+				snapshot = {
+					...snapshot,
+					session: {
+						...snapshot.session,
+						sessionVersion: body.projection.sessionVersion,
+						campaignCursor: body.projection.campaignCursor,
+						projection: body.projection.projection,
+						challengeProjection: body.challengeProjection ?? null,
+						challengeLegalCommands: body.challengeLegalCommands ?? []
+					}
+				};
+			}
+
+			if (!body?.outcome?.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	/** GM lifecycle transitions (freeze/recover/end) against
 	 * `PATCH /sessions/[sessionId]`. Same dedup/error-surfacing conventions as
 	 * `sendCommand` above — a second call for the same action at the same
@@ -421,6 +515,7 @@ export function createCampaignSessionStore(
 		},
 		poll,
 		sendCommand,
+		sendChallengeCommand,
 		sendLifecycleAction,
 		refreshNow,
 		start,

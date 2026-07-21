@@ -23,6 +23,21 @@ if (devAutoLoginLoader) {
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_WRITES = 60;
+/**
+ * The guided Challenge procedure (Increment 3 Task 6) fans out many more,
+ * smaller writes per round than any other write path in the app — one
+ * `/challenge-commands` POST per seat's Initiative placement, per turn's
+ * play/discard/end-turn, and per modifier resolution, from EVERY
+ * participant sharing one campaign. A single busy round easily produces a
+ * dozen-plus writes, and a table cycling several rounds back-to-back (the
+ * deck's own auto-reshuffle, or simply an engaged group) can legitimately
+ * exceed the generic 60/60s budget below well within normal play — that
+ * budget was sized for the old shared table's coarser, one-action-at-a-time
+ * commands. Scoped to ONLY this endpoint family so every other write path
+ * keeps the original, tighter abuse-prevention budget unchanged.
+ */
+const RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS = 300;
+const CHALLENGE_COMMANDS_PATH_SEGMENT = '/challenge-commands';
 const writeBuckets = new Map<string, { count: number; resetAt: number }>();
 // On a long-lived Node process, distinct path keys accumulate forever otherwise.
 const RATE_LIMIT_MAX_BUCKETS = 4096;
@@ -79,7 +94,8 @@ function isRateLimited(request: Request, clientAddress: string): boolean {
 	}
 
 	bucket.count += 1;
-	return bucket.count > RATE_LIMIT_MAX_WRITES;
+	const maxWrites = pathname.includes(CHALLENGE_COMMANDS_PATH_SEGMENT) ? RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS : RATE_LIMIT_MAX_WRITES;
+	return bucket.count > maxWrites;
 }
 
 function pruneExpired(now: number): void {

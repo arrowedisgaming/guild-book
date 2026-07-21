@@ -37,7 +37,11 @@ export type SessionProjection = SessionPlayerProjection | SessionGmProjection;
  * entirely — `label`/`imageKey` fall back to the card id and `value` falls
  * back to `0` rather than fabricating rulebook data the engine doesn't have.
  */
-function hydrateVisible(cardId: CardId, catalog: TarotCardCatalog): VisibleCardSlot {
+/** Exported (Increment 3 Task 6) so the Challenge procedure's own projector
+ * (`procedures/challenge/projection.ts`) can hydrate a revealed Initiative
+ * card the identical way every other card slot in this module is hydrated,
+ * rather than duplicating this lookup/fallback logic. Behavior unchanged. */
+export function hydrateVisible(cardId: CardId, catalog: TarotCardCatalog): VisibleCardSlot {
 	const entry = catalog[cardId];
 	const id = entry?.id ?? cardId;
 	return {

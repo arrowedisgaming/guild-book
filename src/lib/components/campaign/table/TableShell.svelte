@@ -18,6 +18,7 @@
 	import PrivateFacedown from './PrivateFacedown.svelte';
 	import EventLog from './EventLog.svelte';
 	import MobileTableDrawers from './MobileTableDrawers.svelte';
+	import ChallengePanel from './challenge/ChallengePanel.svelte';
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
@@ -27,20 +28,29 @@
 		type WireSessionEventLike
 	} from '$lib/stores/campaign-session.svelte';
 	import type { SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
+	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
+	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 
 	let {
 		role,
 		userId,
 		session,
 		events,
+		challengeRoster,
 		onSendCommand,
+		onSendChallengeCommand,
 		onSendLifecycleAction
 	}: {
 		role: 'gm' | 'player';
 		userId: string;
 		session: TableSession;
 		events: WireSessionEventLike[];
+		/** GM-only "Begin Challenge" roster picker source — harmless, non-secret
+		 * campaign membership data for every role (see
+		 * `loadActiveChallengeRoster`'s doc comment). */
+		challengeRoster: ActiveChallengeTenureView[];
 		onSendCommand: (command: SessionCommand, expectedStructuralVersion?: number) => Promise<SendCommandResult>;
+		onSendChallengeCommand: (command: ChallengeCommand, commandId?: string) => Promise<SendCommandResult>;
 		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
 	} = $props();
 
@@ -262,6 +272,7 @@
 			/>
 			<div class="table-column">
 				<PublicTable publicProjection={session.projection.public} {otherHands} />
+				<ChallengePanel {role} {userId} {session} {events} {challengeRoster} onSendChallengeCommand={onSendChallengeCommand} />
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}
@@ -288,6 +299,7 @@
 			     `order` — PublicTable must precede the drawers/hand so the table
 			     genuinely leads on mobile, not just visually. -->
 			<PublicTable publicProjection={session.projection.public} {otherHands} />
+			<ChallengePanel {role} {userId} {session} {events} {challengeRoster} onSendChallengeCommand={onSendChallengeCommand} />
 			<MobileTableDrawers
 				publicProjection={session.projection.public}
 				{role}

@@ -28,7 +28,12 @@ import { findZoneDescriptor } from '../../state';
 import { FIXED_ZONE_IDS } from '../../zones';
 import { reduceSession, type ReduceContext } from '../../reducer';
 import type { ReduceResult } from '../../result';
-import { challengeEnemyFactSchema, challengeStateV1Schema, challengeTenureOwnersSchema } from './schema';
+import {
+	challengeEnemyFactSchema,
+	challengeStateV1Schema,
+	challengeTenureIdSchema,
+	challengeTenureOwnersSchema
+} from './schema';
 import type { ChallengeConfig, ChallengeEnemyFact, ChallengeParticipantBudget, ChallengeStateV1 } from './types';
 
 /** Alias matching the shared `reducer.ts`'s own `SessionReduceResult` —
@@ -159,6 +164,63 @@ function validateTenureOwners(tenureIds: readonly string[], tenureOwners: unknow
 	for (const tenureId of tenureIds) {
 		if (!(tenureId in parsed.data)) {
 			return `no owner registered for tenure ${tenureId}`;
+		}
+	}
+	return null;
+}
+
+/**
+ * Validates a raw, caller-supplied `participantTenureIds` array structurally
+ * (non-empty trimmed strings). Without this, a blank/whitespace-only id could
+ * pass `validateTenureOwners`' coverage check (as long as the same blank
+ * string was also registered as a `tenureOwners` key) and reach
+ * `writeChallengeState`'s throwing `.parse` instead of a clean rejection —
+ * the same defect class as `validateEnemyFacts`/`validateTenureOwners`, on
+ * the roster itself (Increment 3 Task 2 review, Minor). `cleanupRound` needs
+ * no equivalent call: its roster is always built from `challenge.
+ * participantTenureIds`/`challenge.pendingJoinTenureIds`, both of which were
+ * already validated when the state that produced `challenge` was written.
+ *
+ * Returns a human-readable rejection message, or `null` if valid.
+ */
+function validateParticipantTenureIds(participantTenureIds: unknown): string | null {
+	const parsed = z.array(challengeTenureIdSchema).safeParse(participantTenureIds);
+	if (!parsed.success) {
+		return `invalid participantTenureIds: ${parsed.error.message}`;
+	}
+	return null;
+}
+
+/**
+ * Rejects an `options.tenureOwners` remap (`cleanupRound`) that tries to
+ * re-point a tenure ALREADY in `activeTenureIds` (the current round's
+ * `participantTenureIds`, before admitting any pending join) to a different
+ * owner than it currently has. `CleanupRoundOptions.tenureOwners` exists to
+ * register a newly-admitted `pendingJoinTenureIds` entry's owner — not to
+ * re-own an already-live tenure. `ensureParticipantZones` only ever CREATES
+ * missing zones; it never re-owns an existing one, so a silently-accepted
+ * conflicting remap would desync `placeInitiative`'s authorization (which
+ * reads `tenureOwners`, so it would authorize the NEW user) from the hand
+ * zone's actual, unchanged `ownerUserId` (still the OLD user, so only they
+ * can see it in `privateHand`) — both outcomes wrong at once. Re-pointing a
+ * live tenure to a different user mid-Challenge isn't a real operation
+ * (Increment 3 Task 2 coordinator decision, option (a): reject rather than
+ * re-own).
+ *
+ * Returns a human-readable rejection message, or `null` if there is no
+ * conflict (including when `remap` is `undefined` or doesn't mention any
+ * already-active tenure).
+ */
+function validateNoTenureOwnerRemap(
+	activeTenureIds: readonly string[],
+	currentOwners: Record<string, string>,
+	remap: Record<string, string> | undefined
+): string | null {
+	if (!remap) return null;
+	for (const tenureId of activeTenureIds) {
+		if (!(tenureId in remap)) continue;
+		if (remap[tenureId] !== currentOwners[tenureId]) {
+			return `cannot re-point already-active tenure ${tenureId} to a different owner mid-Challenge`;
 		}
 	}
 	return null;
@@ -313,7 +375,12 @@ export function beginChallenge(
 	// duplicate/colliding id here would otherwise silently collapse two
 	// Initiative entries into one at reveal time (Important 3); a tenure with
 	// no registered owner would otherwise make its own zones misowned
-	// (tenureId-vs-userId fix).
+	// (tenureId-vs-userId fix); a blank/whitespace-only tenure id would
+	// otherwise reach `writeChallengeState`'s throwing `.parse` (Minor).
+	const participantTenureIdsError = validateParticipantTenureIds(participantTenureIds);
+	if (participantTenureIdsError) {
+		return reject('illegal-command', participantTenureIdsError);
+	}
 	const tenureOwnersError = validateTenureOwners(participantTenureIds, command.tenureOwners);
 	if (tenureOwnersError) {
 		return reject('illegal-command', tenureOwnersError);
@@ -389,12 +456,20 @@ export interface CleanupRoundOptions {
 	 * is this option, not a fabricated automatic mechanic). Carries the
 	 * current round's `enemyFacts` forward unchanged when omitted. */
 	enemyFacts?: ChallengeEnemyFact[];
-	/** Additional/updated `tenureId -> userId` entries, merged onto the
-	 * current round's `tenureOwners` (these values win on conflict). Exists
-	 * so a newly-admitted `pendingJoinTenureIds` entry — whose owner may not
-	 * already be registered — can be resolved at the same moment it's
-	 * admitted into `participantTenureIds`. Carries the current map forward
-	 * unchanged when omitted. */
+	/** Additional `tenureId -> userId` entries, merged onto the current
+	 * round's `tenureOwners`. Exists ONLY to register a newly-admitted
+	 * `pendingJoinTenureIds` entry's owner — one not already registered — at
+	 * the same moment it's admitted into `participantTenureIds`. An entry
+	 * here for a tenure that is ALREADY in the current round's
+	 * `participantTenureIds` is rejected if it names a different owner than
+	 * that tenure already has (`validateNoTenureOwnerRemap`): re-pointing a
+	 * live tenure to a different user mid-Challenge isn't a real operation,
+	 * and `ensureParticipantZones` only ever creates missing zones — it never
+	 * re-owns an existing one, so a silently-accepted remap would desync
+	 * `placeInitiative`'s authorization (reads this map) from the hand zone's
+	 * actual, unchanged `ownerUserId` (Increment 3 Task 2 coordinator
+	 * decision, option (a)). Carries the current map forward unchanged when
+	 * omitted. */
 	tenureOwners?: Record<string, string>;
 }
 
@@ -435,7 +510,22 @@ export function cleanupRound(
 	// equivalent work has already run (Important 2/3 — same reasoning as
 	// `beginChallenge`; tenureOwners coverage is the same fix, extended to
 	// cleanup's admitted-pending-join roster).
-	const nextParticipantTenureIds = [...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds];
+	//
+	// De-duplicated with `[...new Set(...)]`, matching `beginChallenge`
+	// (Important 1 — re-review): a pending join naming an already-active
+	// tenure would otherwise duplicate the id here, so a single
+	// `initiativeOrder` entry would satisfy `revealInitiative`'s missing-key
+	// check for both listed seats — the same collapse `validateEnemyFacts`
+	// exists to prevent, on the player side.
+	const nextParticipantTenureIds = [...new Set([...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds])];
+
+	// Reject a conflicting remap of an ALREADY-ACTIVE tenure before merging —
+	// see `validateNoTenureOwnerRemap`'s doc comment and this interface's
+	// `tenureOwners` field doc comment (Important 2 — re-review, option (a)).
+	const tenureOwnerRemapError = validateNoTenureOwnerRemap(challenge.participantTenureIds, challenge.tenureOwners, options.tenureOwners);
+	if (tenureOwnerRemapError) {
+		return reject('illegal-command', tenureOwnerRemapError);
+	}
 	const nextTenureOwners = { ...challenge.tenureOwners, ...(options.tenureOwners ?? {}) };
 	const tenureOwnersError = validateTenureOwners(nextParticipantTenureIds, nextTenureOwners);
 	if (tenureOwnersError) {

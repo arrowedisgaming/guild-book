@@ -11,6 +11,13 @@ import type { ChallengeConfig, ChallengeStateV1 } from './types';
 const nonNegativeInt = z.number().int().nonnegative();
 const tenureId = z.string().trim().min(1);
 
+/** Re-exported so `reducer.ts` can `safeParse` a raw `participantTenureIds`
+ * array itself (not just infer validity indirectly through `tenureOwners`'
+ * coverage check) — a caller-supplied blank/whitespace-only tenure id must be
+ * rejected, not reach `writeChallengeState`'s throwing `.parse` (Increment 3
+ * Task 2 review, Minor). */
+export const challengeTenureIdSchema = tenureId;
+
 // ---------------------------------------------------------------------------
 // ChallengeConfig
 // ---------------------------------------------------------------------------
@@ -148,11 +155,16 @@ export const challengeEnemyFactSchema = z
 	.strict();
 
 /** Mirrors `ChallengeStateV1.tenureOwners` — maps a tenure id to its owning
- * user id. Exported so `reducer.ts` can `safeParse` a GM-supplied mapping
- * before mutating state, mirroring `challengeEnemyFactSchema` (Increment 3
- * Task 2 tenureId-vs-userId fix: a tenure is never a user id and must not be
- * compared against one directly). */
-export const challengeTenureOwnersSchema = z.record(z.string(), tenureId);
+ * user id. Both the key (a tenure id) and value (a user id) are validated
+ * as non-empty trimmed strings — a blank/whitespace-only key would otherwise
+ * slip past `validateTenureOwners`'s coverage check whenever it's also the
+ * malformed id being registered, reaching `writeChallengeState`'s throwing
+ * `.parse` instead of a clean rejection (Increment 3 Task 2 review, Minor).
+ * Exported so `reducer.ts` can `safeParse` a GM-supplied mapping before
+ * mutating state, mirroring `challengeEnemyFactSchema` (tenureId-vs-userId
+ * fix: a tenure is never a user id and must not be compared against one
+ * directly). */
+export const challengeTenureOwnersSchema = z.record(tenureId, tenureId);
 
 const challengeInitiativeEntrySchema = z
 	.object({

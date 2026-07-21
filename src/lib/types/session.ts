@@ -338,6 +338,19 @@ export interface PublicPrivateZoneCardBacks {
 }
 
 /**
+ * GM-only hydration of one pending zone's real card contents — see
+ * `SessionGmProjection.gmPendingZones`'s doc comment. Named (not an inline
+ * anonymous shape) to match every neighbouring per-zone projection type
+ * (`PublicSessionZoneView`, `PublicPrivateZoneCardBacks`) — other procedures
+ * beyond Challenge read this shared shape too.
+ */
+export interface GmPendingZoneView {
+	id: string;
+	deck: 'major' | 'player';
+	cards: CardSlot[];
+}
+
+/**
  * Everyone at the table sees this. `playerHandCounts` is public information
  * (spec §8.2) — hand counts never move to a private section. Session
  * lifecycle status (active/frozen/ended) is deliberately absent: the pure
@@ -392,7 +405,7 @@ export interface SessionGmProjection {
 	 * that left the GM unable to see which card they themselves had placed
 	 * for an enemy's Initiative (Increment 3 Task 2 review).
 	 */
-	gmPendingZones: Array<{ id: string; deck: 'major' | 'player'; cards: CardSlot[] }>;
+	gmPendingZones: GmPendingZoneView[];
 	gmPrivateProcedure?: unknown;
 	legalCommands: SessionCommandType[];
 }

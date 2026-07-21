@@ -41,9 +41,12 @@
  * something, and tests need a deterministic order to assert against), so
  * ties break by combined roster order (`participantTenureIds` then
  * `enemyFacts` order) as a practical default — but that default is never
- * presented as a ruling: `revealInitiative`'s public event additionally
- * carries `tiedGroups`, the id groups that share a value, so the table can
- * see a tie exists and adjudicate it themselves.
+ * presented as a ruling: `revealInitiative` records `tiedGroups`, the id
+ * groups that share a value, BOTH on the public `challenge-initiative-
+ * revealed` event's payload AND durably in `ChallengeStateV1.tiedGroups`
+ * (state, not just the momentary event — a later reader like Task 3's turn
+ * loop or Task 6's UI must see a tie without replaying the event log), so the
+ * table can see a tie exists and adjudicate it themselves.
  */
 
 import { findZoneDescriptor } from '../../state';

@@ -247,6 +247,22 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 			expect(state.procedure).toBeNull();
 		});
+
+		it('rejects a blank/whitespace-only participant tenure id instead of throwing out of writeChallengeState (Minor — re-review)', () => {
+			const state = makeSessionFixture('begin-blank-tenure-id');
+
+			// Passes BOTH tenureOwners' presence check and the enemy-collision
+			// check (there's no collision to find) — without a dedicated
+			// participantTenureIds validation, this used to reach
+			// `writeChallengeState`'s throwing `challengeStateV1Schema.parse`.
+			const result = beginChallenge(
+				state,
+				{ participantTenureIds: ['  '], tenureOwners: { '  ': 'user-x' }, enemyFacts: [] },
+				ctxFor(GM, catalog, config, 'begin-blank-tenure-id')
+			);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(state.procedure).toBeNull();
+		});
 	});
 
 	describe('tenure ownership — a tenure id is NOT a user id (Increment 3 Task 2 follow-up)', () => {
@@ -727,7 +743,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 				privateZones: state.privateZones.concat({
 					id: 'prepared:tenure-1',
 					kind: 'player-prepared',
-					ownerUserId: 'tenure-1',
+					ownerUserId: ownerOf('tenure-1'),
 					cards: [preparedCard]
 				})
 			};
@@ -779,6 +795,44 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 
 			const result = cleanupRound(withPendingJoin, gmCtx);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('does not duplicate an already-active tenure when a pending join names it again (Important 1 — re-review)', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-dedupe-join', makeImpFacts(2));
+			// 'tenure-1' is already an active participant; naming it again as a
+			// pending join (the shape Task 5 will produce whenever a rejoin
+			// targets an already-seated tenure) must not create a second seat —
+			// exactly the collapse `validateEnemyFacts` already prevents on the
+			// enemy side.
+			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-1'] });
+
+			const cleaned = cleanupRound(withPendingJoin, gmCtx);
+			expect(cleaned.ok).toBe(true);
+			if (!cleaned.ok) return;
+
+			const after = readChallengeState(cleaned.state)!;
+			expect(after.participantTenureIds.filter((id) => id === 'tenure-1')).toHaveLength(1);
+			expect(after.participantTenureIds).toHaveLength(TENURE_IDS.length);
+			expectConserved(cleaned.state, catalog);
+		});
+
+		it('rejects an options.tenureOwners remap that re-points an already-active tenure to a different owner (Important 2 — re-review, option (a))', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-owner-remap-conflict', makeImpFacts(2));
+
+			const result = cleanupRound(state, gmCtx, { tenureOwners: { 'tenure-1': 'user-mallory' } });
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+
+			// No partial state: the rejection happens before the discard sweep,
+			// so hands are untouched.
+			for (const tenureId of TENURE_IDS) {
+				expect(handCount(state, tenureId)).toBeGreaterThan(0);
+			}
+		});
+
+		it("allows an options.tenureOwners entry that merely repeats an already-active tenure's CURRENT owner (not a real conflict)", () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-owner-remap-noop', makeImpFacts(2));
+			const result = cleanupRound(state, gmCtx, { tenureOwners: { 'tenure-1': ownerOf('tenure-1') } });
+			expect(result.ok).toBe(true);
 		});
 
 		it('resolves a Fool-scheduled reshuffle only at the round boundary, not immediately', () => {

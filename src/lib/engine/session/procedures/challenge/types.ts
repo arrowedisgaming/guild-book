@@ -182,6 +182,21 @@ export interface ChallengeStateV1 {
 	stage: ChallengeStage;
 	round: number;
 	participantTenureIds: string[];
+	/**
+	 * `tenureId -> owning userId`. A tenure (Increment 1) is an adventurer's
+	 * attachment to a campaign membership — it is NOT a user id, and must
+	 * never be compared against `SessionActor.userId` directly. Every id in
+	 * `participantTenureIds` must have an entry here; `beginChallenge`/
+	 * `cleanupRound` reject a roster with a missing owner rather than let a
+	 * tenure silently become unauthorizable or its private zones misowned.
+	 *
+	 * Keyed by tenure rather than user because on death the same user
+	 * attaches a NEW tenure (a replacement adventurer) — keying by tenure
+	 * keeps the dead adventurer's private Challenge zones addressable
+	 * separately from their replacement's, which Task 5 needs to redact/
+	 * remove independently of the user's other (living) tenures.
+	 */
+	tenureOwners: Record<string, string>;
 	pendingJoinTenureIds: string[];
 	enemyFacts: ChallengeEnemyFact[];
 	initiativeOrder: ChallengeInitiativeEntry[];

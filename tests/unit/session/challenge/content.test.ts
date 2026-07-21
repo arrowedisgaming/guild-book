@@ -141,6 +141,7 @@ describe('ChallengeStateV1 schema (Step 3 + O4/O5)', () => {
 		stage: 'turns',
 		round: 1,
 		participantTenureIds: ['tenure-1', 'tenure-2'],
+		tenureOwners: { 'tenure-1': 'user-alice', 'tenure-2': 'user-bob' },
 		pendingJoinTenureIds: [],
 		enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'], count: 1 }],
 		initiativeOrder: [{ tenureId: 'tenure-1', cardZoneId: 'zone-1', revealed: true }],

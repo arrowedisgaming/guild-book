@@ -28,7 +28,7 @@ import { findZoneDescriptor } from '../../state';
 import { FIXED_ZONE_IDS } from '../../zones';
 import { reduceSession, type ReduceContext } from '../../reducer';
 import type { ReduceResult } from '../../result';
-import { challengeEnemyFactSchema, challengeStateV1Schema } from './schema';
+import { challengeEnemyFactSchema, challengeStateV1Schema, challengeTenureOwnersSchema } from './schema';
 import type { ChallengeConfig, ChallengeEnemyFact, ChallengeParticipantBudget, ChallengeStateV1 } from './types';
 
 /** Alias matching the shared `reducer.ts`'s own `SessionReduceResult` —
@@ -51,11 +51,15 @@ export const CHALLENGE_GM_TENURE_ID = 'gm';
  * across rounds (cleared, not recreated, at round cleanup). */
 export const CHALLENGE_INITIATIVE_ZONE_ID = 'challenge-initiative';
 
-/** A participant's private hand zone id — matches the convention already
- * established by `tests/fixtures/session.ts`'s `fixtureWithHands`
- * (`hand:<ownerUserId>`), reusing `tenureId` as the private zone's owning
- * `UserId` (the pure engine has no notion of a "tenure" beyond an opaque
- * string id; see `types.ts`'s `ChallengeStateV1.participantTenureIds`). */
+/** A participant's private hand zone id — keyed by TENURE id, matching the
+ * convention already established by `tests/fixtures/session.ts`'s
+ * `fixtureWithHands` (`hand:<id>`). The zone's `ownerUserId` is NOT this id —
+ * a tenure is not a user id (see `types.ts`'s `ChallengeStateV1.tenureOwners`
+ * doc comment) — it is resolved through `tenureOwners` by
+ * `ensureParticipantZones`, below. Zone ids stay tenure-keyed deliberately:
+ * on death the same user attaches a new tenure, and keeping zone identity
+ * tied to the tenure (not the user) is what lets Task 5 address a dead
+ * adventurer's private zones separately from their replacement's. */
 export function challengeHandZoneId(tenureId: string): string {
 	return `hand:${tenureId}`;
 }
@@ -130,6 +134,36 @@ function validateEnemyFacts(enemyFacts: unknown, participantTenureIds: readonly 
 	return null;
 }
 
+/**
+ * Validates a `tenureId -> userId` mapping structurally (against
+ * `challengeTenureOwnersSchema`) AND covers every id in `tenureIds`. The
+ * Challenge module previously conflated tenure id with user id: zone
+ * ownership (`ensureParticipantZones`) set `ownerUserId` to the tenure id
+ * itself, and `placeInitiative`'s authorization compared `actor.userId`
+ * directly against the tenure id. Both only worked because every test
+ * happened to pass the same string as both ids. A tenure (Increment 1) is an
+ * adventurer's attachment to a campaign membership, never a user id — Task 5
+ * hands real tenure ids that are NOT user ids, and death reattaches the same
+ * user to a brand-new tenure. Called at the top of both `beginChallenge` and
+ * `cleanupRound`, before either performs any state mutation (same reasoning
+ * as `validateEnemyFacts`).
+ *
+ * Returns a human-readable rejection message, or `null` if `tenureOwners` is
+ * valid and covers every id in `tenureIds`.
+ */
+function validateTenureOwners(tenureIds: readonly string[], tenureOwners: unknown): string | null {
+	const parsed = challengeTenureOwnersSchema.safeParse(tenureOwners);
+	if (!parsed.success) {
+		return `invalid tenureOwners: ${parsed.error.message}`;
+	}
+	for (const tenureId of tenureIds) {
+		if (!(tenureId in parsed.data)) {
+			return `no owner registered for tenure ${tenureId}`;
+		}
+	}
+	return null;
+}
+
 /** The context every Challenge procedure function takes: the generic
  * session `ReduceContext` (actor/runtime/rng) plus the content-hydrated
  * `ChallengeConfig` (`buildChallengeConfig` in `schema.ts`). Structurally a
@@ -173,20 +207,34 @@ export function initialBudgets(tenureIds: readonly string[]): Record<string, Cha
 
 /** Creates any missing hand/Initiative-facedown zones for `tenureIds`,
  * idempotently (a no-op for already-provisioned participants — used both at
- * setup and again at round cleanup when pending joins are admitted). */
-function ensureParticipantZones(state: SessionEngineStateV1, tenureIds: readonly string[]): SessionEngineStateV1 {
+ * setup and again at round cleanup when pending joins are admitted). Each
+ * zone's `ownerUserId` is resolved through `tenureOwners` — NEVER the tenure
+ * id itself (see `challengeHandZoneId`'s doc comment). Callers
+ * (`beginChallenge`/`cleanupRound`) always run `validateTenureOwners` first,
+ * so a missing entry here means a reducer bug, not a rejectable user error —
+ * it throws rather than silently falling back to the tenure id, which would
+ * quietly reintroduce the exact conflation this function exists to prevent. */
+function ensureParticipantZones(
+	state: SessionEngineStateV1,
+	tenureIds: readonly string[],
+	tenureOwners: Record<string, string>
+): SessionEngineStateV1 {
 	let privateZones = state.privateZones;
 	for (const tenureId of tenureIds) {
+		const ownerUserId = tenureOwners[tenureId];
+		if (ownerUserId === undefined) {
+			throw new Error(`ensureParticipantZones: no owner registered for tenure ${tenureId} (should have been validated upstream)`);
+		}
 		const handId = challengeHandZoneId(tenureId);
 		const initiativeId = challengeInitiativeFacedownZoneId(tenureId);
 		if (!privateZones.some((zone) => zone.id === handId)) {
-			privateZones = privateZones.concat({ id: handId, kind: 'player-hand', ownerUserId: tenureId, cards: [] });
+			privateZones = privateZones.concat({ id: handId, kind: 'player-hand', ownerUserId, cards: [] });
 		}
 		if (!privateZones.some((zone) => zone.id === initiativeId)) {
 			privateZones = privateZones.concat({
 				id: initiativeId,
 				kind: 'player-facedown',
-				ownerUserId: tenureId,
+				ownerUserId,
 				cards: []
 			});
 		}
@@ -227,6 +275,12 @@ function ensureEnemyInitiativeZones(state: SessionEngineStateV1, enemyFactIds: r
 export interface BeginChallengeCommand {
 	participantTenureIds: string[];
 	enemyFacts: ChallengeEnemyFact[];
+	/** `tenureId -> owning userId` for every entry in `participantTenureIds` —
+	 * see `types.ts`'s `ChallengeStateV1.tenureOwners` doc comment for why
+	 * this can't be inferred from the tenure id itself. May carry extra
+	 * entries beyond the current roster (e.g. a future joiner's owner,
+	 * already known ahead of admission). */
+	tenureOwners: Record<string, string>;
 }
 
 /**
@@ -257,7 +311,13 @@ export function beginChallenge(
 	// a `ZodError` throw here would crash the engine with `begin-procedure`
 	// already applied, leaving a half-applied intent (Important 2); a
 	// duplicate/colliding id here would otherwise silently collapse two
-	// Initiative entries into one at reveal time (Important 3).
+	// Initiative entries into one at reveal time (Important 3); a tenure with
+	// no registered owner would otherwise make its own zones misowned
+	// (tenureId-vs-userId fix).
+	const tenureOwnersError = validateTenureOwners(participantTenureIds, command.tenureOwners);
+	if (tenureOwnersError) {
+		return reject('illegal-command', tenureOwnersError);
+	}
 	const enemyFactsError = validateEnemyFacts(command.enemyFacts, participantTenureIds);
 	if (enemyFactsError) {
 		return reject('illegal-command', enemyFactsError);
@@ -266,7 +326,7 @@ export function beginChallenge(
 	const beginResult = reduceSession(state, { type: 'begin-procedure', procedureId: CHALLENGE_PROCEDURE_ID }, context);
 	if (!beginResult.ok) return beginResult;
 
-	let nextState = ensureParticipantZones(beginResult.state, participantTenureIds);
+	let nextState = ensureParticipantZones(beginResult.state, participantTenureIds, command.tenureOwners);
 	nextState = ensureInitiativeZone(nextState);
 	nextState = ensureEnemyInitiativeZones(nextState, command.enemyFacts.map((enemy) => enemy.id));
 
@@ -275,6 +335,7 @@ export function beginChallenge(
 		stage: 'deal',
 		round: 1,
 		participantTenureIds,
+		tenureOwners: command.tenureOwners,
 		pendingJoinTenureIds: [],
 		enemyFacts: command.enemyFacts,
 		initiativeOrder: [],
@@ -328,6 +389,13 @@ export interface CleanupRoundOptions {
 	 * is this option, not a fabricated automatic mechanic). Carries the
 	 * current round's `enemyFacts` forward unchanged when omitted. */
 	enemyFacts?: ChallengeEnemyFact[];
+	/** Additional/updated `tenureId -> userId` entries, merged onto the
+	 * current round's `tenureOwners` (these values win on conflict). Exists
+	 * so a newly-admitted `pendingJoinTenureIds` entry — whose owner may not
+	 * already be registered — can be resolved at the same moment it's
+	 * admitted into `participantTenureIds`. Carries the current map forward
+	 * unchanged when omitted. */
+	tenureOwners?: Record<string, string>;
 }
 
 /**
@@ -362,10 +430,17 @@ export function cleanupRound(
 	}
 
 	// Computed and validated BEFORE any state mutation (the discard sweep
-	// below) so an invalid `options.enemyFacts` is rejected with the state
-	// untouched, not after `begin-procedure`-equivalent work has already run
-	// (Important 2/3 — same reasoning as `beginChallenge`).
+	// below) so an invalid `options.enemyFacts`/`options.tenureOwners` is
+	// rejected with the state untouched, not after `begin-procedure`-
+	// equivalent work has already run (Important 2/3 — same reasoning as
+	// `beginChallenge`; tenureOwners coverage is the same fix, extended to
+	// cleanup's admitted-pending-join roster).
 	const nextParticipantTenureIds = [...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds];
+	const nextTenureOwners = { ...challenge.tenureOwners, ...(options.tenureOwners ?? {}) };
+	const tenureOwnersError = validateTenureOwners(nextParticipantTenureIds, nextTenureOwners);
+	if (tenureOwnersError) {
+		return reject('illegal-command', tenureOwnersError);
+	}
 	const nextEnemyFacts = options.enemyFacts ?? challenge.enemyFacts;
 	const enemyFactsError = validateEnemyFacts(nextEnemyFacts, nextParticipantTenureIds);
 	if (enemyFactsError) {
@@ -397,7 +472,7 @@ export function cleanupRound(
 	nextState = endRoundResult.state;
 	events.push(...endRoundResult.events);
 
-	nextState = ensureParticipantZones(nextState, nextParticipantTenureIds);
+	nextState = ensureParticipantZones(nextState, nextParticipantTenureIds, nextTenureOwners);
 	nextState = ensureEnemyInitiativeZones(nextState, nextEnemyFacts.map((enemy) => enemy.id));
 
 	const nextChallenge: ChallengeStateV1 = {
@@ -405,6 +480,7 @@ export function cleanupRound(
 		stage: 'deal',
 		round: challenge.round + 1,
 		participantTenureIds: nextParticipantTenureIds,
+		tenureOwners: nextTenureOwners,
 		pendingJoinTenureIds: [],
 		enemyFacts: nextEnemyFacts,
 		initiativeOrder: [],

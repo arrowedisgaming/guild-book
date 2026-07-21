@@ -69,6 +69,13 @@ import { FIXED_ZONE_IDS } from '../../zones';
  * hand) facedown as their Initiative for the round. Player-only for their
  * own tenure (the GM never places a player's Initiative for them); rejects a
  * repeat placement for the same tenure this round.
+ *
+ * Authorization resolves the tenure's owning user through
+ * `challenge.tenureOwners` — NEVER by comparing `context.actor.userId`
+ * against `tenureId` directly. A tenure (Increment 1) is an adventurer's
+ * attachment to a campaign membership, not a user id (Increment 3 Task 2
+ * tenureId-vs-userId fix); `beginChallenge`/`cleanupRound` already guarantee
+ * every active tenure has a registered owner.
  */
 export function placeInitiative(
 	state: SessionEngineStateV1,
@@ -84,7 +91,8 @@ export function placeInitiative(
 	if (!challenge.participantTenureIds.includes(tenureId)) {
 		return reject('illegal-command', `${tenureId} is not an active Challenge participant`);
 	}
-	if (context.actor.kind === 'player' && context.actor.userId !== tenureId) {
+	const owner = challenge.tenureOwners[tenureId];
+	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
 		return reject('not-authorized', 'a player may only place their own Initiative');
 	}
 	if (challenge.initiativeOrder.some((entry) => entry.tenureId === tenureId)) {

@@ -32,8 +32,26 @@ import type {
 const GM: SessionActor = { kind: 'gm', userId: 'gm-1' };
 const TENURE_IDS = ['tenure-1', 'tenure-2', 'tenure-3', 'tenure-4'];
 
+/** A tenure (Increment 1: an adventurer's attachment to a campaign
+ * membership) is NEVER a user id — deliberately spelled with DISTINCT string
+ * values from `TENURE_IDS` so a test that only passed because tenureId ===
+ * userId (the conflation this fixture update fixes — Increment 3 Task 2
+ * follow-up) cannot silently keep passing. */
+const TENURE_OWNERS: Record<string, string> = {
+	'tenure-1': 'user-alice',
+	'tenure-2': 'user-bob',
+	'tenure-3': 'user-carol',
+	'tenure-4': 'user-dave'
+};
+
+function ownerOf(tenureId: string): string {
+	const owner = TENURE_OWNERS[tenureId];
+	if (!owner) throw new Error(`ownerOf: no owner fixture registered for ${tenureId}`);
+	return owner;
+}
+
 function playerActor(tenureId: string): SessionActor {
-	return { kind: 'player', userId: tenureId };
+	return { kind: 'player', userId: ownerOf(tenureId) };
 }
 
 /** ONE group entry representing `count` imps — exactly how the rulebook's
@@ -142,7 +160,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 	describe('beginChallenge', () => {
 		it('starts a challenge-round procedure at stage deal, round 1', () => {
 			const state = makeSessionFixture('begin');
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: makeImpFacts(12) }, ctxFor(GM, catalog, config, 'begin'));
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: makeImpFacts(12) }, ctxFor(GM, catalog, config, 'begin'));
 
 			expect(result.ok).toBe(true);
 			if (!result.ok) return;
@@ -156,7 +174,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const state = makeSessionFixture('begin-player');
 			const result = beginChallenge(
 				state,
-				{ participantTenureIds: TENURE_IDS, enemyFacts: [] },
+				{ participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] },
 				ctxFor(playerActor('tenure-1'), catalog, config, 'begin-player')
 			);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
@@ -164,10 +182,10 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 
 		it('rejects starting a second procedure while one is active', () => {
 			const state = makeSessionFixture('begin-twice');
-			const first = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, ctxFor(GM, catalog, config, 'begin-twice'));
+			const first = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, ctxFor(GM, catalog, config, 'begin-twice'));
 			expect(first.ok).toBe(true);
 			if (!first.ok) return;
-			const second = beginChallenge(first.state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, ctxFor(GM, catalog, config, 'begin-twice'));
+			const second = beginChallenge(first.state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, ctxFor(GM, catalog, config, 'begin-twice'));
 			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 
@@ -178,7 +196,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			// Calling this directly (no try/catch) already proves it doesn't
 			// throw — a `ZodError` throw would fail this test with an uncaught
 			// exception rather than a normal returned rejection.
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-invalid-fact'));
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-invalid-fact'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 
 			// No partial state: `begin-procedure` never ran, so the input state
@@ -190,7 +208,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		it('rejects a whitespace-only threat/id the same way — never throws (Important 2)', () => {
 			const state = makeSessionFixture('begin-whitespace-fact');
 			const invalidFacts = [{ id: '   ', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }] as ChallengeEnemyFact[];
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-whitespace-fact'));
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-whitespace-fact'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 			expect(state.procedure).toBeNull();
 		});
@@ -201,7 +219,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 },
 				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
 			];
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: duplicateFacts }, ctxFor(GM, catalog, config, 'begin-duplicate-fact'));
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: duplicateFacts }, ctxFor(GM, catalog, config, 'begin-duplicate-fact'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 			expect(state.procedure).toBeNull();
 		});
@@ -211,9 +229,70 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const collidingFacts: ChallengeEnemyFact[] = [
 				{ id: 'tenure-1', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
 			];
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: collidingFacts }, ctxFor(GM, catalog, config, 'begin-collision-fact'));
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: collidingFacts }, ctxFor(GM, catalog, config, 'begin-collision-fact'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 			expect(state.procedure).toBeNull();
+		});
+
+		it('rejects a roster with a tenure that has no registered owner (tenureId-vs-userId fix)', () => {
+			const state = makeSessionFixture('begin-missing-owner');
+			const incompleteOwners = { ...TENURE_OWNERS };
+			delete incompleteOwners['tenure-2'];
+
+			const result = beginChallenge(
+				state,
+				{ participantTenureIds: TENURE_IDS, tenureOwners: incompleteOwners, enemyFacts: [] },
+				ctxFor(GM, catalog, config, 'begin-missing-owner')
+			);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(state.procedure).toBeNull();
+		});
+	});
+
+	describe('tenure ownership — a tenure id is NOT a user id (Increment 3 Task 2 follow-up)', () => {
+		// A tenure is an adventurer's attachment to a campaign membership
+		// (Increment 1), not a user id. Before this fix, zone ownership and
+		// Initiative-placement authorization both compared directly against
+		// the tenure id, which only worked because every fixture happened to
+		// pass the same string as both. `TENURE_OWNERS` (file header) uses
+		// visibly distinct tenure/user id spaces specifically so these tests
+		// cannot pass by accident the way the old ones could.
+		function dealtWithOwners(seed: string) {
+			const state = makeSessionFixture(seed);
+			const gmCtx = ctxFor(GM, catalog, config, seed);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, gmCtx);
+			if (!begun.ok) throw begun;
+			const dealResult = dealRound(begun.state, gmCtx);
+			if (!dealResult.ok) throw dealResult;
+			return { state: dealResult.state, gmCtx };
+		}
+
+		it("a hand zone's ownerUserId is the owning USER, not the tenure id", () => {
+			const { state } = dealtWithOwners('owner-hand-zone');
+			const handZone = findZoneDescriptor(state, challengeHandZoneId('tenure-1'));
+			expect(handZone?.owner).toEqual({ kind: 'player', userId: ownerOf('tenure-1') });
+			expect(handZone?.owner).not.toEqual({ kind: 'player', userId: 'tenure-1' });
+		});
+
+		it('the owning user can see their own hand and place their own Initiative', () => {
+			const { state } = dealtWithOwners('owner-can-place');
+			const owningActor: SessionActor = { kind: 'player', userId: ownerOf('tenure-1') };
+
+			const projection = projectForActor(state, owningActor, catalog) as SessionPlayerProjection;
+			expect(projection.privateHand.length).toBeGreaterThan(0);
+
+			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!;
+			const placed = placeInitiative(state, 'tenure-1', hand.cards[0], ctxFor(owningActor, catalog, config, 'owner-can-place'));
+			expect(placed.ok).toBe(true);
+		});
+
+		it('a DIFFERENT owning user cannot place Initiative for a tenure they do not own, even knowing its tenure id', () => {
+			const { state } = dealtWithOwners('owner-cannot-place');
+			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!;
+			const otherOwningActor: SessionActor = { kind: 'player', userId: ownerOf('tenure-2') };
+
+			const result = placeInitiative(state, 'tenure-1', hand.cards[0], ctxFor(otherOwningActor, catalog, config, 'owner-cannot-place'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 	});
 
@@ -221,7 +300,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		function begin(seed: string, enemyFacts: ChallengeEnemyFact[]) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts }, gmCtx);
 			if (!result.ok) throw new Error('begin failed in test setup');
 			return { state: result.state, gmCtx };
 		}
@@ -319,7 +398,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		function dealt(seed: string, enemyFacts: ChallengeEnemyFact[] = makeImpFacts(4)) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -336,7 +415,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			if (!placed.ok) return;
 
 			const publicBack = projectForActor(placed.state, GM, catalog).public.privateZoneCardBacks.find(
-				(zone) => zone.ownerUserId === 'tenure-1' && zone.kind === 'player-facedown'
+				(zone) => zone.ownerUserId === ownerOf('tenure-1') && zone.kind === 'player-facedown'
 			);
 			expect(publicBack?.cards).toEqual([{ hidden: true }]);
 
@@ -425,7 +504,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			// participants tied on the SAME rank across different suits.
 			const state = makeSessionFixture('tie-break');
 			const gmCtx = ctxFor(GM, catalog, config, 'tie-break');
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -478,7 +557,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		function dealtWithEnemies(seed: string, enemyFacts: ChallengeEnemyFact[]) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -595,7 +674,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		function readyForCleanup(seed: string, enemyFacts: ChallengeEnemyFact[]) {
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -672,11 +751,14 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expectConserved(cleaned.state, catalog);
 		});
 
-		it('admits pending join tenures into the next round and provisions their zones', () => {
+		it('admits pending join tenures into the next round and provisions their zones, owned by their real user (not the tenure id)', () => {
 			const { state, gmCtx } = readyForCleanup('cleanup-join', makeImpFacts(2));
 			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-5'] });
 
-			const cleaned = cleanupRound(withPendingJoin, gmCtx);
+			// The new tenure's owner isn't registered yet — supplied at the same
+			// moment it's admitted, exactly the scenario `CleanupRoundOptions.
+			// tenureOwners` exists for.
+			const cleaned = cleanupRound(withPendingJoin, gmCtx, { tenureOwners: { 'tenure-5': 'user-eve' } });
 			expect(cleaned.ok).toBe(true);
 			if (!cleaned.ok) return;
 
@@ -684,8 +766,19 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expect(after.participantTenureIds).toContain('tenure-5');
 			expect(after.pendingJoinTenureIds).toEqual([]);
 			expect(after.budgets['tenure-5']).toBeDefined();
-			expect(findZoneDescriptor(cleaned.state, challengeHandZoneId('tenure-5'))).toBeDefined();
+			expect(after.tenureOwners['tenure-5']).toBe('user-eve');
+			const handZone = findZoneDescriptor(cleaned.state, challengeHandZoneId('tenure-5'));
+			expect(handZone).toBeDefined();
+			expect(handZone?.owner).toEqual({ kind: 'player', userId: 'user-eve' });
 			expectConserved(cleaned.state, catalog);
+		});
+
+		it('rejects admitting a pending join tenure with no registered owner', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-join-no-owner', makeImpFacts(2));
+			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-5'] });
+
+			const result = cleanupRound(withPendingJoin, gmCtx);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 
 		it('resolves a Fool-scheduled reshuffle only at the round boundary, not immediately', () => {
@@ -696,7 +789,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const state = { ...baseState, playerDraw: stackedTop };
 			const gmCtx = ctxFor(GM, catalog, config, seed);
 
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, gmCtx);
 			if (!begun.ok) throw begun;
 			const dealResult = dealRound(begun.state, gmCtx);
 			if (!dealResult.ok) throw dealResult;
@@ -728,7 +821,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const seed = 'cleanup-too-early';
 			const state = makeSessionFixture(seed);
 			const gmCtx = ctxFor(GM, catalog, config, seed);
-			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, gmCtx);
+			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, tenureOwners: TENURE_OWNERS, enemyFacts: [] }, gmCtx);
 			if (!begun.ok) throw begun;
 			const result = cleanupRound(begun.state, gmCtx);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
@@ -771,7 +864,14 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const collidingNextFacts: ChallengeEnemyFact[] = [
 				{ id: 'tenure-5', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
 			];
-			const result = cleanupRound(withPendingJoin, gmCtx, { enemyFacts: collidingNextFacts });
+			// Owner supplied so this rejection is proven to come from the
+			// enemy/tenure collision guard specifically, not incidentally from
+			// tenure-5 lacking a registered owner (a separate, already-tested
+			// rejection path).
+			const result = cleanupRound(withPendingJoin, gmCtx, {
+				enemyFacts: collidingNextFacts,
+				tenureOwners: { 'tenure-5': 'user-eve' }
+			});
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 	});

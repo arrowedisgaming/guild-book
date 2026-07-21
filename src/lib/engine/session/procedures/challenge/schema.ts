@@ -147,6 +147,13 @@ export const challengeEnemyFactSchema = z
 	})
 	.strict();
 
+/** Mirrors `ChallengeStateV1.tenureOwners` — maps a tenure id to its owning
+ * user id. Exported so `reducer.ts` can `safeParse` a GM-supplied mapping
+ * before mutating state, mirroring `challengeEnemyFactSchema` (Increment 3
+ * Task 2 tenureId-vs-userId fix: a tenure is never a user id and must not be
+ * compared against one directly). */
+export const challengeTenureOwnersSchema = z.record(z.string(), tenureId);
+
 const challengeInitiativeEntrySchema = z
 	.object({
 		tenureId,
@@ -182,6 +189,7 @@ export const challengeStateV1Schema = z
 		stage: challengeStageSchema,
 		round: z.number().int().positive(),
 		participantTenureIds: z.array(tenureId),
+		tenureOwners: challengeTenureOwnersSchema,
 		pendingJoinTenureIds: z.array(tenureId),
 		enemyFacts: z.array(challengeEnemyFactSchema),
 		initiativeOrder: z.array(challengeInitiativeEntrySchema),

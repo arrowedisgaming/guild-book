@@ -44,6 +44,42 @@ function collectResponses(page: Page): string[] {
 }
 
 /**
+ * Whole-token containment check used by every canary assertion below.
+ *
+ * Root-cause note (diagnosed by reproducing the flake and inspecting the
+ * actual matched substrings — see `.superpowers/sdd/task-6-report.md`): the
+ * content pack's minor-arcana card ids and labels are built from Roman
+ * numerals (`i, ii, iii, iv, v, vi, vii, viii, ix, x`), and Roman numerals
+ * nest as substrings/suffixes of one another — e.g. the id `wands-vi` is a
+ * literal prefix of `wands-vii`, and the label `"X of Cups"` is a literal
+ * suffix of `"IX of Cups"`. A plain `String.includes(canary)` check
+ * therefore reports a false "leak" whenever some OTHER, legitimately-visible
+ * card's id/label happens to contain the private canary as a contiguous
+ * substring — confirmed by direct reproduction: e.g. canary `"II of Swords"`
+ * matched inside a legitimately-public `"VIII of Swords"` in the GM's own
+ * `/challenge-commands` response, and canary `"X of Cups"` matched inside a
+ * player's own freshly-dealt `"IX of Cups"` in their own `/sync` response —
+ * two entirely different, unrelated physical cards, not a disclosure of the
+ * canary's card at all.
+ *
+ * Every genuine occurrence of a canary in either a JSON response body or the
+ * rendered DOM is always delimited by a non-word character on both sides —
+ * a JSON string value is always `"...canary..."` (quote-bounded) and an HTML
+ * attribute value is always `attr="...canary..."` (quote-bounded); the one
+ * unquoted rendering (major-arcana card names in `TarotCard.svelte`'s
+ * `.mname` span) is still tag-bounded (`>...canary...<`). A Roman-numeral
+ * collision, by construction, always fails a boundary check on at least one
+ * side (the extra numeral character continues the SAME word), so anchoring
+ * the match to word boundaries (`\b`) keeps every genuine leak detectable
+ * while rejecting every numeral-nesting false positive — verified directly
+ * against all four reproduced instances above.
+ */
+function canaryLeaked(haystack: string, canary: string): boolean {
+	const escaped = canary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return new RegExp(`\\b${escaped}\\b`).test(haystack);
+}
+
+/**
  * `sinceIndex` (default 0, the whole collected history) lets a caller scope
  * the check to responses collected from a given point forward. Needed by
  * the Fool-hunt loop below: the shared deck is a FINITE, fixed set of ~78
@@ -57,9 +93,9 @@ function collectResponses(page: Page): string[] {
  * checks only what matters: has the CURRENT private instance leaked yet.
  */
 async function assertCanaryAbsent(page: Page, responses: string[], canary: string, sinceIndex = 0): Promise<void> {
-	expect(responses.slice(sinceIndex).some((body) => body.includes(canary))).toBe(false);
+	expect(responses.slice(sinceIndex).some((body) => canaryLeaked(body, canary))).toBe(false);
 	const content = await page.content();
-	expect(content).not.toContain(canary);
+	expect(canaryLeaked(content, canary)).toBe(false);
 }
 
 async function assertCanaryPresentEventually(
@@ -73,7 +109,7 @@ async function assertCanaryPresentEventually(
 		.poll(
 			async () => {
 				const content = await page.content();
-				return content.includes(canary) || responses().slice(sinceIndex).some((body) => body.includes(canary));
+				return canaryLeaked(content, canary) || responses().slice(sinceIndex).some((body) => canaryLeaked(body, canary));
 			},
 			{ timeout: timeoutMs }
 		)
@@ -323,7 +359,7 @@ test.describe('guided Challenge table privacy', () => {
 		// Never leaked to the console on any client either (matching
 		// `shared-table-privacy.spec.ts`'s discipline).
 		const leaked = consoleTexts.some(
-			(text) => text.includes(aCanary as string) || text.includes(bCanary as string)
+			(text) => canaryLeaked(text, aCanary as string) || canaryLeaked(text, bCanary as string)
 		);
 		expect(leaked).toBe(false);
 

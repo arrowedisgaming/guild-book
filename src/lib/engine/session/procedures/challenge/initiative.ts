@@ -252,19 +252,31 @@ export function revealInitiative(state: SessionEngineStateV1, context: Challenge
 		cardZoneId: CHALLENGE_INITIATIVE_ZONE_ID,
 		revealed: true
 	}));
-	const nextChallenge: ChallengeStateV1 = { ...challenge, stage: 'initiative-reveal', initiativeOrder: revealedOrder };
-	nextState = writeChallengeState(nextState, nextChallenge);
-	assertSessionInvariants(nextState, context.runtime.catalog);
 
 	// Groups of two-or-more ids that share a card value — a real Ch7 tie the
 	// table must adjudicate (see the file header), surfaced here rather than
-	// silently resolved by the stable sort above.
+	// silently resolved by the stable sort above. Computed before the state
+	// write below so `tiedGroups` lands in `ChallengeStateV1` itself, not only
+	// on this function's event payload (M1 — a later *reader of state*, like
+	// Task 3's turn loop or Task 6's UI, must see a tie without replaying the
+	// event log).
 	const byValue = new Map<number, string[]>();
 	for (const entry of sortedEntries) {
 		const value = context.runtime.catalog[placedCardIds[entry.tenureId]]?.value ?? 0;
-		(byValue.get(value) ?? byValue.set(value, []).get(value)!).push(entry.tenureId);
+		const group = byValue.get(value) ?? [];
+		group.push(entry.tenureId);
+		byValue.set(value, group);
 	}
 	const tiedGroups = [...byValue.values()].filter((group) => group.length > 1);
+
+	const nextChallenge: ChallengeStateV1 = {
+		...challenge,
+		stage: 'initiative-reveal',
+		initiativeOrder: revealedOrder,
+		tiedGroups
+	};
+	nextState = writeChallengeState(nextState, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
 
 	events.push({
 		kind: 'challenge-initiative-revealed',

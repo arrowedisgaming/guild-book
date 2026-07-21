@@ -22,12 +22,13 @@ import type {
 	SessionEvent,
 	SessionRejection
 } from '$lib/types/session';
+import { z } from 'zod';
 import { assertSessionInvariants } from '../../invariants';
 import { findZoneDescriptor } from '../../state';
 import { FIXED_ZONE_IDS } from '../../zones';
 import { reduceSession, type ReduceContext } from '../../reducer';
 import type { ReduceResult } from '../../result';
-import { challengeStateV1Schema } from './schema';
+import { challengeEnemyFactSchema, challengeStateV1Schema } from './schema';
 import type { ChallengeConfig, ChallengeEnemyFact, ChallengeParticipantBudget, ChallengeStateV1 } from './types';
 
 /** Alias matching the shared `reducer.ts`'s own `SessionReduceResult` —
@@ -87,8 +88,46 @@ export function challengeGmInitiativeZoneId(enemyFactId: string): string {
 	return `challenge-gm-initiative-facedown:${enemyFactId}`;
 }
 
-function reject(code: SessionRejection['code'], message: string): SessionReduceResult {
+export function reject(code: SessionRejection['code'], message: string): SessionReduceResult {
 	return { ok: false, rejection: { code, message } };
+}
+
+/**
+ * Validates a GM-supplied `enemyFacts` array structurally (against
+ * `challengeEnemyFactSchema`) AND against two Challenge-specific invariants
+ * Zod alone can't express: no two entries may share an `id`, and no entry's
+ * `id` may collide with a `participantTenureId` (Increment 3 Task 2 review,
+ * Important 3). Both defects silently collapse two Initiative entries into
+ * one at `revealInitiative` time — `ensureEnemyInitiativeZones` creates only
+ * one zone for a duplicated id, so the second `placeGmInitiative` is rejected
+ * as "already placed" while `revealInitiative`'s missing-key check is
+ * satisfied for both by the single surviving entry, and a reveal silently
+ * proceeds representing two enemy groups (or an enemy and a player) with one
+ * card. Called at the top of both `beginChallenge` and `cleanupRound`,
+ * before either performs any state mutation, so a rejection here never
+ * leaves a half-applied intent (Important 2 — the same reasoning that
+ * requires `safeParse` over `parse`).
+ *
+ * Returns a human-readable rejection message, or `null` if `enemyFacts` is
+ * valid.
+ */
+function validateEnemyFacts(enemyFacts: unknown, participantTenureIds: readonly string[]): string | null {
+	const parsed = z.array(challengeEnemyFactSchema).safeParse(enemyFacts);
+	if (!parsed.success) {
+		return `invalid enemyFacts: ${parsed.error.message}`;
+	}
+
+	const seenIds = new Set<string>();
+	for (const enemy of parsed.data) {
+		if (seenIds.has(enemy.id)) {
+			return `duplicate enemyFacts id: ${enemy.id}`;
+		}
+		seenIds.add(enemy.id);
+		if (participantTenureIds.includes(enemy.id)) {
+			return `enemyFacts id collides with a participant tenure id: ${enemy.id}`;
+		}
+	}
+	return null;
 }
 
 /** The context every Challenge procedure function takes: the generic
@@ -214,6 +253,16 @@ export function beginChallenge(
 		return reject('illegal-command', 'a Challenge round needs at least one participant');
 	}
 
+	// Validate BEFORE any state mutation (including `begin-procedure` below) —
+	// a `ZodError` throw here would crash the engine with `begin-procedure`
+	// already applied, leaving a half-applied intent (Important 2); a
+	// duplicate/colliding id here would otherwise silently collapse two
+	// Initiative entries into one at reveal time (Important 3).
+	const enemyFactsError = validateEnemyFacts(command.enemyFacts, participantTenureIds);
+	if (enemyFactsError) {
+		return reject('illegal-command', enemyFactsError);
+	}
+
 	const beginResult = reduceSession(state, { type: 'begin-procedure', procedureId: CHALLENGE_PROCEDURE_ID }, context);
 	if (!beginResult.ok) return beginResult;
 
@@ -229,6 +278,7 @@ export function beginChallenge(
 		pendingJoinTenureIds: [],
 		enemyFacts: command.enemyFacts,
 		initiativeOrder: [],
+		tiedGroups: [],
 		activeTurnIndex: null,
 		turnKind: null,
 		budgets: initialBudgets(participantTenureIds),
@@ -311,6 +361,17 @@ export function cleanupRound(
 		return reject('illegal-command', `cannot clean up during stage ${challenge.stage}`);
 	}
 
+	// Computed and validated BEFORE any state mutation (the discard sweep
+	// below) so an invalid `options.enemyFacts` is rejected with the state
+	// untouched, not after `begin-procedure`-equivalent work has already run
+	// (Important 2/3 — same reasoning as `beginChallenge`).
+	const nextParticipantTenureIds = [...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds];
+	const nextEnemyFacts = options.enemyFacts ?? challenge.enemyFacts;
+	const enemyFactsError = validateEnemyFacts(nextEnemyFacts, nextParticipantTenureIds);
+	if (enemyFactsError) {
+		return reject('illegal-command', enemyFactsError);
+	}
+
 	let nextState: SessionEngineStateV1 = state;
 	const events: SessionEvent[] = [];
 
@@ -336,8 +397,6 @@ export function cleanupRound(
 	nextState = endRoundResult.state;
 	events.push(...endRoundResult.events);
 
-	const nextParticipantTenureIds = [...challenge.participantTenureIds, ...challenge.pendingJoinTenureIds];
-	const nextEnemyFacts = options.enemyFacts ?? challenge.enemyFacts;
 	nextState = ensureParticipantZones(nextState, nextParticipantTenureIds);
 	nextState = ensureEnemyInitiativeZones(nextState, nextEnemyFacts.map((enemy) => enemy.id));
 
@@ -349,6 +408,7 @@ export function cleanupRound(
 		pendingJoinTenureIds: [],
 		enemyFacts: nextEnemyFacts,
 		initiativeOrder: [],
+		tiedGroups: [],
 		activeTurnIndex: null,
 		turnKind: null,
 		budgets: initialBudgets(nextParticipantTenureIds),
@@ -379,5 +439,3 @@ function discardOneCard(
 	const destinationZoneId = entry?.deck === 'player' ? FIXED_ZONE_IDS.playerDiscard : FIXED_ZONE_IDS.majorDiscard;
 	return reduceSession(state, { type: 'discard', sourceZoneId: zoneId, cardId, destinationZoneId }, context);
 }
-
-export { ensureParticipantZones, ensureInitiativeZone, reject };

@@ -144,6 +144,7 @@ describe('ChallengeStateV1 schema (Step 3 + O4/O5)', () => {
 		pendingJoinTenureIds: [],
 		enemyFacts: [{ id: 'enemy-1', size: 'human', threat: 'minion', typeIds: ['goblin'], count: 1 }],
 		initiativeOrder: [{ tenureId: 'tenure-1', cardZoneId: 'zone-1', revealed: true }],
+		tiedGroups: [],
 		activeTurnIndex: 0,
 		turnKind: 'normal',
 		budgets: {

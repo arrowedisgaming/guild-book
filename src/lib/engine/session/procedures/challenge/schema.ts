@@ -132,8 +132,12 @@ export const challengeStageSchema = z.enum([
 
 /** Mirrors `ChallengeEnemyFact`. `count` is the entry's headcount (one
  * significant character or one group — see that type's doc comment) and
- * must be a positive integer; `count: 0` or negative is rejected. */
-const challengeEnemyFactSchema = z
+ * must be a positive integer; `count: 0` or negative is rejected. Exported
+ * so `reducer.ts` can `safeParse` a GM-supplied `enemyFacts` array at the top
+ * of `beginChallenge`/`cleanupRound`, before any state mutation, and reject
+ * (rather than throw) a malformed entry (Increment 3 Task 2 review, Important
+ * 2). */
+export const challengeEnemyFactSchema = z
 	.object({
 		id: z.string().trim().min(1),
 		size: z.string().trim().min(1),
@@ -181,6 +185,7 @@ export const challengeStateV1Schema = z
 		pendingJoinTenureIds: z.array(tenureId),
 		enemyFacts: z.array(challengeEnemyFactSchema),
 		initiativeOrder: z.array(challengeInitiativeEntrySchema),
+		tiedGroups: z.array(z.array(tenureId)),
 		activeTurnIndex: z.number().int().nonnegative().nullable(),
 		turnKind: z.enum(['normal', 'fool-extra']).nullable(),
 		budgets: z.record(z.string(), challengeParticipantBudgetSchema),

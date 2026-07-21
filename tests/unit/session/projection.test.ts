@@ -189,7 +189,7 @@ describe('projectForActor — shared public projection', () => {
 		expect(JSON.stringify(projection.public.playerDiscardTop)).not.toContain(buried);
 	});
 
-	it('reports pending zones as counts only, never card identities', () => {
+	it('reports pending zones as counts only, never card identities — for a PLAYER', () => {
 		const state = makeSessionFixture();
 		const cardId = state.majorDraw.pop();
 		if (!cardId) throw new Error('fixture empty');
@@ -198,6 +198,21 @@ describe('projectForActor — shared public projection', () => {
 		const projection = projectForActor(state, PLAYER_A, catalog) as SessionPlayerProjection;
 		expect(projection.public.pendingZoneCounts).toEqual([{ id: 'pending:augury', deck: 'major', count: 1 }]);
 		expect(JSON.stringify(projection)).not.toContain(cardId);
+	});
+
+	it("the shared public section still hides pending-zone identities from the GM, but the GM's own gmPendingZones hydrates them (GM-private, not hidden-from-GM)", () => {
+		const state = makeSessionFixture();
+		const cardId = state.majorDraw.pop();
+		if (!cardId) throw new Error('fixture empty');
+		state.pendingZones.push({ id: 'pending:augury', deck: 'major', cards: [cardId] });
+
+		const projection = projectForActor(state, GM, catalog) as SessionGmProjection;
+		expect(projection.public.pendingZoneCounts).toEqual([{ id: 'pending:augury', deck: 'major', count: 1 }]);
+		expect(JSON.stringify(projection.public)).not.toContain(cardId);
+
+		expect(projection.gmPendingZones).toEqual([
+			{ id: 'pending:augury', deck: 'major', cards: [{ hidden: false, id: cardId, label: cardId, imageKey: cardId, value: 0 }] }
+		]);
 	});
 
 	it('projects the active procedure\'s public shape', () => {

@@ -379,6 +379,20 @@ export interface SessionPlayerProjection {
 export interface SessionGmProjection {
 	public: SessionPublicProjection;
 	gmHand: CardSlot[];
+	/**
+	 * GM-only hydration of every pending zone's actual card contents — the
+	 * pending-zone analog of a player's own `privateFacedown`/`privatePrepared`
+	 * on `SessionPlayerProjection`. `state.pendingZones` are, by construction
+	 * (`zones.ts`'s `listZoneDescriptors`), always `visibility: 'hidden'` with
+	 * no player owner, so `actorMayAccessZone` already grants the GM — and
+	 * only the GM — access to every one of them. The shared public projection
+	 * deliberately exposes only a count (`SessionPublicProjection.
+	 * pendingZoneCounts`) to every role, but "GM-private" means private *to*
+	 * the GM, not hidden from the GM too — omitting this field was the gap
+	 * that left the GM unable to see which card they themselves had placed
+	 * for an enemy's Initiative (Increment 3 Task 2 review).
+	 */
+	gmPendingZones: Array<{ id: string; deck: 'major' | 'player'; cards: CardSlot[] }>;
 	gmPrivateProcedure?: unknown;
 	legalCommands: SessionCommandType[];
 }

@@ -126,6 +126,13 @@ function ownedZoneCards(state: SessionEngineStateV1, ownerUserId: UserId, kind: 
 	return state.privateZones.filter((zone) => zone.ownerUserId === ownerUserId && zone.kind === kind).flatMap((zone) => zone.cards);
 }
 
+/** GM-only hydration of every pending zone's real card contents (see
+ * `SessionGmProjection.gmPendingZones`'s doc comment for why this is safe:
+ * every `state.pendingZones` entry is GM-accessible-only by construction). */
+function buildGmPendingZones(state: SessionEngineStateV1, catalog: TarotCardCatalog): SessionGmProjection['gmPendingZones'] {
+	return state.pendingZones.map((zone) => ({ id: zone.id, deck: zone.deck, cards: visibleSlots(zone.cards, catalog) }));
+}
+
 /**
  * Builds the projection `actor` is authorized to see: the shared public
  * view, plus only their own private identities (a player) or the GM hand
@@ -150,6 +157,7 @@ export function projectForActor(state: SessionEngineStateV1, actor: SessionActor
 		const gmProjection: SessionGmProjection = {
 			public: publicProjection,
 			gmHand: visibleSlots(state.gmHand, catalog),
+			gmPendingZones: buildGmPendingZones(state, catalog),
 			legalCommands
 		};
 		return gmProjection;

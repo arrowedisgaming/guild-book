@@ -20,7 +20,14 @@ import { findZoneDescriptor } from '$lib/engine/session/state';
 import { projectForActor } from '$lib/engine/session/projection';
 import { makeRng } from '$lib/engine/rng';
 import { makeRichSessionCatalogFixture, makeSessionFixture } from '../../../fixtures/session';
-import type { CardId, SessionActor, SessionEngineStateV1, SessionPlayerProjection, TarotCardCatalog } from '$lib/types/session';
+import type {
+	CardId,
+	SessionActor,
+	SessionEngineStateV1,
+	SessionGmProjection,
+	SessionPlayerProjection,
+	TarotCardCatalog
+} from '$lib/types/session';
 
 const GM: SessionActor = { kind: 'gm', userId: 'gm-1' };
 const TENURE_IDS = ['tenure-1', 'tenure-2', 'tenure-3', 'tenure-4'];
@@ -162,6 +169,51 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			if (!first.ok) return;
 			const second = beginChallenge(first.state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, ctxFor(GM, catalog, config, 'begin-twice'));
 			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('rejects an invalid enemy fact instead of throwing, and applies no partial state (Important 2)', () => {
+			const state = makeSessionFixture('begin-invalid-fact');
+			const invalidFacts = [{ id: 'imp-1', size: 'human', threat: 'minion', typeIds: ['imp'], count: 0 }] as ChallengeEnemyFact[];
+
+			// Calling this directly (no try/catch) already proves it doesn't
+			// throw — a `ZodError` throw would fail this test with an uncaught
+			// exception rather than a normal returned rejection.
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-invalid-fact'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+
+			// No partial state: `begin-procedure` never ran, so the input state
+			// (which the caller may still hold a reference to) is still
+			// pre-Challenge.
+			expect(state.procedure).toBeNull();
+		});
+
+		it('rejects a whitespace-only threat/id the same way — never throws (Important 2)', () => {
+			const state = makeSessionFixture('begin-whitespace-fact');
+			const invalidFacts = [{ id: '   ', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }] as ChallengeEnemyFact[];
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: invalidFacts }, ctxFor(GM, catalog, config, 'begin-whitespace-fact'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(state.procedure).toBeNull();
+		});
+
+		it('rejects two enemy facts sharing the same id instead of silently collapsing them (Important 3)', () => {
+			const state = makeSessionFixture('begin-duplicate-fact');
+			const duplicateFacts: ChallengeEnemyFact[] = [
+				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 },
+				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
+			];
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: duplicateFacts }, ctxFor(GM, catalog, config, 'begin-duplicate-fact'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(state.procedure).toBeNull();
+		});
+
+		it("rejects an enemy fact id that collides with a participant tenure id (Important 3)", () => {
+			const state = makeSessionFixture('begin-collision-fact');
+			const collidingFacts: ChallengeEnemyFact[] = [
+				{ id: 'tenure-1', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
+			];
+			const result = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: collidingFacts }, ctxFor(GM, catalog, config, 'begin-collision-fact'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(state.procedure).toBeNull();
 		});
 	});
 
@@ -411,6 +463,14 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			// engine ruling), not silently absorbed into that default order.
 			const revealEvent = revealed.events.find((event) => event.kind === 'challenge-initiative-revealed');
 			expect(revealEvent?.publicPayload).toMatchObject({ tiedGroups: [['tenure-2', 'tenure-3']] });
+
+			// (M1) The tie is durable in STATE too, not only on this momentary
+			// event — Task 3's turn loop and Task 6's UI read state, not the
+			// event log. Re-parse via `readChallengeState` (a fresh
+			// `challengeStateV1Schema.safeParse` off `state.procedure.gmPrivate`)
+			// to prove it survives a real write/read round-trip, not just
+			// in-memory object identity.
+			expect(readChallengeState(revealed.state)?.tiedGroups).toEqual([['tenure-2', 'tenure-3']]);
 		});
 	});
 
@@ -446,7 +506,7 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expectConserved(placed.state, catalog);
 		});
 
-		it('is publicly visible only as an occupied-but-hidden pending-zone count; no player projection can hydrate it', () => {
+		it('is publicly visible only as an occupied-but-hidden pending-zone count to players; the GM who placed it can see it themselves', () => {
 			const { state, gmCtx } = dealtWithEnemies('gm-initiative-privacy', oneOgre);
 			const cardId = state.gmHand[0];
 			const placed = placeGmInitiative(state, 'ogre-1', cardId, gmCtx);
@@ -457,10 +517,20 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			);
 			expect(pendingCount).toMatchObject({ deck: 'major', count: 1 });
 
-			for (const actor of [playerActor('tenure-1'), playerActor('tenure-2'), GM]) {
+			// Neither player can hydrate the GM's placed enemy Initiative card.
+			for (const actor of [playerActor('tenure-1'), playerActor('tenure-2')]) {
 				const projection = projectForActor(placed.state, actor, catalog);
 				expect(JSON.stringify(projection)).not.toContain(cardId);
 			}
+
+			// "GM-private" means private TO the GM, not hidden from the GM too:
+			// the GM who placed this card can see which card it was via the new
+			// GM-only pending-zone hydration.
+			const gmProjection = projectForActor(placed.state, GM, catalog) as SessionGmProjection;
+			expect(JSON.stringify(gmProjection)).toContain(cardId);
+			const gmPendingZone = gmProjection.gmPendingZones.find((zone) => zone.id === challengeGmInitiativeZoneId('ogre-1'));
+			expect(gmPendingZone?.deck).toBe('major');
+			expect(gmPendingZone?.cards.map((slot) => (slot.hidden ? null : slot.id))).toEqual([cardId]);
 			expectConserved(placed.state, catalog);
 		});
 
@@ -561,6 +631,47 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			expectConserved(cleaned.state, catalog);
 		});
 
+		it('leaves inspiration and prepared zones untouched at cleanup while hands/Initiative ARE discarded (M2 — the O6 untouched-zone clause)', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-untouched', makeImpFacts(2));
+
+			// Seed a populated public `inspiration` zone and a private
+			// `player-prepared` zone by pulling two real cards out of the
+			// player draw pile, so the fixture's card count stays conserved.
+			const inspirationCard = state.playerDraw[0];
+			const preparedCard = state.playerDraw[1];
+			if (!inspirationCard || !preparedCard) throw new Error('fixture empty');
+
+			const seeded: SessionEngineStateV1 = {
+				...state,
+				playerDraw: state.playerDraw.slice(2),
+				publicZones: state.publicZones.concat({ id: 'inspiration', kind: 'inspiration', cards: [inspirationCard] }),
+				privateZones: state.privateZones.concat({
+					id: 'prepared:tenure-1',
+					kind: 'player-prepared',
+					ownerUserId: 'tenure-1',
+					cards: [preparedCard]
+				})
+			};
+			expectConserved(seeded, catalog);
+
+			const cleaned = cleanupRound(seeded, gmCtx);
+			expect(cleaned.ok).toBe(true);
+			if (!cleaned.ok) return;
+
+			// Untouched: contents survive intact.
+			expect(findZoneDescriptor(cleaned.state, 'inspiration')?.cards).toEqual([inspirationCard]);
+			expect(findZoneDescriptor(cleaned.state, 'prepared:tenure-1')?.cards).toEqual([preparedCard]);
+
+			// Meanwhile hands (and the public Initiative zone) ARE swept.
+			for (const tenureId of TENURE_IDS) {
+				expect(handCount(cleaned.state, tenureId)).toBe(0);
+			}
+			expect(cleaned.state.gmHand).toHaveLength(0);
+			expect(findZoneDescriptor(cleaned.state, CHALLENGE_INITIATIVE_ZONE_ID)?.cards).toHaveLength(0);
+
+			expectConserved(cleaned.state, catalog);
+		});
+
 		it('admits pending join tenures into the next round and provisions their zones', () => {
 			const { state, gmCtx } = readyForCleanup('cleanup-join', makeImpFacts(2));
 			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-5'] });
@@ -620,6 +731,47 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 			const begun = beginChallenge(state, { participantTenureIds: TENURE_IDS, enemyFacts: [] }, gmCtx);
 			if (!begun.ok) throw begun;
 			const result = cleanupRound(begun.state, gmCtx);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('rejects an invalid next-round enemy fact instead of throwing, and applies no partial state (Important 2)', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-invalid-fact', makeImpFacts(2));
+			const before = readChallengeState(state)!;
+			const invalidNextFacts = [{ id: 'imp-1', size: 'human', threat: 'minion', typeIds: ['imp'], count: 0 }] as ChallengeEnemyFact[];
+
+			// No try/catch: a thrown ZodError would fail this test directly.
+			const result = cleanupRound(state, gmCtx, { enemyFacts: invalidNextFacts });
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+
+			// No partial state: the sweep never ran, so hands are exactly what
+			// they were pre-cleanup (non-empty), and `readChallengeState` off the
+			// same input `state` still shows the pre-cleanup round/stage.
+			for (const tenureId of TENURE_IDS) {
+				expect(handCount(state, tenureId)).toBeGreaterThan(0);
+			}
+			expect(readChallengeState(state)).toMatchObject({ round: before.round, stage: before.stage });
+		});
+
+		it('rejects two next-round enemy facts sharing the same id instead of silently collapsing them (Important 3)', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-duplicate-fact', makeImpFacts(2));
+			const duplicateNextFacts: ChallengeEnemyFact[] = [
+				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 },
+				{ id: 'imp-swarm', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
+			];
+			const result = cleanupRound(state, gmCtx, { enemyFacts: duplicateNextFacts });
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			for (const tenureId of TENURE_IDS) {
+				expect(handCount(state, tenureId)).toBeGreaterThan(0);
+			}
+		});
+
+		it('rejects a next-round enemy fact id that collides with a (possibly newly-admitted) participant tenure id (Important 3)', () => {
+			const { state, gmCtx } = readyForCleanup('cleanup-collision-fact', makeImpFacts(2));
+			const withPendingJoin = writeChallengeState(state, { ...readChallengeState(state)!, pendingJoinTenureIds: ['tenure-5'] });
+			const collidingNextFacts: ChallengeEnemyFact[] = [
+				{ id: 'tenure-5', size: 'human', threat: 'minion', typeIds: ['imp'], count: 1 }
+			];
+			const result = cleanupRound(withPendingJoin, gmCtx, { enemyFacts: collidingNextFacts });
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 		});
 	});

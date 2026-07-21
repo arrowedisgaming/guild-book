@@ -185,6 +185,15 @@ export interface ChallengeStateV1 {
 	pendingJoinTenureIds: string[];
 	enemyFacts: ChallengeEnemyFact[];
 	initiativeOrder: ChallengeInitiativeEntry[];
+	/** Groups of two-or-more `initiativeOrder` ids that share the same
+	 * revealed card value — Ch7 "Tied Initiative" makes resolving a tie a
+	 * table decision, not an engine ruling (see `initiative.ts`'s file header
+	 * doc comment). Carried here, not only on the `challenge-initiative-
+	 * revealed` event's payload, so a later reader of *state* (Task 3's turn
+	 * loop, Task 6's UI) still sees which seats are tied without replaying
+	 * the event log. Empty before `revealInitiative` runs; reset to `[]` at
+	 * each round's cleanup alongside `initiativeOrder`. */
+	tiedGroups: string[][];
 	activeTurnIndex: number | null;
 	turnKind: ChallengeTurnKind | null;
 	budgets: Record<string, ChallengeParticipantBudget>;

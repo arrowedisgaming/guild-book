@@ -182,6 +182,7 @@ export type BuildChallengeJoinStatements = (input: {
 	db: AppDb;
 	sessionId: string;
 	tenureId: string;
+	actorUserId: string;
 }) => Promise<CampaignAtomicStatement[]>;
 
 export async function attachAdventurer(
@@ -232,13 +233,16 @@ export async function attachAdventurer(
 	const now = input.now ?? new Date();
 	// Built BEFORE the atomic write so a Challenge-join registration failure
 	// (e.g. the session load itself throwing) surfaces before any statement
-	// runs, rather than after tenure creation already committed. When there is
-	// no active session, or the caller supplied no callback, this is `[]` —
-	// exactly today's behavior (O3's first sentence: outside Challenge there is
-	// nothing extra to do).
+	// runs, rather than after tenure creation already committed — this call is
+	// deliberately OUTSIDE the try/catch below, so a throw here propagates
+	// straight out of `attachAdventurer` (review Important 3: "could not
+	// determine" must fail the whole attach, never silently commit a tenure
+	// with no pending-join registration). When there is no active session, or
+	// the caller supplied no callback, this is `[]` — exactly today's behavior
+	// (O3's first sentence: outside Challenge there is nothing extra to do).
 	const challengeJoinStatements =
 		activeSessionId && buildChallengeJoinStatements
-			? await buildChallengeJoinStatements({ db, sessionId: activeSessionId, tenureId })
+			? await buildChallengeJoinStatements({ db, sessionId: activeSessionId, tenureId, actorUserId: input.actorUserId })
 			: [];
 	try {
 		await runCampaignAtomic(db, [

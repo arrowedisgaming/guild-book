@@ -368,6 +368,14 @@ export interface SessionPublicProjection {
 	playerDrawCount: number;
 	playerDiscardTop: CardSlot | null;
 	gmHandCount: number;
+	/**
+	 * @deprecated for any Challenge consumer (Task 6): merges every
+	 * `player-hand` zone a user owns into one count — including a dead
+	 * tenure's zone alongside a live replacement's (see
+	 * `playerHandCountsByZoneId`'s doc comment). Still correct and still used
+	 * by every non-Challenge procedure; a Challenge-aware caller should reach
+	 * for `playerHandCountsByZoneId` instead.
+	 */
 	playerHandCounts: Record<UserId, number>;
 	/**
 	 * Additive (Increment 3 Task 5, O2). `playerHandCounts` sums every
@@ -394,6 +402,16 @@ export interface SessionPublicProjection {
  * can still be rejected on its own zone/card legality). */
 export interface SessionPlayerProjection {
 	public: SessionPublicProjection;
+	/**
+	 * @deprecated for any Challenge consumer (Task 6): flat-maps every
+	 * `player-hand` zone this actor owns into one merged array — including a
+	 * dead tenure's zone alongside a live replacement's (see
+	 * `privateHandsByZoneId`'s doc comment). Still correct and still used by
+	 * every non-Challenge procedure; a Challenge-aware caller should reach for
+	 * `privateHandsByZoneId` instead — this field is the one that
+	 * demonstrably merges two live zones and would otherwise be the first
+	 * thing reached for.
+	 */
 	privateHand: CardSlot[];
 	privateFacedown: CardSlot[];
 	privatePrepared: CardSlot[];

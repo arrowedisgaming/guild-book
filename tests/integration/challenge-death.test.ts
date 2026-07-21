@@ -18,11 +18,12 @@ import { join } from 'node:path';
 import { nanoid } from 'nanoid';
 import * as schema from '$lib/server/db/schema';
 import type { AppDb } from '$lib/server/db';
-import type { AppDbContext } from '$lib/server/db/atomic';
+import type { AppDbContext, AtomicStatement } from '$lib/server/db/atomic';
 import { runAtomic } from '$lib/server/db/atomic';
 import { runCampaignAtomic, type CampaignAtomicStatement } from '$lib/server/campaign/atomic';
 import { createBlankCharacter } from '$lib/types/character';
 import { attachAdventurer } from '$lib/server/campaign/tenure';
+import { markCharacterDead } from '$lib/server/character/life';
 import { startSession } from '$lib/server/session/lifecycle';
 import {
 	buildAcceptedCommandStatements,
@@ -31,6 +32,7 @@ import {
 import {
 	buildChallengeDeathStatements,
 	buildPendingChallengeJoinStatements,
+	challengeSessionStatePort,
 	executeChallengeDeath
 } from '$lib/server/session/command-service';
 import { toSessionEngineRuntime } from '$lib/server/content/session-runtime';
@@ -301,7 +303,10 @@ describe('challenge death — atomic mutation and card conservation', () => {
 
 		// Player A attaches a replacement character — allowed mid-session ONLY
 		// because tenure-a's own end reason is 'died' in THIS session
-		// (tenure.ts's existing carve-out).
+		// (tenure.ts's existing carve-out). Uses the REAL, DB-backed
+		// `challengeSessionStatePort` (reviewer's ⚠️) rather than a stub port,
+		// so `attachAdventurer`'s actual session-guard interaction with the
+		// appended join statements is genuinely exercised, not just assumed.
 		seedCharacter(sqlite, 'character-a2', PLAYER_A);
 		const replacementAttach = await attachAdventurer(
 			db,
@@ -313,7 +318,7 @@ describe('challenge death — atomic mutation and card conservation', () => {
 				tenureId: 'tenure-a2',
 				now: new Date(220_000)
 			},
-			{ activeSessionId: async () => 'session-a', claimGuard: () => sql`1 = 1` },
+			challengeSessionStatePort(db),
 			buildPendingChallengeJoinStatements
 		);
 		expect(replacementAttach).toEqual({ ok: true, tenureId: 'tenure-a2' });
@@ -365,6 +370,72 @@ describe('challenge death — atomic mutation and card conservation', () => {
 			expect(replacementProjection.privateHandsByZoneId[challengeHandZoneId('tenure-a')]).toBeUndefined();
 		}
 		expect(() => assertSessionInvariants(afterDeal2.engineState, catalog)).not.toThrow();
+	});
+
+	// Review Important 4: the generic out-of-session death path
+	// (`life.ts`'s `markCharacterDead`) must refuse a tenure that is a
+	// Challenge participant OR pending joiner — using it here would end the
+	// tenure and mark the character dead while leaving `participantTenureIds`,
+	// the hand zone, and the Initiative seat all intact.
+	it('markCharacterDead (the generic out-of-session path) rejects a tenure that IS a live Challenge participant', async () => {
+		const { tenureA, tenureB } = await seedTwoParticipants();
+		const started = await startSession({ dbContext: ctx, campaignId: 'campaign-a', actorUserId: GM_USER, sessionId: 'session-a', shuffleSeed: 'life-guard-seed', now: new Date(200_000) });
+		if (!started.ok) throw new Error('fixture: session failed to start');
+		await beginAndDeal('session-a', [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B });
+
+		const stubSessionState = { activeSessionId: async () => 'session-a', claimGuard: () => sql`1 = 1` };
+		const result = await markCharacterDead(
+			db,
+			{ characterId: 'character-a', actorUserId: PLAYER_A, expectedVersion: 1, campaignId: 'campaign-a' },
+			{ sessionState: stubSessionState, sessionCleanup: { statements: async () => [] } }
+		);
+		expect(result).toEqual({ ok: false, reason: 'is-challenge-participant' });
+
+		// No partial write: character still alive, tenure still active, and
+		// the Challenge engine state is completely untouched.
+		expect(sqlite.prepare('SELECT version, life_status FROM characters WHERE id = ?').get('character-a')).toEqual({
+			version: 1,
+			life_status: 'alive'
+		});
+		expect(sqlite.prepare('SELECT ended_at FROM campaign_adventurer_tenures WHERE id = ?').get(tenureA)).toEqual({ ended_at: null });
+		const after = await loadSessionForReduce(db, 'session-a');
+		expect(readChallengeState(after.engineState)!.participantTenureIds).toEqual([tenureA, tenureB]);
+	});
+
+	it('markCharacterDead rejects a tenure that is only a PENDING Challenge joiner too', async () => {
+		const { tenureA, tenureB } = await seedTwoParticipants();
+		const started = await startSession({ dbContext: ctx, campaignId: 'campaign-a', actorUserId: GM_USER, sessionId: 'session-a', shuffleSeed: 'life-guard-pending-seed', now: new Date(200_000) });
+		if (!started.ok) throw new Error('fixture: session failed to start');
+		await beginAndDeal('session-a', [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B });
+
+		const death = await executeChallengeDeath({ db, campaignId: 'campaign-a', sessionId: 'session-a', tenureId: tenureA, actorUserId: GM_USER, now: new Date(210_000) });
+		expect(death.ok).toBe(true);
+
+		// A replacement for tenure-a joins mid-Challenge — real attach flow,
+		// same carve-out and real port as the earlier "replacement admitted"
+		// test — landing PENDING (O3), not yet a full participant.
+		seedCharacter(sqlite, 'character-a2', PLAYER_A);
+		const pendingAttach = await attachAdventurer(
+			db,
+			{ campaignId: 'campaign-a', membershipId: 'membership-a', actorUserId: PLAYER_A, characterId: 'character-a2', tenureId: 'tenure-a2', now: new Date(220_000) },
+			challengeSessionStatePort(db),
+			buildPendingChallengeJoinStatements
+		);
+		expect(pendingAttach).toEqual({ ok: true, tenureId: 'tenure-a2' });
+		const afterJoin = await loadSessionForReduce(db, 'session-a');
+		expect(readChallengeState(afterJoin.engineState)!.pendingJoinTenureIds).toEqual(['tenure-a2']);
+
+		const stubSessionState = { activeSessionId: async () => 'session-a', claimGuard: () => sql`1 = 1` };
+		const result = await markCharacterDead(
+			db,
+			{ characterId: 'character-a2', actorUserId: PLAYER_A, expectedVersion: 1, campaignId: 'campaign-a' },
+			{ sessionState: stubSessionState, sessionCleanup: { statements: async () => [] } }
+		);
+		expect(result).toEqual({ ok: false, reason: 'is-challenge-participant' });
+		expect(sqlite.prepare('SELECT version, life_status FROM characters WHERE id = ?').get('character-a2')).toEqual({
+			version: 1,
+			life_status: 'alive'
+		});
 	});
 });
 
@@ -421,19 +492,96 @@ describe('challenge death — atomicity failure-injection matrix (O4/O6)', () =>
 		await runCampaignAtomic(db, built.statements);
 		expect(sqlite.prepare('SELECT life_status FROM characters WHERE id = ?').get('character-a')).toEqual({ life_status: 'dead' });
 	});
+
+	// Review Critical 1: a failure-injection matrix that only ever corrupts ONE
+	// writer's OWN batch can never see a race between TWO writers — this is
+	// exactly what let the missing `session_commands` claim through. These two
+	// tests model a genuine second writer racing the death in both directions.
+	it('a concurrent SessionCommand that commits FIRST makes a stale death fail outright — never silently overwritten (Critical 1)', async () => {
+		// Read (but do not commit) the death from the PRE-race version.
+		const staleDeath = await buildChallengeDeathStatements({
+			db,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			tenureId: 'tenure-a',
+			actorUserId: GM_USER,
+			now: new Date(210_000)
+		});
+		if (!staleDeath.ok) throw new Error(`fixture: buildChallengeDeathStatements rejected: ${staleDeath.reason}`);
+
+		// A real, ordinary Challenge command — a SECOND writer — commits FIRST,
+		// claiming the very next version the stale death also targets.
+		await applyChallengeStep(ctx, 'session-a', 'campaign-a', 'challenge-place-b', (state, context) => {
+			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-b'))!;
+			return placeInitiative(state, 'tenure-b', hand.cards[0], { ...context, actor: { kind: 'player', userId: PLAYER_B } });
+		});
+
+		// The stale death — built from a read that happened BEFORE that
+		// command committed — must now fail outright (claim collision on the
+		// version the command already claimed), never silently overwrite it.
+		await expect(runCampaignAtomic(db, staleDeath.statements)).rejects.toThrow();
+
+		// The command's effect survives; the death never applied to either
+		// domain (session-engine OR character/tenure).
+		const after = await loadSessionForReduce(db, 'session-a');
+		const challenge = readChallengeState(after.engineState)!;
+		expect(challenge.initiativeOrder.some((entry) => entry.tenureId === 'tenure-b')).toBe(true);
+		expect(challenge.participantTenureIds).toEqual(['tenure-a', 'tenure-b']);
+		expect(sqlite.prepare('SELECT life_status FROM characters WHERE id = ?').get('character-a')).toEqual({ life_status: 'alive' });
+		expect(
+			sqlite.prepare('SELECT ended_at FROM campaign_adventurer_tenures WHERE id = ?').get('tenure-a')
+		).toEqual({ ended_at: null });
+	});
+
+	it('a death that commits FIRST makes a stale concurrent SessionCommand fail outright — never silently overwritten (Critical 1)', async () => {
+		// Read (but do not commit) an ordinary command from the PRE-race
+		// version — the SECOND writer, built stale on purpose.
+		const staleCommandStatements = await buildChallengeStepStatements(ctx, 'session-a', 'campaign-a', 'challenge-place-b', (state, context) => {
+			const hand = findZoneDescriptor(state, challengeHandZoneId('tenure-b'))!;
+			return placeInitiative(state, 'tenure-b', hand.cards[0], { ...context, actor: { kind: 'player', userId: PLAYER_B } });
+		});
+
+		// The death commits first.
+		const death = await executeChallengeDeath({
+			db,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			tenureId: 'tenure-a',
+			actorUserId: GM_USER,
+			now: new Date(210_000)
+		});
+		expect(death.ok).toBe(true);
+
+		// The stale command — built from a read before the death committed —
+		// must now fail outright, never silently resurrect the pre-death
+		// session state (the dead tenure's hand/participant slot) underneath
+		// the death's own commit.
+		await expect(runAtomic(ctx, staleCommandStatements)).rejects.toThrow();
+
+		const after = await loadSessionForReduce(db, 'session-a');
+		const challenge = readChallengeState(after.engineState)!;
+		expect(challenge.participantTenureIds).toEqual(['tenure-b']);
+		expect(challenge.initiativeOrder).toEqual([]); // the stale placement never landed
+		expect(sqlite.prepare('SELECT life_status FROM characters WHERE id = ?').get('character-a')).toEqual({ life_status: 'dead' });
+	});
 });
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-async function applyChallengeStep(
+/** Builds (but does NOT run) the raw `AtomicStatement`s for one ordinary
+ * Challenge reducer step, read fresh from `sessionId`'s CURRENT state —
+ * factored out of `applyChallengeStep` so a racing-writer test (Critical 1)
+ * can hold onto a "stale" statement list, let something else commit first,
+ * and only then attempt it. */
+async function buildChallengeStepStatements(
 	ctx: AppDbContext,
 	sessionId: string,
 	campaignId: string,
 	commandType: string,
 	step: (state: SessionEngineStateV1, context: ChallengeReduceContext) => SessionReduceResult
-): Promise<void> {
+): Promise<AtomicStatement[]> {
 	const db = ctx.db as unknown as AppDb;
 	const loaded = await loadSessionForReduce(db, sessionId);
 	const { procedures, formulas } = getTarotProcedures();
@@ -448,7 +596,7 @@ async function applyChallengeStep(
 	const result = step(loaded.engineState, context);
 	if (!result.ok) throw new Error(`${commandType} rejected: ${result.rejection.code} ${result.rejection.message}`);
 	const nextState = { ...result.state, version: loaded.currentVersion + 1 };
-	const statements = buildAcceptedCommandStatements({
+	return buildAcceptedCommandStatements({
 		commandRowId: nanoid(),
 		sessionId,
 		campaignId,
@@ -467,6 +615,16 @@ async function applyChallengeStep(
 		now: new Date(),
 		idFactory: () => nanoid()
 	});
+}
+
+async function applyChallengeStep(
+	ctx: AppDbContext,
+	sessionId: string,
+	campaignId: string,
+	commandType: string,
+	step: (state: SessionEngineStateV1, context: ChallengeReduceContext) => SessionReduceResult
+): Promise<void> {
+	const statements = await buildChallengeStepStatements(ctx, sessionId, campaignId, commandType, step);
 	await runAtomic(ctx, statements);
 }
 
@@ -487,6 +645,16 @@ function fullSnapshot(sqlite: Database.Database): unknown {
 		characters: sqlite.prepare('SELECT id, version, life_status, data FROM characters ORDER BY id').all(),
 		tenures: sqlite.prepare('SELECT id, ended_at, end_reason, death_session_id FROM campaign_adventurer_tenures ORDER BY id').all(),
 		versionClaims: sqlite.prepare('SELECT character_id, resulting_version, mutation_kind FROM character_version_claims ORDER BY id').all(),
+		// Minor 7 (review): without this, a claim row that leaks past a
+		// rolled-back batch (e.g. the conditional claim's SELECT matched but
+		// something LATER in the same batch still failed) would be invisible
+		// to the failure-injection matrix — a real partial-write mode this
+		// snapshot must be able to see.
+		mutationClaims: sqlite.prepare('SELECT id, campaign_id, character_id, kind FROM campaign_mutation_claims ORDER BY id').all(),
+		mutationReceipts: sqlite.prepare('SELECT claim_id FROM campaign_mutation_receipts ORDER BY claim_id').all(),
+		sessionCommandClaims: sqlite
+			.prepare('SELECT session_id, command_type, resulting_version, status FROM session_commands ORDER BY id')
+			.all(),
 		playSessions: sqlite.prepare('SELECT id, version, public_state_json FROM play_sessions ORDER BY id').all(),
 		serverStates: sqlite.prepare('SELECT session_id, session_version, server_state_json FROM session_server_states ORDER BY session_id').all(),
 		privateStates: sqlite

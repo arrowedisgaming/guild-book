@@ -228,6 +228,95 @@ describe('markTenureDead', () => {
 		const afterEnd = markTenureDead(ended.state, activeTenureId, ctxFor(GM, catalog, config, 'active-turn'));
 		expect(afterEnd.ok).toBe(true);
 	});
+
+	// Review Minor 6: unbounded growth / stale authorization edge otherwise.
+	it('prunes the dead tenure\'s tenureOwners entry', () => {
+		const state = dealtState('prune-owners');
+		const result = markTenureDead(state, 'tenure-1', ctxFor(GM, catalog, config, 'prune-owners'));
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		const challenge = readChallengeState(result.state)!;
+		expect(challenge.tenureOwners).toEqual({ 'tenure-2': 'user-bob' });
+	});
+
+	// Review Minor 8: death of the LAST remaining participant must not corrupt
+	// state — verify cleanupRound/dealRound stay sane against an empty roster.
+	it('handles death of the last remaining participant — cleanupRound and dealRound both stay sane on an empty roster', () => {
+		const state = dealtState('last-participant');
+		const firstDeath = markTenureDead(state, 'tenure-1', ctxFor(GM, catalog, config, 'last-participant'));
+		if (!firstDeath.ok) throw firstDeath;
+		const secondDeath = markTenureDead(firstDeath.state, 'tenure-2', ctxFor(GM, catalog, config, 'last-participant'));
+		expect(secondDeath.ok).toBe(true);
+		if (!secondDeath.ok) return;
+
+		const challenge = readChallengeState(secondDeath.state)!;
+		expect(challenge.participantTenureIds).toEqual([]);
+		expect(challenge.tenureOwners).toEqual({});
+		expect(challenge.budgets).toEqual({ gm: expect.any(Object) });
+		expectConserved(secondDeath.state, catalog);
+
+		// cleanupRound requires stage 'initiative-reveal' or later — reachable
+		// even with an empty roster since revealInitiative's "everyone has
+		// placed" check is vacuously true when there is no one left to place.
+		const revealed = revealInitiative(secondDeath.state, ctxFor(GM, catalog, config, 'last-participant'));
+		expect(revealed.ok).toBe(true);
+		if (!revealed.ok) return;
+
+		// cleanupRound must not crash on an empty roster.
+		const cleaned = cleanupRound(revealed.state, ctxFor(GM, catalog, config, 'last-participant'));
+		expect(cleaned.ok).toBe(true);
+		if (!cleaned.ok) return;
+		expect(readChallengeState(cleaned.state)!.participantTenureIds).toEqual([]);
+		expectConserved(cleaned.state, catalog);
+
+		// dealRound must not crash on an empty roster either — zero player
+		// hands dealt, GM hand recalculated from (now zero) enemyFacts/
+		// adventurerCount.
+		const dealtAgain = dealRound(cleaned.state, ctxFor(GM, catalog, config, 'last-participant'));
+		expect(dealtAgain.ok).toBe(true);
+		if (!dealtAgain.ok) return;
+		expectConserved(dealtAgain.state, catalog);
+	});
+
+	describe('a PENDING joiner who dies before cleanupRound admits them (Important 4)', () => {
+		it('rejects a non-GM actor — no tenureOwners entry exists yet to resolve player ownership against', () => {
+			const state = dealtState('pending-death-auth');
+			const joined = admitPendingJoinTenure(state, 'tenure-5', catalog);
+			if (!joined.ok) throw joined;
+			const result = markTenureDead(joined.state, 'tenure-5', ctxFor(playerActor('tenure-1'), catalog, config, 'pending-death-auth'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
+		});
+
+		it('withdraws the pending join on GM death — never admitted by a later cleanupRound', () => {
+			const state = dealtState('pending-death');
+			const joined = admitPendingJoinTenure(state, 'tenure-5', catalog);
+			if (!joined.ok) throw joined;
+			expect(readChallengeState(joined.state)!.pendingJoinTenureIds).toEqual(['tenure-5']);
+
+			const result = markTenureDead(joined.state, 'tenure-5', ctxFor(GM, catalog, config, 'pending-death'));
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			const challenge = readChallengeState(result.state)!;
+			expect(challenge.pendingJoinTenureIds).toEqual([]);
+			expect(challenge.participantTenureIds).toEqual(TENURE_IDS);
+			expectConserved(result.state, catalog);
+
+			// Advance to a legal cleanup boundary and confirm the dead pending
+			// tenure is never admitted into the roster.
+			const handA = findZoneDescriptor(result.state, challengeHandZoneId('tenure-1'))!;
+			const placedA = placeInitiative(result.state, 'tenure-1', handA.cards[0], ctxFor(playerActor('tenure-1'), catalog, config, 'pending-death'));
+			if (!placedA.ok) throw placedA;
+			const handB = findZoneDescriptor(placedA.state, challengeHandZoneId('tenure-2'))!;
+			const placedB = placeInitiative(placedA.state, 'tenure-2', handB.cards[0], ctxFor(playerActor('tenure-2'), catalog, config, 'pending-death'));
+			if (!placedB.ok) throw placedB;
+			const revealed = revealInitiative(placedB.state, ctxFor(GM, catalog, config, 'pending-death'));
+			if (!revealed.ok) throw revealed;
+			const cleaned = cleanupRound(revealed.state, ctxFor(GM, catalog, config, 'pending-death'));
+			if (!cleaned.ok) throw cleaned;
+			expect(readChallengeState(cleaned.state)!.participantTenureIds).toEqual(TENURE_IDS);
+			expect(findZoneDescriptor(cleaned.state, challengeHandZoneId('tenure-5'))).toBeUndefined();
+		});
+	});
 });
 
 describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {

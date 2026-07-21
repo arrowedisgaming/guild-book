@@ -10,17 +10,24 @@
  */
 
 import { nanoid } from 'nanoid';
-import { and, eq, exists } from 'drizzle-orm';
+import { and, eq, exists, inArray, notExists } from 'drizzle-orm';
 import type { AppDb } from '$lib/server/db';
 import { runAtomic, isUniqueConstraintError, type AppDbContext } from '$lib/server/db/atomic';
 import { runCampaignAtomic, type CampaignAtomicStatement } from '$lib/server/campaign/atomic';
-import { campaignEvents, playSessions, sessionPrivateStates, sessionServerStates } from '$lib/server/db/schema';
+import {
+	campaignEvents,
+	playSessions,
+	sessionCommands,
+	sessionPrivateStates,
+	sessionServerStates
+} from '$lib/server/db/schema';
 import { migrateCharacterData } from '$lib/engine/character-migration';
 import {
 	challengeDeathStatements,
 	readChallengeDeathContext,
 	type ChallengeDeathContext
 } from '$lib/server/campaign/tenure';
+import type { SessionStatePort } from '$lib/server/campaign/session-state-port';
 import { sessionCommandEnvelopeSchema } from '$lib/schemas/session.schema';
 import { sha256Hex, canonicalJsonStringify } from '$lib/server/content/canonical-json';
 import { toSessionEngineRuntime } from '$lib/server/content/session-runtime';
@@ -38,6 +45,7 @@ import {
 	buildAcceptedCommandStatements,
 	buildRejectedCommandStatements,
 	campaignCursor,
+	findOpenSessionForCampaign,
 	findSessionCommand,
 	loadSessionForReduce,
 	loadSessionSummary,
@@ -483,6 +491,49 @@ export async function loadProjectionForActor(
 // procedure death path.
 // ---------------------------------------------------------------------------
 
+/**
+ * Review Critical 1 / Important 2: EVERY version-advancing write to
+ * `play_sessions` must participate in the SAME serialization index every
+ * other one does — `repository.ts`'s `sessionCommandClaimStatement` doc
+ * comment: the unique partial index on `(session_id, resulting_version)` in
+ * `session_commands` "is what makes this the single point of serialization
+ * between racing writers." Both `buildChallengeDeathStatements` and
+ * `buildPendingChallengeJoinStatements` bypass `buildAcceptedCommandStatements`
+ * (they run through `runCampaignAtomic`, not `runAtomic` — see the file
+ * header above), so neither one is automatically covered by that claim
+ * unless it inserts an equivalent row itself. Before this fix, NEITHER did:
+ * an ordinary `SessionCommand` racing a Challenge death (or a pending-join
+ * registration) could silently overwrite it, or be silently overwritten by
+ * it, with both writers reporting success — exactly the partial-death/lost-
+ * update failure mode O4 forbids. This is the Drizzle-statement equivalent of
+ * `sessionCommandClaimStatement`, inserting the identical row shape so it
+ * competes for the identical unique index.
+ */
+function sessionVersionClaimStatement(
+	db: AppDb,
+	input: { sessionId: string; actorUserId: string | null; commandType: string; expectedVersion: number; now: Date }
+): CampaignAtomicStatement {
+	const commandRowId = nanoid();
+	const requestHash = sha256Hex(
+		canonicalJsonStringify({ action: input.commandType, sessionId: input.sessionId, expectedVersion: input.expectedVersion, commandRowId })
+	);
+	return db.insert(sessionCommands).values({
+		id: commandRowId,
+		sessionId: input.sessionId,
+		commandId: commandRowId,
+		actorUserId: input.actorUserId,
+		requestHash,
+		commandType: input.commandType,
+		clientObservedVersion: input.expectedVersion,
+		structuralPreconditionVersion: input.expectedVersion,
+		expectedVersion: input.expectedVersion,
+		resultingVersion: input.expectedVersion + 1,
+		status: 'accepted',
+		outcomeMetadataJson: '{}',
+		createdAt: input.now
+	});
+}
+
 export interface ChallengeDeathInput {
 	db: AppDb;
 	campaignId: string;
@@ -589,6 +640,16 @@ export async function buildChallengeDeathStatements(
 	);
 
 	const statements: CampaignAtomicStatement[] = [
+		// Review Critical 1: claims `nextSessionVersion` in the SAME
+		// `session_commands` serialization index every other version-advancing
+		// write uses — see `sessionVersionClaimStatement`'s doc comment.
+		sessionVersionClaimStatement(db, {
+			sessionId: input.sessionId,
+			actorUserId: input.actorUserId,
+			commandType: 'challenge-death',
+			expectedVersion: loaded.currentVersion,
+			now
+		}),
 		...challengeDeathStatements(db, {
 			claimId,
 			campaignId: input.campaignId,
@@ -619,7 +680,7 @@ export async function buildChallengeDeathStatements(
 		db
 			.update(sessionServerStates)
 			.set({ sessionVersion: nextSessionVersion, serverStateJson: JSON.stringify(serverFragment), updatedAt: now })
-			.where(eq(sessionServerStates.sessionId, input.sessionId))
+			.where(and(eq(sessionServerStates.sessionId, input.sessionId), eq(sessionServerStates.sessionVersion, loaded.currentVersion)))
 	];
 
 	for (const [recipientUserId, fragment] of privateFragmentsByRecipient) {
@@ -627,7 +688,13 @@ export async function buildChallengeDeathStatements(
 			db
 				.update(sessionPrivateStates)
 				.set({ sessionVersion: nextSessionVersion, privateStateJson: JSON.stringify(fragment), updatedAt: now })
-				.where(and(eq(sessionPrivateStates.sessionId, input.sessionId), eq(sessionPrivateStates.recipientUserId, recipientUserId)))
+				.where(
+					and(
+						eq(sessionPrivateStates.sessionId, input.sessionId),
+						eq(sessionPrivateStates.recipientUserId, recipientUserId),
+						eq(sessionPrivateStates.sessionVersion, loaded.currentVersion)
+					)
+				)
 		);
 	}
 
@@ -766,31 +833,94 @@ export async function executeChallengeDeath(input: ChallengeDeathInput): Promise
 // ---------------------------------------------------------------------------
 
 /**
+ * A REAL, DB-backed `SessionStatePort` (`$lib/server/campaign/session-state-
+ * port.ts`'s interface) — closes the reviewer's ⚠️: exercising the Challenge
+ * pending-join path only through a stub port (`activeSessionId: async () =>
+ * 'session-a'`, `claimGuard: () => sql\`1 = 1\``) never proves
+ * `attachAdventurer`'s real session-guard interacts correctly with the
+ * appended join statements. `activeSessionId` reuses the same
+ * `findOpenSessionForCampaign` query `/sync`'s own read path already trusts;
+ * `claimGuard` proves, at commit time, that campaignId still has (or still
+ * lacks) an open session matching what was observed — the same EXISTS/
+ * NOT EXISTS shape `characterEligibilityClaim`'s existing membership/tenure
+ * guards already use.
+ */
+export function challengeSessionStatePort(db: AppDb): SessionStatePort {
+	return {
+		activeSessionId: async (campaignId: string) => {
+			const open = await findOpenSessionForCampaign(db, campaignId);
+			return open?.sessionId ?? null;
+		},
+		claimGuard: (campaignId: string, activeSessionId: string | null) =>
+			activeSessionId
+				? exists(
+						db
+							.select({ id: playSessions.id })
+							.from(playSessions)
+							.where(
+								and(
+									eq(playSessions.id, activeSessionId),
+									eq(playSessions.campaignId, campaignId),
+									inArray(playSessions.status, ['active', 'frozen'])
+								)
+							)
+					)
+				: notExists(
+						db
+							.select({ id: playSessions.id })
+							.from(playSessions)
+							.where(and(eq(playSessions.campaignId, campaignId), inArray(playSessions.status, ['active', 'frozen'])))
+					)
+	};
+}
+
+/**
  * Builds the (Drizzle-compatible) statements needed to register `tenureId`
- * as a Challenge pending joiner in `sessionId` — `[]` when there is no
- * active session, the session isn't `'active'`, there is no active Challenge
- * round, or `tenureId` is already known (already an active participant or
- * already pending; `admitPendingJoinTenure` is idempotent). Intended as the
- * `buildChallengeJoinStatements` callback `$lib/server/campaign/tenure.ts`'s
- * `attachAdventurer` accepts, so tenure creation and pending-join
- * registration commit in ONE transaction.
+ * as a Challenge pending joiner in `sessionId` — `[]` ONLY for the genuine
+ * "nothing to do" case: no active Challenge round, or `tenureId` is already
+ * known (already an active participant or already pending —
+ * `admitPendingJoinTenure` is idempotent, signaled by returning the SAME
+ * state reference unchanged). Intended as the `buildChallengeJoinStatements`
+ * callback `$lib/server/campaign/tenure.ts`'s `attachAdventurer` accepts, so
+ * tenure creation and pending-join registration commit in ONE transaction.
+ *
+ * Review Important 3: every OTHER early exit (the session load throwing, a
+ * non-`'active'` status) now THROWS instead of silently returning `[]`. The
+ * previous behavior conflated "nothing to do" with "could not determine,
+ * silently drop the join" — a transient load failure or an integrity error
+ * would commit the tenure with no pending-join registration and no signal
+ * that anything was skipped. `attachAdventurer` awaits this callback OUTSIDE
+ * its own try/catch, so a throw here now fails the WHOLE attach before any
+ * statement runs, rather than silently admitting a tenure the session can
+ * never see.
  */
 export async function buildPendingChallengeJoinStatements(input: {
 	db: AppDb;
 	sessionId: string;
 	tenureId: string;
+	actorUserId: string;
 }): Promise<CampaignAtomicStatement[]> {
-	let loaded: LoadedSession;
-	try {
-		loaded = await loadSessionForReduce(input.db, input.sessionId);
-	} catch {
-		return [];
+	// Deliberately NOT wrapped in try/catch — a load failure means "could not
+	// determine," not "nothing to do" (Important 3).
+	const loaded = await loadSessionForReduce(input.db, input.sessionId);
+	if (loaded.status !== 'active') {
+		throw new Error(
+			`buildPendingChallengeJoinStatements: session ${input.sessionId} is not active (status: ${loaded.status}) — cannot determine whether to register a pending Challenge join`
+		);
 	}
-	if (loaded.status !== 'active') return [];
 
 	const catalog = toSessionEngineRuntime(loaded.runtimeContent).catalog;
 	const reduceResult = admitPendingJoinTenure(loaded.engineState, input.tenureId, catalog);
-	if (!reduceResult.ok || reduceResult.state === loaded.engineState) return [];
+	if (!reduceResult.ok) {
+		// Unreachable in practice — `admitPendingJoinTenure` never rejects —
+		// but a rejection here is a reducer bug, not "nothing to do."
+		throw new Error(`buildPendingChallengeJoinStatements: unexpected rejection: ${reduceResult.rejection.message}`);
+	}
+	if (reduceResult.state === loaded.engineState) {
+		// Genuinely "nothing to do": no active Challenge round, or `tenureId`
+		// is already known — a real, intended no-op.
+		return [];
+	}
 
 	const nextVersion = loaded.currentVersion + 1;
 	const finalState: SessionEngineStateV1 = { ...reduceResult.state, version: nextVersion };
@@ -802,6 +932,17 @@ export async function buildPendingChallengeJoinStatements(input: {
 	);
 
 	const statements: CampaignAtomicStatement[] = [
+		// Review Critical 1 / Important 2: same serialization claim as the
+		// death path — without it, a racing `SessionCommand` could silently
+		// overwrite this join registration (or vice versa), both reporting
+		// success.
+		sessionVersionClaimStatement(input.db, {
+			sessionId: input.sessionId,
+			actorUserId: input.actorUserId,
+			commandType: 'challenge-pending-join',
+			expectedVersion: loaded.currentVersion,
+			now: new Date()
+		}),
 		input.db
 			.update(playSessions)
 			.set({
@@ -814,14 +955,20 @@ export async function buildPendingChallengeJoinStatements(input: {
 		input.db
 			.update(sessionServerStates)
 			.set({ sessionVersion: nextVersion, serverStateJson: JSON.stringify(serverFragment) })
-			.where(eq(sessionServerStates.sessionId, input.sessionId))
+			.where(and(eq(sessionServerStates.sessionId, input.sessionId), eq(sessionServerStates.sessionVersion, loaded.currentVersion)))
 	];
 	for (const [recipientUserId, fragment] of privateFragmentsByRecipient) {
 		statements.push(
 			input.db
 				.update(sessionPrivateStates)
 				.set({ sessionVersion: nextVersion, privateStateJson: JSON.stringify(fragment) })
-				.where(and(eq(sessionPrivateStates.sessionId, input.sessionId), eq(sessionPrivateStates.recipientUserId, recipientUserId)))
+				.where(
+					and(
+						eq(sessionPrivateStates.sessionId, input.sessionId),
+						eq(sessionPrivateStates.recipientUserId, recipientUserId),
+						eq(sessionPrivateStates.sessionVersion, loaded.currentVersion)
+					)
+				)
 		);
 	}
 	return statements;

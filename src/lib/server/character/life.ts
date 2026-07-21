@@ -21,6 +21,8 @@ import {
 	type SessionCleanupPort,
 	type SessionStatePort
 } from '$lib/server/campaign/session-state-port';
+import { loadSessionForReduce } from '$lib/server/session/repository';
+import { readChallengeState } from '$lib/engine/session/procedures/challenge/reducer';
 
 export type CharacterLifeMutationResult =
 	| {
@@ -36,9 +38,46 @@ export type CharacterLifeMutationResult =
 				| 'already-dead'
 				| 'not-dead'
 				| 'session-cleanup-unavailable'
+				| /** Increment 3 Task 5, review Important 4: this tenure is a
+				   * Challenge participant OR pending joiner in the session's
+				   * active `challenge-round` procedure — that death must go
+				   * through `$lib/server/session/command-service.ts`'s
+				   * `executeChallengeDeath` instead, which redacts the tenure's
+				   * Challenge zones/participant state atomically alongside the
+				   * character/tenure write. Going through THIS function for a
+				   * participating tenure would end the tenure and mark the
+				   * character dead while leaving `participantTenureIds`, the
+				   * hand zone, and the Initiative seat all intact — the exact
+				   * corrupt half-state O4 exists to prevent. */
+				  'is-challenge-participant'
 				| 'conflict';
 	  }
 	| { ok: false; reason: 'version-conflict'; currentVersion: number };
+
+/**
+ * Review Important 4: is `tenureId` currently a Challenge participant or
+ * pending joiner in `sessionId`'s active `challenge-round` procedure? Returns
+ * `false` ("not detectably a participant") if the session can't be loaded —
+ * NOT a fail-closed choice, but a deliberate deference to the EXISTING
+ * `ports.sessionCleanup` requirement immediately below this call: whenever
+ * `sessionId` is set, `markCharacterDead` already refuses to proceed without
+ * a real `SessionCleanupPort`, and any real implementation of that port would
+ * itself need to load the same session state and would itself fail/throw on
+ * the identical inconsistency (a session claimed active that can't actually
+ * be loaded). Failing this specific check closed here would only ever
+ * produce a WRONG rejection reason for that already-handled case — it would
+ * not make an undetectable, already-anomalous session state any safer.
+ */
+async function isChallengeParticipantOrPending(db: AppDb, sessionId: string, tenureId: string): Promise<boolean> {
+	try {
+		const loaded = await loadSessionForReduce(db, sessionId);
+		const challenge = readChallengeState(loaded.engineState);
+		if (!challenge) return false;
+		return challenge.participantTenureIds.includes(tenureId) || challenge.pendingJoinTenureIds.includes(tenureId);
+	} catch {
+		return false;
+	}
+}
 
 interface LifeMutationPorts {
 	sessionState?: SessionStatePort;
@@ -76,6 +115,9 @@ export async function markCharacterDead(
 	const sessionId = campaignId ? await sessionState.activeSessionId(campaignId) : null;
 	let cleanupStatements: CampaignAtomicStatement[] = [];
 	if (sessionId && tenure) {
+		if (await isChallengeParticipantOrPending(db, sessionId, tenure.id)) {
+			return { ok: false, reason: 'is-challenge-participant' };
+		}
 		if (!ports.sessionCleanup) {
 			return { ok: false, reason: 'session-cleanup-unavailable' };
 		}

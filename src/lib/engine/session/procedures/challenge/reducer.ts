@@ -775,6 +775,13 @@ function deathOwnedZoneIds(tenureId: string): string[] {
  * "currently active" at the removed index, so a plain index shift (decrement
  * once for every removed seat before it, otherwise unchanged) is always
  * correct — no branch is needed for "the active seat just got removed."
+ *
+ * Also accepts a tenureId that is only in `pendingJoinTenureIds` (review
+ * Important 4): a replacement who dies before `cleanupRound` ever admits
+ * them has no zones/budget/initiative seat to redact — this is GM-only (no
+ * `tenureOwners` entry exists yet to resolve a player's own-tenure check
+ * against) and simply withdraws the pending join, so a dead tenure can never
+ * be admitted into the next round's roster.
  */
 export function markTenureDead(
 	state: SessionEngineStateV1,
@@ -783,9 +790,37 @@ export function markTenureDead(
 ): SessionReduceResult {
 	const challenge = readChallengeState(state);
 	if (!challenge) return reject('illegal-command', 'no active Challenge round');
-	if (!challenge.participantTenureIds.includes(tenureId)) {
-		return reject('illegal-command', `${tenureId} is not an active Challenge participant`);
+
+	const isParticipant = challenge.participantTenureIds.includes(tenureId);
+	const isPending = challenge.pendingJoinTenureIds.includes(tenureId);
+	if (!isParticipant && !isPending) {
+		return reject('illegal-command', `${tenureId} is not an active or pending Challenge participant`);
 	}
+
+	// A PENDING joiner (review Important 4 — a replacement who dies before
+	// `cleanupRound` ever admits them) has no hand, no private zone, no
+	// budget, and — critically — no `tenureOwners` entry yet (that's only
+	// registered AT admission, per `admitPendingJoinTenure`'s own doc
+	// comment), so player-owner authorization cannot be resolved the normal
+	// way. GM-only; nothing to redact — just withdraw the pending join so
+	// `cleanupRound` never admits a dead tenure into the roster.
+	if (isPending && !isParticipant) {
+		if (context.actor.kind !== 'gm') {
+			return reject('not-authorized', 'only the GM may withdraw a pending Challenge joiner who died before being admitted');
+		}
+		const nextChallenge: ChallengeStateV1 = {
+			...challenge,
+			pendingJoinTenureIds: challenge.pendingJoinTenureIds.filter((id) => id !== tenureId)
+		};
+		const nextState = writeChallengeState(state, nextChallenge);
+		assertSessionInvariants(nextState, context.runtime.catalog);
+		return {
+			ok: true,
+			state: nextState,
+			events: [{ kind: 'challenge-participant-died', publicPayload: { tenureId, round: challenge.round } }]
+		};
+	}
+
 	const owner = challenge.tenureOwners[tenureId];
 	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
 		return reject('not-authorized', 'a player may only mark their own tenure dead');
@@ -846,10 +881,19 @@ export function markTenureDead(
 	const nextModifiers = challenge.modifiers.filter(
 		(modifier) => modifier.ownerTenureId !== tenureId && modifier.targetTenureId !== tenureId
 	);
+	// Minor 6 (review): prune the dead tenure's `tenureOwners` entry too —
+	// otherwise it grows unboundedly across a long campaign's death/
+	// replacement churn, and a stale entry is a stale authorization edge
+	// (nothing reads it once the tenure is gone, but nothing should have to
+	// reason about that either).
+	const nextTenureOwners = Object.fromEntries(
+		Object.entries(challenge.tenureOwners).filter(([ownerTenureId]) => ownerTenureId !== tenureId)
+	);
 
 	const nextChallenge: ChallengeStateV1 = {
 		...challenge,
 		participantTenureIds: challenge.participantTenureIds.filter((id) => id !== tenureId),
+		tenureOwners: nextTenureOwners,
 		initiativeOrder: nextInitiativeOrder,
 		activeTurnIndex: nextActiveTurnIndex,
 		tiedGroups: nextTiedGroups,

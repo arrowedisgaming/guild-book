@@ -170,7 +170,9 @@ const challengeInitiativeEntrySchema = z
 	.object({
 		tenureId,
 		cardZoneId: z.string().trim().min(1),
-		revealed: z.boolean()
+		revealed: z.boolean(),
+		// Additive (Increment 3 Task 3) — see `types.ts`'s `ChallengeInitiativeEntry.turnKind` doc comment.
+		turnKind: z.enum(['normal', 'fool-extra']).optional()
 	})
 	.strict();
 

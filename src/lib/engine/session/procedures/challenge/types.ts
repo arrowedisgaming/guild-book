@@ -124,6 +124,16 @@ export interface ChallengeInitiativeEntry {
 	tenureId: string;
 	cardZoneId: string;
 	revealed: boolean;
+	/**
+	 * Present only on a bonus turn `fool.ts`'s `playFool` inserts immediately
+	 * after the current seat (Ch7 "The Fool": "drawing the Fool allows you to
+	 * take two turns (but no minor actions) during a round") — absent (read as
+	 * `'normal'`) on every entry `initiative.ts`'s `revealInitiative` produces.
+	 * Additive field (Increment 3 Task 3): lets the turn loop
+	 * (`turns.ts`'s `endTurn`) carry the inserted turn's kind without a
+	 * parallel structure duplicating `initiativeOrder` itself.
+	 */
+	turnKind?: ChallengeTurnKind;
 }
 
 /**

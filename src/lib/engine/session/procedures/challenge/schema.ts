@@ -193,7 +193,10 @@ export const challengeModifierStateSchema = z
 		ownerTenureId: tenureId,
 		targetTenureId: tenureId.optional(),
 		status: z.enum(['pending', 'active', 'resolved', 'expired']),
-		usesRemaining: nonNegativeInt.optional()
+		usesRemaining: nonNegativeInt.optional(),
+		// Additive (Increment 3 Task 4 review) — see `types.ts`'s
+		// `ChallengeModifierState.cardId` doc comment.
+		cardId: z.string().trim().min(1).optional()
 	})
 	.strict();
 

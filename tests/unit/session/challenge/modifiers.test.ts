@@ -17,23 +17,29 @@ import {
 } from '$lib/engine/session/procedures/challenge/reducer';
 import { dealRound } from '$lib/engine/session/procedures/challenge/deal';
 import { placeInitiative, revealInitiative } from '$lib/engine/session/procedures/challenge/initiative';
-import { beginTurns } from '$lib/engine/session/procedures/challenge/turns';
+import { beginTurns, endTurn } from '$lib/engine/session/procedures/challenge/turns';
+import { playFool } from '$lib/engine/session/procedures/challenge/fool';
 import {
 	applyBlackHoney,
 	applyBrainfever,
+	applyChallengeModifierCommand,
 	applyGuard,
 	applyGuardianAngel,
 	applyStun,
 	findModifierParams,
+	legalChallengeModifierCommands,
 	prepareAim,
 	resolveAim,
+	resolveGuardianAngel,
 	CHALLENGE_AIM_ID,
 	CHALLENGE_BLACK_HONEY_ID,
 	CHALLENGE_BRAINFEVER_ID,
 	CHALLENGE_GUARD_ID,
 	CHALLENGE_GUARDIAN_ANGEL_ID,
-	CHALLENGE_STUN_ID
+	CHALLENGE_STUN_ID,
+	type ChallengeModifierMaterials
 } from '$lib/engine/session/procedures/challenge/modifiers';
+import { CHALLENGE_COUNSEL_ID } from '$lib/engine/session/procedures/challenge/transfers';
 import { assertSessionInvariants } from '$lib/engine/session/invariants';
 import { findZoneDescriptor } from '$lib/engine/session/state';
 import { projectForActor } from '$lib/engine/session/projection';
@@ -48,6 +54,7 @@ import type {
 	TarotCardCatalog
 } from '$lib/types/session';
 import type {
+	CounselTransferParams,
 	ForcedHandDiscardParams,
 	ForcedInitiativeSelectionParams,
 	GuardianAngelParams,
@@ -119,6 +126,32 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 	const guardianAngelParams = findModifierParams<GuardianAngelParams>(modifiers, CHALLENGE_GUARDIAN_ANGEL_ID, 'guardian-angel-defense');
 	const aimParams = findModifierParams<PreparedFacedownBonusParams>(modifiers, CHALLENGE_AIM_ID, 'prepared-facedown-bonus');
 	const guardParams = findModifierParams<ReplaceInitiativeParams>(modifiers, CHALLENGE_GUARD_ID, 'replace-initiative');
+	const counselParams = findModifierParams<CounselTransferParams>(modifiers, CHALLENGE_COUNSEL_ID, 'private-transfer');
+
+	/** Every params block `applyChallengeModifierCommand` needs, assembled
+	 * once — mirrors how a real caller would build this once per session/
+	 * content-load. */
+	const materials: ChallengeModifierMaterials = {
+		blackHoney: blackHoneyParams,
+		stun: stunParams,
+		brainfever: brainfeverParams,
+		counsel: counselParams,
+		guardianAngel: guardianAngelParams,
+		aim: aimParams,
+		guard: guardParams,
+		hasShield: true,
+		hasBow: true
+	};
+
+	/** The smaller cap bundle `legalChallengeModifierCommands` itself takes —
+	 * deliberately a DIFFERENT (narrower) shape than `materials` above, so a
+	 * test calling the derivation function directly must supply exactly what
+	 * it needs, not the whole materials bag (`applyChallengeModifierCommand`
+	 * builds this same shape internally from `materials`). */
+	const derivationCaps = {
+		counselMaxUsesPerRound: counselParams.maxUsesPerRound,
+		guardianAngelMaxInstances: guardianAngelParams.maxInstances
+	};
 
 	it('every modifier lookup narrows to its expected params shape (content-integrity guard)', () => {
 		expect(blackHoneyParams).toEqual({ normalCards: 4, optionalCards: 5, teethLostFrom: 1, teethLostTo: 4 });
@@ -267,6 +300,32 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			for (const cardId of hand2Before) expect(serializedPublic).not.toContain(cardId);
 			expect(result.events[0].privatePayloads).toBeUndefined();
 
+			// Minor 4 (review): the event-layer guarantee above is NOT a
+			// state-layer one — the shared engine's own `'public-top'` discard
+			// pile model means ONE of the discarded cards genuinely becomes
+			// public via every projection's `playerDiscardTop` (which of the
+			// discarded cards ends up "on top" is this engine's own pre-
+			// existing discard-pile convention, not something Stun controls).
+			// Asserted explicitly (rather than left implicit) so this reads as
+			// an accepted, documented exposure, not a stronger guarantee than
+			// the code gives.
+			const publicProjection = projectForActor(result.state, GM, catalog).public;
+			expect(publicProjection.playerDiscardTop?.hidden).toBe(false);
+			expect(hand2Before).toContain((publicProjection.playerDiscardTop as { id: string }).id);
+
+			expectConserved(result.state, catalog);
+		});
+
+		it('emits count: 0 and conserves cards when the target already has an empty hand (Minor 9 edge case)', () => {
+			const { state, gmCtx } = readyTwoPlayerTurns('stun-empty-hand', [], []);
+			expect(findZoneDescriptor(state, challengeHandZoneId('tenure-2'))?.cards).toEqual([]);
+
+			const result = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(result.events).toEqual([
+				expect.objectContaining({ kind: 'challenge-stun-applied', publicPayload: expect.objectContaining({ targetTenureId: 'tenure-2', count: 0 }) })
+			]);
 			expectConserved(result.state, catalog);
 		});
 
@@ -276,10 +335,14 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 
-		it('rejects the wrong stage distinctly from the authorization guard (test discrimination)', () => {
-			const { state, gmCtx } = dealtTwoPlayer('stun-wrong-stage');
-			const result = applyStun(state, 'tenure-1', stunParams, gmCtx);
-			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('stage') } });
+		it('carries no invented stage restriction — Ch1 "Effects" says Stun is immediate/instantaneous, so the GM may apply it at ANY stage of an active Challenge (Minor 6)', () => {
+			const { state: dealStage, gmCtx: dealGmCtx } = beginTwoPlayer('stun-any-stage-deal');
+			expect(readChallengeState(dealStage)?.stage).toBe('deal');
+			expect(applyStun(dealStage, 'tenure-1', stunParams, dealGmCtx).ok).toBe(true);
+
+			const { state: placementStage, gmCtx: placementGmCtx } = dealtTwoPlayer('stun-any-stage-placement');
+			expect(readChallengeState(placementStage)?.stage).toBe('initiative-placement');
+			expect(applyStun(placementStage, 'tenure-1', stunParams, placementGmCtx).ok).toBe(true);
 		});
 	});
 
@@ -379,17 +442,58 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expectConserved(result.state, catalog);
 		});
 
-		it('rejects casting a second Guardian Angel while the caster already has an active one (maxInstances: 1)', () => {
-			const { state, p1Ctx } = readyTwoPlayerTurns('guardian-angel-cap', ['wands-v', 'cups-ii'], ['pentacles-iv']);
+		it('permits self-targeting — the rule text never restricts who the target may be, unlike Counsel (Minor 7)', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('guardian-angel-self', ['wands-v'], ['pentacles-iv']);
+			const result = applyGuardianAngel(state, 'tenure-1', 'tenure-1', 'wands-v', guardianAngelParams, p1Ctx);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(findZoneDescriptor(result.state, challengeGuardianAngelZoneId('tenure-1'))?.cards).toEqual(['wands-v']);
+			expectConserved(result.state, catalog);
+		});
+
+		it('rejects casting a second Guardian Angel while the caster already has an active one (maxInstances: 1), isolated from a FRESH turn budget (Important 3 fix)', () => {
+			const seed = 'guardian-angel-cap';
+			const { state, gmCtx, p1Ctx } = readyTwoPlayerTurns(seed, ['wands-v'], ['pentacles-iv']);
 			const first = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, p1Ctx);
 			if (!first.ok) throw first;
 
-			// The `maxInstances` cap check runs BEFORE `spendCard`'s own budget
-			// cap, so this proves the maxInstances guard fires on its own — even
-			// though the per-turn card budget is also already exhausted after
-			// the first cast, this rejection is not that one (see the message
-			// assertion below).
-			const second = applyGuardianAngel(first.state, 'tenure-1', 'tenure-2', 'cups-ii', guardianAngelParams, p1Ctx);
+			// Cycle a full round boundary — end both turns, clean up (which
+			// CARRIES the active Guardian Angel instance forward, exactly as
+			// `duration: 'until-used'` requires), deal again, and re-enter
+			// `'turns'` with tenure-1 active and a genuinely FRESH per-turn
+			// budget. This isolates the `maxInstances` guard from `spendCard`'s
+			// own cap — the earlier version of this test only proved a
+			// rejection occurred, not WHICH guard caused it, since both were
+			// simultaneously true (review, Important 3).
+			const p2Ctx = ctxFor(playerActor('tenure-2'), catalog, config, seed);
+			const endedFirst = endTurn(first.state, p1Ctx);
+			if (!endedFirst.ok) throw endedFirst;
+			const endedSecond = endTurn(endedFirst.state, p2Ctx);
+			if (!endedSecond.ok) throw endedSecond;
+			const cleaned = cleanupRound(endedSecond.state, gmCtx);
+			if (!cleaned.ok) throw cleaned;
+			expect(readChallengeState(cleaned.state)?.modifiers).toContainEqual(
+				expect.objectContaining({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, status: 'active' })
+			);
+
+			const dealResult = dealRound(cleaned.state, gmCtx);
+			if (!dealResult.ok) throw dealResult;
+			// Fresh card ids, disjoint from round 1's set (`swords-i`, `wands-v`,
+			// `wands-king`, `pentacles-iv`) — see the fixture's own doc comment
+			// on why round-1 identities can't safely be reused here.
+			const forced1 = forceHand(dealResult.state, 'tenure-1', ['swords-ii', 'cups-iii']);
+			const forced2 = forceHand(forced1, 'tenure-2', ['wands-queen']);
+			const placed1 = placeInitiative(forced2, 'tenure-1', 'swords-ii', p1Ctx);
+			if (!placed1.ok) throw placed1;
+			const placed2 = placeInitiative(placed1.state, 'tenure-2', 'wands-queen', p2Ctx);
+			if (!placed2.ok) throw placed2;
+			const revealed = revealInitiative(placed2.state, gmCtx);
+			if (!revealed.ok) throw revealed;
+			const begunTurns = beginTurns(revealed.state, gmCtx);
+			if (!begunTurns.ok) throw begunTurns;
+			expect(readChallengeState(begunTurns.state)?.budgets['tenure-1']).toMatchObject({ cardsThisTurn: 0, actionTaken: false });
+
+			const second = applyGuardianAngel(begunTurns.state, 'tenure-1', 'tenure-2', 'cups-iii', guardianAngelParams, p1Ctx);
 			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('maxInstances') } });
 		});
 
@@ -397,6 +501,64 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			const { state } = readyTwoPlayerTurns('guardian-angel-impersonation', ['wands-v'], ['pentacles-iv']);
 			const impersonator = ctxFor(playerActor('tenure-2'), catalog, config, 'guardian-angel-impersonation');
 			const result = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, impersonator);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// resolveGuardianAngel — the "used" consumption Important 2 requires
+	// -------------------------------------------------------------------------
+
+	describe('resolveGuardianAngel', () => {
+		function castGuardianAngel(seed: string) {
+			const { state, gmCtx, p1Ctx, p2Ctx } = readyTwoPlayerTurns(seed, ['wands-v'], ['pentacles-iv']);
+			const cast = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, p1Ctx);
+			if (!cast.ok) throw cast;
+			return { state: cast.state, gmCtx, p1Ctx, p2Ctx };
+		}
+
+		it("flips the ward to 'resolved' and discards the card once flipped up to Dodge or Riposte (Ch7: \"Once your Dodge/Riposte card is resolved, discard the card\") — freeing the maxInstances lockout", () => {
+			const { state, p2Ctx } = castGuardianAngel('guardian-angel-resolve');
+
+			const resolved = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			expect(resolved.ok).toBe(true);
+			if (!resolved.ok) return;
+
+			expect(findZoneDescriptor(resolved.state, challengeGuardianAngelZoneId('tenure-2'))?.cards).toEqual([]);
+			expect(resolved.state.playerDiscard).toContain('wands-v');
+			expect(readChallengeState(resolved.state)?.modifiers).toContainEqual(
+				expect.objectContaining({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, ownerTenureId: 'tenure-1', status: 'resolved' })
+			);
+			const consequence = resolved.events.find((event) => event.kind === 'manual-consequence-required');
+			expect(consequence?.publicPayload).toMatchObject({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, targetTenureId: 'tenure-2', consequence: 'apply-guardian-angel-bonus-to-dodge' });
+			expectConserved(resolved.state, catalog);
+
+			// Once resolved, the caster's maxInstances lockout is freed — no
+			// `'active'` instance remains for tenure-1, so `applyGuardianAngel`'s
+			// own cap-counting (`activeInstanceCount >= params.maxInstances`)
+			// would admit a fresh cast (a real re-cast additionally needs a fresh
+			// per-turn budget — exercised together in the maxInstances test
+			// above; this isolates the "consumption frees the cap" claim from
+			// the separate "fresh turn" concern).
+			const activeCountAfterResolve = readChallengeState(resolved.state)!.modifiers.filter(
+				(modifier) => modifier.modifierId === CHALLENGE_GUARDIAN_ANGEL_ID && modifier.ownerTenureId === 'tenure-1' && modifier.status === 'active'
+			).length;
+			expect(activeCountAfterResolve).toBe(0);
+			expect(activeCountAfterResolve).toBeLessThan(guardianAngelParams.maxInstances);
+		});
+
+		it('rejects resolving a Guardian Angel that has already been resolved (no double-consumption)', () => {
+			const { state, p2Ctx } = castGuardianAngel('guardian-angel-resolve-twice');
+			const first = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			if (!first.ok) throw first;
+			const second = resolveGuardianAngel(first.state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		});
+
+		it('rejects a non-owning player resolving another tenure\'s ward', () => {
+			const { state } = castGuardianAngel('guardian-angel-resolve-not-owner');
+			const impersonator = ctxFor(playerActor('tenure-1'), catalog, config, 'guardian-angel-resolve-not-owner');
+			const result = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', impersonator);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 	});
@@ -438,6 +600,18 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			const { state, p1Ctx } = readyTwoPlayerTurns('aim-no-bow', ['swords-vii'], ['pentacles-iv']);
 			const result = prepareAim(state, 'tenure-1', 'swords-vii', false, aimParams, p1Ctx);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('bow') } });
+		});
+
+		it('rejects resolving the same prepared Aim card twice (Minor 9 edge case) — already consumed, no longer present', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('aim-resolve-twice', ['swords-vii'], ['pentacles-iv']);
+			const prepared = prepareAim(state, 'tenure-1', 'swords-vii', true, aimParams, p1Ctx);
+			if (!prepared.ok) throw prepared;
+			const first = resolveAim(prepared.state, 'tenure-1', 'swords-vii', aimParams, p1Ctx);
+			if (!first.ok) throw first;
+
+			const second = resolveAim(first.state, 'tenure-1', 'swords-vii', aimParams, p1Ctx);
+			expect(second).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expectConserved(first.state, catalog);
 		});
 	});
 
@@ -488,6 +662,42 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			// (never reaches the shield check's specific message)
 			expect((result as { rejection: { message: string } }).rejection.message).not.toContain('shield');
 		});
+
+		it("updates BOTH initiativeOrder entries sharing the tenure's id when a Fool-extra bonus turn is in play (Minor 9 — O7's double-render hazard)", () => {
+			const seed = 'guard-fool-extra';
+			const { state, p1Ctx } = readyTwoPlayerTurns(seed, ['fool', 'wands-iii', 'pentacles-x'], ['pentacles-iv']);
+
+			// tenure-1 plays the Fool paired with 'wands-iii' — this inserts a
+			// SECOND `initiativeOrder` entry for tenure-1 (`turnKind: 'fool-extra'`)
+			// that CLONES the current entry, sharing `tenureId`/`cardZoneId`/
+			// `cardId` with the original (`fool.ts`'s `playFool`).
+			const played = playFool(state, 'tenure-1', 'wands-iii', p1Ctx);
+			if (!played.ok) throw played;
+			const beforeGuard = readChallengeState(played.state)!.initiativeOrder.filter((entry) => entry.tenureId === 'tenure-1');
+			expect(beforeGuard).toHaveLength(2);
+			expect(beforeGuard.every((entry) => entry.cardId === 'swords-i')).toBe(true);
+
+			// End the original turn to enter the fool-extra bonus turn — a
+			// FRESH budget for the same tenure (Task 3's `endTurn`), which is
+			// what makes Guard legal here at all.
+			const ended = endTurn(played.state, p1Ctx);
+			if (!ended.ok) throw ended;
+			expect(readChallengeState(ended.state)?.turnKind).toBe('fool-extra');
+
+			const guarded = applyGuard(ended.state, 'tenure-1', 'pentacles-x', true, guardParams, p1Ctx);
+			expect(guarded.ok).toBe(true);
+			if (!guarded.ok) return;
+
+			const afterGuard = readChallengeState(guarded.state)!.initiativeOrder.filter((entry) => entry.tenureId === 'tenure-1');
+			expect(afterGuard).toHaveLength(2);
+			// BOTH entries updated together — not just one left stale, and not a
+			// THIRD entry accidentally created with a colliding zone id.
+			expect(afterGuard.every((entry) => entry.cardId === 'pentacles-x')).toBe(true);
+			const initiativeZone = findZoneDescriptor(guarded.state, CHALLENGE_INITIATIVE_ZONE_ID)!;
+			expect(initiativeZone.cards).not.toContain('swords-i');
+			expect(initiativeZone.cards).toContain('pentacles-x');
+			expectConserved(guarded.state, catalog);
+		});
 	});
 
 	// -------------------------------------------------------------------------
@@ -533,5 +743,105 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 		// The physical card is untouched too — facedown zones are never swept.
 		expect(findZoneDescriptor(cleaned.state, challengeGuardianAngelZoneId('tenure-2'))?.cards).toEqual(['wands-v']);
 		expectConserved(cleaned.state, catalog);
+	});
+
+	// -------------------------------------------------------------------------
+	// legalChallengeModifierCommands / applyChallengeModifierCommand (O4,
+	// Important 1 — review): the actual derived command set, not just ownership
+	// checks inside the individual apply* functions.
+	// -------------------------------------------------------------------------
+
+	describe('legalChallengeModifierCommands', () => {
+		it("derives the GM's set from Challenge stage — Black Honey only during 'deal', Brainfever only during 'initiative-placement', Stun always", () => {
+			const { state: dealState } = beginTwoPlayer('legal-gm-deal');
+			expect(legalChallengeModifierCommands(dealState, GM, derivationCaps)).toEqual(
+				expect.arrayContaining(['apply-black-honey', 'apply-stun'])
+			);
+			expect(legalChallengeModifierCommands(dealState, GM, derivationCaps)).not.toContain('apply-brainfever');
+
+			const { state: placementState } = dealtTwoPlayer('legal-gm-placement');
+			expect(legalChallengeModifierCommands(placementState, GM, derivationCaps)).toEqual(
+				expect.arrayContaining(['apply-brainfever', 'apply-stun'])
+			);
+			expect(legalChallengeModifierCommands(placementState, GM, derivationCaps)).not.toContain('apply-black-honey');
+		});
+
+		it("derives a player's set from actor ownership + whose turn it is — the three own-turn actions are absent when it ISN'T their turn, Counsel is offered either way (\"any time during a Challenge\")", () => {
+			const { state } = readyTwoPlayerTurns('legal-player-turn', ['wands-v'], ['pentacles-iv']);
+
+			const tenure1Legal = legalChallengeModifierCommands(state, playerActor('tenure-1'), derivationCaps);
+			expect(tenure1Legal).toEqual(
+				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer'])
+			);
+
+			// tenure-2 is NOT the active seat — none of the own-turn actions are
+			// offered to them, but Counsel still is.
+			const tenure2Legal = legalChallengeModifierCommands(state, playerActor('tenure-2'), derivationCaps);
+			expect(tenure2Legal).toEqual(['counsel-transfer']);
+
+			// The GM sees none of the player-only commands.
+			expect(legalChallengeModifierCommands(state, GM, derivationCaps)).not.toEqual(
+				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer'])
+			);
+		});
+
+		it('excludes guardian-angel once the caster has an active instance (active content modifiers, the third O4 input)', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('legal-guardian-angel-cap', ['wands-v'], ['pentacles-iv']);
+			expect(legalChallengeModifierCommands(state, playerActor('tenure-1'), derivationCaps)).toContain('guardian-angel');
+
+			const cast = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, p1Ctx);
+			if (!cast.ok) throw cast;
+			expect(legalChallengeModifierCommands(cast.state, playerActor('tenure-1'), derivationCaps)).not.toContain('guardian-angel');
+		});
+
+		it('returns an empty set when no Challenge round is active', () => {
+			expect(legalChallengeModifierCommands(makeSessionFixture('legal-no-round'), GM, derivationCaps)).toEqual([]);
+		});
+	});
+
+	describe('applyChallengeModifierCommand — the mandated O4 test: a syntactically valid command absent from the derived set is rejected', () => {
+		it("rejects Guard attempted by the actor whose turn it ISN'T — syntactically valid (well-formed tenure/card), never offered to tenure-2 right now", () => {
+			const { state } = readyTwoPlayerTurns('dispatch-not-offered', ['pentacles-x'], ['pentacles-iv']);
+
+			const result = applyChallengeModifierCommand(
+				state,
+				{ type: 'replace-initiative-with-shield', cardId: 'pentacles-iv' },
+				materials,
+				ctxFor(playerActor('tenure-2'), catalog, config, 'dispatch-not-offered')
+			);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('not currently offered') }
+			});
+		});
+
+		it('dispatches an OFFERED command to the underlying mechanism and it actually succeeds', () => {
+			const { state } = readyTwoPlayerTurns('dispatch-offered', ['pentacles-x'], ['pentacles-iv']);
+
+			const result = applyChallengeModifierCommand(
+				state,
+				{ type: 'replace-initiative-with-shield', cardId: 'pentacles-x' },
+				materials,
+				ctxFor(playerActor('tenure-1'), catalog, config, 'dispatch-offered')
+			);
+			expect(result.ok).toBe(true);
+			if (!result.ok) return;
+			expect(findZoneDescriptor(result.state, CHALLENGE_INITIATIVE_ZONE_ID)?.cards).toContain('pentacles-x');
+			expectConserved(result.state, catalog);
+		});
+
+		it('rejects the GM attempting a player-only command (Brainfever is GM-only; guardian-angel is player-only) — absent from the GM\'s derived set', () => {
+			const { state, gmCtx } = readyTwoPlayerTurns('dispatch-gm-not-offered', ['wands-v'], ['pentacles-iv']);
+			const result = applyChallengeModifierCommand(
+				state,
+				{ type: 'guardian-angel', targetTenureId: 'tenure-2', cardId: 'wands-v' },
+				materials,
+				gmCtx
+			);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('not currently offered') }
+			});
+		});
 	});
 });

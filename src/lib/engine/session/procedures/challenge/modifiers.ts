@@ -46,8 +46,9 @@ import { reduceSession } from '../../reducer';
 import { findZoneDescriptor } from '../../state';
 import { FIXED_ZONE_IDS } from '../../zones';
 import { assertSessionInvariants } from '../../invariants';
-import type { CardId, SessionEngineStateV1, SessionEvent } from '$lib/types/session';
+import type { CardId, SessionActor, SessionEngineStateV1, SessionEvent } from '$lib/types/session';
 import type {
+	CounselTransferParams,
 	ForcedHandDiscardParams,
 	ForcedInitiativeSelectionParams,
 	GuardianAngelParams,
@@ -58,7 +59,7 @@ import type {
 } from '$lib/types/content-pack';
 import type { ChallengeModifierState, ChallengeStateV1 } from './types';
 import { placeInitiative } from './initiative';
-import { isRejection, requirePlayerTurn, spendCard } from './turns';
+import { activeTurnEntry, isRejection, requirePlayerTurn, spendCard } from './turns';
 import {
 	challengeAimZoneId,
 	challengeGuardianAngelStagingZoneId,
@@ -66,12 +67,13 @@ import {
 	challengeHandZoneId,
 	readChallengeState,
 	reject,
+	tenureIdForUser,
 	writeChallengeState,
 	CHALLENGE_INITIATIVE_ZONE_ID,
 	type ChallengeReduceContext,
 	type SessionReduceResult
 } from './reducer';
-import { movePrivateCard } from './transfers';
+import { counselTransfer, movePrivateCard, CHALLENGE_COUNSEL_ID } from './transfers';
 
 // ---------------------------------------------------------------------------
 // Content modifier ids (the content pack's `SessionModifierDefinition.id`s)
@@ -101,6 +103,37 @@ export function findModifierParams<T>(
 		throw new Error(`Challenge modifier ${id} has unexpected behaviorId ${found.behaviorId}`);
 	}
 	return found.params as T;
+}
+
+/**
+ * Relabels only the FIRST event whose `kind` is `originalKind`, leaving every
+ * other event untouched — never a blind `.map()` over the whole array
+ * (Increment 3 Task 4 review, Minor 8: every delegated call below currently
+ * happens to return exactly one event, but a blind relabel would silently
+ * mis-attribute a SECOND event — e.g. a future reshuffle notice — to this
+ * modifier's own label if that ever changed). Merges `extraPublicPayload`
+ * onto the located event's existing `publicPayload`, preserving whatever
+ * privacy-correct shape (`privatePayloads` included) the delegated call
+ * already built.
+ */
+function relabelEvent(
+	events: readonly SessionEvent[],
+	originalKind: string,
+	newKind: string,
+	extraPublicPayload: Record<string, unknown>
+): SessionEvent[] {
+	let relabeled = false;
+	return events.map((event) => {
+		if (!relabeled && event.kind === originalKind) {
+			relabeled = true;
+			return {
+				...event,
+				kind: newKind,
+				publicPayload: { ...(event.publicPayload as Record<string, unknown>), ...extraPublicPayload }
+			};
+		}
+		return event;
+	});
 }
 
 function ensureOwnedPrivateZone(
@@ -134,6 +167,12 @@ function ensureOwnedPrivateZone(
  * body-horror flavor) this engine does not adjudicate or roll for (O6) — they
  * are carried verbatim on the `manual-consequence-required` event for the GM
  * to narrate/resolve at the table.
+ *
+ * Gated to `stage === 'deal'` — traced to rule text, not invented (Increment
+ * 3 Task 4 review, Minor 6): Ch6 "Black honey" states the choice as "you may
+ * choose to draw 5 cards during an encounter instead of 4," tying the
+ * decision to the moment of drawing itself, which in this engine is the
+ * `'deal'` stage.
  */
 export function applyBlackHoney(
 	state: SessionEngineStateV1,
@@ -170,11 +209,7 @@ export function applyBlackHoney(
 		);
 		if (!dealResult.ok) return dealResult;
 		nextState = dealResult.state;
-		dealEvents = dealResult.events.map((event) => ({
-			...event,
-			kind: 'challenge-black-honey-applied',
-			publicPayload: { ...(event.publicPayload as Record<string, unknown>), targetTenureId, extraCards }
-		}));
+		dealEvents = relabelEvent(dealResult.events, 'cards-dealt', 'challenge-black-honey-applied', { targetTenureId, extraCards });
 	}
 
 	const nextChallenge: ChallengeStateV1 = {
@@ -209,9 +244,14 @@ export function applyBlackHoney(
 // ---------------------------------------------------------------------------
 
 /**
- * Stun (Ch1 "Effects", `effects`): immediately discards the target's entire
- * hand. GM-only (an effect inflicted BY the GM's enemy ON a participant,
- * mirroring `applyGmPlay`'s Doom-tier framing). Deliberately does NOT reuse
+ * Stun (Ch1 "Effects", `effects`): "When Stunned, immediately choose and
+ * discard a Challenge card from your hand ... It is an instantaneous
+ * effect." GM-only (an effect inflicted BY the GM's enemy ON a participant,
+ * mirroring `applyGmPlay`'s Doom-tier framing). No stage gate — the rule
+ * text's own "immediately"/"instantaneous" language argues AGAINST inventing
+ * one, and content's `immediate: true` agrees (Increment 3 Task 4 review,
+ * Minor 6: an earlier version wrongly required `stage === 'turns'`, an
+ * engine-asserted restriction with no source). Deliberately does NOT reuse
  * the generic `discard` command's own per-card event (each of which would
  * publicly disclose that card's identity, since the destination discard pile
  * is `'public-top'` visibility — `card-commands.ts`'s `buildMoveEvent`
@@ -219,10 +259,17 @@ export function applyBlackHoney(
  * still run (conservation holds, invariants still checked), but only a
  * single hand-crafted summary event with a COUNT is returned, per O3: "the
  * same discipline applies to stun: it emits a public count, never the
- * identities of cards that were not already public." The target already
- * knows their own former hand; nobody else needs those identities restated
- * here (`SessionGmProjection` never surfaces a player's hand contents either
- * — `projection.ts`).
+ * identities of cards that were not already public."
+ *
+ * That guarantee is about the EVENT stream only (Increment 3 Task 4 review,
+ * Minor 4) — it does not and cannot suppress the shared engine's own
+ * pre-existing `'public-top'` zone model: once the discards land, the LAST
+ * card discarded genuinely becomes the discard pile's visible top card in
+ * every projection (`projection.ts`'s `playerDiscardTop`), exactly as it
+ * would for any other discard. That state-level exposure is accepted,
+ * inherited from the generic discard primitive, not something this modifier
+ * introduces or could suppress without redesigning the shared zone-visibility
+ * model — see `modifiers.test.ts`'s explicit projection assertion.
  */
 export function applyStun(
 	state: SessionEngineStateV1,
@@ -233,7 +280,6 @@ export function applyStun(
 	if (context.actor.kind !== 'gm') return reject('not-authorized', 'only the GM may inflict Stun');
 	const challenge = readChallengeState(state);
 	if (!challenge) return reject('illegal-command', 'no active Challenge round');
-	if (challenge.stage !== 'turns') return reject('illegal-command', `cannot apply Stun during stage ${challenge.stage}`);
 	if (!challenge.participantTenureIds.includes(targetTenureId)) {
 		return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
 	}
@@ -319,17 +365,12 @@ export function applyBrainfever(
 	const placement = placeInitiative(state, targetTenureId, chosenCardId, context);
 	if (!placement.ok) return placement;
 
-	const events = placement.events.map((event) => ({
-		...event,
-		kind: 'challenge-brainfever-forced-initiative',
-		publicPayload: {
-			...(event.publicPayload as Record<string, unknown>),
-			targetTenureId,
-			tieBroken,
-			initiativeSelection: params.initiativeSelection,
-			attacksHaveFavor: params.attacksHaveFavor
-		}
-	}));
+	const events = relabelEvent(placement.events, 'card-transferred', 'challenge-brainfever-forced-initiative', {
+		targetTenureId,
+		tieBroken,
+		initiativeSelection: params.initiativeSelection,
+		attacksHaveFavor: params.attacksHaveFavor
+	});
 
 	return { ok: true, state: placement.state, events };
 }
@@ -360,12 +401,25 @@ export function applyBrainfever(
  * as the caster's own limit; `cumulative` (Ch11) is exactly why the SAME
  * target's zone may still hold several different casters' cards at once.
  * `allowedActions`/`duration: 'until-used'` describe how/when the target may
- * later flip the card (Dodge or Riposte) — not adjudicated here, carried on
- * the event as typed data (O6); the `ChallengeModifierState` instance this
- * writes stays `status: 'active'` and — unlike Counsel/Black Honey's
- * immediately-`'resolved'` instances — is deliberately carried forward across
- * round cleanup (`reducer.ts`'s `cleanupRound`) since "until-used" can span a
- * round boundary.
+ * later flip the card (Dodge or Riposte) — not adjudicated here (attack/
+ * defense math is out of scope, O6), but "used" IS a real state transition
+ * this module tracks — see `resolveGuardianAngel`, below.
+ *
+ * Self-targeting (`targetTenureId === casterTenureId`) is deliberately
+ * PERMITTED: unlike Counsel ("yell advice to ANOTHER adventurer" —
+ * `transfers.ts`), the Guardian Angel rule text never restricts who the
+ * target may be, and this module does not add a restriction the book doesn't
+ * state (Increment 3 Task 4 review, Minor 7).
+ *
+ * The `ChallengeModifierState` instance this writes stays `status: 'active'`
+ * with `cardId` recorded (so `resolveGuardianAngel` can identify which of
+ * possibly SEVERAL active instances a given target's card belongs to,
+ * "cumulative") and — unlike Counsel/Black Honey's immediately-`'resolved'`
+ * instances — is deliberately carried forward across round cleanup
+ * (`reducer.ts`'s `cleanupRound`) since "until-used" can span a round
+ * boundary. Without a consuming counterpart this would be a one-way door —
+ * see `resolveGuardianAngel`'s doc comment (Increment 3 Task 4 review,
+ * Important 2).
  */
 export function applyGuardianAngel(
 	state: SessionEngineStateV1,
@@ -418,9 +472,10 @@ export function applyGuardianAngel(
 
 	const targetZoneId = challengeGuardianAngelZoneId(targetTenureId);
 	const withTargetZone = ensureOwnedPrivateZone(spendResult.state, targetZoneId, 'player-facedown', targetUserId);
-	const handedOff = movePrivateCard(withTargetZone, stagingZoneId, targetZoneId, cardId);
+	const handoffResult = movePrivateCard(withTargetZone, stagingZoneId, targetZoneId, cardId);
+	if (!handoffResult.ok) return handoffResult;
 
-	const challengeAfterSpend = readChallengeState(handedOff);
+	const challengeAfterSpend = readChallengeState(handoffResult.state);
 	if (!challengeAfterSpend) throw new Error('applyGuardianAngel: Challenge state missing after the cast leg');
 
 	const instanceId = `${CHALLENGE_GUARDIAN_ANGEL_ID}:${casterTenureId}:${challengeAfterSpend.round}:${challengeAfterSpend.modifiers.length}`;
@@ -429,13 +484,14 @@ export function applyGuardianAngel(
 		modifierId: CHALLENGE_GUARDIAN_ANGEL_ID,
 		ownerTenureId: casterTenureId,
 		targetTenureId,
-		status: 'active'
+		status: 'active',
+		cardId
 	};
 	const nextChallenge: ChallengeStateV1 = {
 		...challengeAfterSpend,
 		modifiers: challengeAfterSpend.modifiers.concat(nextModifierInstance)
 	};
-	const finalState = writeChallengeState(handedOff, nextChallenge);
+	const finalState = writeChallengeState(handoffResult.state, nextChallenge);
 	assertSessionInvariants(finalState, context.runtime.catalog);
 
 	const handoffEvent: SessionEvent = {
@@ -453,6 +509,94 @@ export function applyGuardianAngel(
 	};
 
 	return { ok: true, state: finalState, events: [...spendResult.events, handoffEvent] };
+}
+
+/**
+ * Consumes an active Guardian Angel ward: "At their discretion, they can
+ * flip the card up and use its value to either Dodge or Riposte" (Appendix A
+ * Sorcery, "Guardian Angel"). Flipping it up is a reveal — same mechanic as
+ * every other discard-into-a-public-top-pile reveal in this module — and per
+ * Ch7 "Dodge"/"Riposte" ("Once your Dodge card is resolved, discard the
+ * card" / "Once your Riposte card is resolved, discard the card"), the card
+ * this bonus attaches to is discarded once that defensive action resolves —
+ * the SAME rule, since the Guardian Angel card only ever contributes its
+ * value to one of those two actions, never stands alone. Flips the
+ * `ChallengeModifierState` instance to `'resolved'` (ending its `maxInstances`
+ * lockout and letting the target's zone stop holding it) — added per
+ * Increment 3 Task 4 review, Important 2: without a consuming counterpart,
+ * `cleanupRound` carrying the `'active'` instance forward across every
+ * subsequent round would have made the caster's `maxInstances` cap and the
+ * warded card itself permanently unusable. The book is silent on whether the
+ * card must be discarded to the SAME pile as any other Challenge card (no
+ * special disposition is stated for a spent Guardian Angel card) — this
+ * follows the general Dodge/Riposte discard rule since that is the action it
+ * augments, not an invented special case.
+ *
+ * `chosenAction` records which of the two allowed actions it was used for
+ * (`allowedActions: 'dodge-or-riposte'`) for audit/typed-data purposes only —
+ * the actual Dodge/Riposte value comparison against an attacker's action is
+ * never computed here (O6); `manual-consequence-required` carries the bonus
+ * for the GM/table to apply.
+ */
+export function resolveGuardianAngel(
+	state: SessionEngineStateV1,
+	targetTenureId: string,
+	cardId: CardId,
+	chosenAction: 'dodge' | 'riposte',
+	context: ChallengeReduceContext
+): SessionReduceResult {
+	const challenge = readChallengeState(state);
+	if (!challenge) return reject('illegal-command', 'no active Challenge round');
+	const owner = challenge.tenureOwners[targetTenureId];
+	if (!owner) return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
+	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
+		return reject('not-authorized', 'a player may only resolve their own Guardian Angel ward');
+	}
+
+	const zoneId = challengeGuardianAngelZoneId(targetTenureId);
+	const zone = findZoneDescriptor(state, zoneId);
+	if (!zone || !zone.cards.includes(cardId)) {
+		return reject('illegal-command', `${targetTenureId} has no Guardian Angel card ${cardId} to reveal`);
+	}
+	const instanceIndex = challenge.modifiers.findIndex(
+		(modifier) =>
+			modifier.modifierId === CHALLENGE_GUARDIAN_ANGEL_ID &&
+			modifier.targetTenureId === targetTenureId &&
+			modifier.cardId === cardId &&
+			modifier.status === 'active'
+	);
+	if (instanceIndex === -1) {
+		return reject('illegal-command', `${targetTenureId} has no active Guardian Angel instance for card ${cardId}`);
+	}
+
+	const discardResult = reduceSession(
+		state,
+		{ type: 'discard', sourceZoneId: zoneId, cardId, destinationZoneId: FIXED_ZONE_IDS.playerDiscard },
+		context
+	);
+	if (!discardResult.ok) return discardResult;
+
+	const nextModifiers = challenge.modifiers.map((modifier, index) =>
+		index === instanceIndex ? { ...modifier, status: 'resolved' as const } : modifier
+	);
+	const nextChallenge: ChallengeStateV1 = { ...challenge, modifiers: nextModifiers };
+	const nextState = writeChallengeState(discardResult.state, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
+
+	const bonusValue = context.runtime.catalog[cardId]?.value ?? 0;
+	const events: SessionEvent[] = [
+		...relabelEvent(discardResult.events, 'card-discarded', 'challenge-guardian-angel-resolved', { targetTenureId, chosenAction, bonusValue }),
+		{
+			kind: 'manual-consequence-required',
+			publicPayload: {
+				modifierId: CHALLENGE_GUARDIAN_ANGEL_ID,
+				targetTenureId,
+				consequence: `apply-guardian-angel-bonus-to-${chosenAction}`,
+				bonusValue
+			}
+		}
+	];
+	return { ok: true, state: nextState, events };
 }
 
 // ---------------------------------------------------------------------------
@@ -555,11 +699,7 @@ export function resolveAim(
 
 	const bonusValue = context.runtime.catalog[cardId]?.value ?? 0;
 	const events: SessionEvent[] = [
-		...discardResult.events.map((event) => ({
-			...event,
-			kind: 'challenge-aim-resolved',
-			publicPayload: { ...(event.publicPayload as Record<string, unknown>), tenureId, bonusValue }
-		})),
+		...relabelEvent(discardResult.events, 'card-discarded', 'challenge-aim-resolved', { tenureId, bonusValue }),
 		{
 			kind: 'manual-consequence-required',
 			publicPayload: {
@@ -657,11 +797,10 @@ export function applyGuard(
 	if (!discardResult.ok) return discardResult;
 	assertSessionInvariants(discardResult.state, context.runtime.catalog);
 
-	const discardEvents = discardResult.events.map((event) => ({
-		...event,
-		kind: 'challenge-guard-old-initiative-discarded',
-		publicPayload: { ...(event.publicPayload as Record<string, unknown>), tenureId, discardsOldInitiative: params.discardsOldInitiative }
-	}));
+	const discardEvents = relabelEvent(discardResult.events, 'card-discarded', 'challenge-guard-old-initiative-discarded', {
+		tenureId,
+		discardsOldInitiative: params.discardsOldInitiative
+	});
 
 	return { ok: true, state: discardResult.state, events: [...spendResult.events, ...discardEvents] };
 }
@@ -674,19 +813,9 @@ export function applyGuard(
  * The typed Challenge modifier commands (binding Step 2 shape). Not wired
  * into `SessionCommand`/`command-service.ts` — that union is the frozen
  * Cross-Increment Contract and explicitly must not be altered by later tasks
- * (`session.ts`'s file header). These variants describe the surface a LATER
- * orchestration layer maps onto the `apply*`/`prepareAim`/`resolveAim`/
- * `counselTransfer` functions above, resolving a self-directed command's
- * acting tenure via `tenureIdForUser` (`reducer.ts`) rather than trusting a
- * client-supplied one — O4: "the visible command set is derived from actor
- * ownership, current Challenge stage, and active content modifiers." Every
- * function above already independently enforces exactly that derivation
- * (ownership via `requirePlayerTurn`/`tenureOwners`, stage via
- * `readChallengeState`, the `maxUsesPerRound`/`maxInstances` caps via
- * `challenge.modifiers`) — a syntactically valid command naming a tenure or
- * timing it wasn't authorized for is rejected by the SAME checks
- * `modifiers.test.ts`/`transfers.test.ts` exercise directly, not a separate
- * client-trust boundary.
+ * (`session.ts`'s file header). These variants describe the surface
+ * `applyChallengeModifierCommand` (below) dispatches onto the `apply*`/
+ * `prepareAim`/`resolveAim`/`counselTransfer` functions above.
  */
 export type ChallengeModifierCommand =
 	| { type: 'apply-black-honey'; targetTenureId: string }
@@ -696,3 +825,158 @@ export type ChallengeModifierCommand =
 	| { type: 'guardian-angel'; targetTenureId: string; cardId: string }
 	| { type: 'aim-prepare'; cardId: string }
 	| { type: 'replace-initiative-with-shield'; cardId: string };
+
+/** The two content-driven caps `legalChallengeModifierCommands` needs to
+ * know whether a player has already exhausted for THIS round/Challenge —
+ * "active content modifiers" (O4's third derivation input) means checking
+ * `challenge.modifiers`, not just role+stage. */
+export interface ChallengeModifierDerivationCaps {
+	counselMaxUsesPerRound: CounselTransferParams['maxUsesPerRound'];
+	guardianAngelMaxInstances: GuardianAngelParams['maxInstances'];
+}
+
+/**
+ * Derives the set of modifier command TYPES currently offered to `actor` —
+ * mirrors `reducer.ts`'s `legalCommandsForActor` (coarse, role-based command
+ * TYPES, not per-zone/per-card legality) but for the Challenge modifier
+ * surface, which that function knows nothing about (Increment 3 Task 4
+ * review, Important 1: `legalCommandsForActor` takes only an actor and is
+ * blind to Challenge stage and modifier state entirely).
+ *
+ * Three derivation inputs, per O4:
+ * - **actor ownership** — a player only ever sees commands for THEIR OWN
+ *   tenure (resolved via `tenureIdForUser`); the GM-only three are never
+ *   offered to a player at all, and vice versa.
+ * - **current Challenge stage** — Black Honey only during `'deal'`,
+ *   Brainfever only during `'initiative-placement'`, the three own-turn
+ *   player actions (Guardian Angel/Aim/Guard) only when it is genuinely that
+ *   tenure's active turn during `'turns'`.
+ * - **active content modifiers** — Counsel's `maxUsesPerRound` and Guardian
+ *   Angel's `maxInstances`, both counted from `challenge.modifiers` exactly
+ *   as `counselTransfer`/`applyGuardianAngel` themselves do, so this can
+ *   never drift from what those functions actually enforce.
+ *
+ * Returns `[]` if no Challenge round is active. Stun carries no stage/cap
+ * restriction (see `applyStun`'s doc comment — the rule's own "immediately"
+ * argues against inventing one), so it is offered to the GM whenever a round
+ * exists.
+ */
+export function legalChallengeModifierCommands(
+	state: SessionEngineStateV1,
+	actor: SessionActor,
+	caps: ChallengeModifierDerivationCaps
+): ChallengeModifierCommand['type'][] {
+	const challenge = readChallengeState(state);
+	if (!challenge) return [];
+
+	if (actor.kind === 'gm') {
+		const legal: ChallengeModifierCommand['type'][] = ['apply-stun'];
+		if (challenge.stage === 'deal') legal.push('apply-black-honey');
+		if (challenge.stage === 'initiative-placement') legal.push('apply-brainfever');
+		return legal;
+	}
+
+	const tenureId = tenureIdForUser(challenge, actor.userId);
+	if (!tenureId) return [];
+
+	const legal: ChallengeModifierCommand['type'][] = [];
+
+	const counselUsesThisRound = challenge.modifiers.filter(
+		(modifier) => modifier.modifierId === CHALLENGE_COUNSEL_ID && modifier.ownerTenureId === tenureId && modifier.status === 'resolved'
+	).length;
+	if (counselUsesThisRound < caps.counselMaxUsesPerRound) legal.push('counsel-transfer');
+
+	const isOwnActiveTurn = challenge.stage === 'turns' && activeTurnEntry(challenge)?.tenureId === tenureId;
+	if (isOwnActiveTurn) {
+		const activeGuardianAngels = challenge.modifiers.filter(
+			(modifier) => modifier.modifierId === CHALLENGE_GUARDIAN_ANGEL_ID && modifier.ownerTenureId === tenureId && modifier.status === 'active'
+		).length;
+		if (activeGuardianAngels < caps.guardianAngelMaxInstances) legal.push('guardian-angel');
+		legal.push('aim-prepare');
+		legal.push('replace-initiative-with-shield');
+	}
+
+	return legal;
+}
+
+/** Every content `params` block a `ChallengeModifierCommand` might need, plus
+ * the two equipment booleans the engine cannot verify itself (O2) — a
+ * caller assembles this once per session/content-load, the same way
+ * `ChallengeConfig` is assembled once by `buildChallengeConfig`. */
+export interface ChallengeModifierMaterials {
+	blackHoney: OptionalHandSizeParams;
+	stun: ForcedHandDiscardParams;
+	brainfever: ForcedInitiativeSelectionParams;
+	counsel: CounselTransferParams;
+	guardianAngel: GuardianAngelParams;
+	aim: PreparedFacedownBonusParams;
+	guard: ReplaceInitiativeParams;
+	hasShield?: boolean;
+	hasBow?: boolean;
+}
+
+/**
+ * The single entry point a command-issuing layer (a test, or a later task's
+ * HTTP/command-service wiring) calls: derives the legal set via
+ * `legalChallengeModifierCommands` and rejects `command` OUTRIGHT —
+ * `illegal-command`, before ever reaching the underlying mechanism — if its
+ * `type` is absent from that set. This is what "a syntactically valid but
+ * unprojected command" (O4) actually means: a command shape that type-checks
+ * and could plausibly succeed in some OTHER stage/for some OTHER actor, but
+ * was never offered to THIS actor right now. Mirrors `reduceSession`'s own
+ * `legalCommandsForActor`-gate-then-`dispatch` shape exactly.
+ *
+ * Resolves a self-directed command's acting tenure via `tenureIdForUser`
+ * (Guardian Angel/Aim/Guard all act on the caller's OWN tenure and carry no
+ * tenure id of their own in `ChallengeModifierCommand` — see that type's
+ * doc comment) rather than trusting any client-supplied one.
+ */
+export function applyChallengeModifierCommand(
+	state: SessionEngineStateV1,
+	command: ChallengeModifierCommand,
+	materials: ChallengeModifierMaterials,
+	context: ChallengeReduceContext
+): SessionReduceResult {
+	const caps: ChallengeModifierDerivationCaps = {
+		counselMaxUsesPerRound: materials.counsel.maxUsesPerRound,
+		guardianAngelMaxInstances: materials.guardianAngel.maxInstances
+	};
+	const legal = legalChallengeModifierCommands(state, context.actor, caps);
+	if (!legal.includes(command.type)) {
+		return reject('illegal-command', `${command.type} is not currently offered to this actor`);
+	}
+
+	const challenge = readChallengeState(state);
+	/* v8 ignore start -- unreachable: `legal` is only ever non-empty when
+	 * `readChallengeState` already succeeded above, so a non-empty `legal`
+	 * list here always means `challenge` is defined too. Kept only so this
+	 * function never dereferences `challenge` as possibly `undefined`. */
+	if (!challenge) return reject('illegal-command', 'no active Challenge round');
+	/* v8 ignore stop */
+
+	switch (command.type) {
+		case 'apply-black-honey':
+			return applyBlackHoney(state, command.targetTenureId, materials.blackHoney, context);
+		case 'apply-stun':
+			return applyStun(state, command.targetTenureId, materials.stun, context);
+		case 'apply-brainfever':
+			return applyBrainfever(state, command.targetTenureId, materials.brainfever, context);
+		case 'counsel-transfer':
+			return counselTransfer(state, command.recipientUserId, command.cardId, materials.counsel, context);
+		case 'guardian-angel': {
+			const casterTenureId = tenureIdForUser(challenge, context.actor.userId);
+			if (!casterTenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
+			return applyGuardianAngel(state, casterTenureId, command.targetTenureId, command.cardId, materials.guardianAngel, context);
+		}
+		case 'aim-prepare': {
+			const tenureId = tenureIdForUser(challenge, context.actor.userId);
+			if (!tenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
+			return prepareAim(state, tenureId, command.cardId, materials.hasBow ?? false, materials.aim, context);
+		}
+		case 'replace-initiative-with-shield': {
+			const tenureId = tenureIdForUser(challenge, context.actor.userId);
+			if (!tenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
+			return applyGuard(state, tenureId, command.cardId, materials.hasShield ?? false, materials.guard, context);
+		}
+	}
+}

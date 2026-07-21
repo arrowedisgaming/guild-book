@@ -60,21 +60,36 @@ export const CHALLENGE_COUNSEL_ID = 'challenge-counsel';
 
 /** Moves `cardId` directly between two private zones, bypassing
  * `actorMayAccessZone` — see the file header for why this is safe ONLY when
- * the caller has already authorized the move itself. Both zones must already
- * exist and `sourceZoneId` must already hold `cardId`; callers confirm this
- * before calling (this function does not reject, only moves). */
+ * the caller has already authorized the move itself. Validates the three
+ * cases that would otherwise silently break card conservation (source ===
+ * destination, a missing source/destination zone, or the card not actually
+ * present in the source) and rejects rather than mutating — Increment 3 Task
+ * 4 review, Minor 5: an earlier version of this function performed no
+ * validation at all, which meant a missing source zone or an absent card
+ * would silently CREATE a card at the destination instead of moving one. */
 export function movePrivateCard(
 	state: SessionEngineStateV1,
 	sourceZoneId: string,
 	destinationZoneId: string,
 	cardId: CardId
-): SessionEngineStateV1 {
+): SessionReduceResult {
+	if (sourceZoneId === destinationZoneId) {
+		return reject('illegal-command', 'movePrivateCard: source and destination must be different zones');
+	}
+	const source = state.privateZones.find((zone) => zone.id === sourceZoneId);
+	if (!source) return reject('illegal-command', `movePrivateCard: source zone not found: ${sourceZoneId}`);
+	if (!source.cards.includes(cardId)) {
+		return reject('illegal-command', `movePrivateCard: named card is not present in source zone ${sourceZoneId}`);
+	}
+	const destination = state.privateZones.find((zone) => zone.id === destinationZoneId);
+	if (!destination) return reject('illegal-command', `movePrivateCard: destination zone not found: ${destinationZoneId}`);
+
 	const privateZones = state.privateZones.map((zone) => {
 		if (zone.id === sourceZoneId) return { ...zone, cards: zone.cards.filter((id) => id !== cardId) };
 		if (zone.id === destinationZoneId) return { ...zone, cards: zone.cards.concat(cardId) };
 		return zone;
 	});
-	return { ...state, privateZones };
+	return { ok: true, state: { ...state, privateZones }, events: [] };
 }
 
 export interface PrivateTransferOptions {
@@ -91,31 +106,26 @@ export interface PrivateTransferOptions {
 }
 
 /**
- * Validates the named zones/card, performs the cross-owner move via
- * `movePrivateCard`, and builds the privacy-correct event (file header).
- * Does NOT touch `ChallengeStateV1` itself (per-round caps, modifier
- * instances) — that bookkeeping is caller-specific (`counselTransfer` below;
- * `modifiers.ts`'s `applyGuardianAngel`, which uses `movePrivateCard`
- * directly instead since its hand-off leg composes with an already-budgeted
- * `spendCard` leg rather than needing its own event).
+ * Validates the card is a real catalog entry, performs the cross-owner move
+ * via `movePrivateCard` (which validates the zones/card presence itself and
+ * rejects rather than mutating on failure), and builds the privacy-correct
+ * event (file header). Does NOT touch `ChallengeStateV1` itself (per-round
+ * caps, modifier instances) — that bookkeeping is caller-specific
+ * (`counselTransfer` below; `modifiers.ts`'s `applyGuardianAngel`, which uses
+ * `movePrivateCard` directly instead since its hand-off leg composes with an
+ * already-budgeted `spendCard` leg rather than needing its own event).
  */
 export function performPrivateTransfer(
 	state: SessionEngineStateV1,
 	options: PrivateTransferOptions,
 	context: ChallengeReduceContext
 ): SessionReduceResult {
-	const source = findZoneDescriptor(state, options.senderZoneId);
-	if (!source) return reject('illegal-command', `sender zone not found: ${options.senderZoneId}`);
-	if (!source.cards.includes(options.cardId)) {
-		return reject('illegal-command', 'named card is not present in the sender\'s zone');
-	}
-	const destination = findZoneDescriptor(state, options.recipientZoneId);
-	if (!destination) return reject('illegal-command', `recipient zone not found: ${options.recipientZoneId}`);
 	if (!context.runtime.catalog[options.cardId]) {
 		return reject('content-mismatch', 'unrecognized card referenced for a private transfer');
 	}
 
-	const nextState = movePrivateCard(state, options.senderZoneId, options.recipientZoneId, options.cardId);
+	const moveResult = movePrivateCard(state, options.senderZoneId, options.recipientZoneId, options.cardId);
+	if (!moveResult.ok) return moveResult;
 
 	const event: SessionEvent = {
 		kind: options.eventKind,
@@ -125,7 +135,7 @@ export function performPrivateTransfer(
 			[options.recipientUserId]: { cardId: options.cardId, direction: 'received' }
 		}
 	};
-	return { ok: true, state: nextState, events: [event] };
+	return { ok: true, state: moveResult.state, events: [event] };
 }
 
 /**
@@ -162,7 +172,11 @@ export function counselTransfer(
 
 	const recipientTenureId = tenureIdForUser(challenge, recipientUserId);
 	if (!recipientTenureId) return reject('illegal-command', `${recipientUserId} is not an active Challenge participant`);
-	if (recipientTenureId === senderTenureId) return reject('illegal-command', 'cannot Counsel yourself');
+	// Ch5 "Counsel": "you may yell advice to ANOTHER adventurer" — the rule
+	// text itself excludes yourself, unlike Guardian Angel (which the book
+	// never restricts from self-targeting — see `modifiers.ts`'s
+	// `applyGuardianAngel` doc comment, Increment 3 Task 4 review, Minor 7).
+	if (recipientTenureId === senderTenureId) return reject('illegal-command', 'cannot Counsel yourself — the rule names "another adventurer"');
 
 	const senderZoneId = challengeHandZoneId(senderTenureId);
 	const senderHand = findZoneDescriptor(state, senderZoneId);

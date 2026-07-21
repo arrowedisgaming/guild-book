@@ -194,6 +194,16 @@ export interface ChallengeModifierState {
 	/** Remaining uses for modifiers with a per-round/per-instance cap (e.g.
 	 * Counsel's `maxUsesPerRound`); absent when not applicable. */
 	usesRemaining?: number;
+	/**
+	 * The specific card this instance is bound to, when the modifier's
+	 * "cumulative" nature (Guardian Angel: "cumulative" — Ch11) means a target
+	 * can hold MORE THAN ONE such instance's card at once. Without this, a
+	 * later resolve/consume step naming a `cardId` (Increment 3 Task 4 review,
+	 * Important 2) has no way to identify WHICH of possibly several active
+	 * instances that card belongs to. Absent for modifiers that never
+	 * stack this way (Counsel, Black Honey).
+	 */
+	cardId?: string;
 }
 
 /**

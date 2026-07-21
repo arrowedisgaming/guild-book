@@ -71,6 +71,7 @@ import {
 	writeChallengeState,
 	CHALLENGE_GM_TENURE_ID,
 	CHALLENGE_INITIATIVE_ZONE_ID,
+	CHALLENGE_STUN_ID,
 	type ChallengeReduceContext,
 	type SessionReduceResult
 } from './reducer';
@@ -80,8 +81,12 @@ import { counselTransfer, movePrivateCard, CHALLENGE_COUNSEL_ID } from './transf
 // Content modifier ids (the content pack's `SessionModifierDefinition.id`s)
 // ---------------------------------------------------------------------------
 
+/** Re-exported from `reducer.ts`, which owns this one constant so
+ * `cleanupRound` (Stun-specific pending expiry — review round 5) can name it
+ * without a circular import; every other modifier id is defined here as
+ * before. */
+export { CHALLENGE_STUN_ID };
 export const CHALLENGE_BLACK_HONEY_ID = 'challenge-black-honey';
-export const CHALLENGE_STUN_ID = 'challenge-stun';
 export const CHALLENGE_BRAINFEVER_ID = 'challenge-brainfever';
 export const CHALLENGE_GUARDIAN_ANGEL_ID = 'challenge-guardian-angel';
 export const CHALLENGE_AIM_ID = 'challenge-aim';

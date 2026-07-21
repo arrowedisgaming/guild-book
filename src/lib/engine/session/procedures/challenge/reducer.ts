@@ -52,6 +52,16 @@ export const CHALLENGE_PROCEDURE_ID = 'challenge-round';
  * as `card-commands.ts`'s `FOOL_CARD_ID`. */
 export const CHALLENGE_GM_TENURE_ID = 'gm';
 
+/** The content pack's `challenge-stun` modifier id. Defined HERE (not in
+ * `modifiers.ts`, which owns the other six modifier id constants) because
+ * `cleanupRound` (below) needs to name it when expiring an unresolved
+ * pending Stun at the round boundary (Increment 3 Task 4 review, round 5) —
+ * `modifiers.ts` imports FROM this module, so the reverse dependency would
+ * be circular. `modifiers.ts` re-exports this constant so its own public
+ * surface (and every existing import of `CHALLENGE_STUN_ID` from there) is
+ * unchanged. */
+export const CHALLENGE_STUN_ID = 'challenge-stun';
+
 /** The one shared public zone Initiative cards are revealed into. Persists
  * across rounds (cleared, not recreated, at round cleanup). */
 export const CHALLENGE_INITIATIVE_ZONE_ID = 'challenge-initiative';
@@ -654,9 +664,28 @@ export function cleanupRound(
 		// never swept here, `challenge-end-the-round`: "Facedown actions are
 		// left facedown"), so silently dropping its bookkeeping entry would
 		// desync the two and let a caster re-cast past `maxInstances: 1`.
-		// Every existing fixture's `modifiers` array is empty before this
-		// task, so this filter is a no-op for every pre-Task-4 test.
-		modifiers: challenge.modifiers.filter((modifier) => modifier.status === 'active' || modifier.status === 'pending')
+		//
+		// Stun is the one exception (review round 5): content says
+		// `immediate: true` and the rule states "It is an instantaneous
+		// effect," so a `'pending'` Stun (the GM recorded it but the target
+		// never chose a card — `modifiers.ts`'s `applyStun`/`resolveStun`)
+		// must NOT bank across a round boundary the way Guardian Angel's
+		// genuinely round-spanning `'active'` wards do. Expired to
+		// `'expired'` here, SCOPED TO `CHALLENGE_STUN_ID` only, before the
+		// existing keep-filter runs — every other modifier's carry-forward
+		// rule (including any future one that legitimately uses `'pending'`
+		// for something that SHOULD span rounds) is unaffected.
+		//
+		// Every existing fixture's `modifiers` array is empty before
+		// Increment 3 Task 4, so both this expiry and the filter below are a
+		// no-op for every pre-Task-4 test.
+		modifiers: challenge.modifiers
+			.map((modifier) =>
+				modifier.modifierId === CHALLENGE_STUN_ID && modifier.status === 'pending'
+					? { ...modifier, status: 'expired' as const }
+					: modifier
+			)
+			.filter((modifier) => modifier.status === 'active' || modifier.status === 'pending')
 	};
 	nextState = writeChallengeState(nextState, nextChallenge);
 	assertSessionInvariants(nextState, context.runtime.catalog);

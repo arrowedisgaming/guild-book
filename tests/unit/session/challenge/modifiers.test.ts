@@ -819,6 +819,53 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 		expectConserved(cleaned.state, catalog);
 	});
 
+	/** Sets up a `'turns'`-stage round with BOTH a `'pending'` Stun (recorded,
+	 * never resolved) and an `'active'` Guardian Angel instance, then cleans
+	 * up — the shared fixture for the two round-5 review tests below, which
+	 * assert opposite outcomes for the SAME cleanup call: Stun's `'pending'`
+	 * must expire, Guardian Angel's `'active'` must not (guard against
+	 * over-broad expiry — the fix must be scoped to Stun, not every
+	 * `'pending'`/`'active'` modifier alike). */
+	function stunPendingAndGuardianAngelActive(seed: string) {
+		const { state, gmCtx, p1Ctx } = readyTwoPlayerTurns(seed, ['wands-v'], ['pentacles-iv']);
+		const ga = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, p1Ctx);
+		if (!ga.ok) throw ga;
+		const stunned = applyStun(ga.state, 'tenure-2', stunParams, gmCtx);
+		if (!stunned.ok) throw stunned;
+		expect(readChallengeState(stunned.state)?.modifiers).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, status: 'active' }),
+				expect.objectContaining({ modifierId: CHALLENGE_STUN_ID, targetTenureId: 'tenure-2', status: 'pending' })
+			])
+		);
+
+		const cleaned = cleanupRound(stunned.state, gmCtx);
+		if (!cleaned.ok) throw cleaned;
+		return cleaned.state;
+	}
+
+	it('an unresolved pending Stun expires at round cleanup (immediate: true — it does not bank indefinitely) and apply-stun is no longer offered to that target (review round 5)', () => {
+		const seed = 'cleanup-stun-pending-expires';
+		const cleanedState = stunPendingAndGuardianAngelActive(seed);
+
+		const afterCleanup = readChallengeState(cleanedState)!;
+		expect(afterCleanup.modifiers).not.toContainEqual(expect.objectContaining({ modifierId: CHALLENGE_STUN_ID }));
+		expect(legalChallengeModifierCommands(cleanedState, playerActor('tenure-2'), derivationCaps)).not.toContain('apply-stun');
+		expectConserved(cleanedState, catalog);
+	});
+
+	it("a Guardian Angel 'active' instance still survives the SAME cleanup (guard against over-broad expiry — review round 5)", () => {
+		const seed = 'cleanup-guardian-angel-survives-alongside-stun';
+		const cleanedState = stunPendingAndGuardianAngelActive(seed);
+
+		const afterCleanup = readChallengeState(cleanedState)!;
+		expect(afterCleanup.modifiers).toContainEqual(
+			expect.objectContaining({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, ownerTenureId: 'tenure-1', status: 'active' })
+		);
+		expect(findZoneDescriptor(cleanedState, challengeGuardianAngelZoneId('tenure-2'))?.cards).toEqual(['wands-v']);
+		expectConserved(cleanedState, catalog);
+	});
+
 	// -------------------------------------------------------------------------
 	// legalChallengeModifierCommands / applyChallengeModifierCommand (O4,
 	// Important 1 — review): the actual derived command set, not just ownership

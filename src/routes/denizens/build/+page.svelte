@@ -120,6 +120,10 @@
 		// draft's themeId was overwritten by the radio before this effect ran,
 		// so the stash may carry the other mode's theme — never trust it.
 		if (theme && personMode && draft.kind !== 'person') {
+			// The draft (pools included) is swapped out — drop pool-scoped
+			// edit and scratch state, same as a template reseed.
+			editing = null;
+			poolCustom = {};
 			denizenBuilder.swapMode('person', (stashed, current) =>
 				stashed
 					? { ...carryIdentity(stashed, current), kind: 'person', themeId: current.themeId }
@@ -128,6 +132,8 @@
 			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
 		}
 		if (theme && !personMode && draft.kind === 'person') {
+			editing = null;
+			poolCustom = {};
 			denizenBuilder.swapMode('creature', (stashed, current) =>
 				stashed
 					? { ...carryIdentity(stashed, current), kind: 'creature', themeId: current.themeId }
@@ -543,7 +549,7 @@
 				</label>
 			{/each}
 		</div>
-		{#each statWarnings as warning (warning)}
+		{#each statWarnings as warning}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 

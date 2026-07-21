@@ -57,8 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   explains the wedged state instead of hiding it, integrity failures are logged
   for the operator rather than swallowed, and a refused start says why.
 
-## [0.3.0] - 2026-07-20
-
 ### Added
 
 - **People in the denizen builder**: the Man theme now follows the book's
@@ -73,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entirely for people. Switching themes — person to creature or between
   creature template pairs — stashes and restores each side's work instead
   of discarding it.
+
+## [0.3.0] - 2026-07-20
+
+### Added
+
 - **Dungeon lords in the denizen builder**: threats fought in named pools of
   Health and Defense are now fully buildable. A new Pools step (shown only for
   pool-based threats) adds, names, reorders, and removes pools, each with its

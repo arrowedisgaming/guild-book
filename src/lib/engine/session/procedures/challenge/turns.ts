@@ -272,17 +272,32 @@ export function isRejection(value: ChallengeStateV1 | SessionRejection): value i
 // spendCard — the one place a card leaves a hand to become an action
 // ---------------------------------------------------------------------------
 
-interface SpendCardOptions {
+export interface SpendCardOptions {
 	budgetKey: string;
 	handZoneId: string;
 	cardId: CardId;
 	actionKind: 'action' | 'minor-action';
 	/** Present only for a player's minor action (O4) — the GM never carries
-	 * this (suit-exempt), and a full action never checks suit either. */
+	 * this (suit-exempt), and a full action never checks suit either.
+	 * Increment 3 Task 4's `challenge-aim` is the one FULL action that also
+	 * carries this: Aim is content-tagged `suit: 'swords'` (Ch9 "Bow": "Aim is
+	 * a Swords action"), a genuine exception to "any card for any action" that
+	 * the content pack states explicitly rather than this module inventing it. */
 	actionSuit?: SuitId;
 	cap: number;
 	eventKind: string;
 	extraPublicPayload: Record<string, unknown>;
+	/**
+	 * Where the spent card lands. Defaults to `CHALLENGE_PLAYED_ZONE_ID` when
+	 * omitted (every Task 3 call site) — Increment 3 Task 4 generalizes this
+	 * so `challenge-guard` (replace-Initiative) can spend into
+	 * `CHALLENGE_INITIATIVE_ZONE_ID` and `challenge-aim`/Guardian Angel's
+	 * cast leg can spend into a private facedown/staging zone, all through
+	 * this SAME budget/cap choke point (O7) rather than a parallel counter.
+	 * When set, the CALLER is responsible for ensuring the zone already
+	 * exists (`ensurePlayedZone` only auto-creates the default).
+	 */
+	destinationZoneId?: string;
 }
 
 /** Shared legality/mutation core for every card-spending turn action
@@ -297,7 +312,7 @@ interface SpendCardOptions {
  * turn/budget context the generic engine has no vocabulary for (which
  * tenure/the GM, action vs minor action, Doom tier) — without inventing a
  * second, duplicate event alongside it. */
-function spendCard(
+export function spendCard(
 	state: SessionEngineStateV1,
 	challenge: ChallengeStateV1,
 	options: SpendCardOptions,
@@ -328,14 +343,21 @@ function spendCard(
 		const cardEntry = context.runtime.catalog[options.cardId];
 		if (!cardEntry) return reject('content-mismatch', `unrecognized card referenced for a minor action`);
 		if (cardEntry.suit !== options.actionSuit) {
-			return reject('illegal-command', `card suit does not match the ${options.actionSuit} minor action`);
+			return reject('illegal-command', `card suit does not match the required ${options.actionSuit} suit for this action`);
 		}
 	}
 
-	const ensuredState = ensurePlayedZone(state);
+	// The default destination (`CHALLENGE_PLAYED_ZONE_ID`) is auto-created
+	// here exactly as Task 3 always did; a caller-supplied `destinationZoneId`
+	// (Increment 3 Task 4) is that caller's own responsibility to have already
+	// ensured (`applyGuard`'s target is `beginChallenge`'s own Initiative
+	// zone; `prepareAim`/`applyGuardianAngel` ensure their own facedown/
+	// staging zone immediately before calling this).
+	const destinationZoneId = options.destinationZoneId ?? CHALLENGE_PLAYED_ZONE_ID;
+	const ensuredState = options.destinationZoneId === undefined ? ensurePlayedZone(state) : state;
 	const moveResult = reduceSession(
 		ensuredState,
-		{ type: 'play', sourceZoneId: options.handZoneId, cardId: options.cardId, destinationZoneId: CHALLENGE_PLAYED_ZONE_ID },
+		{ type: 'play', sourceZoneId: options.handZoneId, cardId: options.cardId, destinationZoneId },
 		context
 	);
 	if (!moveResult.ok) return moveResult;

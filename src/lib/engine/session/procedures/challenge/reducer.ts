@@ -97,6 +97,70 @@ export function challengeGmInitiativeZoneId(enemyFactId: string): string {
 	return `challenge-gm-initiative-facedown:${enemyFactId}`;
 }
 
+/**
+ * A tenure's prepared/facedown Aim zone (`modifiers.ts`'s `prepareAim`/
+ * `resolveAim` — content pack `challenge-aim`, "Aim is a Swords action ...
+ * play your card facedown. When you next Attack with your bow, you may
+ * reveal the card" — Ch9 "Bow"). Deliberately distinct from
+ * `challengeInitiativeFacedownZoneId` (a different game concept — Ch7
+ * "Facedown Cards": "Your Initiative card does not count towards this
+ * limit!") and never swept at round cleanup: `challenge-end-the-round` is
+ * explicit that "Facedown actions are left facedown," and `revealOn:
+ * 'next-bow-attack'` can legitimately span a round boundary.
+ */
+export function challengeAimZoneId(tenureId: string): string {
+	return `challenge-aim-facedown:${tenureId}`;
+}
+
+/**
+ * The TARGET's facedown Guardian Angel zone (`modifiers.ts`'s
+ * `applyGuardianAngel` — content pack `challenge-guardian-angel`, Appendix A
+ * Sorcery: "the sorcerer hands the target the card used for Speak
+ * Incantation. This card is placed facedown in front of the target
+ * player"). Owned by the TARGET, not the caster — the caster's card leaves
+ * their hand and becomes the target's held defense. Multiple different
+ * casters may each place a card here for the same target ("cumulative"); a
+ * single caster may not maintain more than one active instance at a time
+ * ("you cannot have multiple instances of this spell at the same time" —
+ * enforced by `applyGuardianAngel` reading `ChallengeStateV1.modifiers`, not
+ * by this zone, which has no notion of who placed which card). Never swept
+ * at round cleanup — `duration: 'until-used'` can span a round boundary,
+ * same reasoning as `challengeAimZoneId`.
+ */
+export function challengeGuardianAngelZoneId(targetTenureId: string): string {
+	return `challenge-guardian-angel-facedown:${targetTenureId}`;
+}
+
+/**
+ * A CASTER-owned, purely transient staging zone `applyGuardianAngel` moves
+ * the Speak Incantation card into via the ordinary budgeted `spendCard`
+ * choke point (a same-owner move the generic engine's authorization already
+ * permits), immediately before handing it off to the target's
+ * `challengeGuardianAngelZoneId` zone (a cross-owner move the generic
+ * engine's actor-based zone authorization cannot express — see
+ * `transfers.ts`'s file header). Always empty again by the time
+ * `applyGuardianAngel` returns; kept as its own zone id (rather than reusing
+ * `challengeInitiativeFacedownZoneId`) so it can never collide with a
+ * genuinely-held Initiative placement.
+ */
+export function challengeGuardianAngelStagingZoneId(casterTenureId: string): string {
+	return `challenge-guardian-angel-staging:${casterTenureId}`;
+}
+
+/**
+ * Resolves the ACTIVE participant tenure owned by `userId`, or `undefined`
+ * if `userId` owns none (not a current participant, or a GM/spectator).
+ * Several Increment 3 Task 4 modifiers (Counsel, Guardian Angel) act on
+ * behalf of "the caster's own tenure" without the caller having to pass it
+ * explicitly — this is the single reverse-lookup helper through
+ * `tenureOwners`, matching every other Challenge authorization check's rule
+ * that a tenure is resolved through the map, never compared against
+ * `actor.userId` directly (O7).
+ */
+export function tenureIdForUser(challenge: ChallengeStateV1, userId: string): string | undefined {
+	return challenge.participantTenureIds.find((tenureId) => challenge.tenureOwners[tenureId] === userId);
+}
+
 export function reject(code: SessionRejection['code'], message: string): SessionReduceResult {
 	return { ok: false, rejection: { code, message } };
 }
@@ -579,7 +643,20 @@ export function cleanupRound(
 		turnKind: null,
 		budgets: initialBudgets(nextParticipantTenureIds),
 		mulliganUsedThisRound: false,
-		modifiers: []
+		// Round-scoped modifier instances (Counsel's once-per-round cap,
+		// Black Honey's already-eaten-this-round gate — both recorded
+		// `status: 'resolved'` the instant they resolve, Increment 3 Task 4)
+		// are cleared here so next round's caps start fresh. A modifier whose
+		// OWN duration outlives the round boundary (Guardian Angel's
+		// `duration: 'until-used'`, tracked `status: 'active'` until actually
+		// triggered) is deliberately carried forward — its physical card
+		// already survives cleanup untouched (facedown/prepared zones are
+		// never swept here, `challenge-end-the-round`: "Facedown actions are
+		// left facedown"), so silently dropping its bookkeeping entry would
+		// desync the two and let a caster re-cast past `maxInstances: 1`.
+		// Every existing fixture's `modifiers` array is empty before this
+		// task, so this filter is a no-op for every pre-Task-4 test.
+		modifiers: challenge.modifiers.filter((modifier) => modifier.status === 'active' || modifier.status === 'pending')
 	};
 	nextState = writeChallengeState(nextState, nextChallenge);
 	assertSessionInvariants(nextState, context.runtime.catalog);

@@ -11,6 +11,8 @@
  * and hand-size calculation are later Challenge tasks.
  */
 
+import type { CardId } from '$lib/types/session';
+
 /** Every stage a Challenge round passes through, in order. */
 export type ChallengeStage =
 	| 'setup'
@@ -134,6 +136,19 @@ export interface ChallengeInitiativeEntry {
 	 * parallel structure duplicating `initiativeOrder` itself.
 	 */
 	turnKind?: ChallengeTurnKind;
+	/**
+	 * The specific card currently seated here, once revealed. Absent
+	 * pre-reveal (mirrors `revealed: false`) — `initiative.ts`'s
+	 * `revealInitiative` is the only writer that sets it, alongside flipping
+	 * `revealed` to `true`. Additive field (Increment 3 Task 4): without it,
+	 * nothing in `ChallengeStateV1` records WHICH card seats a given tenure
+	 * once every revealed entry shares the same `cardZoneId` (the one shared
+	 * public Initiative zone) — `modifiers.ts`'s `applyGuard` needs to name the
+	 * exact old card to discard when swapping in a new one (Ch7:552-554), and
+	 * a flat zone-cards array alone can't answer "which card is THIS tenure's"
+	 * once several tenures' cards sit in the same zone.
+	 */
+	cardId?: CardId;
 }
 
 /**

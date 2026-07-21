@@ -172,7 +172,9 @@ const challengeInitiativeEntrySchema = z
 		cardZoneId: z.string().trim().min(1),
 		revealed: z.boolean(),
 		// Additive (Increment 3 Task 3) — see `types.ts`'s `ChallengeInitiativeEntry.turnKind` doc comment.
-		turnKind: z.enum(['normal', 'fool-extra']).optional()
+		turnKind: z.enum(['normal', 'fool-extra']).optional(),
+		// Additive (Increment 3 Task 4) — see `types.ts`'s `ChallengeInitiativeEntry.cardId` doc comment.
+		cardId: z.string().trim().min(1).optional()
 	})
 	.strict();
 

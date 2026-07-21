@@ -258,10 +258,18 @@ export function revealInitiative(state: SessionEngineStateV1, context: Challenge
 	nextState = reorderResult.state;
 	events.push(...reorderResult.events);
 
+	// `cardId` (Increment 3 Task 4, additive on `ChallengeInitiativeEntry`):
+	// every revealed entry shares the same `cardZoneId` (the one shared public
+	// Initiative zone), so without recording each seat's own card here nothing
+	// in state could answer "which card is THIS tenure's Initiative" once
+	// several tenures' cards sit in that zone — `modifiers.ts`'s `applyGuard`
+	// needs exactly that to discard the correct old card when swapping in a
+	// new one (Ch7:552-554).
 	const revealedOrder: ChallengeInitiativeEntry[] = sortedEntries.map((entry) => ({
 		tenureId: entry.tenureId,
 		cardZoneId: CHALLENGE_INITIATIVE_ZONE_ID,
-		revealed: true
+		revealed: true,
+		cardId: placedCardIds[entry.tenureId]
 	}));
 
 	// Groups of two-or-more ids that share a card value — a real Ch7 tie the

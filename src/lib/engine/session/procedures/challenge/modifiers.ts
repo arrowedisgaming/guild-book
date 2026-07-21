@@ -69,6 +69,7 @@ import {
 	reject,
 	tenureIdForUser,
 	writeChallengeState,
+	CHALLENGE_GM_TENURE_ID,
 	CHALLENGE_INITIATIVE_ZONE_ID,
 	type ChallengeReduceContext,
 	type SessionReduceResult
@@ -250,19 +251,81 @@ export function applyBlackHoney(
  * player, not the GM or the engine — content originally shipped
  * `discard: 'entire-hand'`, a content-authoring bug from Increment 0b that
  * made Stun far stronger than the printed rule (a whole hand, not one
- * player-chosen card). Fixed in content (pack v3.3.0, this task's one
- * approved content change): `discard: 'one-card'` plus `playerChooses: true`.
- * No stage gate — the rule text's own "immediately"/"instantaneous" language
- * argues AGAINST inventing one, and content's `immediate: true` agrees
- * (Increment 3 Task 4 review, Minor 6: an earlier version wrongly required
- * `stage === 'turns'`, an engine-asserted restriction with no source).
+ * player-chosen card). Fixed in content (pack v3.3.0): `discard: 'one-card'`
+ * plus `playerChooses: true`. No stage gate — the rule text's own
+ * "immediately"/"instantaneous" language argues AGAINST inventing one, and
+ * content's `immediate: true` agrees (Increment 3 Task 4 review, Minor 6: an
+ * earlier version wrongly required `stage === 'turns'`).
  *
- * Authorization mirrors every other player-choice function in this module:
- * the TARGET (resolved through `tenureOwners`, never by comparing
- * `actor.userId` to a tenure id — O7) chooses their own card, or the GM acts
- * with full authority as usual (e.g. narrating the choice for an away
- * player) — a single step, not a GM-applies/target-responds handshake; the
- * book's own "immediately" argues against splitting this into two commands.
+ * ## The GM-records / target-resolves handshake (review round 4)
+ *
+ * A first fix (making the target the chooser) opened a real hole: this
+ * engine deliberately does not model status effects (O6), so nothing
+ * tracked whether a player was actually Stunned. Letting ANY player invoke a
+ * one-card discard on themselves at will, at any stage, with no cap, is free
+ * hand-cycling that bypasses the `discards` budget Task 3 built for exactly
+ * this (`types.ts`'s `ChallengeParticipantBudget` — players are deliberately
+ * given `discards: null`, "no discard budget of their own"). That capability
+ * never existed before and is not in the book.
+ *
+ * The fix keeps WHO CHOOSES right (Ch1:527 — the affected player) while
+ * closing WHO MAY INITIATE: `applyStun` (below) is the GM's action — it
+ * RECORDS a `'pending'` `ChallengeModifierState` instance against the target,
+ * because inflicting Stun is a fictional event only the GM narrates (which
+ * enemy action, spell, or hazard caused it is never modeled here, same as
+ * every other modifier's fictional trigger). `resolveStun` is the TARGET's
+ * action — it requires an existing `'pending'` instance and rejects outright
+ * if there isn't one, so a player can never self-serve a discard unprompted.
+ * "Immediately" (the book's own word) describes TIMING IN THE FICTION — the
+ * GM records the moment Stun lands, and the target chooses their card right
+ * away — not a claim about who may submit which command; recording-then-
+ * immediately-resolving is faithful to "immediately," an unprompted
+ * self-discard is not.
+ *
+ * `params.playerChooses` (content) is enforced here, not merely surfaced:
+ * `resolveStun` grants NO full-authority GM override, unlike every other
+ * player action in this module — that flag is precisely the assertion that
+ * the GM may not choose on the player's behalf, so the GM's only avenue is
+ * `applyStun` (record), never picking the card itself.
+ */
+export function applyStun(
+	state: SessionEngineStateV1,
+	targetTenureId: string,
+	params: ForcedHandDiscardParams,
+	context: ChallengeReduceContext
+): SessionReduceResult {
+	if (context.actor.kind !== 'gm') return reject('not-authorized', 'only the GM may record that Stun was inflicted');
+	const challenge = readChallengeState(state);
+	if (!challenge) return reject('illegal-command', 'no active Challenge round');
+	if (!challenge.participantTenureIds.includes(targetTenureId)) {
+		return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
+	}
+
+	const instanceId = `${CHALLENGE_STUN_ID}:${targetTenureId}:${challenge.round}:${challenge.modifiers.length}`;
+	const nextChallenge: ChallengeStateV1 = {
+		...challenge,
+		modifiers: challenge.modifiers.concat({
+			instanceId,
+			modifierId: CHALLENGE_STUN_ID,
+			ownerTenureId: CHALLENGE_GM_TENURE_ID,
+			targetTenureId,
+			status: 'pending'
+		})
+	};
+	const nextState = writeChallengeState(state, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
+
+	const event: SessionEvent = {
+		kind: 'challenge-stun-inflicted',
+		publicPayload: { targetTenureId, immediate: params.immediate }
+	};
+	return { ok: true, state: nextState, events: [event] };
+}
+
+/**
+ * Resolves a `'pending'` Stun instance: the affected player chooses and
+ * discards ONE card (Ch1:527). See `applyStun`'s doc comment for why this is
+ * a separate, gated step rather than the GM applying it directly.
  *
  * Deliberately does NOT reuse the generic `discard` command's own event
  * (which would publicly disclose the card's identity, since the destination
@@ -283,7 +346,7 @@ export function applyBlackHoney(
  * could suppress without redesigning the shared zone-visibility model — see
  * `modifiers.test.ts`'s explicit projection assertion.
  */
-export function applyStun(
+export function resolveStun(
 	state: SessionEngineStateV1,
 	targetTenureId: string,
 	cardId: CardId,
@@ -294,8 +357,18 @@ export function applyStun(
 	if (!challenge) return reject('illegal-command', 'no active Challenge round');
 	const owner = challenge.tenureOwners[targetTenureId];
 	if (!owner) return reject('illegal-command', `${targetTenureId} is not an active Challenge participant`);
-	if (context.actor.kind === 'player' && context.actor.userId !== owner) {
-		return reject('not-authorized', 'a player may only choose their own Stun discard');
+	// `playerChooses: true` enforced, not just surfaced (see `applyStun`'s doc
+	// comment) — no GM full-authority override here, unlike every other
+	// player action in this module.
+	if (context.actor.kind !== 'player' || context.actor.userId !== owner) {
+		return reject('not-authorized', 'only the stunned player may choose their own Stun discard');
+	}
+
+	const instanceIndex = challenge.modifiers.findIndex(
+		(modifier) => modifier.modifierId === CHALLENGE_STUN_ID && modifier.targetTenureId === targetTenureId && modifier.status === 'pending'
+	);
+	if (instanceIndex === -1) {
+		return reject('illegal-command', `${targetTenureId} has no pending Stun to resolve`);
 	}
 
 	const handZoneId = challengeHandZoneId(targetTenureId);
@@ -310,13 +383,19 @@ export function applyStun(
 		context
 	);
 	if (!discardResult.ok) return discardResult;
-	assertSessionInvariants(discardResult.state, context.runtime.catalog);
+
+	const nextModifiers = challenge.modifiers.map((modifier, index) =>
+		index === instanceIndex ? { ...modifier, status: 'resolved' as const } : modifier
+	);
+	const nextChallenge: ChallengeStateV1 = { ...challenge, modifiers: nextModifiers };
+	const nextState = writeChallengeState(discardResult.state, nextChallenge);
+	assertSessionInvariants(nextState, context.runtime.catalog);
 
 	const event: SessionEvent = {
 		kind: 'challenge-stun-applied',
-		publicPayload: { targetTenureId, count: 1, immediate: params.immediate, discard: params.discard }
+		publicPayload: { targetTenureId, count: 1, immediate: params.immediate, discard: params.discard, playerChooses: params.playerChooses }
 	};
-	return { ok: true, state: discardResult.state, events: [event] };
+	return { ok: true, state: nextState, events: [event] };
 }
 
 // ---------------------------------------------------------------------------
@@ -832,19 +911,20 @@ export function applyGuard(
 
 /**
  * The typed Challenge modifier commands (binding Step 2 shape, with one
- * necessary evolution: `apply-stun` gained `cardId` — round-2 review, Item 1
- * fixed a real content bug where Stun discarded the entire hand instead of
- * one player-chosen card, so the command naming WHICH card is discarded no
- * longer optional). Not wired into `SessionCommand`/`command-service.ts` —
- * that union is the frozen Cross-Increment Contract and explicitly must not
- * be altered by later tasks (`session.ts`'s file header). These variants
- * describe the surface `applyChallengeModifierCommand` (below) dispatches
- * onto the `apply*`/`prepareAim`/`resolveAim`/`counselTransfer` functions
- * above.
+ * necessary evolution: `apply-stun` now serves BOTH halves of the GM-
+ * records/target-resolves handshake (`applyStun`/`resolveStun` — review
+ * round 4) through a single command type, distinguished by actor role:
+ * `cardId` absent (or ignored) from the GM (recording — they never choose
+ * the card), required from a player (resolving their own pending instance).
+ * Not wired into `SessionCommand`/`command-service.ts` — that union is the
+ * frozen Cross-Increment Contract and explicitly must not be altered by
+ * later tasks (`session.ts`'s file header). These variants describe the
+ * surface `applyChallengeModifierCommand` (below) dispatches onto the
+ * `apply*`/`resolve*`/`prepareAim`/`counselTransfer` functions above.
  */
 export type ChallengeModifierCommand =
 	| { type: 'apply-black-honey'; targetTenureId: string }
-	| { type: 'apply-stun'; targetTenureId: string; cardId: string }
+	| { type: 'apply-stun'; targetTenureId: string; cardId?: string }
 	| { type: 'apply-brainfever'; targetTenureId: string }
 	| { type: 'counsel-transfer'; recipientUserId: string; cardId: string }
 	| { type: 'guardian-angel'; targetTenureId: string; cardId: string }
@@ -862,7 +942,13 @@ export interface ChallengeModifierDerivationCaps {
 	 * input, not something to fabricate") — round-2 review, Item 3: without
 	 * these, `aim-prepare`/`replace-initiative-with-shield` were offered
 	 * regardless of whether the player actually has the required item,
-	 * guaranteeing a downstream rejection. */
+	 * guaranteeing a downstream rejection. Optional and evaluated for
+	 * truthiness — fail-closed is the right default (an omitted flag hides
+	 * the command rather than wrongly offering it), but that means a caller
+	 * who forgets to pass one silently loses that command from the derived
+	 * set: Task 6 (or any later caller) MUST resolve and pass the real
+	 * equipment state here, not merely construct this object with the numeric
+	 * caps and leave these two off. */
 	hasBow?: boolean;
 	hasShield?: boolean;
 }
@@ -924,16 +1010,19 @@ export function legalChallengeModifierCommands(
 	const tenureId = tenureIdForUser(challenge, actor.userId);
 	if (!tenureId) return [];
 
+	const legal: ChallengeModifierCommand['type'][] = [];
+
 	// Stun's choice belongs to the TARGET (Ch1 "Effects": "immediately choose
-	// and discard a Challenge card from your hand") — offered to every
-	// participant unconditionally (round-2 review, Item 1), mirroring
-	// Counsel's "any time during a Challenge" timing: neither is gated to the
-	// actor's own active turn, and this engine does not track WHO is
-	// currently Stunned (O6 — status application is not modeled), so, like
-	// the GM's own always-offered `apply-stun`, this is offered whenever a
-	// round is active rather than fabricating a "you must actually be
-	// Stunned right now" precondition this engine has no state for.
-	const legal: ChallengeModifierCommand['type'][] = ['apply-stun'];
+	// and discard a Challenge card from your hand") — but ONLY once the GM
+	// has recorded that Stun actually happened (`applyStun`, a `'pending'`
+	// instance). Review round 4: offering this unconditionally (as an
+	// earlier version did) let any player self-serve a discard with no
+	// trigger at all, bypassing the `discards` budget Task 3 built — closed
+	// by gating on an actual pending instance targeting this tenure.
+	const hasPendingStun = challenge.modifiers.some(
+		(modifier) => modifier.modifierId === CHALLENGE_STUN_ID && modifier.targetTenureId === tenureId && modifier.status === 'pending'
+	);
+	if (hasPendingStun) legal.push('apply-stun');
 
 	const counselUsesThisRound = challenge.modifiers.filter(
 		(modifier) => modifier.modifierId === CHALLENGE_COUNSEL_ID && modifier.ownerTenureId === tenureId && modifier.status === 'resolved'
@@ -1017,8 +1106,20 @@ export function applyChallengeModifierCommand(
 	switch (command.type) {
 		case 'apply-black-honey':
 			return applyBlackHoney(state, command.targetTenureId, materials.blackHoney, context);
-		case 'apply-stun':
-			return applyStun(state, command.targetTenureId, command.cardId, materials.stun, context);
+		case 'apply-stun': {
+			// One command type, two roles (Step 2 doc comment / review round 4):
+			// the GM records that Stun happened; the target resolves it by
+			// choosing a card. `legalChallengeModifierCommands` already gated
+			// which role sees this offered when, so no further branching on
+			// `legal` is needed here — just dispatch to the matching function.
+			if (context.actor.kind === 'gm') {
+				return applyStun(state, command.targetTenureId, materials.stun, context);
+			}
+			if (command.cardId === undefined) {
+				return reject('illegal-command', 'resolving Stun requires naming which card to discard');
+			}
+			return resolveStun(state, command.targetTenureId, command.cardId, materials.stun, context);
+		}
 		case 'apply-brainfever':
 			return applyBrainfever(state, command.targetTenureId, materials.brainfever, context);
 		case 'counsel-transfer':

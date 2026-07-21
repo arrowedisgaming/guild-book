@@ -31,6 +31,7 @@ import {
 	prepareAim,
 	resolveAim,
 	resolveGuardianAngel,
+	resolveStun,
 	CHALLENGE_AIM_ID,
 	CHALLENGE_BLACK_HONEY_ID,
 	CHALLENGE_BRAINFEVER_ID,
@@ -278,22 +279,35 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 	// Stun — forced-hand-discard
 	// -------------------------------------------------------------------------
 
-	describe('applyStun', () => {
-		it("discards exactly the ONE card the target chooses (content bug fix: Ch1 \"Effects\" says \"a Challenge card,\" not the entire hand) and emits a public COUNT, never identity (Step 1 / O3)", () => {
-			const { state, gmCtx } = readyTwoPlayerTurns('stun-basic', ['swords-vii', 'cups-ii'], ['pentacles-iv', 'cups-iii']);
+	describe('applyStun / resolveStun — GM records a pending instance, the target resolves it (review round 4)', () => {
+		it('applyStun records a pending instance; resolveStun then discards exactly the ONE card the target chooses and emits a public COUNT, never identity (Step 1 / O3)', () => {
+			const { state, gmCtx, p2Ctx } = readyTwoPlayerTurns('stun-basic', ['swords-vii', 'cups-ii'], ['pentacles-iv', 'cups-iii']);
 			const hand2Before = findZoneDescriptor(state, challengeHandZoneId('tenure-2'))!.cards.slice();
 			expect(hand2Before).toEqual(['pentacles-iv', 'cups-iii']);
 
-			const result = applyStun(state, 'tenure-2', 'cups-iii', stunParams, gmCtx);
+			const recorded = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			expect(recorded.ok).toBe(true);
+			if (!recorded.ok) return;
+			expect(recorded.events).toEqual([
+				expect.objectContaining({ kind: 'challenge-stun-inflicted', publicPayload: expect.objectContaining({ targetTenureId: 'tenure-2' }) })
+			]);
+			expect(readChallengeState(recorded.state)?.modifiers).toContainEqual(
+				expect.objectContaining({ modifierId: CHALLENGE_STUN_ID, targetTenureId: 'tenure-2', status: 'pending' })
+			);
+
+			const result = resolveStun(recorded.state, 'tenure-2', 'cups-iii', stunParams, p2Ctx);
 			expect(result.ok).toBe(true);
 			if (!result.ok) return;
 
 			// Exactly the CHOSEN card is gone; the rest of the hand survives.
 			expect(findZoneDescriptor(result.state, challengeHandZoneId('tenure-2'))?.cards).toEqual(['pentacles-iv']);
+			expect(readChallengeState(result.state)?.modifiers).toContainEqual(
+				expect.objectContaining({ modifierId: CHALLENGE_STUN_ID, targetTenureId: 'tenure-2', status: 'resolved' })
+			);
 			expect(result.events).toHaveLength(1);
 			expect(result.events[0]).toMatchObject({
 				kind: 'challenge-stun-applied',
-				publicPayload: { targetTenureId: 'tenure-2', count: 1 }
+				publicPayload: { targetTenureId: 'tenure-2', count: 1, playerChooses: true }
 			});
 			// Canary: the discarded card's identity never leaked into the public
 			// payload, even though it DID land in a public-top discard pile (the
@@ -303,7 +317,7 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expect(serializedPublic).not.toContain('cups-iii');
 			expect(result.events[0].privatePayloads).toBeUndefined();
 
-			// Minor 4 (review): the event-layer guarantee above is NOT a
+			// Minor 4 (review round 2): the event-layer guarantee above is NOT a
 			// state-layer one — the shared engine's own `'public-top'` discard
 			// pile model means the discarded card genuinely becomes public via
 			// every projection's `playerDiscardTop`. Asserted explicitly so this
@@ -315,43 +329,67 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expectConserved(result.state, catalog);
 		});
 
-		it('the target may choose their own Stun discard directly (round-2 review, Item 1: the choice belongs to the affected player, not only the GM)', () => {
-			const { state, p2Ctx } = readyTwoPlayerTurns('stun-target-chooses', ['swords-vii'], ['pentacles-iv', 'cups-iii']);
-			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, p2Ctx);
-			expect(result.ok).toBe(true);
-			if (!result.ok) return;
-			expect(findZoneDescriptor(result.state, challengeHandZoneId('tenure-2'))?.cards).toEqual(['cups-iii']);
-			expectConserved(result.state, catalog);
-		});
-
-		it('rejects choosing a card the target does not hold (Minor 9 edge case, e.g. an already-empty hand)', () => {
-			const { state, gmCtx } = readyTwoPlayerTurns('stun-empty-hand', [], []);
-			expect(findZoneDescriptor(state, challengeHandZoneId('tenure-2'))?.cards).toEqual([]);
-
-			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, gmCtx);
-			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not hold') } });
-			expectConserved(state, catalog);
-		});
-
-		it('rejects a player choosing a discard on behalf of a tenure they do not own, distinctly from the not-held-card guard (test discrimination)', () => {
-			const { state } = readyTwoPlayerTurns('stun-not-owner', ['swords-vii'], ['pentacles-iv']);
-			const result = applyStun(state, 'tenure-2', 'pentacles-iv', stunParams, ctxFor(playerActor('tenure-1'), catalog, config, 'stun-not-owner'));
+		it('rejects a player invoking apply-stun (recording is GM-only — a player cannot self-serve a trigger)', () => {
+			const { state } = readyTwoPlayerTurns('stun-record-not-gm', ['swords-vii'], ['pentacles-iv']);
+			const result = applyStun(state, 'tenure-2', stunParams, ctxFor(playerActor('tenure-1'), catalog, config, 'stun-record-not-gm'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 
-		it('carries no invented stage restriction — Ch1 "Effects" says Stun is immediate/instantaneous, so it may be applied at ANY stage of an active Challenge (Minor 6)', () => {
+		it('rejects resolveStun with NO pending instance recorded — closes the hole: a player cannot self-serve a discard unprompted (review round 4, the core fix)', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('stun-no-pending', ['swords-vii'], ['pentacles-iv']);
+			expect(readChallengeState(state)?.modifiers).toEqual([]);
+
+			const result = resolveStun(state, 'tenure-1', 'swords-vii', stunParams, p1Ctx);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'illegal-command', message: expect.stringContaining('has no pending Stun') }
+			});
+			expectConserved(state, catalog);
+		});
+
+		it('rejects a GM attempt to resolveStun directly — playerChooses is enforced, not just surfaced: no full-authority override here (test discrimination against the not-authorized message the GM would otherwise get elsewhere)', () => {
+			const { state, gmCtx } = readyTwoPlayerTurns('stun-gm-cannot-resolve', ['swords-vii'], ['pentacles-iv']);
+			const recorded = applyStun(state, 'tenure-1', stunParams, gmCtx);
+			if (!recorded.ok) throw recorded;
+			const result = resolveStun(recorded.state, 'tenure-1', 'swords-vii', stunParams, gmCtx);
+			expect(result).toMatchObject({
+				ok: false,
+				rejection: { code: 'not-authorized', message: expect.stringContaining('only the stunned player') }
+			});
+		});
+
+		it('rejects a player resolving a discard on behalf of a tenure they do not own, distinctly from the no-pending-instance guard (test discrimination)', () => {
+			const { state, gmCtx } = readyTwoPlayerTurns('stun-not-owner', ['swords-vii'], ['pentacles-iv']);
+			const recorded = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			if (!recorded.ok) throw recorded;
+			const result = resolveStun(recorded.state, 'tenure-2', 'pentacles-iv', stunParams, ctxFor(playerActor('tenure-1'), catalog, config, 'stun-not-owner'));
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
+		});
+
+		it('rejects resolving a card the target does not hold, even with a valid pending instance (Minor 9 edge case, e.g. an already-empty hand)', () => {
+			const { state, gmCtx } = readyTwoPlayerTurns('stun-empty-hand', [], []);
+			expect(findZoneDescriptor(state, challengeHandZoneId('tenure-2'))?.cards).toEqual([]);
+			const recorded = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			if (!recorded.ok) throw recorded;
+
+			const p2Ctx = ctxFor(playerActor('tenure-2'), catalog, config, 'stun-empty-hand');
+			const result = resolveStun(recorded.state, 'tenure-2', 'pentacles-iv', stunParams, p2Ctx);
+			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not hold') } });
+			expectConserved(recorded.state, catalog);
+		});
+
+		it('carries no invented stage restriction — Ch1 "Effects" says Stun is immediate/instantaneous, so applyStun/resolveStun may run at ANY stage of an active Challenge (Minor 6)', () => {
 			const { state: dealStage, gmCtx: dealGmCtx } = beginTwoPlayer('stun-any-stage-deal');
 			expect(readChallengeState(dealStage)?.stage).toBe('deal');
-			// Nothing has been dealt yet at `'deal'` — the target's hand is
-			// empty, so there is no card to choose; this proves the STAGE is
-			// not what rejects (message is about the missing card, not stage).
-			const dealAttempt = applyStun(dealStage, 'tenure-1', 'swords-i', stunParams, dealGmCtx);
-			expect(dealAttempt).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not hold') } });
+			expect(applyStun(dealStage, 'tenure-1', stunParams, dealGmCtx).ok).toBe(true);
 
-			const { state: placementStage, gmCtx: placementGmCtx } = dealtTwoPlayer('stun-any-stage-placement');
-			expect(readChallengeState(placementStage)?.stage).toBe('initiative-placement');
-			const heldCard = findZoneDescriptor(placementStage, challengeHandZoneId('tenure-1'))!.cards[0];
-			expect(applyStun(placementStage, 'tenure-1', heldCard, stunParams, placementGmCtx).ok).toBe(true);
+			const { state: placementState, gmCtx: placementGmCtx } = dealtTwoPlayer('stun-any-stage-placement');
+			expect(readChallengeState(placementState)?.stage).toBe('initiative-placement');
+			const recorded = applyStun(placementState, 'tenure-1', stunParams, placementGmCtx);
+			if (!recorded.ok) throw recorded;
+			const heldCard = findZoneDescriptor(recorded.state, challengeHandZoneId('tenure-1'))!.cards[0];
+			const p1Ctx = ctxFor(playerActor('tenure-1'), catalog, config, 'stun-any-stage-placement');
+			expect(resolveStun(recorded.state, 'tenure-1', heldCard, stunParams, p1Ctx).ok).toBe(true);
 		});
 	});
 
@@ -807,19 +845,37 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 
 			const tenure1Legal = legalChallengeModifierCommands(state, playerActor('tenure-1'), derivationCaps);
 			expect(tenure1Legal).toEqual(
-				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer', 'apply-stun'])
+				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer'])
 			);
+			// Neither player has a pending Stun yet — apply-stun is not offered
+			// to either (review round 4: it must be earned by a GM-recorded
+			// pending instance, not offered unconditionally).
+			expect(tenure1Legal).not.toContain('apply-stun');
 
 			// tenure-2 is NOT the active seat — none of the own-turn actions are
-			// offered to them, but Counsel and Stun (the choice belongs to
-			// whoever is targeted, "any time during a Challenge") still are.
+			// offered to them, but Counsel ("any time during a Challenge") still is.
 			const tenure2Legal = legalChallengeModifierCommands(state, playerActor('tenure-2'), derivationCaps);
-			expect(tenure2Legal).toEqual(['apply-stun', 'counsel-transfer']);
+			expect(tenure2Legal).toEqual(['counsel-transfer']);
 
 			// The GM sees none of the player-only commands.
 			expect(legalChallengeModifierCommands(state, GM, derivationCaps)).not.toEqual(
 				expect.arrayContaining(['guardian-angel', 'aim-prepare', 'replace-initiative-with-shield', 'counsel-transfer'])
 			);
+		});
+
+		it('offers apply-stun to the target ONLY once the GM has recorded a pending instance, and withdraws it again once resolved (review round 4)', () => {
+			const { state, gmCtx, p2Ctx } = readyTwoPlayerTurns('legal-stun-pending', ['wands-v'], ['pentacles-iv']);
+			expect(legalChallengeModifierCommands(state, playerActor('tenure-2'), derivationCaps)).not.toContain('apply-stun');
+
+			const recorded = applyStun(state, 'tenure-2', stunParams, gmCtx);
+			if (!recorded.ok) throw recorded;
+			expect(legalChallengeModifierCommands(recorded.state, playerActor('tenure-2'), derivationCaps)).toContain('apply-stun');
+			// tenure-1 is not the target — never offered it.
+			expect(legalChallengeModifierCommands(recorded.state, playerActor('tenure-1'), derivationCaps)).not.toContain('apply-stun');
+
+			const resolved = resolveStun(recorded.state, 'tenure-2', 'pentacles-iv', stunParams, p2Ctx);
+			if (!resolved.ok) throw resolved;
+			expect(legalChallengeModifierCommands(resolved.state, playerActor('tenure-2'), derivationCaps)).not.toContain('apply-stun');
 		});
 
 		it('excludes guardian-angel once the caster has an active instance (active content modifiers, the third O4 input)', () => {
@@ -913,6 +969,34 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 				ok: false,
 				rejection: { code: 'illegal-command', message: expect.stringContaining('not currently offered') }
 			});
+		});
+
+		it('dispatches apply-stun to the matching function per actor role: GM records, target resolves (review round 4)', () => {
+			const { state, gmCtx, p2Ctx } = readyTwoPlayerTurns('dispatch-stun-roundtrip', ['wands-v'], ['pentacles-iv']);
+
+			const recorded = applyChallengeModifierCommand(state, { type: 'apply-stun', targetTenureId: 'tenure-2' }, materials, gmCtx);
+			expect(recorded.ok).toBe(true);
+			if (!recorded.ok) return;
+			expect(recorded.events[0].kind).toBe('challenge-stun-inflicted');
+
+			// Before it was recorded, the target's own resolve attempt would have
+			// been rejected as not-offered (covered by the "no pending instance"
+			// test on `resolveStun` directly); once recorded, tenure-1 (not the
+			// target) still never sees it offered.
+			expect(
+				applyChallengeModifierCommand(recorded.state, { type: 'apply-stun', targetTenureId: 'tenure-1' }, materials, ctxFor(playerActor('tenure-1'), catalog, config, 'dispatch-stun-roundtrip'))
+			).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('not currently offered') } });
+
+			const resolved = applyChallengeModifierCommand(
+				recorded.state,
+				{ type: 'apply-stun', targetTenureId: 'tenure-2', cardId: 'pentacles-iv' },
+				materials,
+				p2Ctx
+			);
+			expect(resolved.ok).toBe(true);
+			if (!resolved.ok) return;
+			expect(resolved.events[0].kind).toBe('challenge-stun-applied');
+			expectConserved(resolved.state, catalog);
 		});
 	});
 });

@@ -165,11 +165,23 @@ describe('ChallengeStateV1 schema (Step 3 + O4/O5)', () => {
 		expect(typeof parsed.mulliganUsedThisRound).toBe('boolean');
 	});
 
-	it('uses a single cardsThisTurn/actionTaken budget pair, not separate play/minor-action counters (O5)', () => {
-		expect(validState.budgets['tenure-1']).not.toHaveProperty('plays');
-		expect(validState.budgets['tenure-1']).not.toHaveProperty('minorActions');
-		expect(validState.budgets['tenure-1']).toHaveProperty('cardsThisTurn');
-		expect(validState.budgets['tenure-1']).toHaveProperty('actionTaken');
+	it('uses a single cardsThisTurn/actionTaken budget pair — the schema REJECTS the old separate play/minor-action counters (O5)', () => {
+		// I7: previously this asserted against the `validState` LITERAL declared
+		// above (never exercising the schema). Now it drives
+		// `parseChallengeStateOrThrow`: the single-counter shape parses...
+		const parsed = parseChallengeStateOrThrow(validState);
+		expect(parsed.budgets['tenure-1']).toMatchObject({ cardsThisTurn: 0, actionTaken: false });
+
+		// ...and the `.strict()` budget schema REJECTS a budget that also carries
+		// the old separate `plays`/`minorActions` counters.
+		const twoCounter = {
+			...validState,
+			budgets: {
+				...validState.budgets,
+				'tenure-1': { cardsThisTurn: 0, actionTaken: false, discards: null, plays: 1, minorActions: 1 }
+			}
+		};
+		expect(() => parseChallengeStateOrThrow(twoCounter)).toThrow();
 	});
 
 	it('rejects a negative cardsThisTurn count', () => {

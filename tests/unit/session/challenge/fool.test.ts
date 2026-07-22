@@ -163,7 +163,12 @@ describe('The Fool interrupt (O5)', () => {
 	it('rejects a lone Fool (the paired card cannot be the Fool itself)', () => {
 		const { state, playerCtx } = readyWithFoolInHand('fool-lone');
 		const result = playFool(state, 'tenure-1', 'fool', playerCtx);
-		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		// I7: assert the lone-Fool message — deleting that guard falls through to
+		// `spendCard`'s own "Fool cannot be played as an ordinary action"
+		// rejection, which a bare `ok === false` could not tell apart.
+		expect(result.rejection.message).toMatch(/paired with itself|lone Fool/);
 	});
 
 	it('rejects playing the Fool when the participant does not actually hold it', () => {
@@ -183,13 +188,21 @@ describe('The Fool interrupt (O5)', () => {
 		if (!begunTurns.ok) throw begunTurns;
 
 		const result = playFool(begunTurns.state, 'tenure-1', 'cups-v', playerCtx);
-		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		// I7: assert the Fool-not-held message — deleting that guard falls through
+		// to the paired-play move failing on the absent Fool card, a different
+		// rejection a bare `ok === false` could not distinguish.
+		expect(result.rejection.message).toMatch(/does not hold the Fool/);
 	});
 
 	it('rejects pairing the Fool with a card the participant does not hold', () => {
 		const { state, playerCtx } = readyWithFoolInHand('fool-paired-not-held');
 		const result = playFool(state, 'tenure-1', 'swords-king', playerCtx);
-		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		// I7: assert the paired-card-not-held message specifically.
+		expect(result.rejection.message).toMatch(/does not hold the paired card/);
 	});
 
 	it('rejects a non-owning player', () => {

@@ -141,6 +141,11 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 		if (!dealt.ok) throw dealt;
 		const result = placeInitiative(dealt.state, 'tenure-not-in-round', 'cups-i', ctxFor(ALICE, catalog, config, seed));
 		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		// Discrimination (I7): assert the PARTICIPANT-membership message
+		// specifically — deleting that guard falls through to the owner
+		// (not-authorized) check, which a bare `ok === false` could not tell apart.
+		expect(result.rejection.message).toMatch(/not an active Challenge participant/);
 	});
 
 	it('revealInitiative rejects to a non-GM actor', () => {
@@ -167,9 +172,12 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 
 		const dealt = dealRound(begun.state, ctx);
 		if (!dealt.ok) throw dealt;
-		// Wrong stage (`deal`, not `initiative-reveal`) — never placed/revealed.
+		// Wrong stage (`initiative-placement`, not `initiative-reveal`) — never
+		// placed/revealed. Discrimination (I7): assert the STAGE message, else the
+		// empty-Initiative-order guard also produces `ok === false`.
 		const wrongStage = beginTurns(dealt.state, ctx);
 		expect(wrongStage.ok).toBe(false);
+		if (!wrongStage.ok) expect(wrongStage.rejection.message).toMatch(/stage/);
 	});
 
 	it('endTurn rejects during the wrong stage and when turns have not begun', () => {
@@ -178,9 +186,11 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 		const ctx = ctxFor(GM, catalog, config, seed);
 		const begun = beginChallenge(state, { participantTenureIds: ['tenure-1'], tenureOwners: { 'tenure-1': 'user-alice' }, enemyFacts: [] }, ctx);
 		if (!begun.ok) throw begun;
-		// Still `stage: 'deal'`.
+		// Still `stage: 'deal'`. Discrimination (I7): assert the STAGE message,
+		// else the `activeTurnIndex === null` guard also produces `ok === false`.
 		const result = endTurn(begun.state, ctx);
 		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.rejection.message).toMatch(/stage/);
 	});
 
 	it('applyGmDiscard rejects to a non-GM actor, and during the wrong stage', () => {
@@ -189,12 +199,18 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 		const ctx = ctxFor(GM, catalog, config, seed);
 		const begun = beginChallenge(state, { participantTenureIds: ['tenure-1'], tenureOwners: { 'tenure-1': 'user-alice' }, enemyFacts: [] }, ctx);
 		if (!begun.ok) throw begun;
-		const notGm = applyGmDiscard(begun.state, 'the-fool', ctxFor(ALICE, catalog, config, seed));
+		// 'tower' is a real major-arcana catalog card (I7: 'the-fool' is not in
+		// the catalog) — though the stage/auth guards fire before the card is
+		// even looked up.
+		const notGm = applyGmDiscard(begun.state, 'tower', ctxFor(ALICE, catalog, config, seed));
 		expect(notGm.ok).toBe(false);
 		if (!notGm.ok) expect(notGm.rejection.code).toBe('not-authorized');
 
-		const wrongStage = applyGmDiscard(begun.state, 'the-fool', ctx);
+		// Discrimination (I7): assert the STAGE message, else the discard's own
+		// zone/card failure also produces `ok === false`.
+		const wrongStage = applyGmDiscard(begun.state, 'tower', ctx);
 		expect(wrongStage.ok).toBe(false);
+		if (!wrongStage.ok) expect(wrongStage.rejection.message).toMatch(/stage/);
 	});
 
 	it('applyGmMulligan rejects to a non-GM actor, and during the wrong stage', () => {
@@ -221,12 +237,15 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 		const dealt = dealRound(begun.state, ctx);
 		if (!dealt.ok) throw dealt;
 
-		const notGm = placeGmInitiative(dealt.state, 'ogre-1', 'the-fool', ctxFor(ALICE, catalog, config, seed));
+		const notGm = placeGmInitiative(dealt.state, 'ogre-1', 'tower', ctxFor(ALICE, catalog, config, seed));
 		expect(notGm.ok).toBe(false);
 		if (!notGm.ok) expect(notGm.rejection.code).toBe('not-authorized');
 
-		const unknownEnemy = placeGmInitiative(dealt.state, 'not-a-real-enemy', 'the-fool', ctx);
+		// Discrimination (I7): assert the unknown-enemy message, else the
+		// transfer's own missing-card failure also produces `ok === false`.
+		const unknownEnemy = placeGmInitiative(dealt.state, 'not-a-real-enemy', 'tower', ctx);
 		expect(unknownEnemy.ok).toBe(false);
+		if (!unknownEnemy.ok) expect(unknownEnemy.rejection.message).toMatch(/not a current Challenge enemy fact/);
 	});
 
 	it('beginChallenge rejects an empty participant roster', () => {

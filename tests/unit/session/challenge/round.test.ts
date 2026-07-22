@@ -638,7 +638,12 @@ describe('Challenge round — setup, dealing, initiative, cleanup', () => {
 		it('rejects an enemy fact id that is not part of the current round', () => {
 			const { state, gmCtx } = dealtWithEnemies('gm-initiative-unknown', oneOgre);
 			const result = placeGmInitiative(state, 'not-a-real-enemy', state.gmHand[0], gmCtx);
-			expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+			expect(result.ok).toBe(false);
+			if (result.ok) return;
+			// I7: assert the unknown-enemy message — deleting that guard falls
+			// through to the transfer failing on the missing GM-initiative zone, a
+			// different rejection a bare `ok === false` could not distinguish.
+			expect(result.rejection.message).toMatch(/not a current Challenge enemy fact/);
 		});
 
 		it('rejects placing Initiative twice for the same enemy fact', () => {

@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { getTarotProcedures } from '$lib/server/content/loader';
 import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/schema';
 import type { ChallengeConfig, ChallengeEnemyFact } from '$lib/engine/session/procedures/challenge/types';
-import { challengeHandZoneId, type ChallengeReduceContext } from '$lib/engine/session/procedures/challenge/reducer';
+import { challengeHandZoneId, readChallengeState, writeChallengeState, CHALLENGE_GUARDIAN_ANGEL_ID, type ChallengeReduceContext } from '$lib/engine/session/procedures/challenge/reducer';
 import { applyChallengeCommand, buildChallengeModifierMaterials } from '$lib/engine/session/procedures/challenge/command';
 import { projectChallengeForActor, type ChallengeGmProjection, type ChallengePlayerProjection } from '$lib/engine/session/procedures/challenge/projection';
 import { findZoneDescriptor } from '$lib/engine/session/state';
@@ -131,25 +131,76 @@ describe('projectChallengeForActor (Increment 3 Task 6)', () => {
 		// signal a component must render as a table decision.
 	});
 
-	it('strips a modifier instance`s cardId from the projection for every actor, including the owner (the real card lives in their own private zone view instead)', () => {
-		// A `ChallengeModifierState` with `cardId` set (Guardian Angel/Aim
-		// shape) must never surface it through this projection.
+	it('strips a modifier instance`s cardId from the projection for every actor, including the owner and target (the real card lives in their own private zone view instead)', () => {
+		// I7: this test previously created NO modifier instance and asserted
+		// `modifiers === []` — vacuously true even if the projection leaked
+		// cardId. Now it actually plants a Guardian Angel ward (a
+		// `ChallengeModifierState` WITH a cardId — the branch's central privacy
+		// contract) and proves the cardId is stripped for every viewer.
 		const seed = 'projection-modifier-cardid';
 		const state = makeSessionFixture(seed);
 		const gmCtx = ctxFor(GM, catalog, config, seed);
 		const begun = applyChallengeCommand(
 			state,
-			{ type: 'begin-challenge', participantTenureIds: ['tenure-1'], tenureOwners: { 'tenure-1': 'user-alice' }, enemyFacts: [] },
+			{ type: 'begin-challenge', participantTenureIds: ['tenure-1', 'tenure-2'], tenureOwners: TENURE_OWNERS, enemyFacts: [] },
 			materials,
 			gmCtx
 		);
 		if (!begun.ok) throw begun;
-		const projection = projectChallengeForActor(begun.state, GM, catalog, config, modifierCaps);
-		expect(projection).not.toBeNull();
-		// No modifiers yet, but the TYPE itself carries no `cardId` field —
-		// enforced at compile time by `ChallengeModifierView` (see the source);
-		// this test documents the contract for a reader of the test suite.
-		expect(projection?.modifiers).toEqual([]);
+
+		const challenge = readChallengeState(begun.state)!;
+		const secretCardId = 'wands-v';
+		const withWard = writeChallengeState(begun.state, {
+			...challenge,
+			modifiers: [
+				{
+					instanceId: `${CHALLENGE_GUARDIAN_ANGEL_ID}:tenure-1:1:0`,
+					modifierId: CHALLENGE_GUARDIAN_ANGEL_ID,
+					ownerTenureId: 'tenure-1',
+					targetTenureId: 'tenure-2',
+					status: 'active',
+					cardId: secretCardId
+				}
+			]
+		});
+
+		// The cardId must be absent from the projected modifier view for EVERY
+		// actor — the caster (owner), the ward's target, and the GM alike.
+		for (const actor of [GM, ALICE, BOB]) {
+			const projection = projectChallengeForActor(withWard, actor, catalog, config, modifierCaps);
+			expect(projection).not.toBeNull();
+			expect(projection!.modifiers).toHaveLength(1);
+			const view = projection!.modifiers[0];
+			// The bookkeeping fields ARE present...
+			expect(view).toMatchObject({ modifierId: CHALLENGE_GUARDIAN_ANGEL_ID, ownerTenureId: 'tenure-1', targetTenureId: 'tenure-2', status: 'active' });
+			// ...but the secret card identity is NOT, on any channel of this view.
+			expect('cardId' in view).toBe(false);
+			expect(JSON.stringify(view)).not.toContain(secretCardId);
+		}
+	});
+
+	it('O1 — projection.legalCommands is EXACTLY the set the actor may issue in a given state (render buttons only from this list)', () => {
+		const seed = 'projection-legal-commands';
+		const state = makeSessionFixture(seed);
+		const gmCtx = ctxFor(GM, catalog, config, seed);
+		const begun = applyChallengeCommand(
+			state,
+			{ type: 'begin-challenge', participantTenureIds: ['tenure-1', 'tenure-2'], tenureOwners: TENURE_OWNERS, enemyFacts: [] },
+			materials,
+			gmCtx
+		);
+		if (!begun.ok) throw begun;
+
+		// Fresh 'deal' stage: the GM may deal the round, record a Stun, or apply
+		// Black Honey — and NOTHING else (no place/reveal/turn/cleanup yet).
+		const gmProjection = projectChallengeForActor(begun.state, GM, catalog, config, modifierCaps)!;
+		expect([...gmProjection.legalCommands].sort()).toEqual(['apply-black-honey', 'apply-stun', 'deal-round']);
+
+		// A player at 'deal' stage may ONLY Counsel (which the book allows "any
+		// time during the challenge") — no placement/turn commands yet, no
+		// pending Stun, no ward to resolve, no bow/shield in these materials.
+		const playerProjection = projectChallengeForActor(begun.state, ALICE, catalog, config, modifierCaps)!;
+		expect(playerProjection.legalCommands).toEqual(['counsel-transfer']);
 	});
 
 	it('gives the GM enemyFacts but never the player (players get actingTenureId instead)', () => {

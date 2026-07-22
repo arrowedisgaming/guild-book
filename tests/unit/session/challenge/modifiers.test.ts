@@ -1119,7 +1119,7 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 
 			// A params block that permits ONLY Dodge (content could ship this for a
 			// future ward) — the engine now honors it instead of echoing.
-			const dodgeOnlyParams = { ...guardianAngelParams, allowedActions: 'dodge' } as GuardianAngelParams;
+			const dodgeOnlyParams = { ...guardianAngelParams, allowedActions: 'dodge' } as unknown as GuardianAngelParams;
 			const rejected = resolveGuardianAngel(cast.state, 'tenure-2', 'wands-v', 'riposte', dodgeOnlyParams, p2Ctx);
 			expect(rejected).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not permit riposte') } });
 

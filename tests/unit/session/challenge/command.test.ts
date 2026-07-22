@@ -69,6 +69,38 @@ describe('Challenge command surface (Increment 3 Task 6)', () => {
 	const config = buildChallengeConfig(procedures, formulas);
 	const materials: ChallengeModifierMaterials = buildChallengeModifierMaterials(modifiers, { hasBow: true, hasShield: true });
 
+	// Branch-fix "also fix": a CORRUPT Challenge state must reject with a
+	// DISTINCT message, not the misleading "not currently offered" every command
+	// gets when the round is genuinely absent.
+	it('rejects every command against a corrupt Challenge state with a distinct message (not the absent-round message)', () => {
+		const seed = 'corrupt-state';
+		const gmCtx = ctxFor(GM, catalog, config, seed);
+		const begin = applyChallengeCommand(
+			makeSessionFixture(seed),
+			{ type: 'begin-challenge', participantTenureIds: ['tenure-1', 'tenure-2'], tenureOwners: TENURE_OWNERS, enemyFacts: oneOgre },
+			materials,
+			gmCtx
+		);
+		if (!begin.ok) throw begin;
+
+		// Corrupt the persisted Challenge blob (unparseable gmPrivate) — the
+		// procedure is still the challenge-round procedure, but its state no
+		// longer validates.
+		const corrupt: SessionEngineStateV1 = {
+			...begin.state,
+			procedure: { ...begin.state.procedure!, gmPrivate: { schemaVersion: 999, garbage: true } }
+		};
+		const corruptResult = applyChallengeCommand(corrupt, { type: 'deal-round' }, materials, gmCtx);
+		expect(corruptResult).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('corrupt') } });
+
+		// Discrimination: a genuinely-absent round (no procedure) rejects with a
+		// DIFFERENT message — proving the corrupt path is distinguishable.
+		const absent = applyChallengeCommand(makeSessionFixture('absent-round'), { type: 'deal-round' }, materials, gmCtx);
+		expect(absent.ok).toBe(false);
+		if (absent.ok) return;
+		expect(absent.rejection.message).not.toContain('corrupt');
+	});
+
 	it('runs the full multi-context journey through applyChallengeCommand alone: begin, deal, place, reveal, take turns, GM plays, Fool paired play, cleanup', () => {
 		const seed = 'command-full-journey';
 		const state = makeSessionFixture(seed);

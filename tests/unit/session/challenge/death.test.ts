@@ -14,12 +14,15 @@ import type { ChallengeConfig, ChallengeEnemyFact } from '$lib/engine/session/pr
 import {
 	admitPendingJoinTenure,
 	beginChallenge,
+	challengeGuardianAngelZoneId,
 	challengeHandZoneId,
 	challengeInitiativeFacedownZoneId,
+	CHALLENGE_GUARDIAN_ANGEL_ID,
 	CHALLENGE_INITIATIVE_ZONE_ID,
 	cleanupRound,
 	markTenureDead,
 	readChallengeState,
+	writeChallengeState,
 	type ChallengeReduceContext
 } from '$lib/engine/session/procedures/challenge/reducer';
 import { dealRound } from '$lib/engine/session/procedures/challenge/deal';
@@ -229,6 +232,52 @@ describe('markTenureDead', () => {
 		expect(afterEnd.ok).toBe(true);
 	});
 
+	// Branch-fix I10: a ward the dying tenure CAST onto another player must be
+	// swept, or the card is stranded in the target's zone (unresolvable, since
+	// the instance is dropped, and never conserved to a discard pile).
+	it('sweeps Guardian Angel wards the dying caster placed on OTHER players (I10)', () => {
+		const state = dealtState('i10-cast-ward');
+		const handA = findZoneDescriptor(state, challengeHandZoneId('tenure-1'))!;
+		const wardCard = handA.cards[0];
+		const challenge = readChallengeState(state)!;
+
+		// Plant an active ward tenure-1 cast onto tenure-2 (equivalent to a real
+		// cast, without threading a full own-turn sequence): move the card from
+		// tenure-1's hand into tenure-2's ward zone and register the instance.
+		const wardZoneId = challengeGuardianAngelZoneId('tenure-2');
+		const withZones: SessionEngineStateV1 = {
+			...state,
+			privateZones: state.privateZones
+				.map((zone) => (zone.id === challengeHandZoneId('tenure-1') ? { ...zone, cards: zone.cards.filter((id) => id !== wardCard) } : zone))
+				.concat({ id: wardZoneId, kind: 'player-facedown', ownerUserId: ownerOf('tenure-2'), cards: [wardCard] })
+		};
+		const withWard = writeChallengeState(withZones, {
+			...challenge,
+			modifiers: challenge.modifiers.concat({
+				instanceId: `${CHALLENGE_GUARDIAN_ANGEL_ID}:tenure-1:1:0`,
+				modifierId: CHALLENGE_GUARDIAN_ANGEL_ID,
+				ownerTenureId: 'tenure-1',
+				targetTenureId: 'tenure-2',
+				status: 'active',
+				cardId: wardCard
+			})
+		});
+		expectConserved(withWard, catalog);
+
+		const result = markTenureDead(withWard, 'tenure-1', ctxFor(GM, catalog, config, 'i10-cast-ward'));
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		// The warded card was conserved to the player discard pile, not left
+		// stranded in tenure-2's (still-live) ward zone.
+		expect(result.state.playerDiscard).toContain(wardCard);
+		expect(findZoneDescriptor(result.state, wardZoneId)?.cards ?? []).not.toContain(wardCard);
+		// The dropped instance and the swept card agree — no active ward owned by
+		// the dead caster remains.
+		expect(readChallengeState(result.state)!.modifiers.some((m) => m.ownerTenureId === 'tenure-1')).toBe(false);
+		expectConserved(result.state, catalog);
+	});
+
 	// Review Minor 6: unbounded growth / stale authorization edge otherwise.
 	it('prunes the dead tenure\'s tenureOwners entry', () => {
 		const state = dealtState('prune-owners');
@@ -396,15 +445,17 @@ describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {
 		const revealed = revealInitiative(placedB.state, ctxFor(GM, catalog, config, 'boundary'));
 		if (!revealed.ok) throw revealed;
 
-		// cleanupRound (Task 2, composed with — not reimplemented, O3) admits
-		// the pending join and registers its owner.
-		const cleaned = cleanupRound(revealed.state, ctxFor(GM, catalog, config, 'boundary'), {
-			tenureOwners: { 'tenure-5': 'user-eve' }
-		});
+		// Branch-fix I4: cleanupRound admits the pending join with NO
+		// `options.tenureOwners` — the owner was recorded at `admitPendingJoinTenure`
+		// (user-carol), so cleanup no longer needs the caller to re-supply it (the
+		// UI sends `{ type: 'cleanup-round' }` with none). Previously this test
+		// papered over the gap by passing `{ tenureOwners: { 'tenure-5': ... } }`.
+		const cleaned = cleanupRound(revealed.state, ctxFor(GM, catalog, config, 'boundary'));
 		if (!cleaned.ok) throw cleaned;
 		const challengeAfterCleanup = readChallengeState(cleaned.state)!;
 		expect(challengeAfterCleanup.participantTenureIds).toEqual([...TENURE_IDS, 'tenure-5']);
 		expect(challengeAfterCleanup.pendingJoinTenureIds).toEqual([]);
+		expect(challengeAfterCleanup.tenureOwners['tenure-5']).toBe('user-carol');
 		// Zone provisioning happens AT admission (matching `ensureParticipantZones`'s
 		// existing idempotent-creation behavior — Task 2), but no hand is DEALT
 		// yet: dealing is always a SEPARATE, subsequent `dealRound` call, exactly

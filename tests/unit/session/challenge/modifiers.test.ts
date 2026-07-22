@@ -1046,4 +1046,88 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 			expectConserved(resolved.state, catalog);
 		});
 	});
+
+	// -------------------------------------------------------------------------
+	// Branch-fix C1 — the resolve commands (cast is no longer a one-way door)
+	// -------------------------------------------------------------------------
+
+	describe('branch-fix C1: resolve-guardian-angel / resolve-aim command surface', () => {
+		it('offers resolve-guardian-angel to the TARGET (not gated to their own turn) once a ward is active, and card conservation holds across cast-then-resolve', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('c1-ward-roundtrip', ['wands-v'], ['pentacles-iv']);
+			expectConserved(state, catalog);
+
+			const cast = applyChallengeModifierCommand(state, { type: 'guardian-angel', targetTenureId: 'tenure-2', cardId: 'wands-v' }, materials, p1Ctx);
+			expect(cast.ok).toBe(true);
+			if (!cast.ok) return;
+			expectConserved(cast.state, catalog);
+
+			// The ward is offered to tenure-2 even though it is tenure-1's active
+			// turn — resolution is "at their discretion" (when attacked), not
+			// turn-gated.
+			const p2Legal = legalChallengeModifierCommands(cast.state, playerActor('tenure-2'), derivationCaps);
+			expect(p2Legal).toContain('resolve-guardian-angel');
+			// ...and NOT offered to a bystander with no ward (tenure-1 is the caster).
+			expect(legalChallengeModifierCommands(cast.state, playerActor('tenure-1'), derivationCaps)).not.toContain('resolve-guardian-angel');
+
+			const resolved = applyChallengeModifierCommand(
+				cast.state,
+				{ type: 'resolve-guardian-angel', cardId: 'wands-v', chosenAction: 'dodge' },
+				materials,
+				ctxFor(playerActor('tenure-2'), catalog, config, 'c1-ward-roundtrip')
+			);
+			expect(resolved.ok).toBe(true);
+			if (!resolved.ok) return;
+			// The card returned to a discard pile (conserved), the ward zone is
+			// empty, and the instance flipped to resolved — no permanent drain.
+			expect(resolved.state.playerDiscard).toContain('wands-v');
+			expect(findZoneDescriptor(resolved.state, challengeGuardianAngelZoneId('tenure-2'))?.cards).toEqual([]);
+			expectConserved(resolved.state, catalog);
+			// The ward is no longer offered once consumed.
+			expect(legalChallengeModifierCommands(resolved.state, playerActor('tenure-2'), derivationCaps)).not.toContain('resolve-guardian-angel');
+		});
+
+		it('offers resolve-aim to the owner once prepared, and card conservation holds across prepare-then-resolve', () => {
+			const { state, p1Ctx } = readyTwoPlayerTurns('c1-aim-roundtrip', ['swords-vii'], ['pentacles-iv']);
+			expectConserved(state, catalog);
+
+			const prepared = applyChallengeModifierCommand(state, { type: 'aim-prepare', cardId: 'swords-vii' }, materials, p1Ctx);
+			expect(prepared.ok).toBe(true);
+			if (!prepared.ok) return;
+			expectConserved(prepared.state, catalog);
+
+			expect(legalChallengeModifierCommands(prepared.state, playerActor('tenure-1'), derivationCaps)).toContain('resolve-aim');
+
+			const resolved = applyChallengeModifierCommand(prepared.state, { type: 'resolve-aim', cardId: 'swords-vii' }, materials, p1Ctx);
+			expect(resolved.ok).toBe(true);
+			if (!resolved.ok) return;
+			expect(resolved.state.playerDiscard).toContain('swords-vii');
+			expect(findZoneDescriptor(resolved.state, challengeAimZoneId('tenure-1'))?.cards).toEqual([]);
+			expectConserved(resolved.state, catalog);
+			expect(legalChallengeModifierCommands(resolved.state, playerActor('tenure-1'), derivationCaps)).not.toContain('resolve-aim');
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Branch-fix I8 — allowedActions is READ, not merely echoed
+	// -------------------------------------------------------------------------
+
+	describe('branch-fix I8: Guardian Angel allowedActions enforcement', () => {
+		it('rejects a chosenAction the content does not permit, while accepting one it does (proves the param drives behavior)', () => {
+			const { state, p1Ctx, p2Ctx } = readyTwoPlayerTurns('i8-allowed-actions', ['wands-v'], ['pentacles-iv']);
+			const cast = applyGuardianAngel(state, 'tenure-1', 'tenure-2', 'wands-v', guardianAngelParams, p1Ctx);
+			if (!cast.ok) throw cast;
+
+			// A params block that permits ONLY Dodge (content could ship this for a
+			// future ward) — the engine now honors it instead of echoing.
+			const dodgeOnlyParams = { ...guardianAngelParams, allowedActions: 'dodge' } as GuardianAngelParams;
+			const rejected = resolveGuardianAngel(cast.state, 'tenure-2', 'wands-v', 'riposte', dodgeOnlyParams, p2Ctx);
+			expect(rejected).toMatchObject({ ok: false, rejection: { code: 'illegal-command', message: expect.stringContaining('does not permit riposte') } });
+
+			// Discrimination: the SAME command with the real params (dodge-or-riposte)
+			// is accepted — so the rejection above is the allowedActions guard, not
+			// some other precondition.
+			const accepted = resolveGuardianAngel(cast.state, 'tenure-2', 'wands-v', 'riposte', guardianAngelParams, p2Ctx);
+			expect(accepted.ok).toBe(true);
+		});
+	});
 });

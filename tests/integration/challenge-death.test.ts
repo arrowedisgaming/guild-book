@@ -35,6 +35,10 @@ import {
 	challengeSessionStatePort,
 	executeChallengeDeath
 } from '$lib/server/session/command-service';
+import {
+	executeChallengeCommand,
+	loadChallengeProjectionsForActor
+} from '$lib/server/session/challenge-command-service';
 import { toSessionEngineRuntime } from '$lib/server/content/session-runtime';
 import { getTarotProcedures } from '$lib/server/content/loader';
 import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/schema';
@@ -338,14 +342,21 @@ describe('challenge death — atomic mutation and card conservation', () => {
 			return placeInitiative(state, tenureB, hand.cards[0], { ...context, actor: { kind: 'player', userId: PLAYER_B } });
 		});
 		await applyChallengeStep(ctx, 'session-a', 'campaign-a', 'challenge-reveal', (state, context) => revealInitiative(state, context));
+		// Branch-fix I4: cleanupRound admits the pending join with NO
+		// `options.tenureOwners` — the owner (PLAYER_A) was recorded through
+		// `buildPendingChallengeJoinStatements` → `admitPendingJoinTenure` at
+		// attach time, exactly as the real UI relies on (it sends
+		// `{ type: 'cleanup-round' }` with no options). Previously this test
+		// papered over the gap by re-supplying `{ tenureOwners: {...} }` here.
 		await applyChallengeStep(ctx, 'session-a', 'campaign-a', 'challenge-cleanup', (state, context) =>
-			cleanupRound(state, context, { tenureOwners: { 'tenure-a2': PLAYER_A } })
+			cleanupRound(state, context)
 		);
 
 		const afterCleanup = await loadSessionForReduce(db, 'session-a');
 		const challengeAfterCleanup = readChallengeState(afterCleanup.engineState)!;
 		expect(challengeAfterCleanup.participantTenureIds).toEqual([tenureB, 'tenure-a2']);
 		expect(challengeAfterCleanup.pendingJoinTenureIds).toEqual([]);
+		expect(challengeAfterCleanup.tenureOwners['tenure-a2']).toBe(PLAYER_A);
 		// Still no hand dealt — dealing is a separate subsequent call, exactly
 		// like every other round boundary.
 		expect(findZoneDescriptor(afterCleanup.engineState, challengeHandZoneId('tenure-a2'))?.cards).toEqual([]);
@@ -563,6 +574,156 @@ describe('challenge death — atomicity failure-injection matrix (O4/O6)', () =>
 		expect(challenge.participantTenureIds).toEqual(['tenure-b']);
 		expect(challenge.initiativeOrder).toEqual([]); // the stale placement never landed
 		expect(sqlite.prepare('SELECT life_status FROM characters WHERE id = ?').get('character-a')).toEqual({ life_status: 'dead' });
+	});
+});
+
+describe('challenge-command-service — branch-fix seams (C2/I5/I6/I9)', () => {
+	let sqlite: Database.Database;
+	let ctx: AppDbContext;
+	let db: AppDb;
+
+	beforeEach(() => {
+		sqlite = new Database(':memory:');
+		sqlite.pragma('foreign_keys = ON');
+		applyMigrations(sqlite);
+		ctx = { kind: 'sqlite', db: drizzle(sqlite, { schema }), raw: sqlite };
+		db = ctx.db as unknown as AppDb;
+	});
+
+	afterEach(() => sqlite.close());
+
+	async function seedAndStart(): Promise<{ tenureA: string; tenureB: string; version: number }> {
+		seedUsersAndCampaign(sqlite, [GM_USER, PLAYER_A, PLAYER_B]);
+		seedMembership(sqlite, 'membership-a', PLAYER_A);
+		seedMembership(sqlite, 'membership-b', PLAYER_B);
+		seedCharacter(sqlite, 'character-a', PLAYER_A);
+		seedCharacter(sqlite, 'character-b', PLAYER_B);
+		const a = await attachAdventurer(db, { campaignId: 'campaign-a', membershipId: 'membership-a', actorUserId: PLAYER_A, characterId: 'character-a', tenureId: 'tenure-a', now: new Date(150_000) });
+		const b = await attachAdventurer(db, { campaignId: 'campaign-a', membershipId: 'membership-b', actorUserId: PLAYER_B, characterId: 'character-b', tenureId: 'tenure-b', now: new Date(150_000) });
+		if (!a.ok || !b.ok) throw new Error('fixture: attach failed');
+		const started = await startSession({ dbContext: ctx, campaignId: 'campaign-a', actorUserId: GM_USER, sessionId: 'session-a', shuffleSeed: 'svc-seed', now: new Date(200_000) });
+		if (!started.ok) throw new Error('fixture: session failed to start');
+		const loaded = await loadSessionForReduce(db, 'session-a');
+		return { tenureA: a.tenureId, tenureB: b.tenureId, version: loaded.currentVersion };
+	}
+
+	function beginEnvelope(version: number, participantTenureIds: string[], tenureOwners: Record<string, string>, enemyFacts: unknown[] = []) {
+		return {
+			commandId: nanoid(),
+			observedSessionVersion: version,
+			command: { type: 'begin-challenge', participantTenureIds, tenureOwners, enemyFacts }
+		};
+	}
+
+	// C2 — a seated tenure whose owner is not a session private-state recipient
+	// must be rejected, not silently dropped then frozen.
+	it('C2: rejects begin-challenge naming a participant whose owner is not a session recipient', async () => {
+		const { tenureA, version } = await seedAndStart();
+
+		// PLAYER_C joins the campaign AFTER the session started: a real active
+		// tenure (present in loadActiveChallengeRoster) but NOT a private-state
+		// recipient (recipients were snapshotted at session start).
+		sqlite.prepare('INSERT INTO users (id) VALUES (?)').run('player-c');
+		seedMembership(sqlite, 'membership-c', 'player-c');
+		seedCharacter(sqlite, 'character-c', 'player-c');
+		sqlite
+			.prepare('INSERT INTO campaign_adventurer_tenures (id, campaign_id, membership_id, character_id, started_at, started_by_user_id) VALUES (?, ?, ?, ?, ?, ?)')
+			.run('tenure-c', 'campaign-a', 'membership-c', 'character-c', 250_000, 'player-c');
+
+		const result = await executeChallengeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: GM_USER,
+			envelope: beginEnvelope(version, [tenureA, 'tenure-c'], { [tenureA]: PLAYER_A, 'tenure-c': 'player-c' })
+		});
+		expect(result.outcome.ok).toBe(false);
+		if (result.outcome.ok) return;
+		expect(result.outcome.code).toBe('illegal-command');
+		expect(result.outcome.message).toContain('not a session participant');
+
+		// The session did NOT freeze — a later command still evaluates normally.
+		const reloaded = await loadSessionForReduce(db, 'session-a');
+		expect(reloaded.status).toBe('active');
+	});
+
+	it('C2 discrimination: begin-challenge naming only recipient-owned tenures succeeds', async () => {
+		const { tenureA, tenureB, version } = await seedAndStart();
+		const result = await executeChallengeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: GM_USER,
+			envelope: beginEnvelope(version, [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B })
+		});
+		expect(result.outcome.ok).toBe(true);
+	});
+
+	// I9 — unknown threat/size must be rejected at the boundary (a stale/scripted
+	// client would otherwise silently mis-score the GM hand).
+	it('I9: rejects begin-challenge with an unknown enemy threat, and a discriminating valid one succeeds', async () => {
+		const { tenureA, tenureB, version } = await seedAndStart();
+		const bad = await executeChallengeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: GM_USER,
+			envelope: beginEnvelope(version, [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B }, [
+				{ id: 'e1', size: 'human', threat: 'not-a-real-threat', typeIds: ['imp'], count: 1 }
+			])
+		});
+		expect(bad.outcome.ok).toBe(false);
+		if (bad.outcome.ok) return;
+		expect(bad.outcome.message).toContain('unknown enemy threat');
+
+		const badSize = await executeChallengeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: GM_USER,
+			envelope: beginEnvelope(version, [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B }, [
+				{ id: 'e1', size: 'gargantuan', threat: 'minion', typeIds: ['imp'], count: 1 }
+			])
+		});
+		expect(badSize.outcome.ok).toBe(false);
+		if (badSize.outcome.ok) return;
+		expect(badSize.outcome.message).toContain('unknown enemy size');
+
+		// Discrimination: a valid threat + size is accepted.
+		const good = await executeChallengeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: GM_USER,
+			envelope: beginEnvelope(version, [tenureA, tenureB], { [tenureA]: PLAYER_A, [tenureB]: PLAYER_B }, [
+				{ id: 'e1', size: 'larger-than-human', threat: 'minion', typeIds: ['imp'], count: 1 }
+			])
+		});
+		expect(good.outcome.ok).toBe(true);
+	});
+
+	// I6 — the loader must not hand a caller another campaign's projection.
+	it('I6: loadChallengeProjectionsForActor returns null for a session id from a different campaign', async () => {
+		await seedAndStart();
+		const actor: SessionActor = { kind: 'gm', userId: GM_USER };
+
+		const correct = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-a', actor);
+		expect(correct.projection).not.toBeNull();
+
+		const crossCampaign = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-does-not-own-this', actor);
+		expect(crossCampaign.projection).toBeNull();
+		expect(crossCampaign.challengeProjection).toBeNull();
+		expect(crossCampaign.challengeLegalCommands).toEqual([]);
+	});
+
+	// I5 — a session with no Challenge round still returns its GENERIC projection
+	// (the Challenge slice being null must never null the generic one).
+	it('I5: returns the generic projection even when no Challenge round is active', async () => {
+		await seedAndStart();
+		const actor: SessionActor = { kind: 'gm', userId: GM_USER };
+		const result = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-a', actor);
+		expect(result.projection).not.toBeNull();
+		expect(result.challengeProjection).toBeNull();
 	});
 });
 

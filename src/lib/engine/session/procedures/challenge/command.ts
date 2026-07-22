@@ -50,6 +50,7 @@ import {
 	beginChallenge,
 	challengeHandZoneId,
 	cleanupRound,
+	isChallengeStateCorrupt,
 	readChallengeState,
 	reject,
 	tenureIdForUser,
@@ -279,6 +280,15 @@ export function applyChallengeCommand(
 	materials: ChallengeModifierMaterials,
 	context: ChallengeReduceContext
 ): SessionReduceResult {
+	// Branch-fix ("also fix"): a CORRUPT Challenge state parses as "no active
+	// round" everywhere, so every command below would reject with a misleading
+	// "not currently offered" message. Surface a distinct rejection instead, so
+	// a corrupt `gmPrivate` blob is diagnosable rather than presenting as an
+	// empty legal set.
+	if (isChallengeStateCorrupt(state)) {
+		return reject('illegal-command', 'the active Challenge state is corrupt and cannot be read — contact the GM');
+	}
+
 	const modifierCaps: ChallengeModifierDerivationCaps = {
 		counselMaxUsesPerRound: materials.counsel.maxUsesPerRound,
 		guardianAngelMaxInstances: materials.guardianAngel.maxInstances,

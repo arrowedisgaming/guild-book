@@ -336,11 +336,23 @@ export interface DenizenDefinition {
 	sidebars?: DenizenSidebar[];
 }
 
+/**
+ * The simple-HD defaults a person draft seeds with (a sturdy commoner).
+ * The attribute spread is not repeated here — people use the adventurer
+ * spread, `creation.attributeSpread` in index.json.
+ */
+export interface DenizenPersonDefaults {
+	health: DenizenStatValue;
+	defense: DenizenStatValue;
+}
+
 /** The denizens.json collection: templates plus the pre-made bestiary. */
 export interface DenizensFile {
 	themes: DenizenThemeDefinition[];
 	threats: DenizenThreatDefinition[];
 	bestiary: DenizenDefinition[];
+	/** Seed data for the builder's person path (themes with builderMode 'person'). */
+	person: DenizenPersonDefaults;
 }
 
 /** A rules-reference entry (browsable/searchable in the rules section). */

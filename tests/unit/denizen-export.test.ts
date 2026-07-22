@@ -8,7 +8,12 @@ import {
 	seedPersonFromTheme,
 	toDenizenDefinition
 } from '$lib/engine/denizen-builder';
-import { getBestiary, getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
+import {
+	getBestiary,
+	getDenizenPersonRules,
+	getDenizenThemes,
+	getDenizenThreats
+} from '$lib/server/content/loader';
 
 const byId = Object.fromEntries(getBestiary().map((d) => [d.id, d]));
 
@@ -86,7 +91,8 @@ describe('denizen markdown export', () => {
 		const person = toDenizenDefinition({
 			...seedPersonFromTheme(
 				{ ...createBlankDraft(), name: 'Odo the Cannibal' },
-				getDenizenThemes().find((t) => t.id === 'man')!
+				getDenizenThemes().find((t) => t.id === 'man')!,
+				getDenizenPersonRules()
 			)
 		});
 		const md = exportDenizenToMarkdown(person, 'Man', '');

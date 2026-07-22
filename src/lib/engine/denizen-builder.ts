@@ -206,12 +206,22 @@ export function needsReseed(draft: DenizenDraft): boolean {
 
 // --- person (adversary) drafts -----------------------------------------------
 
-/** The adventurer attribute spread people are built on. */
-export const PERSON_SPREAD = [4, 3, 2, 1];
+/**
+ * Person-path seed data, sourced from the content pack (never hardcoded here):
+ * the adventurer spread is `creation.attributeSpread` and the simple-HD
+ * defaults (a sturdy commoner) are `denizens.json`'s `person` block.
+ */
+export interface PersonSeedRules {
+	/** The adventurer attribute spread people are built on. */
+	spread: number[];
+	health: DenizenStatValue;
+	defense: DenizenStatValue;
+}
 
-/** The simple-HD defaults people seed with (a sturdy commoner). */
-export const PERSON_DEFAULT_HEALTH = '5';
-export const PERSON_DEFAULT_DEFENSE = '1';
+/** The spread highest-first — people seed it across suits in SUIT_IDS order. */
+function sortedSpread(person: PersonSeedRules): number[] {
+	return [...person.spread].sort((a, b) => b - a);
+}
 
 const KITH_NOTE_PREFIX = 'Kith: ';
 const ARETE_NOTE_PREFIX = 'Arete talent: ';
@@ -235,11 +245,16 @@ const WOUNDS_NOTE_TEXT = [
 /**
  * Seed a person draft from a theme with builderMode 'person'. People follow
  * the book's "make actual characters" advice: the adventurer spread (seeded
- * 4/3/2/1 in suit order, reassigned on the Person step), no threat template,
- * simple default HD (the Customize step explains the simplification).
- * Preserves identity fields.
+ * highest-first in suit order, reassigned on the Person step), no threat
+ * template, simple default HD (the Customize step explains the
+ * simplification). Preserves identity fields.
  */
-export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefinition): DenizenDraft {
+export function seedPersonFromTheme(
+	draft: DenizenDraft,
+	theme: DenizenThemeDefinition,
+	person: PersonSeedRules
+): DenizenDraft {
+	const spread = sortedSpread(person);
 	return {
 		...draft,
 		kind: 'person',
@@ -248,9 +263,11 @@ export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefi
 		themeId: theme.id,
 		threatId: null,
 		seededFrom: { themeId: theme.id, threatId: '' },
-		attributes: { swords: '4', pentacles: '3', cups: '2', wands: '1' },
-		health: PERSON_DEFAULT_HEALTH,
-		defense: PERSON_DEFAULT_DEFENSE,
+		attributes: Object.fromEntries(
+			SUIT_IDS.map((suit, i) => [suit, String(spread[i] ?? 0)])
+		) as Record<SuitId, string>,
+		health: String(person.health),
+		defense: String(person.defense),
 		healthBeforeWounds: '',
 		statNote: '',
 		likes: (theme.likes ?? []).join(', '),
@@ -265,15 +282,17 @@ export function seedPersonFromTheme(draft: DenizenDraft, theme: DenizenThemeDefi
 
 /**
  * Drop person-only state when the draft leaves the person path (a standard
- * theme was chosen): kind, kith/kin, and their notes.
+ * theme was chosen): kind, kith/kin and their notes, and wound tracking —
+ * a creature must never carry the '*' Health or the Wounds note.
  */
-export function clearPersonState(draft: DenizenDraft): DenizenDraft {
+export function clearPersonState(draft: DenizenDraft, person: PersonSeedRules): DenizenDraft {
+	const unwound = setPersonWoundTracking(draft, false, person);
 	return {
-		...draft,
+		...unwound,
 		kind: 'creature',
 		kithId: null,
 		kinId: null,
-		notes: draft.notes.filter(
+		notes: unwound.notes.filter(
 			(n) => !n.name.startsWith(KITH_NOTE_PREFIX) && !n.name.startsWith(ARETE_NOTE_PREFIX)
 		)
 	};
@@ -367,7 +386,11 @@ export function personTracksWounds(draft: DenizenDraft): boolean {
  * it was before enabling (falling back to the simple default). A Health the
  * user typed over the '*' is never clobbered.
  */
-export function setPersonWoundTracking(draft: DenizenDraft, enabled: boolean): DenizenDraft {
+export function setPersonWoundTracking(
+	draft: DenizenDraft,
+	enabled: boolean,
+	person: PersonSeedRules
+): DenizenDraft {
 	const notes = draft.notes.filter((n) => n.name !== WOUNDS_NOTE_NAME);
 	if (enabled) {
 		return {
@@ -380,7 +403,7 @@ export function setPersonWoundTracking(draft: DenizenDraft, enabled: boolean): D
 	return {
 		...draft,
 		health:
-			draft.health === '*' ? draft.healthBeforeWounds || PERSON_DEFAULT_HEALTH : draft.health,
+			draft.health === '*' ? draft.healthBeforeWounds || String(person.health) : draft.health,
 		healthBeforeWounds: '',
 		notes
 	};
@@ -531,25 +554,31 @@ function hdPairWarnings(health: string, defense: string, where: string): string[
  * ("∞", "X") pass through untouched. Pass the chosen threat so pool-based
  * drafts (builderMode 'pools') get their pool invariants checked too: at
  * least one pool, each pool a complete HD pair, and no top-level HD alongside
- * pools (the schema's mutual-exclusivity rule).
+ * pools (the schema's mutual-exclusivity rule). Pass the pack's person rules
+ * wherever the draft can be a person — without them the spread check is
+ * skipped.
  */
 export function draftStatWarnings(
 	draft: DenizenDraft,
-	threat?: DenizenThreatDefinition | null
+	threat?: DenizenThreatDefinition | null,
+	person?: PersonSeedRules | null
 ): string[] {
 	const poolsMode = threat?.builderMode === 'pools';
 	const health = draft.health.trim();
 	const defense = draft.defense.trim();
 	const warnings: string[] = [];
 
-	if (draft.kind === 'person') {
+	if (draft.kind === 'person' && person) {
 		const values = Object.fromEntries(
 			SUIT_IDS.map((s) => [s, Number(draft.attributes[s])])
 		) as Record<SuitId, number>;
-		if (!isValidSpread(values, PERSON_SPREAD)) {
-			warnings.push(
-				'A person uses the adventurer spread — assign 4, 3, 2, and 1 each to one suit.'
-			);
+		if (!isValidSpread(values, person.spread)) {
+			const spread = sortedSpread(person);
+			const listed =
+				spread.length > 1
+					? `${spread.slice(0, -1).join(', ')}, and ${spread[spread.length - 1]}`
+					: String(spread[0] ?? '');
+			warnings.push(`A person uses the adventurer spread — assign ${listed} each to one suit.`);
 		}
 	}
 	if (poolsMode && draft.pools.length === 0) {

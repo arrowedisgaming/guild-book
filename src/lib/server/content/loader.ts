@@ -23,6 +23,7 @@ import type {
 	DenizenThreatDefinition,
 	DenizenDefinition
 } from '$lib/types/content-pack';
+import type { PersonSeedRules } from '$lib/engine/denizen-builder';
 import {
 	contentPackSchema,
 	kithsFileSchema,
@@ -138,6 +139,16 @@ export function getDenizenThreats(): DenizenThreatDefinition[] {
 
 export function getBestiary(): DenizenDefinition[] {
 	return getDenizensFile().bestiary;
+}
+
+/**
+ * Seed rules for the denizen builder's person path: the adventurer spread
+ * from `creation.attributeSpread` (people are "actual characters") plus the
+ * simple-HD defaults from denizens.json's `person` block.
+ */
+export function getDenizenPersonRules(): PersonSeedRules {
+	const { person } = getDenizensFile();
+	return { spread: getContentPack().creation.attributeSpread, ...person };
 }
 
 /** Everything the creation wizard needs, in one validated bundle. */

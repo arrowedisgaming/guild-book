@@ -352,7 +352,11 @@ export const denizenDefinitionSchema = z
 export const denizensFileSchema = z.object({
 	themes: z.array(denizenThemeSchema),
 	threats: z.array(denizenThreatSchema),
-	bestiary: z.array(denizenDefinitionSchema)
+	bestiary: z.array(denizenDefinitionSchema),
+	person: z.object({
+		health: denizenStatValueSchema,
+		defense: denizenStatValueSchema
+	})
 });
 
 export const ruleEntrySchema = z.object({

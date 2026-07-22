@@ -1422,5 +1422,6 @@
 				}
 			]
 		}
-	]
+	],
+	"person": { "health": 5, "defense": 1 }
 }

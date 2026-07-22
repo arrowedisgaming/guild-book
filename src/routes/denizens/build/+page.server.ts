@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import {
+	getDenizenPersonRules,
 	getDenizenThemes,
 	getDenizenThreats,
 	getKiths,
@@ -15,6 +16,7 @@ export const load: PageServerLoad = async () => {
 		threats: getDenizenThreats(),
 		kiths: getKiths(),
 		paths: getPaths(),
-		talents: getTalents()
+		talents: getTalents(),
+		personRules: getDenizenPersonRules()
 	};
 };

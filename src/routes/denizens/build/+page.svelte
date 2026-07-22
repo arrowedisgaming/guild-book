@@ -23,7 +23,6 @@
 		setPersonWoundTracking,
 		personTracksWounds,
 		assignPersonSpreadValue,
-		PERSON_SPREAD,
 		type DenizenDraft
 	} from '$lib/engine/denizen-builder';
 	import { highestSuit } from '$lib/engine/attributes';
@@ -41,7 +40,9 @@
 
 	let theme = $derived(data.themes.find((t) => t.id === draft.themeId));
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
-	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null));
+	// Pack-sourced person seed rules; the spread is shown highest-first.
+	let personSpread = $derived([...data.personRules.spread].sort((a, b) => b - a));
+	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null, data.personRules));
 	// Advisory only — never blocks saving (a special stat with a note is legal).
 	let statReminders = $derived(draftStatReminders(draft));
 	let statMessages = $derived([...statWarnings, ...statReminders]);
@@ -127,7 +128,7 @@
 			denizenBuilder.swapMode('person', (stashed, current) =>
 				stashed
 					? { ...carryIdentity(stashed, current), kind: 'person', themeId: current.themeId }
-					: seedPersonFromTheme(current, theme)
+					: seedPersonFromTheme(current, theme, data.personRules)
 			);
 			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
 		}
@@ -137,7 +138,7 @@
 			denizenBuilder.swapMode('creature', (stashed, current) =>
 				stashed
 					? { ...carryIdentity(stashed, current), kind: 'creature', themeId: current.themeId }
-					: clearPersonState(current)
+					: clearPersonState(current, data.personRules)
 			);
 			announce('Creature path — your person work is kept and restored if you switch back.');
 		}
@@ -530,8 +531,8 @@
 
 		<h3>Attribute spread</h3>
 		<p class="guidance">
-			Assign 4, 3, 2, and 1 — one to each suit. Picking a value swaps it with the suit that
-			currently holds it.
+			Assign {personSpread.join(', ')} — one to each suit. Picking a value swaps it with the
+			suit that currently holds it.
 		</p>
 		<div class="attr-grid">
 			{#each SUIT_IDS as suit (suit)}
@@ -542,7 +543,7 @@
 						onchange={(e) => assignSpread(suit, Number(e.currentTarget.value))}
 						aria-label={`${suit[0].toUpperCase() + suit.slice(1)} spread value`}
 					>
-						{#each PERSON_SPREAD as value (value)}
+						{#each personSpread as value (value)}
 							<option value={String(value)}>{value}</option>
 						{/each}
 					</select>
@@ -729,7 +730,8 @@
 					type="checkbox"
 					checked={personTracksWounds(draft)}
 					onchange={(e) =>
-						denizenBuilder.updateDraft((d) => setPersonWoundTracking(d, e.currentTarget.checked))}
+						denizenBuilder.updateDraft((d) =>
+							setPersonWoundTracking(d, e.currentTarget.checked, data.personRules))}
 				/>
 				<span>
 					Track Wounds like an adventurer — sets Health to <strong>*</strong> and adds a note

@@ -24,7 +24,13 @@ import {
 	personTracksWounds,
 	assignPersonSpreadValue
 } from '$lib/engine/denizen-builder';
-import { getDenizenThemes, getDenizenThreats, getKiths, getTalents } from '$lib/server/content/loader';
+import {
+	getDenizenPersonRules,
+	getDenizenThemes,
+	getDenizenThreats,
+	getKiths,
+	getTalents
+} from '$lib/server/content/loader';
 
 const themes = getDenizenThemes();
 const threats = getDenizenThreats();
@@ -490,7 +496,8 @@ describe('denizen builder — sanitizing pool drafts', () => {
 // --- people (the Man theme's adversary path) ---------------------------------
 
 const manTheme = () => theme('man');
-const seedPerson = () => seedPersonFromTheme(createBlankDraft(), manTheme());
+const personRules = getDenizenPersonRules();
+const seedPerson = () => seedPersonFromTheme(createBlankDraft(), manTheme(), personRules);
 const kiths = getKiths();
 
 describe('denizen builder — person seeding', () => {
@@ -509,7 +516,7 @@ describe('denizen builder — person seeding', () => {
 
 	it('preserves identity fields across a person seed', () => {
 		const blank = { ...createBlankDraft(), name: 'Odo the Cannibal', concept: 'A hermit' };
-		const draft = seedPersonFromTheme(blank, manTheme());
+		const draft = seedPersonFromTheme(blank, manTheme(), personRules);
 		expect(draft.name).toBe('Odo the Cannibal');
 		expect(draft.concept).toBe('A hermit');
 	});
@@ -517,11 +524,23 @@ describe('denizen builder — person seeding', () => {
 
 	it('clears person-only state when leaving the person path', () => {
 		const person = setPersonKith(seedPerson(), kiths[0]);
-		const cleared = clearPersonState(person);
+		const cleared = clearPersonState(person, personRules);
 		expect(cleared.kind).toBe('creature');
 		expect(cleared.kithId).toBeNull();
 		expect(cleared.statNote).toBe('');
 		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+	});
+
+	it('leaving the person path undoes wound tracking too', () => {
+		// A person with Track Wounds on switches to a creature theme with no
+		// stashed creature draft — the creature must not keep the '*' Health,
+		// the Wounds note, or the stale healthBeforeWounds.
+		const tracking = setPersonWoundTracking({ ...seedPerson(), health: '7' }, true, personRules);
+		const cleared = clearPersonState(tracking, personRules);
+		expect(cleared.kind).toBe('creature');
+		expect(cleared.health).toBe('7');
+		expect(cleared.healthBeforeWounds).toBe('');
+		expect(personTracksWounds(cleared)).toBe(false);
 	});
 });
 
@@ -546,19 +565,19 @@ describe('denizen builder — person kith and spread', () => {
 		const draft = assignPersonSpreadValue(seedPerson(), 'cups', 4);
 		expect(draft.attributes).toEqual({ swords: '2', pentacles: '3', cups: '4', wands: '1' });
 		// Still a valid spread, so no warning.
-		expect(draftStatWarnings(draft)).toEqual([]);
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([]);
 	});
 
 	it('warns when the attributes are not the adventurer spread', () => {
 		const draft = { ...seedPerson(), attributes: { swords: '4', pentacles: '4', cups: '2', wands: '1' } };
-		expect(draftStatWarnings(draft)).toEqual([
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([
 			'A person uses the adventurer spread — assign 4, 3, 2, and 1 each to one suit.'
 		]);
 	});
 
 	it('applies the HD pair rule to people who are given stats', () => {
 		const draft = { ...seedPerson(), defense: '' };
-		expect(draftStatWarnings(draft)).toEqual([
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([
 			'Health and Defense are a pair — fill in both or leave both blank.'
 		]);
 	});
@@ -583,7 +602,7 @@ describe('denizen builder — materializing a person', () => {
 
 describe('denizen builder — person wound tracking', () => {
 	it('toggles the Wounds note and a * Health', () => {
-		const tracking = setPersonWoundTracking(seedPerson(), true);
+		const tracking = setPersonWoundTracking(seedPerson(), true, personRules);
 		expect(personTracksWounds(tracking)).toBe(true);
 		expect(tracking.health).toBe('*');
 		const note = tracking.notes.find((n) => n.name === 'Wounds')!;
@@ -591,18 +610,18 @@ describe('denizen builder — person wound tracking', () => {
 		expect(note.text).toMatch(/Death's Door/);
 		expect(note.text).toMatch(/- \[ \] notch a piece of armor/); // rendered as a checklist
 
-		const off = setPersonWoundTracking(tracking, false);
+		const off = setPersonWoundTracking(tracking, false, personRules);
 		expect(personTracksWounds(off)).toBe(false);
 		expect(off.health).toBe('5'); // the * restores to the simple default
 	});
 
 	it('never doubles the Wounds note and keeps a custom Health on toggle-off', () => {
-		let draft = setPersonWoundTracking(seedPerson(), true);
-		draft = setPersonWoundTracking(draft, true);
+		let draft = setPersonWoundTracking(seedPerson(), true, personRules);
+		draft = setPersonWoundTracking(draft, true, personRules);
 		expect(draft.notes.filter((n) => n.name === 'Wounds')).toHaveLength(1);
 
 		draft = { ...draft, health: '8' }; // user overrode the * by hand
-		draft = setPersonWoundTracking(draft, false);
+		draft = setPersonWoundTracking(draft, false, personRules);
 		expect(draft.health).toBe('8');
 		expect(personTracksWounds(draft)).toBe(false);
 	});
@@ -610,9 +629,9 @@ describe('denizen builder — person wound tracking', () => {
 	it('restores a pre-toggle custom Health, not the default', () => {
 		// User set Health 7, tried wound tracking, changed their mind.
 		let draft = { ...seedPerson(), health: '7' };
-		draft = setPersonWoundTracking(draft, true);
+		draft = setPersonWoundTracking(draft, true, personRules);
 		expect(draft.health).toBe('*');
-		draft = setPersonWoundTracking(draft, false);
+		draft = setPersonWoundTracking(draft, false, personRules);
 		expect(draft.health).toBe('7');
 		expect(draft.healthBeforeWounds).toBe('');
 	});
@@ -665,8 +684,8 @@ describe('denizen builder — person wound tracking', () => {
 	});
 
 	it('a wound-tracking person still materializes and passes stat warnings', () => {
-		const draft = setPersonWoundTracking(seedPerson(), true);
-		expect(draftStatWarnings(draft)).toEqual([]);
+		const draft = setPersonWoundTracking(seedPerson(), true, personRules);
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([]);
 		const denizen = toDenizenDefinition(draft);
 		expect(denizen.health).toBe('*');
 		expect(denizen.notes?.some((n) => n.name === 'Wounds')).toBe(true);
@@ -675,7 +694,7 @@ describe('denizen builder — person wound tracking', () => {
 	it('the Wounds note renders drawn checkboxes in HTML and PDF', async () => {
 		const { renderMarkdown } = await import('$lib/utils/markdown');
 		const { buildDenizenDocDefinition } = await import('$lib/export/denizen-pdf-export');
-		const draft = setPersonWoundTracking(seedPerson(), true);
+		const draft = setPersonWoundTracking(seedPerson(), true, personRules);
 		const note = draft.notes.find((n) => n.name === 'Wounds')!;
 
 		const html = renderMarkdown(note.text);

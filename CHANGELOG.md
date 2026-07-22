@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Guided Challenge over the shared table**: campaigns can now run the full
+  Challenge phase at the synchronized tarot table. The GM enters enemy facts as
+  named groups, the engine deals each round from the content-defined formulas
+  (players from the minor arcana, the GM's hand sized from enemy count, types,
+  and threats), and every adventurer plays at one board. The procedure owns
+  hands, facedown initiative and its public reveal, the one-card-per-turn budget
+  with its action/minor-action exclusion, separate GM play and discard budgets,
+  lesser/greater Doom predicates, the Fool interrupt (paired play, an extra turn
+  with no minor actions, and a boundary reshuffle of both decks), the GM
+  mulligan, and round cleanup — while health, wounds, range, position, and every
+  fictional consequence stay manually adjudicated at the table.
+- **Seven typed Challenge modifiers** — black honey, stun, brainfever, counsel,
+  guardian angel, aim, and the shield Guard action — each driven entirely by
+  content parameters, with private card transfers whose public events carry only
+  a count and reason, never a card identity.
+- **Death and legal replacement during a Challenge**: marking a participating
+  adventurer dead is a single atomic mutation (character version claim, life
+  state, tenure end, private-zone redaction, participant update, public events,
+  and freed membership), and a replacement adventurer joins only at the next
+  round boundary, never midway through a deal.
+- A projection-driven Challenge table UI: components render controls solely from
+  the server-derived legal-command set, submit idempotent commands scoped per
+  intent, and announce deal counts, initiative order and ties, turns, plays,
+  round transitions, and completion for assistive technology. The feature stays
+  allowlisted behind `CAMPAIGNS_ENABLED` or pilot user IDs.
+
+### Fixed
+
+- **Stun now matches the rulebook**: the content pack described Stun as
+  discarding a player's entire hand; it discards one card, chosen by the
+  affected player. Content pack bumped to 3.3.0.
+
 ## [0.3.0] - 2026-07-20
 
 ### Added

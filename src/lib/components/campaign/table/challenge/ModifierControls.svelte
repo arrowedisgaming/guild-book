@@ -50,6 +50,12 @@
 			: []
 	);
 
+	/** The actor's own facedown Guardian Angel wards (as target) and prepared
+	 * Aim cards — the real card identities the target/owner sees, used to
+	 * populate the resolve selects (branch-fix C1). */
+	const ownWardCards = $derived(role === 'player' ? ((genericProjection as SessionPlayerProjection).privateFacedown ?? []) : []);
+	const ownPreparedCards = $derived(role === 'player' ? ((genericProjection as SessionPlayerProjection).privatePrepared ?? []) : []);
+
 	function tenureLabel(tenureId: string): string {
 		return roster.find((r) => r.tenureId === tenureId)?.characterName ?? tenureId;
 	}
@@ -77,6 +83,9 @@
 	let guardianAngelCard = $state('');
 	let aimCard = $state('');
 	let guardCard = $state('');
+	let resolveWardCard = $state('');
+	let resolveWardAction = $state<'dodge' | 'riposte'>('dodge');
+	let resolveAimCard = $state('');
 
 	async function applyBlackHoney(): Promise<void> {
 		if (!blackHoneyTarget) return;
@@ -108,9 +117,19 @@
 		await actionRunner.run({ type: 'guardian-angel', targetTenureId: guardianAngelTarget, cardId: guardianAngelCard });
 	}
 
+	async function resolveGuardianAngel(): Promise<void> {
+		if (!resolveWardCard) return;
+		await actionRunner.run({ type: 'resolve-guardian-angel', cardId: resolveWardCard, chosenAction: resolveWardAction });
+	}
+
 	async function aimPrepare(): Promise<void> {
 		if (!aimCard) return;
 		await actionRunner.run({ type: 'aim-prepare', cardId: aimCard });
+	}
+
+	async function resolveAim(): Promise<void> {
+		if (!resolveAimCard) return;
+		await actionRunner.run({ type: 'resolve-aim', cardId: resolveAimCard });
 	}
 
 	async function replaceInitiativeWithShield(): Promise<void> {
@@ -119,7 +138,7 @@
 	}
 </script>
 
-{#if has('apply-black-honey') || has('apply-stun') || has('apply-brainfever') || has('counsel-transfer') || has('guardian-angel') || has('aim-prepare') || has('replace-initiative-with-shield')}
+{#if has('apply-black-honey') || has('apply-stun') || has('apply-brainfever') || has('counsel-transfer') || has('guardian-angel') || has('resolve-guardian-angel') || has('aim-prepare') || has('resolve-aim') || has('replace-initiative-with-shield')}
 	<section class="modifier-controls" data-testid="modifier-controls" aria-label="Challenge modifiers">
 		<h3>Modifiers</h3>
 
@@ -223,6 +242,25 @@
 			</div>
 		{/if}
 
+		{#if has('resolve-guardian-angel')}
+			<div class="modifier" data-testid="modifier-resolve-guardian-angel">
+				<span>Guardian Angel — flip your ward</span>
+				<select aria-label="Guardian Angel ward card to reveal" bind:value={resolveWardCard}>
+					<option value="">Choose a card</option>
+					{#each ownWardCards as slot, index (index)}
+						{#if !slot.hidden}
+							<option value={slot.id}>{slot.label}</option>
+						{/if}
+					{/each}
+				</select>
+				<select aria-label="Dodge or Riposte" bind:value={resolveWardAction}>
+					<option value="dodge">Dodge</option>
+					<option value="riposte">Riposte</option>
+				</select>
+				<button type="button" disabled={actionRunner.pending || !resolveWardCard} onclick={resolveGuardianAngel}>Flip</button>
+			</div>
+		{/if}
+
 		{#if has('aim-prepare')}
 			<div class="modifier" data-testid="modifier-aim">
 				<span>Aim</span>
@@ -235,6 +273,21 @@
 					{/each}
 				</select>
 				<button type="button" disabled={actionRunner.pending || !aimCard} onclick={aimPrepare}>Aim</button>
+			</div>
+		{/if}
+
+		{#if has('resolve-aim')}
+			<div class="modifier" data-testid="modifier-resolve-aim">
+				<span>Aim — reveal your prepared shot</span>
+				<select aria-label="Prepared Aim card to reveal" bind:value={resolveAimCard}>
+					<option value="">Choose a card</option>
+					{#each ownPreparedCards as slot, index (index)}
+						{#if !slot.hidden}
+							<option value={slot.id}>{slot.label}</option>
+						{/if}
+					{/each}
+				</select>
+				<button type="button" disabled={actionRunner.pending || !resolveAimCard} onclick={resolveAim}>Reveal</button>
 			</div>
 		{/if}
 

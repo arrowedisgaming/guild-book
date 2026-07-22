@@ -790,7 +790,14 @@ export const sessionModifierDefinitionSchema = z.discriminatedUnion('behaviorId'
 				requiresShield: z.boolean(),
 				anySuit: z.boolean(),
 				actionBudget: z.literal('miscellaneous'),
-				discardsOldInitiative: z.boolean()
+				// Branch-fix I8: narrowed from `z.boolean()` to a literal. The
+				// engine (`modifiers.ts`'s `applyGuard`) ALWAYS discards the
+				// replaced Initiative card — a `false` value would strand that card
+				// in the shared Initiative zone and break card conservation, so
+				// there is no correct alternative behavior for content to express.
+				// Ch7 states the discard as automatic. Narrowing so content cannot
+				// declare a value the engine would have to ignore.
+				discardsOldInitiative: z.literal(true)
 			})
 			.strict()
 	}),

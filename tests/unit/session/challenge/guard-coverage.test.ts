@@ -84,7 +84,7 @@ describe('Challenge guard-clause coverage (no active round / wrong stage / wrong
 		['applyStun', () => applyStun(noRoundState, 'tenure-1', stunParams, gmCtx)],
 		['resolveStun', () => resolveStun(noRoundState, 'tenure-1', 'cups-i', stunParams, aliceCtx)],
 		['applyBrainfever', () => applyBrainfever(noRoundState, 'tenure-1', brainfeverParams, gmCtx)],
-		['resolveGuardianAngel', () => resolveGuardianAngel(noRoundState, 'tenure-1', 'cups-i', 'dodge', gmCtx)],
+		['resolveGuardianAngel', () => resolveGuardianAngel(noRoundState, 'tenure-1', 'cups-i', 'dodge', guardianAngelParams, gmCtx)],
 		['resolveAim', () => resolveAim(noRoundState, 'tenure-1', 'cups-i', aimParams, gmCtx)],
 		['counselTransfer', () => counselTransfer(noRoundState, 'user-bob', 'cups-i', counselParams, aliceCtx)],
 		['placeInitiative', () => placeInitiative(noRoundState, 'tenure-1', 'cups-i', aliceCtx)],

@@ -70,6 +70,7 @@ import {
 	tenureIdForUser,
 	writeChallengeState,
 	CHALLENGE_GM_TENURE_ID,
+	CHALLENGE_GUARDIAN_ANGEL_ID,
 	CHALLENGE_INITIATIVE_ZONE_ID,
 	CHALLENGE_STUN_ID,
 	type ChallengeReduceContext,
@@ -85,10 +86,9 @@ import { counselTransfer, movePrivateCard, CHALLENGE_COUNSEL_ID } from './transf
  * `cleanupRound` (Stun-specific pending expiry — review round 5) can name it
  * without a circular import; every other modifier id is defined here as
  * before. */
-export { CHALLENGE_STUN_ID };
+export { CHALLENGE_STUN_ID, CHALLENGE_GUARDIAN_ANGEL_ID };
 export const CHALLENGE_BLACK_HONEY_ID = 'challenge-black-honey';
 export const CHALLENGE_BRAINFEVER_ID = 'challenge-brainfever';
-export const CHALLENGE_GUARDIAN_ANGEL_ID = 'challenge-guardian-angel';
 export const CHALLENGE_AIM_ID = 'challenge-aim';
 export const CHALLENGE_GUARD_ID = 'challenge-guard';
 
@@ -648,8 +648,18 @@ export function resolveGuardianAngel(
 	targetTenureId: string,
 	cardId: CardId,
 	chosenAction: 'dodge' | 'riposte',
+	params: GuardianAngelParams,
 	context: ChallengeReduceContext
 ): SessionReduceResult {
+	// Branch-fix I8: `allowedActions` is now READ to drive behavior, not merely
+	// echoed on the event — a `chosenAction` the content does not permit is
+	// rejected. Content ships `'dodge-or-riposte'` (both permitted); should it
+	// ever narrow (e.g. a future denizen ward allowing only Dodge), the engine
+	// now honors that instead of silently accepting either.
+	const permittedActions = params.allowedActions.split('-or-');
+	if (!permittedActions.includes(chosenAction)) {
+		return reject('illegal-command', `Guardian Angel does not permit ${chosenAction} (allowed: ${params.allowedActions})`);
+	}
 	const challenge = readChallengeState(state);
 	if (!challenge) return reject('illegal-command', 'no active Challenge round');
 	const owner = challenge.tenureOwners[targetTenureId];
@@ -933,7 +943,9 @@ export type ChallengeModifierCommand =
 	| { type: 'apply-brainfever'; targetTenureId: string }
 	| { type: 'counsel-transfer'; recipientUserId: string; cardId: string }
 	| { type: 'guardian-angel'; targetTenureId: string; cardId: string }
+	| { type: 'resolve-guardian-angel'; cardId: string; chosenAction: 'dodge' | 'riposte' }
 	| { type: 'aim-prepare'; cardId: string }
+	| { type: 'resolve-aim'; cardId: string }
 	| { type: 'replace-initiative-with-shield'; cardId: string };
 
 /** The two content-driven caps `legalChallengeModifierCommands` needs to
@@ -1048,6 +1060,26 @@ export function legalChallengeModifierCommands(
 		if (caps.hasShield) legal.push('replace-initiative-with-shield');
 	}
 
+	// Resolving a prepared/warded facedown card is NOT gated to the actor's own
+	// active turn (branch-fix C1): Guardian Angel is used "at their discretion"
+	// (when attacked) and Aim "when you next Attack" — timing the engine cannot
+	// box more tightly than ownership (see `resolveGuardianAngel`/`resolveAim`).
+	// Offered only when the actor actually HOLDS a matching card to resolve, so
+	// the control never appears as a guaranteed-to-fail button (O2), and so the
+	// caster's cast can actually be consumed rather than draining the deck one
+	// way (branch-fix C1: without a resolve command every cast permanently shrank
+	// the 56-card player deck).
+	const hasActiveWard = challenge.modifiers.some(
+		(modifier) =>
+			modifier.modifierId === CHALLENGE_GUARDIAN_ANGEL_ID &&
+			modifier.targetTenureId === tenureId &&
+			modifier.status === 'active'
+	);
+	if (hasActiveWard) legal.push('resolve-guardian-angel');
+
+	const preparedAim = findZoneDescriptor(state, challengeAimZoneId(tenureId));
+	if (preparedAim && preparedAim.cards.length > 0) legal.push('resolve-aim');
+
 	return legal;
 }
 
@@ -1134,10 +1166,22 @@ export function applyChallengeModifierCommand(
 			if (!casterTenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
 			return applyGuardianAngel(state, casterTenureId, command.targetTenureId, command.cardId, materials.guardianAngel, context);
 		}
+		case 'resolve-guardian-angel': {
+			// The TARGET resolves their OWN ward (branch-fix C1): resolve the
+			// acting tenure through `tenureOwners`, never a client-supplied one.
+			const targetTenureId = tenureIdForUser(challenge, context.actor.userId);
+			if (!targetTenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
+			return resolveGuardianAngel(state, targetTenureId, command.cardId, command.chosenAction, materials.guardianAngel, context);
+		}
 		case 'aim-prepare': {
 			const tenureId = tenureIdForUser(challenge, context.actor.userId);
 			if (!tenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
 			return prepareAim(state, tenureId, command.cardId, materials.hasBow ?? false, materials.aim, context);
+		}
+		case 'resolve-aim': {
+			const tenureId = tenureIdForUser(challenge, context.actor.userId);
+			if (!tenureId) return reject('illegal-command', 'actor has no active Challenge tenure');
+			return resolveAim(state, tenureId, command.cardId, materials.aim, context);
 		}
 		case 'replace-initiative-with-shield': {
 			const tenureId = tenureIdForUser(challenge, context.actor.userId);

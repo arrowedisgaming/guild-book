@@ -16,7 +16,7 @@ import {
 	runCampaignAtomic,
 	type CampaignAtomicStatement
 } from './atomic';
-import { noSessionsYet, type SessionStatePort } from './session-state-port';
+import { ChallengeJoinSessionNotActiveError, noSessionsYet, type SessionStatePort } from './session-state-port';
 
 export interface AdventurerEligibilityFacts {
 	ownedByActor: boolean;
@@ -162,6 +162,10 @@ export type AttachAdventurerResult =
 				| 'membership-not-found'
 				| 'membership-has-adventurer'
 				| 'session-active'
+				/** Branch-fix I3 / O11 item 1: the Challenge pending-join callback
+				 * could not register the join because the open session is not
+				 * `active` (e.g. frozen) — a typed reason rather than a 500. */
+				| 'session-not-active'
 				| 'conflict';
 	  };
 
@@ -240,10 +244,21 @@ export async function attachAdventurer(
 	// with no pending-join registration). When there is no active session, or
 	// the caller supplied no callback, this is `[]` — exactly today's behavior
 	// (O3's first sentence: outside Challenge there is nothing extra to do).
-	const challengeJoinStatements =
-		activeSessionId && buildChallengeJoinStatements
-			? await buildChallengeJoinStatements({ db, sessionId: activeSessionId, tenureId, actorUserId: input.actorUserId })
-			: [];
+	let challengeJoinStatements: CampaignAtomicStatement[];
+	try {
+		challengeJoinStatements =
+			activeSessionId && buildChallengeJoinStatements
+				? await buildChallengeJoinStatements({ db, sessionId: activeSessionId, tenureId, actorUserId: input.actorUserId })
+				: [];
+	} catch (cause) {
+		// Branch-fix I3 / O11 item 1: a not-active session surfaces as a typed
+		// result, not a 500. Any other failure still propagates (genuinely
+		// unexpected — "could not determine" must fail the whole attach loudly).
+		if (cause instanceof ChallengeJoinSessionNotActiveError) {
+			return { ok: false, reason: 'session-not-active' };
+		}
+		throw cause;
+	}
 	try {
 		await runCampaignAtomic(db, [
 			characterEligibilityClaim(db, {

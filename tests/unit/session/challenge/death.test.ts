@@ -279,9 +279,9 @@ describe('markTenureDead', () => {
 	});
 
 	describe('a PENDING joiner who dies before cleanupRound admits them (Important 4)', () => {
-		it('rejects a non-GM actor — no tenureOwners entry exists yet to resolve player ownership against', () => {
+		it('rejects a non-GM actor — the pending-join withdrawal path is GM-only', () => {
 			const state = dealtState('pending-death-auth');
-			const joined = admitPendingJoinTenure(state, 'tenure-5', catalog);
+			const joined = admitPendingJoinTenure(state, 'tenure-5', 'user-carol', catalog);
 			if (!joined.ok) throw joined;
 			const result = markTenureDead(joined.state, 'tenure-5', ctxFor(playerActor('tenure-1'), catalog, config, 'pending-death-auth'));
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
@@ -289,7 +289,7 @@ describe('markTenureDead', () => {
 
 		it('withdraws the pending join on GM death — never admitted by a later cleanupRound', () => {
 			const state = dealtState('pending-death');
-			const joined = admitPendingJoinTenure(state, 'tenure-5', catalog);
+			const joined = admitPendingJoinTenure(state, 'tenure-5', 'user-carol', catalog);
 			if (!joined.ok) throw joined;
 			expect(readChallengeState(joined.state)!.pendingJoinTenureIds).toEqual(['tenure-5']);
 
@@ -326,7 +326,7 @@ describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {
 
 	it('is a no-op (same state reference) outside an active Challenge round', () => {
 		const state = makeSessionFixture('no-challenge-join');
-		const result = admitPendingJoinTenure(state, 'tenure-5', catalog);
+		const result = admitPendingJoinTenure(state, 'tenure-5', 'user-carol', catalog);
 		expect(result).toEqual({ ok: true, state, events: [] });
 	});
 
@@ -339,7 +339,7 @@ describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {
 		);
 		if (!begun.ok) throw begun;
 
-		const result = admitPendingJoinTenure(begun.state, 'tenure-5', catalog);
+		const result = admitPendingJoinTenure(begun.state, 'tenure-5', 'user-carol', catalog);
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 		const challenge = readChallengeState(result.state)!;
@@ -356,12 +356,12 @@ describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {
 		);
 		if (!begun.ok) throw begun;
 
-		const first = admitPendingJoinTenure(begun.state, 'tenure-5', catalog);
+		const first = admitPendingJoinTenure(begun.state, 'tenure-5', 'user-carol', catalog);
 		if (!first.ok) throw first;
-		const second = admitPendingJoinTenure(first.state, 'tenure-5', catalog);
+		const second = admitPendingJoinTenure(first.state, 'tenure-5', 'user-carol', catalog);
 		expect(second).toEqual({ ok: true, state: first.state, events: [] });
 
-		const alreadyActive = admitPendingJoinTenure(first.state, 'tenure-1', catalog);
+		const alreadyActive = admitPendingJoinTenure(first.state, 'tenure-1', 'user-alice', catalog);
 		expect(alreadyActive).toEqual({ ok: true, state: first.state, events: [] });
 	});
 
@@ -374,7 +374,7 @@ describe('admitPendingJoinTenure — boundary-only admission (O3)', () => {
 		);
 		if (!begun.ok) throw begun;
 
-		const joined = admitPendingJoinTenure(begun.state, 'tenure-5', catalog);
+		const joined = admitPendingJoinTenure(begun.state, 'tenure-5', 'user-carol', catalog);
 		if (!joined.ok) throw joined;
 
 		// Current round's own deal (still stage 'deal', unaffected by the

@@ -27,6 +27,7 @@ import {
 	readChallengeDeathContext,
 	type ChallengeDeathContext
 } from '$lib/server/campaign/tenure';
+import { ChallengeJoinSessionNotActiveError } from '$lib/server/campaign/session-state-port';
 import type { SessionStatePort } from '$lib/server/campaign/session-state-port';
 import { sessionCommandEnvelopeSchema } from '$lib/schemas/session.schema';
 import { sha256Hex, canonicalJsonStringify } from '$lib/server/content/canonical-json';
@@ -904,13 +905,19 @@ export async function buildPendingChallengeJoinStatements(input: {
 	// determine," not "nothing to do" (Important 3).
 	const loaded = await loadSessionForReduce(input.db, input.sessionId);
 	if (loaded.status !== 'active') {
-		throw new Error(
+		// Typed so `attachAdventurer` can surface a `'session-not-active'` result
+		// rather than a 500 (branch-fix I3 / ledger O11 item 1).
+		throw new ChallengeJoinSessionNotActiveError(
 			`buildPendingChallengeJoinStatements: session ${input.sessionId} is not active (status: ${loaded.status}) — cannot determine whether to register a pending Challenge join`
 		);
 	}
 
 	const catalog = toSessionEngineRuntime(loaded.runtimeContent).catalog;
-	const reduceResult = admitPendingJoinTenure(loaded.engineState, input.tenureId, catalog);
+	// Branch-fix I4: register the joiner's owning userId AT admission, so the
+	// next `cleanupRound` can admit the pending tenure without the caller having
+	// to re-supply `options.tenureOwners` (the UI sends none). `actorUserId` is
+	// the attaching player — the owner of the new tenure.
+	const reduceResult = admitPendingJoinTenure(loaded.engineState, input.tenureId, input.actorUserId, catalog);
 	if (!reduceResult.ok) {
 		// Unreachable in practice — `admitPendingJoinTenure` never rejects —
 		// but a rejection here is a reducer bug, not "nothing to do."

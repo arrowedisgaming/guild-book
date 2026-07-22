@@ -63,6 +63,15 @@ export const CHALLENGE_GM_TENURE_ID = 'gm';
  * unchanged. */
 export const CHALLENGE_STUN_ID = 'challenge-stun';
 
+/** The content pack's `challenge-guardian-angel` modifier id. Defined HERE
+ * (alongside `CHALLENGE_STUN_ID`, and re-exported by `modifiers.ts`) because
+ * `markTenureDead` (below, Increment 3 branch-fix I10) needs to name it when
+ * sweeping wards the dying tenure CAST onto other players — `modifiers.ts`
+ * imports FROM this module, so owning the constant here avoids a circular
+ * dependency. `modifiers.ts` re-exports it so every existing import site is
+ * unchanged. */
+export const CHALLENGE_GUARDIAN_ANGEL_ID = 'challenge-guardian-angel';
+
 /** The one shared public zone Initiative cards are revealed into. Persists
  * across rounds (cleared, not recreated, at round cleanup). */
 export const CHALLENGE_INITIATIVE_ZONE_ID = 'challenge-initiative';
@@ -318,6 +327,21 @@ export function readChallengeState(state: SessionEngineStateV1): ChallengeStateV
 	if (!state.procedure || state.procedure.procedureId !== CHALLENGE_PROCEDURE_ID) return undefined;
 	const result = challengeStateV1Schema.safeParse(state.procedure.gmPrivate);
 	return result.success ? result.data : undefined;
+}
+
+/**
+ * Distinguishes a genuinely-absent Challenge round from a CORRUPT one (branch-
+ * fix "also fix"): `readChallengeState` collapses both into `undefined`, so a
+ * `challenge-round` procedure whose `gmPrivate` blob fails to parse presents to
+ * every actor as "no active Challenge" and every command rejects with a
+ * misleading message. This predicate is true only for the corrupt case (the
+ * challenge procedure is active but its state does not parse), letting the
+ * command entry point (`command.ts`'s `applyChallengeCommand`) surface a
+ * distinct rejection message instead. Never throws.
+ */
+export function isChallengeStateCorrupt(state: SessionEngineStateV1): boolean {
+	if (!state.procedure || state.procedure.procedureId !== CHALLENGE_PROCEDURE_ID) return false;
+	return !challengeStateV1Schema.safeParse(state.procedure.gmPrivate).success;
 }
 
 /** Validates `challenge` and writes it back as `state.procedure.gmPrivate`.
@@ -810,7 +834,14 @@ export function markTenureDead(
 		}
 		const nextChallenge: ChallengeStateV1 = {
 			...challenge,
-			pendingJoinTenureIds: challenge.pendingJoinTenureIds.filter((id) => id !== tenureId)
+			pendingJoinTenureIds: challenge.pendingJoinTenureIds.filter((id) => id !== tenureId),
+			// Branch-fix I4: a pending joiner now carries a `tenureOwners` entry
+			// (registered at `admitPendingJoinTenure`); prune it on withdrawal so
+			// no stale owner outlives the withdrawn join (Minor 6, extended to the
+			// pending path).
+			tenureOwners: Object.fromEntries(
+				Object.entries(challenge.tenureOwners).filter(([ownerTenureId]) => ownerTenureId !== tenureId)
+			)
 		};
 		const nextState = writeChallengeState(state, nextChallenge);
 		assertSessionInvariants(nextState, context.runtime.catalog);
@@ -847,6 +878,37 @@ export function markTenureDead(
 			events.push(...discardResult.events);
 		}
 		nextState = { ...nextState, privateZones: nextState.privateZones.filter((existing) => existing.id !== zoneId) };
+	}
+
+	// Branch-fix I10: sweep Guardian Angel wards this tenure CAST onto OTHER
+	// players. `deathOwnedZoneIds` above only reaches the dying tenure's OWN
+	// ward zone (where it is the TARGET); a ward it cast lives in the TARGET's
+	// still-live ward zone with an `active` instance whose `ownerTenureId` is
+	// this dying caster. The `nextModifiers` filter below drops that bookkeeping
+	// entry, and `resolveGuardianAngel` requires an active instance — so without
+	// this the physical card would be stranded in the target's zone,
+	// unresolvable and never conserved to a discard pile. Discard each such card
+	// to its own deck's discard pile here so the two (card + instance) are
+	// removed together. The target's zone itself is left in place (it belongs to
+	// a living player and may hold other casters' cumulative wards).
+	for (const modifier of challenge.modifiers) {
+		if (
+			modifier.modifierId !== CHALLENGE_GUARDIAN_ANGEL_ID ||
+			modifier.ownerTenureId !== tenureId ||
+			modifier.status !== 'active' ||
+			modifier.cardId === undefined ||
+			modifier.targetTenureId === undefined ||
+			modifier.targetTenureId === tenureId
+		) {
+			continue;
+		}
+		const wardZoneId = challengeGuardianAngelZoneId(modifier.targetTenureId);
+		const wardZone = findZoneDescriptor(nextState, wardZoneId);
+		if (!wardZone || !wardZone.cards.includes(modifier.cardId)) continue;
+		const discardResult = discardOneCard(nextState, wardZoneId, modifier.cardId, context);
+		if (!discardResult.ok) return discardResult;
+		nextState = discardResult.state;
+		events.push(...discardResult.events);
 	}
 
 	// A REVEALED Initiative card lives in the one shared public Initiative
@@ -932,10 +994,20 @@ export function markTenureDead(
  * no player/GM authorization gate here, matching the plan's own framing that
  * this is the "session cleanup port" doing its job, not a table participant
  * issuing a command.
+ *
+ * Records `ownerUserId` in `tenureOwners` AT REGISTRATION (branch-fix I4):
+ * previously this stored only the tenure id in `pendingJoinTenureIds`, so at
+ * the next `cleanupRound` the admitted tenure had no registered owner and
+ * cleanup rejected `no owner registered for tenure X` unless the UI happened
+ * to pass `options.tenureOwners` by hand (it sends none). The owning userId is
+ * known here — `buildPendingChallengeJoinStatements` has the attaching
+ * `actorUserId` — so recording it now lets `cleanupRound` admit the join with
+ * no extra caller input.
  */
 export function admitPendingJoinTenure(
 	state: SessionEngineStateV1,
 	tenureId: string,
+	ownerUserId: string,
 	catalog: TarotCardCatalog
 ): SessionReduceResult {
 	const challenge = readChallengeState(state);
@@ -946,7 +1018,8 @@ export function admitPendingJoinTenure(
 
 	const nextChallenge: ChallengeStateV1 = {
 		...challenge,
-		pendingJoinTenureIds: [...challenge.pendingJoinTenureIds, tenureId]
+		pendingJoinTenureIds: [...challenge.pendingJoinTenureIds, tenureId],
+		tenureOwners: { ...challenge.tenureOwners, [tenureId]: ownerUserId }
 	};
 	const nextState = writeChallengeState(state, nextChallenge);
 	assertSessionInvariants(nextState, catalog);

@@ -31,6 +31,9 @@ import { makeRng } from '$lib/engine/rng';
 import { projectForActor, type SessionProjection } from '$lib/engine/session/projection';
 import { buildChallengeConfig } from '$lib/engine/session/procedures/challenge/schema';
 import { readChallengeState, tenureIdForUser, type ChallengeReduceContext } from '$lib/engine/session/procedures/challenge/reducer';
+import { DEFAULT_ENEMY_SIZE_ID, LARGER_THAN_HUMAN_SIZE_ID } from '$lib/engine/session/procedures/challenge/deal';
+import { loadActiveChallengeRoster } from '$lib/server/campaign/page-data';
+import { getDenizenThreats } from '$lib/server/content/loader';
 import {
 	applyChallengeCommand,
 	buildChallengeModifierMaterials,
@@ -158,30 +161,158 @@ export async function loadChallengeProjectionsForActor(
 	 */
 	challengeLegalCommands: ChallengeCommand['type'][];
 }> {
+	let loaded: LoadedSession;
 	try {
-		const loaded = await loadSessionForReduce(db, sessionId);
-		const runtime = toSessionEngineRuntime(loaded.runtimeContent);
+		loaded = await loadSessionForReduce(db, sessionId);
+	} catch (cause) {
+		if (!(cause instanceof SessionNotFoundError) && !(cause instanceof SessionLoadIntegrityError)) {
+			console.error('[challenge] unexpected error loading session for projections', cause);
+		}
+		return { projection: null, challengeProjection: null, challengeLegalCommands: [] };
+	}
+
+	// Branch-fix I6: the session must belong to the REQUESTED campaign. A GM of
+	// campaign A holding a session id from campaign B would otherwise receive
+	// B's full generic AND Challenge state through this loader (called before
+	// `executeChallengeCommand`'s own `summary.campaignId !== campaignId` check
+	// on the malformed-envelope and duplicate-lookup paths). Neither the generic
+	// nor the Challenge slice may leak across campaigns.
+	if (loaded.campaignId !== campaignId) {
+		return { projection: null, challengeProjection: null, challengeLegalCommands: [] };
+	}
+
+	const runtime = toSessionEngineRuntime(loaded.runtimeContent);
+
+	// Branch-fix I5: build and return the GENERIC projection first, wrapping
+	// ONLY the Challenge slice below in its own catch. Previously the generic
+	// projection AND `buildChallengeConfig` (which throws on missing Challenge
+	// content) shared one try/catch, so a Challenge-only fault nulled the
+	// generic projection for a NON-Challenge table — and `/sync`/SSR now route
+	// every session through here.
+	let genericProjection: SessionProjectionEnvelope<SessionProjection> | null;
+	try {
 		const projection = projectForActor(loaded.engineState, actor, runtime.catalog);
 		const cursor = await campaignCursor(db, campaignId);
+		genericProjection = { campaignCursor: cursor, sessionVersion: loaded.currentVersion, projection };
+	} catch (cause) {
+		if (!(cause instanceof SessionNotFoundError) && !(cause instanceof SessionLoadIntegrityError)) {
+			console.error('[challenge] unexpected error building generic projection', cause);
+		}
+		genericProjection = null;
+	}
 
+	let challengeProjection: ChallengeProjection | null = null;
+	let challengeLegalCommands: ChallengeCommand['type'][] = [];
+	try {
 		const config = buildChallengeConfig(loaded.runtimeContent.procedures, loaded.runtimeContent.formulas);
 		const equipment = await resolveEquipmentCapsFor(db, loaded.engineState, actor);
 		const materials = buildChallengeModifierMaterials(loaded.runtimeContent.modifiers, equipment);
 		const modifierCaps = modifierCapsFrom(materials);
-		const challengeProjection = projectChallengeForActor(loaded.engineState, actor, runtime.catalog, config, modifierCaps);
-		const challengeLegalCommands = legalChallengeCommands(loaded.engineState, actor, config, modifierCaps);
-
-		return {
-			projection: { campaignCursor: cursor, sessionVersion: loaded.currentVersion, projection },
-			challengeProjection,
-			challengeLegalCommands
-		};
+		challengeProjection = projectChallengeForActor(loaded.engineState, actor, runtime.catalog, config, modifierCaps);
+		challengeLegalCommands = legalChallengeCommands(loaded.engineState, actor, config, modifierCaps);
 	} catch (cause) {
-		if (!(cause instanceof SessionNotFoundError) && !(cause instanceof SessionLoadIntegrityError)) {
-			console.error('[challenge] unexpected error building actor projections', cause);
-		}
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [] };
+		console.error('[challenge] unexpected error building Challenge projection slice', cause);
+		challengeProjection = null;
+		challengeLegalCommands = [];
 	}
+
+	return { projection: genericProjection, challengeProjection, challengeLegalCommands };
+}
+
+/**
+ * Server-boundary validation for the roster/enemy inputs the pure engine
+ * cannot check itself (it has no DB and no denizen catalog):
+ *
+ * - **C2 (roster):** every tenure that will be SEATED this round must be a real
+ *   active campaign tenure AND its owning user must be an actual session
+ *   private-state recipient. Private-state rows are created once at session
+ *   start from `memberUserIds`; a user who joined the campaign AFTER the session
+ *   started has no such row, so dealing them a hand is a silent no-op UPDATE and
+ *   the next Challenge command trips invariant #5 (every configured card must be
+ *   present) and hard-freezes the session. Rejecting cleanly here turns that
+ *   freeze into an ordinary `illegal-command`. (Recipients are keyed by USER, so
+ *   a death/replacement — the SAME user attaching a new adventurer — passes,
+ *   exactly as intended.)
+ * - **I9 (enemy catalog):** `threat` must be a real `denizens.json` threat id
+ *   (an unrecognized value silently scores a zero GM-hand bonus), and `size`
+ *   must be one of the two recognized sentinels (there is no size catalog — only
+ *   the `larger-than-human` distinction is mechanical).
+ *
+ * Returns a human-readable rejection message, or `null` when the command is
+ * either not a roster/enemy-bearing command or fully valid.
+ */
+async function validateChallengeRosterInputs(
+	db: AppDb,
+	campaignId: string,
+	recipientUserIds: readonly string[],
+	command: ChallengeCommand,
+	loadedState: SessionEngineStateV1
+): Promise<string | null> {
+	const validSizes = new Set([LARGER_THAN_HUMAN_SIZE_ID, DEFAULT_ENEMY_SIZE_ID]);
+	const validThreats = new Set(getDenizenThreats().map((threat) => threat.id));
+
+	function validateEnemyCatalog(enemyFacts: readonly { id: string; size: string; threat: string }[]): string | null {
+		for (const enemy of enemyFacts) {
+			if (!validThreats.has(enemy.threat)) {
+				return `unknown enemy threat "${enemy.threat}" for ${enemy.id} — not a denizens.json threat id`;
+			}
+			if (!validSizes.has(enemy.size)) {
+				return `unknown enemy size "${enemy.size}" for ${enemy.id} — expected "${DEFAULT_ENEMY_SIZE_ID}" or "${LARGER_THAN_HUMAN_SIZE_ID}"`;
+			}
+		}
+		return null;
+	}
+
+	if (command.type === 'begin-challenge') {
+		const roster = await loadActiveChallengeRoster(db, campaignId);
+		const rosterOwnerByTenure = new Map(roster.map((entry) => [entry.tenureId, entry.userId]));
+		const recipients = new Set(recipientUserIds);
+		for (const tenureId of command.participantTenureIds) {
+			const rosterOwner = rosterOwnerByTenure.get(tenureId);
+			if (rosterOwner === undefined) {
+				return `${tenureId} is not an active adventurer tenure in this campaign`;
+			}
+			const declaredOwner = command.tenureOwners[tenureId];
+			if (declaredOwner !== rosterOwner) {
+				return `tenure ${tenureId} owner does not match the active campaign roster`;
+			}
+			if (!recipients.has(rosterOwner)) {
+				return `${tenureId}'s owner is not a session participant (they joined after the session started) and cannot be seated mid-session`;
+			}
+		}
+		return validateEnemyCatalog(command.enemyFacts);
+	}
+
+	if (command.type === 'cleanup-round') {
+		const enemyError = command.options?.enemyFacts ? validateEnemyCatalog(command.options.enemyFacts) : null;
+		if (enemyError) return enemyError;
+
+		// Every tenure `cleanupRound` will ADMIT next round (the current pending
+		// joins) must have a recipient owner, or its dealt hand next round would
+		// write to a nonexistent private-state row and freeze the session (C2).
+		const challenge = readChallengeState(loadedState);
+		if (!challenge || challenge.pendingJoinTenureIds.length === 0) return null;
+		const effectiveOwners: Record<string, string> = { ...challenge.tenureOwners, ...(command.options?.tenureOwners ?? {}) };
+		const recipients = new Set(recipientUserIds);
+		const roster = await loadActiveChallengeRoster(db, campaignId);
+		const rosterOwnerByTenure = new Map(roster.map((entry) => [entry.tenureId, entry.userId]));
+		for (const tenureId of challenge.pendingJoinTenureIds) {
+			const owner = effectiveOwners[tenureId];
+			if (owner === undefined) {
+				return `pending joiner ${tenureId} has no registered owner`;
+			}
+			const rosterOwner = rosterOwnerByTenure.get(tenureId);
+			if (rosterOwner !== undefined && rosterOwner !== owner) {
+				return `pending joiner ${tenureId} owner does not match the active campaign roster`;
+			}
+			if (!recipients.has(owner)) {
+				return `pending joiner ${tenureId}'s owner is not a session participant and cannot be seated`;
+			}
+		}
+		return null;
+	}
+
+	return null;
 }
 
 export async function executeChallengeCommand(input: ExecuteChallengeCommandInput): Promise<ExecuteChallengeCommandResult> {
@@ -254,6 +385,26 @@ export async function executeChallengeCommand(input: ExecuteChallengeCommandInpu
 			throw cause;
 		}
 		lastKnownVersion = loaded.currentVersion;
+
+		// Branch-fix C2/I9: validate roster + enemy-catalog inputs against the
+		// DB and content catalog the pure engine can't reach, BEFORE reducing —
+		// a non-recipient owner or unknown threat/size must be a clean rejection,
+		// never a downstream freeze or silent mis-score.
+		const rosterError = await validateChallengeRosterInputs(db, campaignId, loaded.recipientUserIds, envelope.command, loaded.engineState);
+		if (rosterError) {
+			return await persistRejectionOrReplay(
+				dbContext,
+				db,
+				campaignId,
+				sessionId,
+				envelope,
+				actor,
+				actorUserId,
+				requestHash,
+				loaded.currentVersion,
+				{ code: 'illegal-command', message: rosterError }
+			);
+		}
 
 		const rng = makeRng(deriveAttemptSeed(loaded.shuffleSeed, loaded.currentVersion, attempt));
 		const runtime = toSessionEngineRuntime(loaded.runtimeContent);

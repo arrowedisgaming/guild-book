@@ -840,7 +840,10 @@ export interface ReplaceInitiativeParams {
 	requiresShield: boolean;
 	anySuit: boolean;
 	actionBudget: 'miscellaneous';
-	discardsOldInitiative: boolean;
+	/** Branch-fix I8: literal `true` — the engine always discards the replaced
+	 * Initiative card (a `false` value would strand it and break card
+	 * conservation), so content cannot express any other value. */
+	discardsOldInitiative: true;
 }
 
 export interface GuardianAngelParams {

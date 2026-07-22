@@ -567,7 +567,7 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 		it("flips the ward to 'resolved' and discards the card once flipped up to Dodge or Riposte (Ch7: \"Once your Dodge/Riposte card is resolved, discard the card\") — freeing the maxInstances lockout", () => {
 			const { state, p2Ctx } = castGuardianAngel('guardian-angel-resolve');
 
-			const resolved = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			const resolved = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', guardianAngelParams, p2Ctx);
 			expect(resolved.ok).toBe(true);
 			if (!resolved.ok) return;
 
@@ -596,9 +596,9 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 
 		it('rejects resolving a Guardian Angel that has already been resolved (no double-consumption) — the card is gone, so this pins the ZONE-membership guard specifically (round-2 review, Item 3: distinct from the separate instance-lookup guard below)', () => {
 			const { state, p2Ctx } = castGuardianAngel('guardian-angel-resolve-twice');
-			const first = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			const first = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', guardianAngelParams, p2Ctx);
 			if (!first.ok) throw first;
-			const second = resolveGuardianAngel(first.state, 'tenure-2', 'wands-v', 'dodge', p2Ctx);
+			const second = resolveGuardianAngel(first.state, 'tenure-2', 'wands-v', 'dodge', guardianAngelParams, p2Ctx);
 			expect(second).toMatchObject({
 				ok: false,
 				rejection: { code: 'illegal-command', message: expect.stringContaining('has no Guardian Angel card') }
@@ -622,7 +622,7 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 					.map((zone) => (zone.id === gaZoneId ? { ...zone, cards: zone.cards.concat(orphanCardId) } : zone))
 			};
 
-			const result = resolveGuardianAngel(withOrphanCard, 'tenure-2', orphanCardId, 'dodge', p2Ctx);
+			const result = resolveGuardianAngel(withOrphanCard, 'tenure-2', orphanCardId, 'dodge', guardianAngelParams, p2Ctx);
 			expect(result).toMatchObject({
 				ok: false,
 				rejection: { code: 'illegal-command', message: expect.stringContaining('has no active Guardian Angel instance') }
@@ -632,7 +632,7 @@ describe('Challenge modifiers (Increment 3 Task 4)', () => {
 		it('rejects a non-owning player resolving another tenure\'s ward', () => {
 			const { state } = castGuardianAngel('guardian-angel-resolve-not-owner');
 			const impersonator = ctxFor(playerActor('tenure-1'), catalog, config, 'guardian-angel-resolve-not-owner');
-			const result = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', impersonator);
+			const result = resolveGuardianAngel(state, 'tenure-2', 'wands-v', 'dodge', guardianAngelParams, impersonator);
 			expect(result).toMatchObject({ ok: false, rejection: { code: 'not-authorized' } });
 		});
 	});

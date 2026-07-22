@@ -65,7 +65,11 @@ const counselTransferCommandSchema = z
 	.object({ type: z.literal('counsel-transfer'), recipientUserId: z.string().trim().min(1).max(128), cardId })
 	.strict();
 const guardianAngelCommandSchema = z.object({ type: z.literal('guardian-angel'), targetTenureId: tenureId, cardId }).strict();
+const resolveGuardianAngelCommandSchema = z
+	.object({ type: z.literal('resolve-guardian-angel'), cardId, chosenAction: z.enum(['dodge', 'riposte']) })
+	.strict();
 const aimPrepareCommandSchema = z.object({ type: z.literal('aim-prepare'), cardId }).strict();
+const resolveAimCommandSchema = z.object({ type: z.literal('resolve-aim'), cardId }).strict();
 const replaceInitiativeWithShieldCommandSchema = z
 	.object({ type: z.literal('replace-initiative-with-shield'), cardId })
 	.strict();
@@ -91,7 +95,9 @@ export const challengeCommandSchema = z.discriminatedUnion('type', [
 	applyBrainfeverCommandSchema,
 	counselTransferCommandSchema,
 	guardianAngelCommandSchema,
+	resolveGuardianAngelCommandSchema,
 	aimPrepareCommandSchema,
+	resolveAimCommandSchema,
 	replaceInitiativeWithShieldCommandSchema
 ]);
 

@@ -2,9 +2,11 @@ import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireCampaignAccess } from '$lib/server/campaign/access';
 import { loadCampaignProjection } from '$lib/server/campaign/service';
+import { loadActiveChallengeRoster } from '$lib/server/campaign/page-data';
+import { getDenizenThreats } from '$lib/server/content/loader';
 import { getDb, getDbContext } from '$lib/server/db';
 import { startSession } from '$lib/server/session/lifecycle';
-import { loadProjectionForActor } from '$lib/server/session/command-service';
+import { loadChallengeProjectionsForActor } from '$lib/server/session/challenge-command-service';
 import { campaignCursor, findOpenSessionForCampaign } from '$lib/server/session/repository';
 import type { SessionSyncSnapshot } from '$lib/stores/campaign-session.svelte';
 
@@ -21,37 +23,55 @@ import type { SessionSyncSnapshot } from '$lib/stores/campaign-session.svelte';
 export const load: PageServerLoad = async (event) => {
 	const role = await requireCampaignAccess(event, event.params.id);
 	const db = await getDb(event);
-	const [campaign, cursor, openSession] = await Promise.all([
+	const [campaign, cursor, openSession, challengeRoster] = await Promise.all([
 		loadCampaignProjection(db, role),
 		campaignCursor(db, event.params.id),
-		findOpenSessionForCampaign(db, event.params.id)
+		findOpenSessionForCampaign(db, event.params.id),
+		// GM-only UI need (the "Begin Challenge" roster picker), but cheap
+		// enough and non-secret enough (campaign membership, not private hand
+		// state) to fetch unconditionally rather than branch on role.
+		loadActiveChallengeRoster(db, event.params.id)
 	]);
 	if (!campaign) throw error(404, 'Campaign not found');
 
 	let session: SessionSyncSnapshot['session'] = null;
 	if (openSession) {
-		const envelope = await loadProjectionForActor(db, openSession.sessionId, event.params.id, {
-			kind: role.kind,
-			userId: role.userId
-		});
+		const { projection: envelope, challengeProjection, challengeLegalCommands } = await loadChallengeProjectionsForActor(
+			db,
+			openSession.sessionId,
+			event.params.id,
+			{ kind: role.kind, userId: role.userId }
+		);
 		if (envelope) {
 			session = {
 				sessionId: openSession.sessionId,
 				status: openSession.status,
 				sessionVersion: envelope.sessionVersion,
 				campaignCursor: envelope.campaignCursor,
-				projection: envelope.projection
+				projection: envelope.projection,
+				challengeProjection,
+				challengeLegalCommands
 			};
 		}
 	}
 
 	const initial: SessionSyncSnapshot = { cursor, events: [], session };
 
+	// The GM's "Begin Challenge" enemy-fact form needs the real `threat`
+	// values (review round: previously free text, so a typo like `Elite`
+	// silently scored as no threat at all — `deal.ts`'s
+	// `calculateGmHandSize` compares exactly against these ids). Sourced from
+	// `denizens.json`'s own `threats` catalog, never re-typed in the
+	// component. Trivial/cached, safe to compute unconditionally.
+	const enemyThreatOptions = getDenizenThreats().map((threat) => ({ id: threat.id, name: threat.name }));
+
 	return {
 		campaignId: event.params.id,
 		campaignName: campaign.name,
 		role: role.kind,
 		userId: role.userId,
+		challengeRoster,
+		enemyThreatOptions,
 		initial
 	};
 };

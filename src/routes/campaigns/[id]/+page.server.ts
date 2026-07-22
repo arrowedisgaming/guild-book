@@ -23,6 +23,7 @@ import {
 	rotateCampaignInvite
 } from '$lib/server/campaign/service';
 import { attachAdventurer, replaceAdventurer } from '$lib/server/campaign/tenure';
+import { buildPendingChallengeJoinStatements, challengeSessionStatePort } from '$lib/server/session/command-service';
 import { getDb } from '$lib/server/db';
 import { campaignCursor } from '$lib/server/session/repository';
 
@@ -143,13 +144,19 @@ async function mutateAdventurer(
 ) {
 	const role = await requireRole(event, 'player');
 	const characterId = requiredFormValue(await event.request.formData(), 'characterId');
-	const service = action === 'replace' ? replaceAdventurer : attachAdventurer;
-	const result = await service(await getDb(event), {
+	const db = await getDb(event);
+	// Branch-fix I3: wire the real session-state port + pending-join builder (see
+	// the adventurer API route for the rationale).
+	const input = {
 		campaignId: event.params.id,
 		membershipId: role.membershipId,
 		actorUserId: role.userId,
 		characterId
-	});
+	};
+	const result =
+		action === 'replace'
+			? await replaceAdventurer(db, input, challengeSessionStatePort(db))
+			: await attachAdventurer(db, input, challengeSessionStatePort(db), buildPendingChallengeJoinStatements);
 	if (!result.ok) {
 		return fail(409, {
 			message: action === 'replace' ? 'Adventurer could not be replaced.' : 'Adventurer could not be attached.'

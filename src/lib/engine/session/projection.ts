@@ -37,7 +37,11 @@ export type SessionProjection = SessionPlayerProjection | SessionGmProjection;
  * entirely — `label`/`imageKey` fall back to the card id and `value` falls
  * back to `0` rather than fabricating rulebook data the engine doesn't have.
  */
-function hydrateVisible(cardId: CardId, catalog: TarotCardCatalog): VisibleCardSlot {
+/** Exported (Increment 3 Task 6) so the Challenge procedure's own projector
+ * (`procedures/challenge/projection.ts`) can hydrate a revealed Initiative
+ * card the identical way every other card slot in this module is hydrated,
+ * rather than duplicating this lookup/fallback logic. Behavior unchanged. */
+export function hydrateVisible(cardId: CardId, catalog: TarotCardCatalog): VisibleCardSlot {
 	const entry = catalog[cardId];
 	const id = entry?.id ?? cardId;
 	return {
@@ -73,6 +77,18 @@ function playerHandCounts(state: SessionEngineStateV1): Record<UserId, number> {
 	for (const zone of state.privateZones) {
 		if (zone.kind !== 'player-hand') continue;
 		counts[zone.ownerUserId] = (counts[zone.ownerUserId] ?? 0) + zone.cards.length;
+	}
+	return counts;
+}
+
+/** Additive (O2): the same hand-count information as `playerHandCounts`, but
+ * keyed by zone id instead of summed by owner — see
+ * `SessionPublicProjection.playerHandCountsByZoneId`'s doc comment. */
+function playerHandCountsByZoneId(state: SessionEngineStateV1): Record<string, number> {
+	const counts: Record<string, number> = {};
+	for (const zone of state.privateZones) {
+		if (zone.kind !== 'player-hand') continue;
+		counts[zone.id] = zone.cards.length;
 	}
 	return counts;
 }
@@ -116,6 +132,7 @@ function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCa
 		playerDiscardTop: topSlot(state.playerDiscard, catalog),
 		gmHandCount: state.gmHand.length,
 		playerHandCounts: playerHandCounts(state),
+		playerHandCountsByZoneId: playerHandCountsByZoneId(state),
 		privateZoneCardBacks: buildPrivateZoneCardBacks(state),
 		publicZones: state.publicZones.map((zone) => buildPublicZoneView(zone, catalog)),
 		pendingZoneCounts: state.pendingZones.map((zone) => ({ id: zone.id, deck: zone.deck, count: zone.cards.length }))
@@ -124,6 +141,25 @@ function buildPublicProjection(state: SessionEngineStateV1, catalog: TarotCardCa
 
 function ownedZoneCards(state: SessionEngineStateV1, ownerUserId: UserId, kind: string): CardId[] {
 	return state.privateZones.filter((zone) => zone.ownerUserId === ownerUserId && zone.kind === kind).flatMap((zone) => zone.cards);
+}
+
+/** Additive (O2): the actor's own `player-hand` zones, keyed by zone id
+ * instead of flattened into one array — see
+ * `SessionPlayerProjection.privateHandsByZoneId`'s doc comment. */
+function ownedHandsByZoneId(state: SessionEngineStateV1, ownerUserId: UserId, catalog: TarotCardCatalog): Record<string, CardSlot[]> {
+	const out: Record<string, CardSlot[]> = {};
+	for (const zone of state.privateZones) {
+		if (zone.kind !== 'player-hand' || zone.ownerUserId !== ownerUserId) continue;
+		out[zone.id] = visibleSlots(zone.cards, catalog);
+	}
+	return out;
+}
+
+/** GM-only hydration of every pending zone's real card contents (see
+ * `SessionGmProjection.gmPendingZones`'s doc comment for why this is safe:
+ * every `state.pendingZones` entry is GM-accessible-only by construction). */
+function buildGmPendingZones(state: SessionEngineStateV1, catalog: TarotCardCatalog): SessionGmProjection['gmPendingZones'] {
+	return state.pendingZones.map((zone) => ({ id: zone.id, deck: zone.deck, cards: visibleSlots(zone.cards, catalog) }));
 }
 
 /**
@@ -150,6 +186,7 @@ export function projectForActor(state: SessionEngineStateV1, actor: SessionActor
 		const gmProjection: SessionGmProjection = {
 			public: publicProjection,
 			gmHand: visibleSlots(state.gmHand, catalog),
+			gmPendingZones: buildGmPendingZones(state, catalog),
 			legalCommands
 		};
 		return gmProjection;
@@ -160,6 +197,7 @@ export function projectForActor(state: SessionEngineStateV1, actor: SessionActor
 		privateHand: visibleSlots(ownedZoneCards(state, actor.userId, 'player-hand'), catalog),
 		privateFacedown: visibleSlots(ownedZoneCards(state, actor.userId, 'player-facedown'), catalog),
 		privatePrepared: visibleSlots(ownedZoneCards(state, actor.userId, 'player-prepared'), catalog),
+		privateHandsByZoneId: ownedHandsByZoneId(state, actor.userId, catalog),
 		legalCommands
 	};
 	return playerProjection;

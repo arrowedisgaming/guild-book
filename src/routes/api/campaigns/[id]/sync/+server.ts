@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
 import { getDb } from '$lib/server/db';
-import { loadProjectionForActor } from '$lib/server/session/command-service';
+import { loadChallengeProjectionsForActor } from '$lib/server/session/challenge-command-service';
 import {
 	campaignCursor,
 	findOpenSessionForCampaign,
@@ -68,20 +68,36 @@ export const GET: RequestHandler = async (event) => {
 	const events = cappedRows.map((row) => toWireEvent(row, secretsByEventId));
 	const nextCursor = events.length > 0 ? events[events.length - 1].id : currentCursor;
 
-	let session: { sessionId: string; status: string; sessionVersion: number; campaignCursor: number; projection: unknown } | null =
-		null;
+	let session:
+		| {
+				sessionId: string;
+				status: string;
+				sessionVersion: number;
+				campaignCursor: number;
+				projection: unknown;
+				challengeProjection: unknown;
+				challengeLegalCommands: unknown;
+		  }
+		| null = null;
 	if (openSession) {
-		const projectionEnvelope = await loadProjectionForActor(db, openSession.sessionId, campaignId, {
-			kind: role.kind,
-			userId: role.userId
-		});
+		// Additive (Increment 3 Task 6): the same actor-scoped generic
+		// projection every other route builds, PLUS the Challenge procedure's
+		// own projection slice — one combined loader so this route never
+		// diverges from `challenge-command-service.ts`'s own builder.
+		const {
+			projection: projectionEnvelope,
+			challengeProjection,
+			challengeLegalCommands
+		} = await loadChallengeProjectionsForActor(db, openSession.sessionId, campaignId, { kind: role.kind, userId: role.userId });
 		if (projectionEnvelope) {
 			session = {
 				sessionId: openSession.sessionId,
 				status: openSession.status,
 				sessionVersion: projectionEnvelope.sessionVersion,
 				campaignCursor: projectionEnvelope.campaignCursor,
-				projection: projectionEnvelope.projection
+				projection: projectionEnvelope.projection,
+				challengeProjection,
+				challengeLegalCommands
 			};
 		}
 	}

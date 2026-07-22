@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { AppDb } from '$lib/server/db';
 import {
 	campaignAdventurerTenures,
@@ -93,4 +93,35 @@ export async function listEligibleAdventurersForUser(
 		}
 	}
 	return eligible;
+}
+
+export interface ActiveChallengeTenureView {
+	tenureId: string;
+	userId: string;
+	characterName: string;
+}
+
+/**
+ * Every CURRENTLY-active adventurer tenure in `campaignId` (Increment 3 Task
+ * 6) — exactly the `{participantTenureIds, tenureOwners}` roster the GM's
+ * "Begin Challenge" control needs to submit, since neither the generic nor
+ * Challenge projection carries campaign roster/tenure data (that's
+ * campaign-domain, not session-engine state). Never fabricates a display
+ * name beyond the same "Unnamed adventurer" fallback `loadCampaignRosterView`
+ * already uses.
+ */
+export async function loadActiveChallengeRoster(db: AppDb, campaignId: string): Promise<ActiveChallengeTenureView[]> {
+	const rows = await db
+		.select({
+			tenureId: campaignAdventurerTenures.id,
+			userId: campaignMembers.userId,
+			characterName: characters.name
+		})
+		.from(campaignAdventurerTenures)
+		.innerJoin(campaignMembers, eq(campaignMembers.id, campaignAdventurerTenures.membershipId))
+		.innerJoin(characters, eq(characters.id, campaignAdventurerTenures.characterId))
+		.where(and(eq(campaignAdventurerTenures.campaignId, campaignId), isNull(campaignAdventurerTenures.endedAt)))
+		.orderBy(asc(campaignAdventurerTenures.startedAt));
+
+	return rows.map((row) => ({ ...row, characterName: row.characterName.trim() || 'Unnamed adventurer' }));
 }

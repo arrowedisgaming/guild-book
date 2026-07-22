@@ -7,7 +7,8 @@ import {
 	campaignMembers,
 	campaignMutationClaims,
 	campaigns,
-	characters
+	characters,
+	characterVersionClaims
 } from '$lib/server/db/schema';
 import { migrateCharacterData } from '$lib/engine/character-migration';
 import {
@@ -15,7 +16,7 @@ import {
 	runCampaignAtomic,
 	type CampaignAtomicStatement
 } from './atomic';
-import { noSessionsYet, type SessionStatePort } from './session-state-port';
+import { ChallengeJoinSessionNotActiveError, noSessionsYet, type SessionStatePort } from './session-state-port';
 
 export interface AdventurerEligibilityFacts {
 	ownedByActor: boolean;
@@ -161,8 +162,32 @@ export type AttachAdventurerResult =
 				| 'membership-not-found'
 				| 'membership-has-adventurer'
 				| 'session-active'
+				/** Branch-fix I3 / O11 item 1: the Challenge pending-join callback
+				 * could not register the join because the open session is not
+				 * `active` (e.g. frozen) — a typed reason rather than a 500. */
+				| 'session-not-active'
 				| 'conflict';
 	  };
+
+/**
+ * Increment 3 Task 5 (O3): builds whatever additional atomic statements are
+ * needed to register `tenureId` as a Challenge pending joiner in
+ * `sessionId`'s engine state — a no-op (`[]`) when there is no active
+ * Challenge round to defer into (brief Step 2's "outside Challenge... may
+ * participate immediately" — nothing Challenge-specific to do). Returning
+ * statements (rather than performing the write itself) lets `attachAdventurer`
+ * append them to its OWN `runCampaignAtomic` call, so tenure creation and
+ * pending-join registration commit as one transaction — never a tenure that
+ * exists in the campaign but was silently dropped from the session's roster
+ * bookkeeping. See `$lib/server/session/command-service.ts`'s
+ * `buildPendingChallengeJoinStatements` for the concrete implementation.
+ */
+export type BuildChallengeJoinStatements = (input: {
+	db: AppDb;
+	sessionId: string;
+	tenureId: string;
+	actorUserId: string;
+}) => Promise<CampaignAtomicStatement[]>;
 
 export async function attachAdventurer(
 	db: AppDb,
@@ -174,7 +199,8 @@ export async function attachAdventurer(
 		tenureId?: string;
 		now?: Date;
 	},
-	sessionState: SessionStatePort = noSessionsYet
+	sessionState: SessionStatePort = noSessionsYet,
+	buildChallengeJoinStatements?: BuildChallengeJoinStatements
 ): Promise<AttachAdventurerResult> {
 	const membership = await readActiveMembership(
 		db,
@@ -209,6 +235,30 @@ export async function attachAdventurer(
 	const tenureId = input.tenureId ?? nanoid();
 	const claimId = nanoid();
 	const now = input.now ?? new Date();
+	// Built BEFORE the atomic write so a Challenge-join registration failure
+	// (e.g. the session load itself throwing) surfaces before any statement
+	// runs, rather than after tenure creation already committed — this call is
+	// deliberately OUTSIDE the try/catch below, so a throw here propagates
+	// straight out of `attachAdventurer` (review Important 3: "could not
+	// determine" must fail the whole attach, never silently commit a tenure
+	// with no pending-join registration). When there is no active session, or
+	// the caller supplied no callback, this is `[]` — exactly today's behavior
+	// (O3's first sentence: outside Challenge there is nothing extra to do).
+	let challengeJoinStatements: CampaignAtomicStatement[];
+	try {
+		challengeJoinStatements =
+			activeSessionId && buildChallengeJoinStatements
+				? await buildChallengeJoinStatements({ db, sessionId: activeSessionId, tenureId, actorUserId: input.actorUserId })
+				: [];
+	} catch (cause) {
+		// Branch-fix I3 / O11 item 1: a not-active session surfaces as a typed
+		// result, not a 500. Any other failure still propagates (genuinely
+		// unexpected — "could not determine" must fail the whole attach loudly).
+		if (cause instanceof ChallengeJoinSessionNotActiveError) {
+			return { ok: false, reason: 'session-not-active' };
+		}
+		throw cause;
+	}
 	try {
 		await runCampaignAtomic(db, [
 			characterEligibilityClaim(db, {
@@ -243,6 +293,7 @@ export async function attachAdventurer(
 				}),
 				createdAt: now
 			}),
+			...challengeJoinStatements,
 			mutationClaimReceipt(db, claimId)
 		]);
 	} catch (cause) {
@@ -484,4 +535,186 @@ export async function readAdventurerEligibility(
 		hasActiveTenure: Boolean(activeTenure)
 	});
 	return eligibility.ok ? { ok: true, observedVersion: character.version } : eligibility;
+}
+
+// ---------------------------------------------------------------------------
+// Death within an active Challenge round (Increment 3 Task 5, O4)
+//
+// `$lib/server/character/life.ts`'s `markCharacterDead` already owns
+// out-of-session/no-active-procedure death. This is the SEPARATE, Challenge-
+// aware path: marking a PARTICIPATING adventurer dead must, in one mutation,
+// claim the character version, update life JSON/status, end the tenure,
+// redact the tenure's owned Challenge zones, update participant state, emit
+// public death/cleanup events, and free membership eligibility (tenure
+// ending already frees it — `readActiveMembershipTenure` reads `ended_at IS
+// NULL`). The character/tenure half lives here (mirroring
+// `characterEligibilityClaim`'s conditional-claim style exactly — Increment
+// 1's established pattern, not a new one); the session-engine half
+// (`markTenureDead`, zone/participant bookkeeping) plus the final combined
+// atomic write live in `$lib/server/session/command-service.ts`, which
+// composes both into ONE `runCampaignAtomic` call.
+// ---------------------------------------------------------------------------
+
+export interface ChallengeDeathContext {
+	characterId: string;
+	membershipId: string;
+	campaignId: string;
+	characterUserId: string;
+	characterVersion: number;
+	characterDataJson: string;
+	campaignOwnerUserId: string;
+}
+
+/** Reads everything needed to authorize and build the death statements for
+ * `tenureId`'s CURRENT (not-yet-ended) tenure — or `null` if there is no such
+ * tenure, or its character is already dead (the same "not-found"-shaped
+ * failure `markCharacterDead` uses for an ineligible target, so a caller
+ * doesn't need a separate "already dead" branch here). */
+export async function readChallengeDeathContext(
+	db: AppDb,
+	tenureId: string
+): Promise<ChallengeDeathContext | null> {
+	const row = await db
+		.select({
+			characterId: campaignAdventurerTenures.characterId,
+			membershipId: campaignAdventurerTenures.membershipId,
+			campaignId: campaignAdventurerTenures.campaignId,
+			characterUserId: characters.userId,
+			characterVersion: characters.version,
+			characterDataJson: characters.data,
+			lifeStatus: characters.lifeStatus,
+			campaignOwnerUserId: campaigns.ownerUserId
+		})
+		.from(campaignAdventurerTenures)
+		.innerJoin(characters, eq(characters.id, campaignAdventurerTenures.characterId))
+		.innerJoin(campaigns, eq(campaigns.id, campaignAdventurerTenures.campaignId))
+		.where(and(eq(campaignAdventurerTenures.id, tenureId), isNull(campaignAdventurerTenures.endedAt)))
+		.get();
+	if (!row || row.lifeStatus !== 'alive') return null;
+	return row;
+}
+
+/**
+ * The conditional claim proving, at commit time, that `tenureId`'s character
+ * is still alive at `expectedCharacterVersion` AND `tenureId` is still the
+ * active tenure for `characterId` — mirrors `characterEligibilityClaim`'s
+ * INSERT...SELECT...WHERE shape exactly (Increment 1's established pattern),
+ * plus a caller-supplied `sessionGuard` so the SAME claim also proves the
+ * session is still at the version the caller read Challenge state from
+ * (composability point, same idiom `characterEligibilityClaim`'s own
+ * `sessionGuard` parameter already established). A zero-row claim here makes
+ * the LAST statement in `challengeDeathStatements` — the FK-dependent receipt
+ * — fail, aborting the whole batch (`mutationClaimReceipt`'s doc comment:
+ * "Append this last so a zero-row conditional claim becomes an FK failure").
+ */
+export function challengeDeathClaimStatement(
+	db: AppDb,
+	input: {
+		claimId: string;
+		campaignId: string;
+		characterId: string;
+		tenureId: string;
+		actorUserId: string;
+		expectedCharacterVersion: number;
+		now: Date;
+		sessionGuard: SQL;
+	}
+): CampaignAtomicStatement {
+	return db.insert(campaignMutationClaims).select(
+		db
+			.select({
+				id: sql<string>`${input.claimId}`.as('id'),
+				campaignId: sql<string>`${input.campaignId}`.as('campaign_id'),
+				characterId: characters.id,
+				kind: sql<string>`${'challenge.death'}`.as('kind'),
+				actorUserId: sql<string>`${input.actorUserId}`.as('actor_user_id'),
+				createdAt: sql<Date>`${Math.floor(input.now.getTime() / 1000)}`.as('created_at')
+			})
+			.from(characters)
+			.where(
+				and(
+					eq(characters.id, input.characterId),
+					eq(characters.version, input.expectedCharacterVersion),
+					eq(characters.lifeStatus, 'alive'),
+					exists(
+						db
+							.select({ id: campaignAdventurerTenures.id })
+							.from(campaignAdventurerTenures)
+							.where(
+								and(
+									eq(campaignAdventurerTenures.id, input.tenureId),
+									eq(campaignAdventurerTenures.characterId, input.characterId),
+									eq(campaignAdventurerTenures.campaignId, input.campaignId),
+									isNull(campaignAdventurerTenures.endedAt)
+								)
+							)
+					),
+					input.sessionGuard
+				)
+			)
+	);
+}
+
+/** The character/tenure half of a Challenge death: claim, version-claim
+ * record, the character's `data`/`life_status`/`version` update, the
+ * tenure's `ended_at`/`end_reason`/`death_session_id` update, and the FK-
+ * dependent receipt. Ordered exactly like `markCharacterDead`'s own statement
+ * list (claim, version claim, character update, tenure update, receipt) —
+ * the caller (`command-service.ts`) appends the session-engine statements and
+ * the public `adventurer.died`/redaction events around these before running
+ * everything in ONE `runCampaignAtomic` call. */
+export function challengeDeathStatements(
+	db: AppDb,
+	input: {
+		claimId: string;
+		campaignId: string;
+		characterId: string;
+		tenureId: string;
+		actorUserId: string;
+		sessionId: string;
+		characterDataJson: string;
+		expectedCharacterVersion: number;
+		now: Date;
+		sessionGuard: SQL;
+	}
+): CampaignAtomicStatement[] {
+	const resultingVersion = input.expectedCharacterVersion + 1;
+	return [
+		challengeDeathClaimStatement(db, {
+			claimId: input.claimId,
+			campaignId: input.campaignId,
+			characterId: input.characterId,
+			tenureId: input.tenureId,
+			actorUserId: input.actorUserId,
+			expectedCharacterVersion: input.expectedCharacterVersion,
+			now: input.now,
+			sessionGuard: input.sessionGuard
+		}),
+		db.insert(characterVersionClaims).values({
+			characterId: input.characterId,
+			resultingVersion,
+			mutationKind: 'death',
+			actorUserId: input.actorUserId,
+			createdAt: input.now
+		}),
+		db
+			.update(characters)
+			.set({
+				data: input.characterDataJson,
+				lifeStatus: 'dead',
+				version: resultingVersion,
+				updatedAt: input.now
+			})
+			.where(and(eq(characters.id, input.characterId), eq(characters.version, input.expectedCharacterVersion))),
+		db
+			.update(campaignAdventurerTenures)
+			.set({
+				endedAt: input.now,
+				endedByUserId: input.actorUserId,
+				endReason: 'died',
+				deathSessionId: input.sessionId
+			})
+			.where(and(eq(campaignAdventurerTenures.id, input.tenureId), isNull(campaignAdventurerTenures.endedAt))),
+		mutationClaimReceipt(db, input.claimId)
+	];
 }

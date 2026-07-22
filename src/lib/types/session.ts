@@ -338,6 +338,19 @@ export interface PublicPrivateZoneCardBacks {
 }
 
 /**
+ * GM-only hydration of one pending zone's real card contents — see
+ * `SessionGmProjection.gmPendingZones`'s doc comment. Named (not an inline
+ * anonymous shape) to match every neighbouring per-zone projection type
+ * (`PublicSessionZoneView`, `PublicPrivateZoneCardBacks`) — other procedures
+ * beyond Challenge read this shared shape too.
+ */
+export interface GmPendingZoneView {
+	id: string;
+	deck: 'major' | 'player';
+	cards: CardSlot[];
+}
+
+/**
  * Everyone at the table sees this. `playerHandCounts` is public information
  * (spec §8.2) — hand counts never move to a private section. Session
  * lifecycle status (active/frozen/ended) is deliberately absent: the pure
@@ -355,7 +368,29 @@ export interface SessionPublicProjection {
 	playerDrawCount: number;
 	playerDiscardTop: CardSlot | null;
 	gmHandCount: number;
+	/**
+	 * @deprecated for any Challenge consumer (Task 6): merges every
+	 * `player-hand` zone a user owns into one count — including a dead
+	 * tenure's zone alongside a live replacement's (see
+	 * `playerHandCountsByZoneId`'s doc comment). Still correct and still used
+	 * by every non-Challenge procedure; a Challenge-aware caller should reach
+	 * for `playerHandCountsByZoneId` instead.
+	 */
 	playerHandCounts: Record<UserId, number>;
+	/**
+	 * Additive (Increment 3 Task 5, O2). `playerHandCounts` sums every
+	 * `player-hand` zone a user owns into one figure — correct for every
+	 * procedure before Challenge, where a user never owns more than one hand
+	 * zone at once. Challenge's tenure-keyed hand zones
+	 * (`challengeHandZoneId`) break that assumption: on death a user can
+	 * transiently own a dead tenure's zone alongside a replacement's, and the
+	 * two must never be reported as one merged count. Keyed by zone id (not
+	 * owner), so any consumer that knows which zone id belongs to which
+	 * tenure (or player) can read that seat's count specifically, without
+	 * disturbing `playerHandCounts` for every existing non-Challenge
+	 * consumer.
+	 */
+	playerHandCountsByZoneId: Record<string, number>;
 	privateZoneCardBacks: PublicPrivateZoneCardBacks[];
 	publicZones: PublicSessionZoneView[];
 	pendingZoneCounts: Array<{ id: string; deck: 'major' | 'player'; count: number }>;
@@ -367,9 +402,30 @@ export interface SessionPublicProjection {
  * can still be rejected on its own zone/card legality). */
 export interface SessionPlayerProjection {
 	public: SessionPublicProjection;
+	/**
+	 * @deprecated for any Challenge consumer (Task 6): flat-maps every
+	 * `player-hand` zone this actor owns into one merged array — including a
+	 * dead tenure's zone alongside a live replacement's (see
+	 * `privateHandsByZoneId`'s doc comment). Still correct and still used by
+	 * every non-Challenge procedure; a Challenge-aware caller should reach for
+	 * `privateHandsByZoneId` instead — this field is the one that
+	 * demonstrably merges two live zones and would otherwise be the first
+	 * thing reached for.
+	 */
 	privateHand: CardSlot[];
 	privateFacedown: CardSlot[];
 	privatePrepared: CardSlot[];
+	/**
+	 * Additive (Increment 3 Task 5, O2's shared-projection fix). `privateHand`
+	 * flat-maps every `player-hand` zone this actor owns into one merged
+	 * array — the same undifferentiated-merge gap `playerHandCountsByZoneId`
+	 * fixes for counts, but for identities. Keyed by zone id so a caller who
+	 * knows a specific tenure's hand zone id (`challengeHandZoneId(tenureId)`)
+	 * can read exactly that tenure's cards, never a dead tenure's leftover
+	 * cards merged in with a replacement's. `privateHand` is unchanged and
+	 * kept for every existing (non-Challenge) consumer.
+	 */
+	privateHandsByZoneId: Record<string, CardSlot[]>;
 	legalCommands: SessionCommandType[];
 }
 
@@ -379,6 +435,20 @@ export interface SessionPlayerProjection {
 export interface SessionGmProjection {
 	public: SessionPublicProjection;
 	gmHand: CardSlot[];
+	/**
+	 * GM-only hydration of every pending zone's actual card contents — the
+	 * pending-zone analog of a player's own `privateFacedown`/`privatePrepared`
+	 * on `SessionPlayerProjection`. `state.pendingZones` are, by construction
+	 * (`zones.ts`'s `listZoneDescriptors`), always `visibility: 'hidden'` with
+	 * no player owner, so `actorMayAccessZone` already grants the GM — and
+	 * only the GM — access to every one of them. The shared public projection
+	 * deliberately exposes only a count (`SessionPublicProjection.
+	 * pendingZoneCounts`) to every role, but "GM-private" means private *to*
+	 * the GM, not hidden from the GM too — omitting this field was the gap
+	 * that left the GM unable to see which card they themselves had placed
+	 * for an enemy's Initiative (Increment 3 Task 2 review).
+	 */
+	gmPendingZones: GmPendingZoneView[];
 	gmPrivateProcedure?: unknown;
 	legalCommands: SessionCommandType[];
 }

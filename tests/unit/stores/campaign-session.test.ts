@@ -35,7 +35,9 @@ function makeInitialSnapshot(sessionVersion: number): SessionSyncSnapshot {
 			status: 'active',
 			sessionVersion,
 			campaignCursor: 5,
-			projection: emptyProjection
+			projection: emptyProjection,
+			challengeProjection: null,
+			challengeLegalCommands: []
 		}
 	};
 }

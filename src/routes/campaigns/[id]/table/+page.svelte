@@ -48,7 +48,10 @@
 			userId={data.userId}
 			{session}
 			events={store.events}
+			challengeRoster={data.challengeRoster}
+			enemyThreatOptions={data.enemyThreatOptions}
 			onSendCommand={store.sendCommand}
+			onSendChallengeCommand={store.sendChallengeCommand}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
 	{:else if data.role === 'gm'}

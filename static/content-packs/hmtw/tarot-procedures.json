@@ -642,6 +642,18 @@
 				"challenge-greater-dooms"
 			],
 			"modifierIds": [],
+			"params": {
+				"cardsPerInitiativeTurn": 1,
+				"actionExcludesMinorAction": true,
+				"gmPlayBudget": 1,
+				"gmDiscardsLimitedByHand": true,
+				"fool": {
+					"pairedPlayRequired": true,
+					"grantsExtraTurn": true,
+					"extraTurnMinorActions": 0,
+					"reshuffleBoundary": "end-round"
+				}
+			},
 			"steps": [
 				{
 					"id": "deal-players",
@@ -6104,7 +6116,8 @@
 			"behaviorId": "forced-hand-discard",
 			"params": {
 				"immediate": true,
-				"discard": "entire-hand"
+				"discard": "one-card",
+				"playerChooses": true
 			}
 		}
 	],

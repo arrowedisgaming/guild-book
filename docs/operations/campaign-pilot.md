@@ -328,3 +328,41 @@ would have reported success. The gate now requires **both** at least one
 accepted command **and** at least one visibility observation before it will
 report anything other than an explicit `FAIL (measured nothing — ...)`. A
 green run must have actually measured something.
+
+### 7.3 The load gate predates the Challenge write density (Increment 3)
+
+The numbers in §7 and §7.1 were measured against Increment 2's traffic
+shape: clients poll `/sync`, and the GM periodically issues a single
+`end-round`. A live Challenge is materially heavier and the gate has **not**
+been re-run against it. Before opening the Challenge to real pilot traffic,
+re-run the load gate with a workload that reflects it, and read the numbers
+knowing the following changed:
+
+- **A second write surface.** Challenge commands go to a dedicated route,
+  `POST /api/campaigns/[id]/sessions/[sessionId]/challenge-commands`, separate
+  from the generic `commands` route. It mirrors the generic command service —
+  strict envelope, canonical-JSON request hash, `commandId` idempotency,
+  pinned-runtime reduce, and the same atomic commit-with-version-claim
+  discipline — but dispatches Challenge commands against an additive
+  `ChallengeCommand` surface. The frozen `SessionCommand` union is untouched.
+- **Roughly five times the write density.** A Challenge round is many
+  accepted commands (deal, place initiative ×N, reveal, per-turn plays and
+  discards, modifiers, cleanup) where Increment 2's shape was one `end-round`
+  per interval. Each accepted write touches the public, server, and per-actor
+  private fragments and advances the session version through the same
+  `session_commands` claim, so contention on that unique claim index scales
+  with table activity.
+- **A raised per-IP write budget.** `src/hooks.server.ts` gives the
+  `challenge-commands` path its own **300 requests / 60s** per-IP budget
+  (versus the default 60/60s), because a busy Challenge legitimately exceeds
+  the general write cadence. The bucket is keyed per IP **and** path, and the
+  endpoint is auth-gated. Note the pre-existing limitation that the budget is
+  per-IP: clients behind one NAT share it, so a genuinely co-located table
+  (several players on one network) draws from a single bucket — size the
+  allowlist and watch for spurious 429s accordingly.
+
+Death during a Challenge is its own separately-wired path
+(`POST /api/campaigns/[id]/sessions/[sessionId]/challenge-death`, GM only) and
+is deliberately not reachable through the `challenge-commands` surface; it is
+not idempotency-keyed by envelope id the way ordinary commands are, so it is
+not part of the retry-by-id contract.

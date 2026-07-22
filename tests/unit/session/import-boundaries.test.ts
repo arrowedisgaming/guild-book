@@ -43,7 +43,9 @@ function importSpecifiers(source: string): string[] {
 	return specifiers;
 }
 
-const sessionEngineFiles = readdirSync(SESSION_ENGINE_DIR).filter((file) => file.endsWith('.ts'));
+const sessionEngineFiles = readdirSync(SESSION_ENGINE_DIR, { recursive: true, encoding: 'utf8' }).filter(
+	(file) => file.endsWith('.ts')
+);
 
 describe('session engine import boundaries', () => {
 	it('finds session engine modules to check', () => {

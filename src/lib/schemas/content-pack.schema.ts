@@ -664,7 +664,11 @@ export const tarotProcedureDefinitionSchema = z.object({
 	invokedFrom: z.tuple([tarotSourceRefSchema]).rest(tarotSourceRefSchema),
 	ruleEntryIds: z.array(z.string()),
 	steps: z.array(tarotProcedureStepDefinitionSchema),
-	modifierIds: z.array(z.string())
+	modifierIds: z.array(z.string()),
+	/** Generic passthrough — see `TarotProcedureDefinition.params`. Specific
+	 * procedures validate their own shape downstream (e.g. the Challenge
+	 * engine's `challengeRoundParamsSchema`). */
+	params: z.record(z.string(), z.unknown()).optional()
 });
 
 const tarotLookupKeySchema = z.union([
@@ -786,7 +790,14 @@ export const sessionModifierDefinitionSchema = z.discriminatedUnion('behaviorId'
 				requiresShield: z.boolean(),
 				anySuit: z.boolean(),
 				actionBudget: z.literal('miscellaneous'),
-				discardsOldInitiative: z.boolean()
+				// Branch-fix I8: narrowed from `z.boolean()` to a literal. The
+				// engine (`modifiers.ts`'s `applyGuard`) ALWAYS discards the
+				// replaced Initiative card — a `false` value would strand that card
+				// in the shared Initiative zone and break card conservation, so
+				// there is no correct alternative behavior for content to express.
+				// Ch7 states the discard as automatic. Narrowing so content cannot
+				// declare a value the engine would have to ignore.
+				discardsOldInitiative: z.literal(true)
 			})
 			.strict()
 	}),
@@ -811,7 +822,8 @@ export const sessionModifierDefinitionSchema = z.discriminatedUnion('behaviorId'
 		params: z
 			.object({
 				immediate: z.boolean(),
-				discard: z.literal('entire-hand')
+				discard: z.literal('one-card'),
+				playerChooses: z.boolean()
 			})
 			.strict()
 	})

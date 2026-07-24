@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gimmick dooms instead of template pick-lists. Exports omit the threat line
   entirely for people. Switching themes — person to creature or between
   creature template pairs — stashes and restores each side's work instead
-  of discarding it.
+  of discarding it. Content pack bumped to 3.4.0 (person seed rules in
+  `denizens.json`, Man theme builderMode) with the digest re-recorded.
 
 ## [0.3.0] - 2026-07-20
 

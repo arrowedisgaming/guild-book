@@ -227,6 +227,9 @@ const KITH_NOTE_PREFIX = 'Kith: ';
 const ARETE_NOTE_PREFIX = 'Arete talent: ';
 const TALENT_NOTE_PREFIX = 'Talent: ';
 
+/** Every note prefix the person path owns — clearPersonState drops them all. */
+const PERSON_NOTE_PREFIXES = [KITH_NOTE_PREFIX, ARETE_NOTE_PREFIX, TALENT_NOTE_PREFIX];
+
 /** The optional "track Wounds like an adventurer" note, toggled on Customize. */
 export const WOUNDS_NOTE_NAME = 'Wounds';
 const WOUNDS_NOTE_TEXT = [
@@ -282,7 +285,8 @@ export function seedPersonFromTheme(
 
 /**
  * Drop person-only state when the draft leaves the person path (a standard
- * theme was chosen): kind, kith/kin and their notes, and wound tracking —
+ * theme was chosen): kind, kith/kin, every person-owned note (kith, arete,
+ * mastered path talents), and wound tracking —
  * a creature must never carry the '*' Health or the Wounds note.
  */
 export function clearPersonState(draft: DenizenDraft, person: PersonSeedRules): DenizenDraft {
@@ -293,7 +297,7 @@ export function clearPersonState(draft: DenizenDraft, person: PersonSeedRules): 
 		kithId: null,
 		kinId: null,
 		notes: unwound.notes.filter(
-			(n) => !n.name.startsWith(KITH_NOTE_PREFIX) && !n.name.startsWith(ARETE_NOTE_PREFIX)
+			(n) => !PERSON_NOTE_PREFIXES.some((prefix) => n.name.startsWith(prefix))
 		)
 	};
 }

@@ -34,6 +34,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   intent, and announce deal counts, initiative order and ties, turns, plays,
   round transitions, and completion for assistive technology. The feature stays
   allowlisted behind `CAMPAIGNS_ENABLED` or pilot user IDs.
+- **People in the denizen builder**: the Man theme now follows the book's
+  "make actual characters" advice as an adversary path. Choosing it swaps the
+  wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread
+  assigned by swap, an optional flavour-only kith recorded as a stat-block
+  note, a kin whose arete talent joins the block, path talents offered from
+  the path matching their highest attribute (other paths behind dropdowns),
+  HD pre-filled for simplicity (with an optional switch to proper Wounds
+  tracking and a checklist note of the book's wound options), and custom
+  gimmick dooms instead of template pick-lists. Exports omit the threat line
+  entirely for people. Switching themes — person to creature or between
+  creature template pairs — stashes and restores each side's work instead
+  of discarding it. Content pack bumped to 3.4.0 (person seed rules in
+  `denizens.json`, Man theme builderMode) with the digest re-recorded.
 
 ### Fixed
 
@@ -56,21 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without ever confirming a session outside the caller's campaign — the table
   explains the wedged state instead of hiding it, integrity failures are logged
   for the operator rather than swallowed, and a refused start says why.
-
-### Added
-
-- **People in the denizen builder**: the Man theme now follows the book's
-  "make actual characters" advice as an adversary path. Choosing it swaps the
-  wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread
-  assigned by swap, an optional flavour-only kith recorded as a stat-block
-  note, a kin whose arete talent joins the block, path talents offered from
-  the path matching their highest attribute (other paths behind dropdowns),
-  HD pre-filled for simplicity (with an optional switch to proper Wounds
-  tracking and a checklist note of the book's wound options), and custom
-  gimmick dooms instead of template pick-lists. Exports omit the threat line
-  entirely for people. Switching themes — person to creature or between
-  creature template pairs — stashes and restores each side's work instead
-  of discarding it.
 
 ## [0.3.0] - 2026-07-20
 

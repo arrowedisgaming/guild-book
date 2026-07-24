@@ -531,6 +531,18 @@ describe('denizen builder — person seeding', () => {
 		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
 	});
 
+	it('drops mastered path talent notes when leaving the person path', () => {
+		// Talent: notes are person-owned just like Kith:/Arete talent: — a
+		// mastered path talent must not survive the switch to a creature theme.
+		const talent = getTalents()[0];
+		const withTalent = togglePersonTalent(setPersonKith(seedPerson(), kiths[0]), talent, true);
+		const keeper = { name: 'Lair', text: 'A collapsed chapel.' };
+		const cleared = clearPersonState({ ...withTalent, notes: [...withTalent.notes, keeper] }, personRules);
+		expect(cleared.notes.some((n) => n.name.startsWith('Talent:'))).toBe(false);
+		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+		expect(cleared.notes).toContainEqual(keeper);
+	});
+
 	it('leaving the person path undoes wound tracking too', () => {
 		// A person with Track Wounds on switches to a creature theme with no
 		// stashed creature draft — the creature must not keep the '*' Health,

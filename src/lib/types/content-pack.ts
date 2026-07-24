@@ -233,11 +233,13 @@ export interface DenizenThemeDefinition {
 	chooseLesserDooms?: string;
 	/**
 	 * Whether the builder can use this template. Omitted = 'standard'.
-	 * 'unsupported' keeps the template in the reference but out of the builder
-	 * (the Man theme: the book says to build people as characters instead).
+	 * 'person' switches the builder to the adversary path (the Man theme:
+	 * the book builds people as characters — spread attributes, kith, and
+	 * gimmick dooms). 'unsupported' keeps the template in the reference but
+	 * out of the builder.
 	 */
-	builderMode?: 'standard' | 'unsupported';
-	/** Shown in the builder when the template is unavailable. */
+	builderMode?: 'standard' | 'person' | 'unsupported';
+	/** Guidance shown on the template's builder card. */
 	builderNote?: string;
 }
 
@@ -310,8 +312,12 @@ export interface DenizenDefinition {
 	name: string;
 	/** Theme id (must resolve within the themes collection). */
 	theme: string;
-	/** Threat id (must resolve within the threats collection). */
-	threat: string;
+	/**
+	 * Threat id (must resolve within the threats collection). Bestiary entries
+	 * always have one (the Zod schema requires it); builder-made people omit
+	 * it — the book builds people as characters, not theme + threat.
+	 */
+	threat?: string;
 	/** Markdown flavor text, reproduced from the book (open content). */
 	flavor: string;
 	attributes: DenizenAttributes;
@@ -330,11 +336,23 @@ export interface DenizenDefinition {
 	sidebars?: DenizenSidebar[];
 }
 
+/**
+ * The simple-HD defaults a person draft seeds with (a sturdy commoner).
+ * The attribute spread is not repeated here — people use the adventurer
+ * spread, `creation.attributeSpread` in index.json.
+ */
+export interface DenizenPersonDefaults {
+	health: DenizenStatValue;
+	defense: DenizenStatValue;
+}
+
 /** The denizens.json collection: templates plus the pre-made bestiary. */
 export interface DenizensFile {
 	themes: DenizenThemeDefinition[];
 	threats: DenizenThreatDefinition[];
 	bestiary: DenizenDefinition[];
+	/** Seed data for the builder's person path (themes with builderMode 'person'). */
+	person: DenizenPersonDefaults;
 }
 
 /** A rules-reference entry (browsable/searchable in the rules section). */

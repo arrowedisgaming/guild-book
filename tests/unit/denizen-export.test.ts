@@ -5,9 +5,15 @@ import {
 	createBlankDraft,
 	createBlankPoolDraft,
 	seedFromTemplates,
+	seedPersonFromTheme,
 	toDenizenDefinition
 } from '$lib/engine/denizen-builder';
-import { getBestiary, getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
+import {
+	getBestiary,
+	getDenizenPersonRules,
+	getDenizenThemes,
+	getDenizenThreats
+} from '$lib/server/content/loader';
 
 const byId = Object.fromEntries(getBestiary().map((d) => [d.id, d]));
 
@@ -79,6 +85,20 @@ describe('denizen markdown export', () => {
 		expect(md).not.toContain('Health/Defense: /');
 		expect(md).not.toContain('hd: "/"');
 		expect(md).not.toContain('**Health/Defense:**');
+	});
+
+	it('drops the threat from frontmatter and subtitle for people', () => {
+		const person = toDenizenDefinition({
+			...seedPersonFromTheme(
+				{ ...createBlankDraft(), name: 'Odo the Cannibal' },
+				getDenizenThemes().find((t) => t.id === 'man')!,
+				getDenizenPersonRules()
+			)
+		});
+		const md = exportDenizenToMarkdown(person, 'Man', '');
+		expect(md).toContain('_Man_');
+		expect(md).not.toContain('_Man _');
+		expect(md).not.toContain('threat:');
 	});
 
 	it('renders builder-made pools and special rules, never a blank HD pair', () => {

@@ -41,7 +41,10 @@ describe('denizens — referential integrity', () => {
 	it('every bestiary entry references a theme and threat that exist', () => {
 		for (const denizen of getBestiary()) {
 			expect(themeIds.has(denizen.theme), denizen.id).toBe(true);
-			expect(threatIds.has(denizen.threat), denizen.id).toBe(true);
+			// threat is optional on the type (builder-made people omit it) but
+			// the bestiary schema requires it — assert it's present and real.
+			expect(denizen.threat, denizen.id).toBeDefined();
+			expect(threatIds.has(denizen.threat!), denizen.id).toBe(true);
 		}
 	});
 
@@ -87,8 +90,9 @@ describe('denizens — book irregularities survive the schema', () => {
 			expect(threats[id].builderMode, id).toBeUndefined();
 		}
 
+		// Man is person-mode: the builder's adversary path, guided by book text.
 		const man = getDenizenThemes().find((t) => t.id === 'man')!;
-		expect(man.builderMode).toBe('unsupported');
+		expect(man.builderMode).toBe('person');
 		expect(man.builderNote).toMatch(/making actual characters/);
 	});
 

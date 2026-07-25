@@ -255,7 +255,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		// have lost a character version race.
 		let resolveSpend: ResolveSpend | null = null;
 		if (spendsResolve) {
-			const evaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, envelope);
+			const evaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, resolveSpendRequest(envelope));
 			if (!evaluated.ok) {
 				// Deliberately NOT persisted as a rejection row. The client's whole
 				// job on `resource-changed` is to show the current numbers and ask
@@ -347,7 +347,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			// between this attempt's read and its commit, that is the ordinary
 			// reconfirmation path, not an internal error.
 			if (resolveSpend) {
-				const reEvaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, envelope);
+				const reEvaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, resolveSpendRequest(envelope));
 				if (!reEvaluated.ok) {
 					return {
 						outcome: reEvaluated.outcome,
@@ -412,9 +412,21 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 	);
 }
 
-interface ResolveSpend {
+export interface ResolveSpend {
 	intent: ResolveIntent;
 	context: ResolveWriteContext;
+}
+
+/** The three envelope fields a spend evaluation actually reads. Named
+ * separately (Increment 4 Task 2) so `guided-test-command-service.ts` can reuse
+ * `evaluateResolveSpend` verbatim: its envelope carries the same reconfirmation
+ * pair but a different command union, and duplicating this security-sensitive
+ * path so the two could drift is exactly the wrong trade. */
+export interface ResolveSpendRequest {
+	observedCharacterVersion: number;
+	expectedResolveCurrent: number;
+	/** Audit label for the version claim — the command type that bought favor. */
+	commandType: string;
 }
 
 /**
@@ -428,12 +440,24 @@ interface ResolveSpend {
  * where the UI already surfaces rejection text; no character document is ever
  * returned (Step 3).
  */
-async function evaluateResolveSpend(
+/** Narrows the generic envelope to the three fields a spend evaluation reads.
+ * Both fields are non-`undefined` by the time this is called — the caller has
+ * already checked `expectedResolveCurrent !== undefined`, and
+ * `sessionCommandEnvelopeSchema` requires the pair together. */
+function resolveSpendRequest(envelope: SessionCommandEnvelope<SessionCommand>): ResolveSpendRequest {
+	return {
+		observedCharacterVersion: envelope.observedCharacterVersion as number,
+		expectedResolveCurrent: envelope.expectedResolveCurrent as number,
+		commandType: envelope.command.type
+	};
+}
+
+export async function evaluateResolveSpend(
 	db: AppDb,
 	campaignId: string,
 	sessionId: string,
 	actorUserId: string,
-	envelope: SessionCommandEnvelope<SessionCommand>
+	request: ResolveSpendRequest
 ): Promise<{ ok: true; spend: ResolveSpend } | { ok: false; outcome: CommandOutcome }> {
 	const characterId = await readActorSpendingCharacterId(db, campaignId, actorUserId);
 	if (!characterId) {
@@ -448,10 +472,10 @@ async function evaluateResolveSpend(
 		sessionId,
 		characterId,
 		actorUserId,
-		expectedCharacterVersion: envelope.observedCharacterVersion as number,
-		expectedResolveCurrent: envelope.expectedResolveCurrent as number,
+		expectedCharacterVersion: request.observedCharacterVersion,
+		expectedResolveCurrent: request.expectedResolveCurrent,
 		delta: -1,
-		reason: envelope.command.type,
+		reason: request.commandType,
 		now: new Date()
 	};
 

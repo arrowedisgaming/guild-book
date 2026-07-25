@@ -114,4 +114,32 @@ describe('validateSavedDenizen', () => {
 		// A pools-mode draft with no pools cannot be saved.
 		expect(validateSavedDenizen({ ...lordDraft(), pools: [] }).valid).toBe(false);
 	});
+
+	it('applies the pack person rules — a broken spread is rejected server-side', () => {
+		// Regression: without the person rules threaded into draftStatWarnings,
+		// this flat 4/4/4/4 person sailed through validation.
+		const flat = {
+			...personDraft(),
+			attributes: { swords: '4', pentacles: '4', cups: '4', wands: '4' }
+		};
+		expect(validateSavedDenizen(flat).valid).toBe(false);
+	});
+});
+
+describe('saveDenizenSchema — payload cap counts bytes', () => {
+	it('rejects multi-byte text that fits in code units but not in bytes', () => {
+		const draft = {
+			...bruteDraft(),
+			notes: Array.from({ length: 10 }, (_, i) => ({
+				name: `Note ${i}`,
+				text: '∞'.repeat(4000)
+			}))
+		};
+		const serialized = JSON.stringify(draft);
+		// The old check (string length) would have accepted this payload…
+		expect(serialized.length).toBeLessThan(MAX_DENIZEN_PAYLOAD_BYTES);
+		// …but its true size is far beyond the cap.
+		expect(new TextEncoder().encode(serialized).length).toBeGreaterThan(MAX_DENIZEN_PAYLOAD_BYTES);
+		expect(saveDenizenSchema.safeParse({ draft }).success).toBe(false);
+	});
 });

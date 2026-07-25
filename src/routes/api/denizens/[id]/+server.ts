@@ -4,24 +4,32 @@ import { getDb } from '$lib/server/db';
 import { denizens } from '$lib/server/db/schema';
 import { ensureUser } from '$lib/server/auth';
 import { eq, and } from 'drizzle-orm';
-import { saveDenizenSchema } from '$lib/schemas/denizen.schema';
+import {
+	updateDenizenSchema,
+	describeIssues,
+	MAX_DENIZEN_PAYLOAD_BYTES
+} from '$lib/schemas/denizen.schema';
 import { validateSavedDenizen } from '$lib/server/validation/denizen';
 import { sanitizeDraft } from '$lib/engine/denizen-builder';
+import { privateHeaders, readBoundedJson } from '$lib/server/http';
+
+const MAX_BODY_BYTES = MAX_DENIZEN_PAYLOAD_BYTES + 4096;
+
+/** Ownership scope shared by every handler: this user's live (unarchived) row. */
+const ownedLive = (id: string, userId: string) =>
+	and(eq(denizens.id, id), eq(denizens.userId, userId), eq(denizens.isArchived, false));
 
 /**
  * GET /api/denizens/:id — the stored draft, sanitized on read. Content-pack
  * ids can change out from under saved rows; the field-by-field sanitizer
  * repairs what it can, exactly like the builder's localStorage load.
+ * Archived rows 404 here just as they do on the pages — one id, one answer.
  */
 export const GET: RequestHandler = async (event) => {
 	const db = await getDb(event);
 	const userId = await ensureUser(event);
 
-	const row = await db
-		.select()
-		.from(denizens)
-		.where(and(eq(denizens.id, event.params.id), eq(denizens.userId, userId)))
-		.get();
+	const row = await db.select().from(denizens).where(ownedLive(event.params.id, userId)).get();
 
 	if (!row) throw error(404, 'Denizen not found');
 
@@ -31,27 +39,36 @@ export const GET: RequestHandler = async (event) => {
 	} catch {
 		storedDraft = null;
 	}
-	return json({ ...row, data: sanitizeDraft(storedDraft) });
+	// Curated projection — internal columns (userId, isArchived) stay server-side.
+	return json(
+		{
+			id: row.id,
+			name: row.name,
+			theme: row.theme,
+			threat: row.threat,
+			version: row.version,
+			createdAt: row.createdAt,
+			updatedAt: row.updatedAt,
+			data: sanitizeDraft(storedDraft)
+		},
+		{ headers: privateHeaders() }
+	);
 };
 
 /**
- * PUT /api/denizens/:id — update. Same optional `expectedUpdatedAt`
- * precondition as the characters API: a stale write gets 409 +
- * `{ currentUpdatedAt }` so the client can refetch and retry.
+ * PUT /api/denizens/:id — update under an integer version claim, like
+ * character writes: the UPDATE itself is conditional on
+ * (id, userId, version), so a stale claim loses atomically and gets a 409 +
+ * `{ currentVersion }` to refetch and retry with.
  */
 export const PUT: RequestHandler = async (event) => {
 	const db = await getDb(event);
 	const userId = await ensureUser(event);
 
-	let rawBody: unknown;
-	try {
-		rawBody = await event.request.json();
-	} catch {
-		throw error(400, 'Request body is not valid JSON');
-	}
-	const parsed = saveDenizenSchema.safeParse(rawBody);
+	const rawBody = await readBoundedJson(event, MAX_BODY_BYTES);
+	const parsed = updateDenizenSchema.safeParse(rawBody);
 	if (!parsed.success) {
-		throw error(400, `Invalid denizen data: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
+		throw error(400, `Invalid denizen data: ${describeIssues(parsed.error.issues)}`);
 	}
 	const draft = sanitizeDraft(parsed.data.draft);
 
@@ -60,65 +77,52 @@ export const PUT: RequestHandler = async (event) => {
 		throw error(400, `Denizen is not saveable: ${ruleCheck.errors.join('; ')}`);
 	}
 
-	const existing = await db
-		.select({ id: denizens.id, updatedAt: denizens.updatedAt })
-		.from(denizens)
-		.where(and(eq(denizens.id, event.params.id), eq(denizens.userId, userId)))
-		.get();
-
-	if (!existing) throw error(404, 'Denizen not found');
-
-	const expectedUpdatedAt = parsed.data.expectedUpdatedAt;
-	if (typeof expectedUpdatedAt === 'number' && existing.updatedAt.getTime() !== expectedUpdatedAt) {
-		return json(
-			{
-				message: 'Denizen was updated elsewhere — refetch and retry',
-				currentUpdatedAt: existing.updatedAt.getTime()
-			},
-			{ status: 409 }
-		);
-	}
-
-	// Force a monotonically-advancing updatedAt (second precision) so the next
-	// optimistic-concurrency comparison can detect this write.
-	const now = new Date();
-	const nextSec = Math.max(
-		Math.floor(now.getTime() / 1000),
-		Math.floor(existing.updatedAt.getTime() / 1000) + 1
-	);
-	const nextUpdatedAt = new Date(nextSec * 1000);
-
-	await db
+	const { expectedVersion } = parsed.data;
+	const updated = await db
 		.update(denizens)
 		.set({
 			name: draft.name.trim() || 'Unnamed Denizen',
 			theme: draft.themeId ?? '',
 			threat: draft.threatId ?? '',
 			data: JSON.stringify(draft),
-			updatedAt: nextUpdatedAt
+			version: expectedVersion + 1,
+			updatedAt: new Date()
 		})
-		.where(eq(denizens.id, event.params.id));
+		.where(and(ownedLive(event.params.id, userId), eq(denizens.version, expectedVersion)))
+		.returning({ version: denizens.version });
 
-	return json({ success: true, updatedAt: nextUpdatedAt.getTime() });
+	if (updated.length === 1) {
+		return json({ success: true, version: updated[0].version }, { headers: privateHeaders() });
+	}
+
+	// The conditional write lost — distinguish "gone" from "stale claim".
+	const current = await db
+		.select({ version: denizens.version })
+		.from(denizens)
+		.where(ownedLive(event.params.id, userId))
+		.get();
+
+	if (!current) throw error(404, 'Denizen not found');
+	return json(
+		{
+			message: 'Denizen was updated elsewhere — refetch and retry',
+			currentVersion: current.version
+		},
+		{ status: 409, headers: privateHeaders() }
+	);
 };
 
-/** DELETE /api/denizens/:id — archive (soft delete). */
+/** DELETE /api/denizens/:id — archive (soft delete), ownership in the write. */
 export const DELETE: RequestHandler = async (event) => {
 	const db = await getDb(event);
 	const userId = await ensureUser(event);
 
-	const existing = await db
-		.select({ id: denizens.id })
-		.from(denizens)
-		.where(and(eq(denizens.id, event.params.id), eq(denizens.userId, userId)))
-		.get();
-
-	if (!existing) throw error(404, 'Denizen not found');
-
-	await db
+	const archived = await db
 		.update(denizens)
 		.set({ isArchived: true, updatedAt: new Date() })
-		.where(eq(denizens.id, event.params.id));
+		.where(ownedLive(event.params.id, userId))
+		.returning({ id: denizens.id });
 
-	return json({ success: true });
+	if (archived.length !== 1) throw error(404, 'Denizen not found');
+	return json({ success: true }, { headers: privateHeaders() });
 };

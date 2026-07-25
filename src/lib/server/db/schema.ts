@@ -576,6 +576,8 @@ export const denizens = sqliteTable(
 		threat: text('threat').notNull().default(''),
 		/** DenizenDraft as a JSON blob (sanitized on read). */
 		data: text('data').notNull(),
+		/** Integer version claim — every write is conditional on it, like characters. */
+		version: integer('version').notNull().default(1),
 		isArchived: integer('is_archived', { mode: 'boolean' }).notNull().default(false),
 		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()

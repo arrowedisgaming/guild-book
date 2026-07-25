@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3498c874-2bac-4369-a845-de4f1d4bd5b4",
+  "id": "74ab6b7b-8373-42d9-8d6b-d75ed6443b92",
   "prevId": "b34846dd-8934-4395-80c9-af527e69d5a0",
   "tables": {
     "accounts": {
@@ -1353,6 +1353,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
         },
         "is_archived": {
           "name": "is_archived",

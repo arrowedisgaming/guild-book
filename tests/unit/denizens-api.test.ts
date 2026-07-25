@@ -1,12 +1,14 @@
 /**
  * Handler tests for /api/denizens against an in-memory better-sqlite3 drizzle
  * DB (the auth-lifecycle pattern), covering ownership, the anonymous-401
- * path, validation, sanitize-on-read, and optimistic concurrency.
+ * path, validation, sanitize-on-read, archived-row discipline, the integer
+ * version claim, and the request-size / per-user ceilings.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Database from 'better-sqlite3';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { error } from '@sveltejs/kit';
 import type { AppDb } from '$lib/server/db';
@@ -16,9 +18,15 @@ import {
 	createBlankPoolDraft,
 	sanitizeDraft,
 	seedFromTemplates,
+	seedPersonFromTheme,
 	updatePool
 } from '$lib/engine/denizen-builder';
-import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
+import {
+	getDenizenPersonRules,
+	getDenizenThemes,
+	getDenizenThreats
+} from '$lib/server/content/loader';
+import { MAX_DENIZENS_PER_USER } from '$lib/schemas/denizen.schema';
 
 let db: AppDb;
 let currentUserId: string | null = null;
@@ -37,14 +45,13 @@ vi.mock('$lib/server/auth', () => ({
 const listHandlers = await import('../../src/routes/api/denizens/+server');
 const itemHandlers = await import('../../src/routes/api/denizens/[id]/+server');
 
-const migrations = [
-	'0000_dashing_surge.sql',
-	'0001_auth_account_uniqueness.sql',
-	'0002_auth_email_normalization.sql',
-	'0008_saved_denizens.sql'
-].map((file) =>
-	readFileSync(new URL(`../../src/lib/server/db/migrations/${file}`, import.meta.url), 'utf8')
-);
+// Every migration, in order — the test DB must not silently diverge from the
+// production schema the moment a mid-series migration touches these tables.
+const migrationsDir = fileURLToPath(new URL('../../src/lib/server/db/migrations', import.meta.url));
+const migrations = readdirSync(migrationsDir)
+	.filter((file) => file.endsWith('.sql'))
+	.sort()
+	.map((file) => readFileSync(`${migrationsDir}/${file}`, 'utf8'));
 
 let sqlite: Database.Database;
 
@@ -69,6 +76,13 @@ const threat = (id: string) => getDenizenThreats().find((t) => t.id === id)!;
 
 const bruteDraft = () =>
 	seedFromTemplates({ ...createBlankDraft(), name: 'Locust Husk' }, theme('undead'), threat('brute'));
+
+const personDraft = () =>
+	seedPersonFromTheme(
+		{ ...createBlankDraft(), name: 'Odo the Cannibal' },
+		theme('man'),
+		getDenizenPersonRules()
+	);
 
 type AnyHandler = (event: {
 	request: Request;
@@ -103,12 +117,29 @@ describe('POST /api/denizens', () => {
 	it('saves a valid draft and lists it', async () => {
 		const created = await call(listHandlers.POST, { draft: bruteDraft() });
 		expect(created.status).toBe(201);
-		const { id } = (await created.json()) as { id: string };
+		const { id, version } = (await created.json()) as { id: string; version: number };
+		expect(version).toBe(1);
 
 		const listed = await call(listHandlers.GET);
 		const rows = (await listed.json()) as Array<{ id: string; name: string; theme: string; threat: string }>;
 		expect(rows).toHaveLength(1);
 		expect(rows[0]).toMatchObject({ id, name: 'Locust Husk', theme: 'undead', threat: 'brute' });
+	});
+
+	it('saves a person draft — no threat, threat column empty', async () => {
+		const created = await call(listHandlers.POST, { draft: personDraft() });
+		expect(created.status).toBe(201);
+		const listed = await call(listHandlers.GET);
+		const rows = (await listed.json()) as Array<{ name: string; theme: string; threat: string }>;
+		expect(rows[0]).toMatchObject({ name: 'Odo the Cannibal', theme: 'man', threat: '' });
+	});
+
+	it('falls back to "Unnamed Denizen" for a blank name', async () => {
+		const created = await call(listHandlers.POST, { draft: { ...bruteDraft(), name: '   ' } });
+		expect(created.status).toBe(201);
+		const listed = await call(listHandlers.GET);
+		const rows = (await listed.json()) as Array<{ name: string }>;
+		expect(rows[0].name).toBe('Unnamed Denizen');
 	});
 
 	it('rejects invalid drafts with 400', async () => {
@@ -120,6 +151,28 @@ describe('POST /api/denizens', () => {
 		);
 	});
 
+	it('refuses an oversized request body outright — junk keys cannot ride along', async () => {
+		await expectHttpError(
+			call(listHandlers.POST, { draft: bruteDraft(), junk: 'x'.repeat(200_000) }),
+			413
+		);
+	});
+
+	it('enforces the per-user ceiling, archived rows included', async () => {
+		const insert = sqlite.prepare(
+			`INSERT INTO denizens (id, user_id, name, theme, threat, data, version, is_archived, created_at, updated_at)
+			 VALUES (?, 'user-a', 'Filler', '', '', '{}', 1, ?, 0, 0)`
+		);
+		for (let i = 0; i < MAX_DENIZENS_PER_USER; i += 1) {
+			insert.run(`filler-${i}`, i % 2);
+		}
+		await expectHttpError(call(listHandlers.POST, { draft: bruteDraft() }), 400);
+
+		// Another user is unaffected by user-a's hoard.
+		currentUserId = 'user-b';
+		expect((await call(listHandlers.POST, { draft: bruteDraft() })).status).toBe(201);
+	});
+
 	it('stores the draft as authoritative — no materialized definition', async () => {
 		const created = await call(listHandlers.POST, { draft: bruteDraft() });
 		const { id } = (await created.json()) as { id: string };
@@ -128,7 +181,8 @@ describe('POST /api/denizens', () => {
 		};
 		const stored = JSON.parse(raw.data);
 		expect(stored).toEqual(bruteDraft());
-		expect('attributes' in stored && 'id' in stored).toBe(false); // no DenizenDefinition fields
+		// Exactly the draft's keys — a DenizenDefinition would carry id/theme/etc.
+		expect(Object.keys(stored).sort()).toEqual(Object.keys(createBlankDraft()).sort());
 	});
 });
 
@@ -142,8 +196,20 @@ describe('GET/PUT/DELETE /api/denizens/:id', () => {
 		const id = await save();
 		currentUserId = 'user-b';
 		await expectHttpError(call(itemHandlers.GET, undefined, { id }), 404);
-		await expectHttpError(call(itemHandlers.PUT, { draft: bruteDraft() }, { id }), 404);
+		await expectHttpError(
+			call(itemHandlers.PUT, { draft: bruteDraft(), expectedVersion: 1 }, { id }),
+			404
+		);
 		await expectHttpError(call(itemHandlers.DELETE, undefined, { id }), 404);
+	});
+
+	it('returns a curated projection — no internal columns', async () => {
+		const id = await save();
+		const fetched = await call(itemHandlers.GET, undefined, { id });
+		const row = (await fetched.json()) as Record<string, unknown>;
+		expect(Object.keys(row).sort()).toEqual(
+			['createdAt', 'data', 'id', 'name', 'theme', 'threat', 'updatedAt', 'version'].sort()
+		);
 	});
 
 	it('round-trips the draft and sanitizes hand-edited rows on read', async () => {
@@ -161,29 +227,31 @@ describe('GET/PUT/DELETE /api/denizens/:id', () => {
 		expect(repairedRow.data).toEqual(sanitizeDraft({ name: 'Broken' }));
 	});
 
-	it('updates with optimistic concurrency', async () => {
+	it('updates under the version claim; a stale claim gets 409 + currentVersion', async () => {
 		const id = await save();
-		const fetched = await call(itemHandlers.GET, undefined, { id });
-		const row = (await fetched.json()) as { updatedAt: string };
-		const loadedAt = new Date(row.updatedAt).getTime();
 
 		const renamed = { ...bruteDraft(), name: 'Renamed Husk' };
 		const updated = await call(
 			itemHandlers.PUT,
-			{ draft: renamed, expectedUpdatedAt: loadedAt },
+			{ draft: renamed, expectedVersion: 1 },
 			{ id }
 		);
 		expect(updated.status).toBe(200);
+		expect(((await updated.json()) as { version: number }).version).toBe(2);
 
-		// A second write with the stale timestamp is rejected 409.
-		const stale = await call(
-			itemHandlers.PUT,
-			{ draft: renamed, expectedUpdatedAt: loadedAt },
-			{ id }
-		);
+		// A second write with the stale claim is rejected atomically.
+		const stale = await call(itemHandlers.PUT, { draft: renamed, expectedVersion: 1 }, { id });
 		expect(stale.status).toBe(409);
-		const conflict = (await stale.json()) as { currentUpdatedAt: number };
-		expect(conflict.currentUpdatedAt).toBeGreaterThan(loadedAt);
+		expect(((await stale.json()) as { currentVersion: number }).currentVersion).toBe(2);
+
+		// Retrying with the current claim succeeds.
+		const retried = await call(itemHandlers.PUT, { draft: renamed, expectedVersion: 2 }, { id });
+		expect(retried.status).toBe(200);
+	});
+
+	it('requires the version claim on PUT', async () => {
+		const id = await save();
+		await expectHttpError(call(itemHandlers.PUT, { draft: bruteDraft() }, { id }), 400);
 	});
 
 	it('accepts a valid dungeon-lord draft with pools', async () => {
@@ -214,5 +282,17 @@ describe('GET/PUT/DELETE /api/denizens/:id', () => {
 			is_archived: number;
 		};
 		expect(raw.is_archived).toBe(1);
+	});
+
+	it('treats an archived row as gone everywhere — GET, PUT, and DELETE all 404', async () => {
+		const id = await save();
+		await call(itemHandlers.DELETE, undefined, { id });
+
+		await expectHttpError(call(itemHandlers.GET, undefined, { id }), 404);
+		await expectHttpError(
+			call(itemHandlers.PUT, { draft: bruteDraft(), expectedVersion: 1 }, { id }),
+			404
+		);
+		await expectHttpError(call(itemHandlers.DELETE, undefined, { id }), 404);
 	});
 });

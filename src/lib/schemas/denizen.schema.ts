@@ -14,6 +14,13 @@ import { z } from 'zod';
 /** Serialized-payload ceiling — far above any real draft, well below abuse. */
 export const MAX_DENIZEN_PAYLOAD_BYTES = 64_000;
 
+/**
+ * Per-user row ceiling, archived rows included (archive is soft, the rows
+ * stay) — far above any real bestiary, low enough that one account cannot
+ * grow the table without bound.
+ */
+export const MAX_DENIZENS_PER_USER = 200;
+
 const abilitySchema = z.object({
 	name: z.string().min(1).max(200),
 	text: z.string().min(1).max(4000)
@@ -56,23 +63,49 @@ export const denizenDraftSchema = z.object({
 	statNote: z.string().max(1000),
 	likes: z.string().max(2000),
 	hates: z.string().max(2000),
-	// Room for a maxed-out person: all 49 talents + kith, arete, and Wounds
-	// notes, plus custom notes — 50 would reject a legal draft.
-	notes: z.array(abilitySchema).max(80),
+	// Shape bound only — generous enough that no legal draft can hit it even
+	// if the pack grows (a fully-mastered person carries one note per talent);
+	// the real ceiling is the byte cap below.
+	notes: z.array(abilitySchema).max(200),
 	lesserDooms: z.array(abilitySchema).max(50),
 	greaterDooms: z.array(abilitySchema).max(50),
 	pools: z.array(poolDraftSchema).max(20),
 	specialRules: z.string().max(8000)
 });
 
+/** Readable issue list — keeps the path, so "which note?" has an answer. */
+export const describeIssues = (
+	issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>
+): string =>
+	issues
+		.map((i) => (i.path.length ? `${i.path.map(String).join('.')}: ${i.message}` : i.message))
+		.join(', ');
+
+/** True bytes of the serialized draft — multi-byte text counts at full size. */
+const draftWithinCap = (draft: unknown) =>
+	new TextEncoder().encode(JSON.stringify(draft)).length <= MAX_DENIZEN_PAYLOAD_BYTES;
+
+const capIssue = (ctx: z.RefinementCtx) =>
+	ctx.addIssue({ code: 'custom', message: 'Denizen is too large to save' });
+
+/** POST /api/denizens — create. */
 export const saveDenizenSchema = z
+	.object({ draft: denizenDraftSchema })
+	.superRefine((payload, ctx) => {
+		if (!draftWithinCap(payload.draft)) capIssue(ctx);
+	});
+
+/**
+ * PUT /api/denizens/:id — update. `expectedVersion` is the integer version
+ * claim (same discipline as character writes): the write only lands if the
+ * row still carries this version, so a stale tab gets a 409 instead of
+ * silently clobbering a newer save.
+ */
+export const updateDenizenSchema = z
 	.object({
 		draft: denizenDraftSchema,
-		/** Optimistic-concurrency precondition for PUT, as ms-since-epoch. */
-		expectedUpdatedAt: z.number().optional()
+		expectedVersion: z.number().int().min(1)
 	})
 	.superRefine((payload, ctx) => {
-		if (JSON.stringify(payload.draft).length > MAX_DENIZEN_PAYLOAD_BYTES) {
-			ctx.addIssue({ code: 'custom', message: 'Denizen is too large to save' });
-		}
+		if (!draftWithinCap(payload.draft)) capIssue(ctx);
 	});

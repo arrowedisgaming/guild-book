@@ -5,6 +5,7 @@ CREATE TABLE `denizens` (
 	`theme` text DEFAULT '' NOT NULL,
 	`threat` text DEFAULT '' NOT NULL,
 	`data` text NOT NULL,
+	`version` integer DEFAULT 1 NOT NULL,
 	`is_archived` integer DEFAULT false NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,

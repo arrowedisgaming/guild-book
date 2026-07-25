@@ -71,11 +71,21 @@
 						</span>
 					</div>
 					<div class="actions">
-						<a href="/denizens/mine/{d.id}">Open</a>
-						<button type="button" disabled={busyId === d.id} onclick={() => edit(d.id)}>
+						<a href="/denizens/mine/{d.id}" aria-label={`Open ${d.name}`}>Open</a>
+						<button
+							type="button"
+							aria-label={`Edit ${d.name}`}
+							disabled={busyId === d.id}
+							onclick={() => edit(d.id)}
+						>
 							Edit
 						</button>
-						<button type="button" disabled={busyId === d.id} onclick={() => remove(d.id, d.name)}>
+						<button
+							type="button"
+							aria-label={`Archive ${d.name}`}
+							disabled={busyId === d.id}
+							onclick={() => remove(d.id, d.name)}
+						>
 							Archive
 						</button>
 					</div>

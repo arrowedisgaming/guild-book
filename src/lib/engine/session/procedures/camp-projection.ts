@@ -90,6 +90,24 @@ export interface LeechesView {
 export interface CampProjection {
 	highChant: HighChantView | null;
 	leeches: LeechesView | null;
+	/**
+	 * The FULL minor discard pile, hydrated — but only while a High Chant is at
+	 * its `select` stage, and empty otherwise.
+	 *
+	 * The generic projection deliberately surfaces only `playerDiscardTop`, and
+	 * that default is right for passive viewing. It is not sufficient here: Ch5
+	 * lets the performer "select a number of cards from the minor arcana discard
+	 * pile equal to your Cups", so a panel limited to the top card could never
+	 * reach the second one. Spec §8.2 is explicit that this is a disclosure the
+	 * rules already permit — "the analog game's discard piles are physically
+	 * inspectable — only the passive projection surfaces just the top by default"
+	 * — so an active inspection during the one procedure that requires it
+	 * reveals nothing the table could not reach across the table for.
+	 *
+	 * Scoped to the select stage so the pile is not broadcast on every poll for
+	 * the rest of the session.
+	 */
+	minorDiscard: CardSlot[];
 	/** Every adventurer's inspiration count — visible to all, faces to none. */
 	inspiration: InspirationHoldingView[];
 	/** The viewer's OWN inspiration card, hydrated. `null` when they hold none or
@@ -227,6 +245,10 @@ export function projectCampForActor(
 	return {
 		highChant,
 		leeches,
+		minorDiscard:
+			camp?.kind === 'high-chant' && camp.stage === 'select'
+				? state.playerDiscard.map((cardId) => hydrateVisible(cardId, catalog))
+				: [],
 		inspiration,
 		myInspiration: myInspirationCardId === undefined ? null : hydrateVisible(myInspirationCardId, catalog),
 		controls: legalCampCommands(state, actor, materials, config)

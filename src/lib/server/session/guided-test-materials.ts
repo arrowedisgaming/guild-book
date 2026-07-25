@@ -21,6 +21,7 @@ import { migrateCharacterData } from '$lib/engine/character-migration';
 import { SUIT_IDS, type SuitId } from '$lib/types/common';
 import type { GuildBookCharacterData } from '$lib/types/character';
 import type { GuidedTestActorFacts, GuidedTestMaterials } from '$lib/engine/session/procedures/test-of-fate';
+import type { CampMaterials } from '$lib/engine/session/procedures/camp';
 
 /**
  * Every living, attached adventurer in `campaignId`, with all four attribute
@@ -30,7 +31,7 @@ import type { GuidedTestActorFacts, GuidedTestMaterials } from '$lib/engine/sess
  * A dead adventurer is excluded: they cannot be called on to test, and
  * `readResolveWriteContext` would refuse their spend anyway.
  */
-export async function loadGuidedTestMaterials(db: AppDb, campaignId: string): Promise<GuidedTestMaterials> {
+export async function loadSessionActorFacts(db: AppDb, campaignId: string): Promise<GuidedTestMaterials> {
 	const rows = await db
 		.select({
 			tenureId: campaignAdventurerTenures.id,
@@ -67,6 +68,25 @@ export async function loadGuidedTestMaterials(db: AppDb, campaignId: string): Pr
 	});
 
 	return { actors };
+}
+
+/**
+ * The guided test's view of those facts. An alias, not a second query: a test of
+ * fate needs the tested attribute plus Resolve and the character version, which
+ * is the full row this loader already reads.
+ */
+export const loadGuidedTestMaterials = loadSessionActorFacts;
+
+/**
+ * Camp's view of the same facts (Increment 4 Task 3). `CampActorFacts` is a
+ * strict subset of `GuidedTestActorFacts` — attributes and roster order, no
+ * Resolve or character version, because no Camp procedure spends a resource —
+ * so this is one query serving both surfaces rather than two reads of the same
+ * rows. Typed as `CampMaterials` so a Camp caller never sees fields it has no
+ * business reading.
+ */
+export async function loadCampMaterials(db: AppDb, campaignId: string): Promise<CampMaterials> {
+	return loadSessionActorFacts(db, campaignId);
 }
 
 /** Flattens `Record<SuitId, AttributeState>` to the plain numbers the engine

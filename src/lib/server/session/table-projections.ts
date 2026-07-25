@@ -35,7 +35,9 @@ import {
 	type GuidedTestControl,
 	type GuidedTestProjection
 } from '$lib/engine/session/procedures/guided-test-projection';
-import { loadGuidedTestMaterials } from './guided-test-materials';
+import { legalCampCommands, projectCampForActor, type CampControl, type CampProjection } from '$lib/engine/session/procedures/camp-projection';
+import { buildCampConfig } from '$lib/engine/session/procedures/camp';
+import { loadCampMaterials, loadGuidedTestMaterials } from './guided-test-materials';
 import {
 	campaignCursor,
 	loadSessionForReduce,
@@ -57,6 +59,11 @@ export interface TableProjections {
 	/** Likewise present before any test exists, so the GM's "call for a test"
 	 * control renders from the server's answer rather than a client guess. */
 	guidedTestLegalCommands: GuidedTestControl[];
+	campProjection: CampProjection | null;
+	/** Likewise present before any Camp procedure exists, so an adventurer's
+	 * "Perform the High Chant" / "Apply leeches" controls render from the
+	 * server's answer. */
+	campLegalCommands: CampControl[];
 	/**
 	 * Why `projection` is null, when it is. `'not-found'` means there is no such
 	 * session *for this caller* — genuinely absent, or belonging to another
@@ -80,7 +87,9 @@ const EMPTY: Omit<TableProjections, 'loadFailure'> = {
 	challengeProjection: null,
 	challengeLegalCommands: [],
 	guidedTestProjection: null,
-	guidedTestLegalCommands: []
+	guidedTestLegalCommands: [],
+	campProjection: null,
+	campLegalCommands: []
 };
 
 /** Resolves the Challenge-relevant equipment caps for `actor` against `state`:
@@ -183,12 +192,27 @@ export async function loadTableProjectionsForActor(
 	// A generic projection that failed to build is the same fact as a session
 	// that failed to load, as far as any caller is concerned: the session is
 	// there and cannot be shown.
+	let campProjection: CampProjection | null = null;
+	let campLegalCommands: CampControl[] = [];
+	try {
+		const materials = await loadCampMaterials(db, campaignId);
+		const config = buildCampConfig(loaded.runtimeContent.procedures, loaded.runtimeContent.formulas, loaded.runtimeContent.modifiers);
+		campProjection = projectCampForActor(loaded.engineState, actor, runtime.catalog, materials, config);
+		campLegalCommands = legalCampCommands(loaded.engineState, actor, materials, config);
+	} catch (cause) {
+		console.error('[table] unexpected error building Camp projection slice', cause);
+		campProjection = null;
+		campLegalCommands = [];
+	}
+
 	return {
 		projection,
 		challengeProjection,
 		challengeLegalCommands,
 		guidedTestProjection,
 		guidedTestLegalCommands,
+		campProjection,
+		campLegalCommands,
 		loadFailure: projection ? null : 'unloadable'
 	};
 }

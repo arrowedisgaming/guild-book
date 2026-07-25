@@ -47,6 +47,8 @@ export const load: PageServerLoad = async (event) => {
 			challengeLegalCommands,
 			guidedTestProjection,
 			guidedTestLegalCommands,
+			campProjection,
+			campLegalCommands,
 			loadFailure
 		} = await loadTableProjectionsForActor(
 			db,
@@ -65,7 +67,9 @@ export const load: PageServerLoad = async (event) => {
 				challengeProjection,
 				challengeLegalCommands,
 				guidedTestProjection,
-				guidedTestLegalCommands
+				guidedTestLegalCommands,
+				campProjection,
+				campLegalCommands
 			};
 		}
 	}

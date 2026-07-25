@@ -57,6 +57,7 @@
 			onSendCommand={store.sendCommand}
 			onSendChallengeCommand={store.sendChallengeCommand}
 			onSendGuidedTestCommand={store.sendGuidedTestCommand}
+			onSendCampCommand={store.sendCampCommand}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
 	{:else if data.sessionUnavailable}

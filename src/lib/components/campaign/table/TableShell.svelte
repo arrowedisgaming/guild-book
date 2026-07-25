@@ -21,6 +21,7 @@
 	import ChallengePanel from './challenge/ChallengePanel.svelte';
 	import TestOfFatePanel from './procedures/TestOfFatePanel.svelte';
 	import GroupTestPanel from './procedures/GroupTestPanel.svelte';
+	import CampProcedurePanel from './procedures/CampProcedurePanel.svelte';
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
@@ -33,6 +34,7 @@
 	import type { SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 	import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
+	import type { CampProcedureCommand } from '$lib/engine/session/procedures/camp-command';
 	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 
 	let {
@@ -45,6 +47,7 @@
 		onSendCommand,
 		onSendChallengeCommand,
 		onSendGuidedTestCommand,
+		onSendCampCommand,
 		onSendLifecycleAction
 	}: {
 		role: 'gm' | 'player';
@@ -66,6 +69,7 @@
 			commandId?: string,
 			reconfirmation?: ResolveReconfirmation
 		) => Promise<SendCommandResult>;
+		onSendCampCommand: (command: CampProcedureCommand, commandId?: string) => Promise<SendCommandResult>;
 		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
 	} = $props();
 
@@ -290,6 +294,7 @@
 				<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
 				<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+				<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}
@@ -319,6 +324,7 @@
 			<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
 			<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 			<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+			<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
 			<MobileTableDrawers
 				publicProjection={session.projection.public}
 				{role}

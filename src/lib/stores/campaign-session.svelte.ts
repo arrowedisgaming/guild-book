@@ -32,6 +32,8 @@ import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/
 import type { ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
 import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
 import type { GuidedTestControl, GuidedTestProjection } from '$lib/engine/session/procedures/guided-test-projection';
+import type { CampProcedureCommand } from '$lib/engine/session/procedures/camp-command';
+import type { CampControl, CampProjection } from '$lib/engine/session/procedures/camp-projection';
 import type { DrawnCard } from '$lib/tarot/protocol';
 
 /** GM-only structural transitions the shared table exposes via
@@ -87,6 +89,16 @@ export interface TableSession {
 	 * never a client guess).
 	 */
 	guidedTestLegalCommands: GuidedTestControl[];
+	/**
+	 * Additive (Increment 4 Task 3): the Camp procedures' own actor-scoped slice —
+	 * `null` when no Camp procedure is in flight. Carries inspiration COUNTS for
+	 * every adventurer plus the viewer's own card, never anyone else's face.
+	 */
+	campProjection: CampProjection | null;
+	/** Additive (Increment 4 Task 3): computed server-side even before any Camp
+	 * procedure exists, so "Perform the High Chant" renders from the server's
+	 * answer. */
+	campLegalCommands: CampControl[];
 }
 
 export interface SessionSyncSnapshot {
@@ -137,6 +149,14 @@ interface GuidedTestCommandResponseBody {
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	guidedTestProjection?: GuidedTestProjection | null;
 	guidedTestLegalCommands?: GuidedTestControl[];
+}
+
+/** Response shape of `POST .../camp-commands`. */
+interface CampCommandResponseBody {
+	outcome?: { ok: boolean };
+	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+	campProjection?: CampProjection | null;
+	campLegalCommands?: CampControl[];
 }
 
 /** The reconfirmation pair Task 1 requires on a Resolve purchase. Both values
@@ -538,6 +558,65 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/**
+	 * Sends one Camp command. Same dedup/retry-id conventions as
+	 * `sendChallengeCommand`; no reconfirmation pair, because no Camp procedure
+	 * spends a character resource.
+	 */
+	function sendCampCommand(command: CampProcedureCommand, commandId?: string): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+
+		const key = `camp:${JSON.stringify(command)}`;
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+
+		const id = commandId ?? randomCommandId();
+		const promise = performCampSend(session.sessionId, id, command).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performCampSend(sessionId: string, commandId: string, command: CampProcedureCommand): Promise<SendCommandResult> {
+		const envelope = { commandId, observedSessionVersion: snapshot.session?.sessionVersion ?? 0, command };
+
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}/camp-commands`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify(envelope)
+			});
+			const body = (await response.json().catch(() => null)) as CampCommandResponseBody | null;
+
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
+				snapshot = {
+					...snapshot,
+					session: {
+						...snapshot.session,
+						sessionVersion: body.projection.sessionVersion,
+						campaignCursor: body.projection.campaignCursor,
+						projection: body.projection.projection,
+						campProjection: body.campProjection ?? null,
+						campLegalCommands: body.campLegalCommands ?? []
+					}
+				};
+			}
+
+			if (!body?.outcome?.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	/** GM lifecycle transitions (freeze/recover/end) against
 	 * `PATCH /sessions/[sessionId]`. Same dedup/error-surfacing conventions as
 	 * `sendCommand` above — a second call for the same action at the same
@@ -634,6 +713,7 @@ export function createCampaignSessionStore(
 		sendCommand,
 		sendChallengeCommand,
 		sendGuidedTestCommand,
+		sendCampCommand,
 		sendLifecycleAction,
 		refreshNow,
 		start,

@@ -79,6 +79,8 @@ export const GET: RequestHandler = async (event) => {
 				challengeLegalCommands: unknown;
 				guidedTestProjection: unknown;
 				guidedTestLegalCommands: unknown;
+				campProjection: unknown;
+				campLegalCommands: unknown;
 		  }
 		| null = null;
 	if (openSession) {
@@ -91,7 +93,9 @@ export const GET: RequestHandler = async (event) => {
 			challengeProjection,
 			challengeLegalCommands,
 			guidedTestProjection,
-			guidedTestLegalCommands
+			guidedTestLegalCommands,
+			campProjection,
+			campLegalCommands
 		} = await loadTableProjectionsForActor(db, openSession.sessionId, campaignId, { kind: role.kind, userId: role.userId });
 		if (projectionEnvelope) {
 			session = {
@@ -103,7 +107,9 @@ export const GET: RequestHandler = async (event) => {
 				challengeProjection,
 				challengeLegalCommands,
 				guidedTestProjection,
-				guidedTestLegalCommands
+				guidedTestLegalCommands,
+				campProjection,
+				campLegalCommands
 			};
 		}
 	}

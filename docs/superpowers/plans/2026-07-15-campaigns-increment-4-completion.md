@@ -162,11 +162,11 @@ git commit -m "feat(session): guide individual and group tests"
 - Test: `tests/unit/session/procedures/camp.test.ts`
 - Test: `tests/e2e/camp-procedures.spec.ts`
 
-- [ ] **Step 1: Write failing Camp examples**
+- [x] **Step 1: Write failing Camp examples**
 
 Cover High Chant private transfer, leeches card operation/results, Camp watches and their round-boundary card handling, authorized actors, completion, and reshuffle scheduling. Assert nonparticipants and GM do not see a player-to-player transferred face unless the rule makes it public.
 
-- [ ] **Step 2: Implement typed Camp commands**
+- [x] **Step 2: Implement typed Camp commands**
 
 ```ts
 export type CampProcedureCommand =
@@ -179,7 +179,7 @@ export type CampProcedureCommand =
 
 Each transition is configured by the generated procedure steps. High Chant composes generic `transfer`; leeches composes draw/reveal/discard as audited. No Camp resource outside the modeled card procedure is auto-mutated.
 
-- [ ] **Step 3: Build UI and verify privacy**
+- [x] **Step 3: Build UI and verify privacy**
 
 Run:
 
@@ -190,7 +190,7 @@ npx playwright test tests/e2e/camp-procedures.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit Camp procedures**
+- [x] **Step 4: Commit Camp procedures**
 
 ```bash
 git add src/lib/engine/session/procedures/camp.ts src/lib/components/campaign/table/procedures/CampProcedurePanel.svelte tests/unit/session/procedures/camp.test.ts tests/e2e/camp-procedures.spec.ts

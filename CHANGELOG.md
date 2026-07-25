@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Augury spell each invoke one from inside their own procedure — a test runs
   alongside whatever procedure is already in progress rather than replacing it.
   The GM still narrates every consequence; the app supplies only the numbers.
+- **Camp actions at the table**: the High Chant and leeches, the two Camp
+  Actions whose mechanics are card operations. A bard selects inspiration cards
+  from the minor arcana discard — as many as their Cups — and hands them out, at
+  most one per adventurer. Each holder's card is theirs alone to see; everyone
+  else sees only that they hold one, which is what keeps the one-per-player limit
+  honest without turning a private card face-up. Inspiration survives the Camp
+  phase and lasts until spent or the session ends. Leeches draw a card against
+  another adventurer and report the rulebook's answer — nothing, or two charges
+  toward curing an affliction — and say plainly that the table applies it,
+  because the app never edits a character sheet.
 - **Group tests**: the GM names the eligible group and the engine proposes the
   most- and least-qualified adventurers from their current attributes, flagging
   an apparent tie as the table's decision to talk out rather than presenting a

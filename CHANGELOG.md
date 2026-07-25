@@ -35,18 +35,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   round transitions, and completion for assistive technology. The feature stays
   allowlisted behind `CAMPAIGNS_ENABLED` or pilot user IDs.
 - **Saved denizens**: signed-in users can save denizens from the builder's
-  review step, list and archive them at `/denizens/mine`, view and re-export
-  each at `/denizens/mine/[id]`, and edit them back in the builder. The
-  reference gains a "Your denizens" section when signed in. Saving stores the
-  sanitized draft as the single source of truth (definitions re-materialize on
-  render), validates template ids and stat invariants server-side, and caps
-  payload size. Anonymous building and exporting are untouched — saving is the
-  only signed-in feature. Every bestiary entry with builder-supported templates
-  gains "Customize in the builder", loading a pre-filled copy as a new custom
-  denizen. Save failures show inline next to the button, and the header's Sign
-  in link returns you to the page you were on. Deploy note: run
+  review step, list and archive them at `/denizens/mine` (archiving is one-way
+  for now), view and re-export each at `/denizens/mine/[id]`, and edit them
+  back in the builder. The reference shows a "Your denizens" strip when signed
+  in with saved denizens. Saving stores the sanitized draft as the single
+  source of truth (definitions re-materialize on render), validates template
+  ids and stat invariants server-side, and bounds the request itself — a
+  byte-true payload cap plus a per-user row ceiling. Every write is guarded
+  by an integer version claim in the update statement, like character saves:
+  a stale tab gets a conflict answer, never a silent overwrite, and "New
+  denizen"/"Save as a new copy" explicitly detach the builder from the saved
+  row so starting fresh can never clobber it. All user-scoped denizen pages
+  and API responses are `private, no-store`. Anonymous building and exporting
+  are untouched — saving is the only signed-in feature. Every bestiary entry
+  with builder-supported templates gains "Customize in the builder", loading
+  a pre-filled copy as a new custom denizen. Save failures show inline next
+  to the button, and the header's Sign in link returns you to the page you
+  were on, query string included. Deploy note: run
   `npm run db:migrate:d1:remote` (additive `denizens` table, migration 0008)
-  before merging.
+  when deploying.
 - **People in the denizen builder**: the Man theme now follows the book's
   "make actual characters" advice as an adversary path. Choosing it swaps the
   wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread

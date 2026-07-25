@@ -30,10 +30,29 @@
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
 	import { announce } from '$lib/stores/announcer';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import type { DenizenAbility } from '$lib/types/content-pack';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// "New denizen" states its intent in the URL so every navigation gesture honours
+	// it — a click handler on the roster link is skipped by middle-click and "open in
+	// new tab", and this page would then rehydrate the old saved-row binding from
+	// localStorage and save straight over it. Strip the flag once it is spent, so a
+	// later reload of the same URL can't detach a row the user has since saved.
+	$effect(() => {
+		if (!page.url.searchParams.has('new')) return;
+		denizenBuilder.detachSavedRef();
+		const url = new URL(page.url);
+		url.searchParams.delete('new');
+		void goto(`${url.pathname}${url.search}`, {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true
+		});
+	});
 
 	let stepId = $derived($denizenBuilder.currentStepId);
 	let draft = $derived($denizenBuilder.draft);
@@ -270,19 +289,22 @@
 	let savedAt = $state<number | null>(null);
 	let saveError = $state<string | null>(null);
 
-	/** Detach from the saved row and save the current work as a fresh denizen. */
+	/**
+	 * Save the current work as a fresh denizen. The old row stays bound until the
+	 * POST lands — detaching up front would strand the edit session on a failed
+	 * save, so the next Save would create a duplicate instead of resuming.
+	 */
 	function saveAsNew() {
-		denizenBuilder.detachSavedRef();
-		void saveDenizen();
+		void saveDenizen({ asNew: true });
 	}
 
-	async function saveDenizen() {
+	async function saveDenizen({ asNew = false }: { asNew?: boolean } = {}) {
 		if (saving) return;
 		saving = true;
 		saveError = null;
 		try {
-			const editingId = $denizenBuilder.editingId;
-			const expectedVersion = $denizenBuilder.editingVersion;
+			const editingId = asNew ? null : $denizenBuilder.editingId;
+			const expectedVersion = asNew ? null : $denizenBuilder.editingVersion;
 			const editing = editingId !== null && expectedVersion !== null;
 			const res = await fetch(editing ? `/api/denizens/${editingId}` : '/api/denizens', {
 				method: editing ? 'PUT' : 'POST',
@@ -946,7 +968,7 @@
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		{#if data.user}
 			<div class="save-row">
-				<button type="button" class="save" disabled={saving} onclick={saveDenizen}>
+				<button type="button" class="save" disabled={saving} onclick={() => void saveDenizen()}>
 					{saving
 						? 'Saving…'
 						: $denizenBuilder.editingId

@@ -480,5 +480,29 @@ test.describe('saved denizens (signed in)', () => {
 			.getByRole('button', { name: 'Archive' })
 			.click();
 		await expect(page.locator('li.row', { hasText: 'Test Wight' })).toHaveCount(1);
+
+		// The detach must survive a gesture that skips the click handler: middle-click
+		// and "open in new tab" load the href directly, and the builder rehydrates its
+		// saved-row binding from localStorage. Bind to a row, then follow the roster
+		// link's href the way a fresh tab would — it must still save a new row.
+		const newHref = await page.getByRole('link', { name: 'New denizen' }).getAttribute('href');
+		expect(newHref).toContain('new=1');
+
+		await page
+			.locator('li.row', { hasText: 'Test Wight' })
+			.first()
+			.getByRole('button', { name: 'Edit' })
+			.click();
+		await page.waitForURL((url) => url.pathname === '/denizens/build');
+		await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+
+		await page.goto(newHref!);
+		await expect(page.getByRole('button', { name: 'Save denizen' })).toBeVisible();
+		// The spent flag is stripped, so reloading this URL can't detach a row saved since.
+		await page.waitForURL((url) => url.pathname === '/denizens/build' && url.search === '');
+		await page.getByRole('button', { name: 'Save denizen' }).click();
+		await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible();
+		await page.goto('/denizens/mine');
+		await expect(page.locator('li.row', { hasText: 'Test Wight' })).toHaveCount(2);
 	});
 });

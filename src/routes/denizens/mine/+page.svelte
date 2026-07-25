@@ -47,16 +47,17 @@
 <section class="roster">
 	<div class="head">
 		<h1>My Denizens</h1>
-		<!-- Detach any editing session first: "New" must never overwrite a saved row. -->
-		<a class="new" href="/denizens/build" onclick={() => denizenBuilder.detachSavedRef()}>
-			New denizen
-		</a>
+		<!-- The detach intent rides in the URL, not a click handler: middle-click and
+		     "open in new tab" never fire onclick, and the builder rehydrates its saved-row
+		     binding from localStorage — so a handler-only detach lets the fresh tab save
+		     straight over the row this link sits next to. "New" must never overwrite. -->
+		<a class="new" href="/denizens/build?new=1">New denizen</a>
 	</div>
 
 	{#if data.denizens.length === 0}
 		<p class="empty">
 			No denizens yet.
-			<a href="/denizens/build" onclick={() => denizenBuilder.detachSavedRef()}>Mix your first →</a>
+			<a href="/denizens/build?new=1">Mix your first →</a>
 		</p>
 	{:else}
 		<ul class="list">

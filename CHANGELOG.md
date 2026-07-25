@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stun now matches the rulebook**: the content pack described Stun as
   discarding a player's entire hand; it discards one card, chosen by the
   affected player. Content pack bumped to 3.3.0.
+- **Sessions pinned before the Stun correction are cleared**: a session is
+  loaded through the runtime content it pinned at start, so any session begun
+  under the old Stun shape could no longer be read — and a session that cannot
+  be read cannot be projected, recovered, or ended, while still holding its
+  campaign's single open-session slot. `0007_purge_pinned_sessions` removes
+  play sessions and their session-scoped rows once, leaving campaigns,
+  memberships, characters, tenures, and non-session campaign history intact.
+  This is a deliberate pre-release exception to the forward-only rule, not a
+  precedent; the roadmap now records why freezing was no answer here.
+- **An unloadable session no longer looks like no session at all**: the table
+  page told the GM "No session is currently open" over a session that was very
+  much open, offering a "Start session" button whose action could only ever
+  refuse. Session loads now distinguish "not found" from "cannot be loaded" —
+  without ever confirming a session outside the caller's campaign — the table
+  explains the wedged state instead of hiding it, integrity failures are logged
+  for the operator rather than swallowed, and a refused start says why.
 
 ## [0.3.0] - 2026-07-20
 

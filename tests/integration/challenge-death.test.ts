@@ -725,6 +725,48 @@ describe('challenge-command-service — branch-fix seams (C2/I5/I6/I9)', () => {
 		expect(result.projection).not.toBeNull();
 		expect(result.challengeProjection).toBeNull();
 	});
+
+	// A session whose PINNED runtime content no longer satisfies today's schema
+	// (content-pack drift: a modifier's params changed shape after the session
+	// started) is unloadable — but "unloadable" and "there is no session" are
+	// different facts, and a caller that cannot tell them apart renders the
+	// wrong page entirely (the table offered "Start session", whose action then
+	// refused with 409 because the unloadable session is still open).
+	it('reports an unloadable session distinctly from a missing one', async () => {
+		await seedAndStart();
+		const actor: SessionActor = { kind: 'gm', userId: GM_USER };
+
+		const healthy = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-a', actor);
+		expect(healthy.loadFailure).toBeNull();
+
+		// A session id that does not exist is 'not-found', never 'unloadable' —
+		// and so is a session id belonging to another campaign, which must not
+		// confirm its existence to a caller outside it. Asserted BEFORE the
+		// drift below and again after it: the out-of-campaign answer must not
+		// change just because the session became unloadable.
+		const missing = await loadChallengeProjectionsForActor(db, 'no-such-session', 'campaign-a', actor);
+		expect(missing.loadFailure).toBe('not-found');
+		expect((await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-does-not-own-this', actor)).loadFailure).toBe('not-found');
+
+		// Drift the pinned content exactly as the real regression did: a
+		// modifier's `params` keep an older, now-invalid shape.
+		const row = sqlite.prepare('select runtime_content_json as j from session_runtime_contents where session_id = ?').get('session-a') as { j: string };
+		const pinned = JSON.parse(row.j) as { modifiers: { behaviorId: string; params: Record<string, unknown> }[] };
+		const stun = pinned.modifiers.find((modifier) => modifier.behaviorId === 'forced-hand-discard');
+		if (!stun) throw new Error('fixture: no forced-hand-discard modifier in the pinned content');
+		stun.params = { immediate: true, discard: 'entire-hand' };
+		sqlite
+			.prepare('update session_runtime_contents set runtime_content_json = ? where session_id = ?')
+			.run(JSON.stringify(pinned), 'session-a');
+
+		const drifted = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-a', actor);
+		expect(drifted.projection).toBeNull();
+		expect(drifted.loadFailure).toBe('unloadable');
+
+		const crossCampaign = await loadChallengeProjectionsForActor(db, 'session-a', 'campaign-does-not-own-this', actor);
+		expect(crossCampaign.loadFailure).toBe('not-found');
+		expect(crossCampaign.projection).toBeNull();
+	});
 });
 
 // ---------------------------------------------------------------------------

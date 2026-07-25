@@ -2,9 +2,13 @@
 	import { untrack } from 'svelte';
 	import TableShell from '$lib/components/campaign/table/TableShell.svelte';
 	import { createCampaignSessionStore } from '$lib/stores/campaign-session.svelte';
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	// `form` carries the `?/start` action's `fail()` payload. The form is a
+	// plain (unenhanced) POST, so a rejected start re-renders this page — with
+	// nothing to show for it until this was rendered, which is exactly what
+	// made a refused start look like a dead button.
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	// Constructed exactly once (review round 2: no throwaway store built
 	// before the mount effect swaps in a second one). Reactive on
@@ -54,10 +58,23 @@
 			onSendChallengeCommand={store.sendChallengeCommand}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
+	{:else if data.sessionUnavailable}
+		<section class="no-session">
+			<h1>{data.campaignName} — Table</h1>
+			<p class="sync-error" role="status">
+				This campaign has an open session, but it could not be loaded — so it cannot be shown, and a
+				new session cannot be started while it holds the campaign's open-session slot. This does not
+				resolve on its own; the session has to be ended before play can continue. The server log
+				records the specific reason.
+			</p>
+		</section>
 	{:else if data.role === 'gm'}
 		<section class="no-session">
 			<h1>{data.campaignName} — Table</h1>
 			<p>No session is currently open.</p>
+			{#if form?.message}
+				<p class="sync-error" role="alert">{form.message}</p>
+			{/if}
 			<form method="POST" action="?/start">
 				<button type="submit">Start session</button>
 			</form>

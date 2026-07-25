@@ -160,15 +160,53 @@ export async function loadChallengeProjectionsForActor(
 	 * `challengeProjection` has nothing else to carry.
 	 */
 	challengeLegalCommands: ChallengeCommand['type'][];
+	/**
+	 * Why `projection` is null, when it is. `'not-found'` means there is no
+	 * such session *for this caller* — genuinely absent, or belonging to
+	 * another campaign (deliberately conflated, so this never confirms the
+	 * existence of a session outside the requested campaign). `'unloadable'`
+	 * means the session EXISTS and is open but cannot be projected: pinned
+	 * content that no longer satisfies today's schema, a fragment at the
+	 * wrong version, a corrupt payload.
+	 *
+	 * The distinction is not cosmetic. Callers previously saw one
+	 * indistinguishable `projection: null` for both and rendered "no session
+	 * is open" over a session that was very much open — leaving the GM with a
+	 * "Start session" button whose action could only ever refuse, since the
+	 * unloadable session still holds the campaign's one open-session slot.
+	 * `null` here means "no failure": either a live projection, or a caller
+	 * that never got as far as asking.
+	 */
+	loadFailure: 'not-found' | 'unloadable' | null;
 }> {
+	// Branch-fix I6's campaign check, hoisted AHEAD of the full load (which
+	// parses every fragment and so can fail for reasons of its own). Deciding
+	// ownership from the cheap summary read first means an out-of-campaign
+	// caller always gets a flat 'not-found', never an 'unloadable' that would
+	// confirm the session id exists somewhere. The redundant post-load check
+	// below stays as defence in depth.
+	const summary = await loadSessionSummary(db, sessionId);
+	if (!summary || summary.campaignId !== campaignId) {
+		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
+	}
+
 	let loaded: LoadedSession;
 	try {
 		loaded = await loadSessionForReduce(db, sessionId);
 	} catch (cause) {
-		if (!(cause instanceof SessionNotFoundError) && !(cause instanceof SessionLoadIntegrityError)) {
+		if (cause instanceof SessionNotFoundError) {
+			return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
+		}
+		// Integrity failures used to be swallowed in silence — the one class of
+		// failure an operator most needs to see, since it never resolves on its
+		// own and leaves the campaign wedged. Logged (not persisted, not shown
+		// to the client) because the message carries schema paths, not secrets.
+		if (cause instanceof SessionLoadIntegrityError) {
+			console.error(`[challenge] session ${sessionId} is unloadable: ${cause.message}`);
+		} else {
 			console.error('[challenge] unexpected error loading session for projections', cause);
 		}
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [] };
+		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'unloadable' };
 	}
 
 	// Branch-fix I6: the session must belong to the REQUESTED campaign. A GM of
@@ -178,7 +216,9 @@ export async function loadChallengeProjectionsForActor(
 	// on the malformed-envelope and duplicate-lookup paths). Neither the generic
 	// nor the Challenge slice may leak across campaigns.
 	if (loaded.campaignId !== campaignId) {
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [] };
+		// 'not-found', not 'unloadable': the caller is outside this session's
+		// campaign and must not learn that it exists at all.
+		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
 	}
 
 	const runtime = toSessionEngineRuntime(loaded.runtimeContent);
@@ -216,7 +256,15 @@ export async function loadChallengeProjectionsForActor(
 		challengeLegalCommands = [];
 	}
 
-	return { projection: genericProjection, challengeProjection, challengeLegalCommands };
+	// A generic projection that failed to build is the same fact as a session
+	// that failed to load, as far as any caller is concerned: the session is
+	// there and cannot be shown.
+	return {
+		projection: genericProjection,
+		challengeProjection,
+		challengeLegalCommands,
+		loadFailure: genericProjection ? null : 'unloadable'
+	};
 }
 
 /**

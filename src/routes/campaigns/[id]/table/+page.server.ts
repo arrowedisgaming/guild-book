@@ -35,13 +35,19 @@ export const load: PageServerLoad = async (event) => {
 	if (!campaign) throw error(404, 'Campaign not found');
 
 	let session: SessionSyncSnapshot['session'] = null;
+	// An open session that cannot be projected is NOT the same as no session,
+	// and the page must not conflate them: the unloadable session still holds
+	// the campaign's one open-session slot, so offering "Start session" here
+	// hands the GM a button whose action can only ever refuse with a 409.
+	let sessionUnavailable = false;
 	if (openSession) {
-		const { projection: envelope, challengeProjection, challengeLegalCommands } = await loadChallengeProjectionsForActor(
+		const { projection: envelope, challengeProjection, challengeLegalCommands, loadFailure } = await loadChallengeProjectionsForActor(
 			db,
 			openSession.sessionId,
 			event.params.id,
 			{ kind: role.kind, userId: role.userId }
 		);
+		sessionUnavailable = loadFailure === 'unloadable';
 		if (envelope) {
 			session = {
 				sessionId: openSession.sessionId,
@@ -72,6 +78,7 @@ export const load: PageServerLoad = async (event) => {
 		userId: role.userId,
 		challengeRoster,
 		enemyThreatOptions,
+		sessionUnavailable,
 		initial
 	};
 };
@@ -93,7 +100,18 @@ export const actions: Actions = {
 			campaignId: event.params.id,
 			actorUserId: role.userId
 		});
-		if (!result.ok) return fail(409, { message: 'A session could not be started.' });
+		if (!result.ok) {
+			// `illegal-command` from `startSession` has exactly one cause: this
+			// campaign already has an active or frozen session. Saying so is
+			// worth more than the old catch-all, because the most likely way a
+			// GM reaches it is an open session the table could not load and so
+			// did not show them.
+			const message =
+				result.code === 'illegal-command'
+					? 'This campaign already has an open session, so a new one cannot be started.'
+					: 'A session could not be started.';
+			return fail(409, { message });
+		}
 		return { success: 'session-started' };
 	}
 };

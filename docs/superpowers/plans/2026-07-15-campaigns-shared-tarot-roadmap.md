@@ -269,6 +269,17 @@ Expected: every command exits 0; `git status --short` contains only files intent
 4. Recover by replay-validating the latest persisted fragments and journal version; otherwise let the GM end the frozen session with sanitized public history.
 5. Database migrations are forward-only. Never roll back by dropping campaign, command, event, secret, or tenure rows.
 
+Rules 3–5 assume a session that can still be *read*. A session whose pinned
+runtime content no longer satisfies the current schema cannot be: freeze,
+recover, and end all have to load it first, and the load is what fails, so
+every rung of this ladder is unreachable and the session holds its campaign's
+open-session slot indefinitely. `0007_purge_pinned_sessions` is a one-time,
+pre-release exception taken for exactly that reason (see the migration's own
+header). It is not a precedent: a content change that invalidates already-
+pinned payloads needs a migration that rewrites them, or a loader that can
+read prior pinned shapes — not a second purge, which would destroy real play
+history once campaigns are in use.
+
 ## Delivery Discipline
 
 Each plan task follows red-green-refactor:

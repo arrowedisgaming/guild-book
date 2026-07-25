@@ -49,7 +49,7 @@
 
 <article class="statblock">
 	<svelte:element this={`h${headingLevel}`} class="name">{denizen.name}</svelte:element>
-	<p class="type">{themeName} {threatName}</p>
+	<p class="type">{[themeName, threatName].filter(Boolean).join(' ')}</p>
 
 	<div class="flavor">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
@@ -169,6 +169,13 @@
 	.ability-text :global(ul) {
 		display: block;
 		margin: 0.35rem 0 0;
+	}
+	/* Task rows (the Wounds options) show checkboxes, not bullets. */
+	.ability-text :global(li.task) {
+		list-style: none;
+	}
+	.ability-text :global(li.task input) {
+		accent-color: var(--accent);
 	}
 	.pool {
 		margin-top: 1.25rem;

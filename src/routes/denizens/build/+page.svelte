@@ -11,8 +11,22 @@
 		addPool,
 		removePool,
 		movePool,
-		updatePool
+		updatePool,
+		seedPersonFromTheme,
+		clearPersonState,
+		setPersonKith,
+		setPersonKin,
+		personHasTalent,
+		personHasAreteTalent,
+		togglePersonTalent,
+		togglePersonAreteTalent,
+		setPersonWoundTracking,
+		personTracksWounds,
+		assignPersonSpreadValue,
+		type DenizenDraft
 	} from '$lib/engine/denizen-builder';
+	import { highestSuit } from '$lib/engine/attributes';
+	import { SUIT_IDS, type SuitId } from '$lib/types/common';
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
 	import { announce } from '$lib/stores/announcer';
@@ -26,16 +40,23 @@
 
 	let theme = $derived(data.themes.find((t) => t.id === draft.themeId));
 	let threat = $derived(data.threats.find((t) => t.id === draft.threatId));
-	let templatesChosen = $derived(Boolean(theme && threat));
-	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null));
+	// Pack-sourced person seed rules; the spread is shown highest-first.
+	let personSpread = $derived([...data.personRules.spread].sort((a, b) => b - a));
+	let statWarnings = $derived(draftStatWarnings(draft, threat ?? null, data.personRules));
 	// Advisory only — never blocks saving (a special stat with a note is legal).
 	let statReminders = $derived(draftStatReminders(draft));
 	let statMessages = $derived([...statWarnings, ...statReminders]);
 
-	// The step path is mode-dependent: pool-based threats visit a Pools step.
+	// The step path is mode-dependent: person-mode themes swap Threat for a
+	// Person step; pool-based threats add a Pools step.
+	let personMode = $derived(theme?.builderMode === 'person');
 	let poolsMode = $derived(threat?.builderMode === 'pools');
-	let steps = $derived(builderPath(poolsMode));
+	let pathMode = $derived(personMode ? ('person' as const) : poolsMode ? ('pools' as const) : ('standard' as const));
+	let steps = $derived(builderPath(pathMode));
 	let stepIndex = $derived(steps.findIndex((s) => s.id === stepId));
+
+	// People need only a theme; creatures need the theme + threat pair.
+	let templatesChosen = $derived(personMode ? Boolean(theme) : Boolean(theme && threat));
 
 	// A mode switch can strand the persisted position on a step the new path
 	// doesn't visit (e.g. 'pools' after reseeding to a standard threat) —
@@ -60,15 +81,66 @@
 		}
 	});
 
-	// Steps past Threat need both templates; re-seed stats when the pair changes.
+	// Steps past Threat need both templates; changing the pair stashes the
+	// outgoing work and restores anything built earlier on the new pair, so
+	// flipping between templates never loses either side's customization.
 	$effect(() => {
-		if (stepIndex >= 3 && theme && threat && needsReseed(draft)) {
-			// Reseeding replaces the pool array — drop pool-scoped edit and
-			// scratch state so half-typed text can't attach to the new pools.
+		if (stepIndex >= 3 && theme && !personMode && threat && needsReseed(draft)) {
+			// Swapping the pool array out — drop pool-scoped edit and scratch
+			// state so half-typed text can't attach to the incoming pools.
 			editing = null;
 			poolCustom = {};
-			denizenBuilder.updateDraft((d) => seedFromTemplates(d, theme, threat));
-			announce(`Stat block seeded from ${theme.name} ${threat.name}.`);
+			denizenBuilder.reseedPair(`${theme.id}|${threat.id}`, (stashed, current) =>
+				stashed
+					? {
+							...carryIdentity(stashed, current),
+							kind: 'creature',
+							themeId: theme.id,
+							threatId: threat.id
+						}
+					: seedFromTemplates(current, theme, threat)
+			);
+			announce(`Stat block for ${theme.name} ${threat.name} — earlier work on this pair is kept.`);
+		}
+	});
+
+	// Identity fields travel across the mode boundary; the rest is per-mode.
+	const carryIdentity = (into: DenizenDraft, from: DenizenDraft): DenizenDraft => ({
+		...into,
+		name: from.name,
+		concept: from.concept,
+		exaggeration: from.exaggeration,
+		flavor: from.flavor
+	});
+
+	// Crossing the creature/person boundary stashes the outgoing draft and
+	// restores any earlier work in the target mode, so switching themes back
+	// and forth never loses either side's progress.
+	$effect(() => {
+		// A restored stash always takes the theme just chosen: the outgoing
+		// draft's themeId was overwritten by the radio before this effect ran,
+		// so the stash may carry the other mode's theme — never trust it.
+		if (theme && personMode && draft.kind !== 'person') {
+			// The draft (pools included) is swapped out — drop pool-scoped
+			// edit and scratch state, same as a template reseed.
+			editing = null;
+			poolCustom = {};
+			denizenBuilder.swapMode('person', (stashed, current) =>
+				stashed
+					? { ...carryIdentity(stashed, current), kind: 'person', themeId: current.themeId }
+					: seedPersonFromTheme(current, theme, data.personRules)
+			);
+			announce(`Adversary path for the ${theme.name} theme — earlier work is kept.`);
+		}
+		if (theme && !personMode && draft.kind === 'person') {
+			editing = null;
+			poolCustom = {};
+			denizenBuilder.swapMode('creature', (stashed, current) =>
+				stashed
+					? { ...carryIdentity(stashed, current), kind: 'creature', themeId: current.themeId }
+					: clearPersonState(current, data.personRules)
+			);
+			announce('Creature path — your person work is kept and restored if you switch back.');
 		}
 	});
 
@@ -78,7 +150,9 @@
 	}
 
 	function stepAccessible(i: number): boolean {
-		return i <= 2 || templatesChosen;
+		// Concept and Theme are always open; the person path's step 2 (Person)
+		// already needs a theme, the creature path's (Threat) does not.
+		return i <= (personMode ? 1 : 2) || templatesChosen;
 	}
 
 	function confirmStartOver() {
@@ -188,6 +262,58 @@
 		editing = null;
 		poolCustom = {};
 		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
+	}
+
+	// --- person (adversary) editing -------------------------------------------
+
+	function chooseKith(kithId: string | null) {
+		const kith = kithId ? (data.kiths.find((k) => k.id === kithId) ?? null) : null;
+		denizenBuilder.updateDraft((d) => setPersonKith(d, kith));
+	}
+
+	let chosenKith = $derived(data.kiths.find((k) => k.id === draft.kithId) ?? null);
+	let chosenKin = $derived(chosenKith?.kins.find((k) => k.id === draft.kinId) ?? null);
+	let chosenKinArete = $derived(
+		chosenKin?.areteTalentId
+			? (data.talents.find((t) => t.id === chosenKin.areteTalentId) ?? null)
+			: null
+	);
+	let chosenKinMastered = $derived(
+		chosenKin ? (data.talents.find((t) => t.id === chosenKin.masteredTalentId) ?? null) : null
+	);
+
+	function chooseKin(kinId: string) {
+		const kin = kinId ? (chosenKith?.kins.find((k) => k.id === kinId) ?? null) : null;
+		const arete = kin?.areteTalentId
+			? (data.talents.find((t) => t.id === kin.areteTalentId) ?? null)
+			: null;
+		denizenBuilder.updateDraft((d) => setPersonKin(d, kin, arete));
+	}
+
+	function assignSpread(suit: SuitId, value: number) {
+		denizenBuilder.updateDraft((d) => assignPersonSpreadValue(d, suit, value));
+	}
+
+	// The person's path follows their highest attribute (the 4); its talents
+	// are offered as checkboxes, the other paths' behind collapsed dropdowns.
+	let personPath = $derived.by(() => {
+		const suit = highestSuit(
+			Object.fromEntries(SUIT_IDS.map((s) => [s, Number(draft.attributes[s]) || 0])) as Record<
+				SuitId,
+				number
+			>
+		);
+		return data.paths.find((p) => p.suit === suit);
+	});
+
+	function pathTalents(talentIds: string[]) {
+		return talentIds
+			.map((id) => data.talents.find((t) => t.id === id))
+			.filter((t): t is NonNullable<typeof t> => Boolean(t));
+	}
+
+	function toggleTalent(talent: (typeof data.talents)[number], enabled: boolean) {
+		denizenBuilder.updateDraft((d) => togglePersonTalent(d, talent, enabled));
 	}
 
 	// Per-pool "add ability" form state, keyed by pool index.
@@ -346,6 +472,7 @@
 						<span class="pick-desc">{option.description.split('\n')[0]}</span>
 						{#if option.likes?.length}<span class="pick-meta"><strong>Likes:</strong> {option.likes.join(', ')}</span>{/if}
 						{#if option.hates?.length}<span class="pick-meta"><strong>Hates:</strong> {option.hates.join(', ')}</span>{/if}
+						{#if option.builderNote}<span class="pick-meta">{option.builderNote}</span>{/if}
 					</label>
 				{:else}
 					<div class="pick-card unavailable">
@@ -392,14 +519,191 @@
 				{/if}
 			{/each}
 		</div>
+	{:else if stepId === 'person' && theme}
+		<h2>Person</h2>
+		<p>
+			The book: <em
+				>"Represent people in your game by making actual characters… If the character is strange
+				or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms
+				that represent their core gimmick."</em
+			> This adversary gets the adventurer spread, an optional kith, and gimmick dooms.
+		</p>
+
+		<h3>Attribute spread</h3>
+		<p class="guidance">
+			Assign {personSpread.join(', ')} — one to each suit. Picking a value swaps it with the
+			suit that currently holds it.
+		</p>
+		<div class="attr-grid">
+			{#each SUIT_IDS as suit (suit)}
+				<label class="field">
+					<span>{suit[0].toUpperCase() + suit.slice(1)}</span>
+					<select
+						value={draft.attributes[suit]}
+						onchange={(e) => assignSpread(suit, Number(e.currentTarget.value))}
+						aria-label={`${suit[0].toUpperCase() + suit.slice(1)} spread value`}
+					>
+						{#each personSpread as value (value)}
+							<option value={String(value)}>{value}</option>
+						{/each}
+					</select>
+				</label>
+			{/each}
+		</div>
+		{#each statWarnings as warning}
+			<p class="warning" role="alert">{warning}</p>
+		{/each}
+
+		<h3>Kith</h3>
+		<p class="guidance">Flavour only — the choice is recorded as a note on the stat block.</p>
+		<div class="picker">
+			<label class="pick-card" class:selected={draft.kithId === null}>
+				<input
+					type="radio"
+					name="kith"
+					value=""
+					checked={draft.kithId === null}
+					onchange={() => chooseKith(null)}
+				/>
+				<span class="pick-name">No kith</span>
+				<span class="pick-desc">Leave kith off the stat block.</span>
+			</label>
+			{#each data.kiths as option (option.id)}
+				<label class="pick-card" class:selected={draft.kithId === option.id}>
+					<input
+						type="radio"
+						name="kith"
+						value={option.id}
+						checked={draft.kithId === option.id}
+						onchange={() => chooseKith(option.id)}
+					/>
+					<span class="pick-name">{option.name}</span>
+					<span class="pick-desc">{option.description.split('\n')[0]}</span>
+				</label>
+			{/each}
+		</div>
+		{#if chosenKith}
+			<label class="field">
+				<span>Kin (adds the kin's arete talent as a note)</span>
+				<select
+					value={draft.kinId ?? ''}
+					onchange={(e) => chooseKin(e.currentTarget.value)}
+					aria-label="Kin"
+				>
+					<option value="">No kin</option>
+					{#each chosenKith.kins as kin (kin.id)}
+						<option value={kin.id}>{kin.name}</option>
+					{/each}
+				</select>
+			</label>
+			{#if chosenKin}
+				<!-- Both kin talents previewed right below the pick, each opt-in,
+				     so the GM can judge them before they join the stat block. -->
+				<div class="arete-preview">
+					{#if chosenKinMastered}
+						<label class="kin-talent">
+							<input
+								type="checkbox"
+								checked={personHasTalent(draft, chosenKinMastered)}
+								onchange={(e) => toggleTalent(chosenKinMastered!, e.currentTarget.checked)}
+							/>
+							<span>
+								<em>Mastered:</em>
+								<strong>{abilityLabel(chosenKinMastered.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(chosenKinMastered.description)}</span>
+							</span>
+						</label>
+					{/if}
+					{#if chosenKinArete}
+						<label class="kin-talent">
+							<input
+								type="checkbox"
+								checked={personHasAreteTalent(draft, chosenKinArete)}
+								onchange={(e) =>
+									denizenBuilder.updateDraft((d) =>
+										togglePersonAreteTalent(d, chosenKinArete!, e.currentTarget.checked)
+									)}
+							/>
+							<span>
+								<em>Arete:</em>
+								<strong>{abilityLabel(chosenKinArete.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(chosenKinArete.description)}</span>
+							</span>
+						</label>
+					{/if}
+				</div>
+			{/if}
+		{/if}
+
+		<h3>Talents</h3>
+		<p class="guidance">
+			People have talents like any character. The path matching their highest attribute is open
+			below; other paths' talents are behind the dropdowns. Each picked talent becomes a note.
+		</p>
+		{#if personPath}
+			<h4>{personPath.name} — their path (highest attribute)</h4>
+			<ul class="options">
+				{#each pathTalents(personPath.talentIds) as talent (talent.id)}
+					<li>
+						<label>
+							<input
+								type="checkbox"
+								checked={personHasTalent(draft, talent)}
+								onchange={(e) => toggleTalent(talent, e.currentTarget.checked)}
+							/>
+							<span>
+								<strong>{abilityLabel(talent.name)}</strong>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+								<span class="inline-md">{@html renderMarkdown(talent.description)}</span>
+							</span>
+						</label>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		{#each data.paths.filter((p) => p.id !== personPath?.id) as path (path.id)}
+			<details class="offpath">
+				<summary>{path.name} talents (off-path)</summary>
+				<ul class="options">
+					{#each pathTalents(path.talentIds) as talent (talent.id)}
+						<li>
+							<label>
+								<input
+									type="checkbox"
+									checked={personHasTalent(draft, talent)}
+									onchange={(e) => toggleTalent(talent, e.currentTarget.checked)}
+								/>
+								<span>
+									<strong>{abilityLabel(talent.name)}</strong>
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
+									<span class="inline-md">{@html renderMarkdown(talent.description)}</span>
+								</span>
+							</label>
+						</li>
+					{/each}
+				</ul>
+			</details>
+		{/each}
 	{:else if !templatesChosen}
 		<p class="empty">Choose a theme and a threat first.</p>
 	{:else if stepId === 'customize'}
 		<h2>Customize</h2>
-		<p>
-			The stat block below was seeded from <strong>{theme?.name} {threat?.name}</strong>. Change
-			any detail to fit your concept — the book explicitly blesses it.
-		</p>
+		{#if personMode}
+			<p>
+				The stat block below was seeded as a <strong>{theme?.name}</strong> adversary. Change any
+				detail to fit your concept — the book explicitly blesses it. The GM normally tracks
+				denizens with Health and Defense while characters take Wounds. H/D values are pre-filled
+				for simplicity, but you can select the option to track Wounds like an adventurer if you
+				prefer.
+			</p>
+		{:else}
+			<p>
+				The stat block below was seeded from <strong>{theme?.name} {threat?.name}</strong>. Change
+				any detail to fit your concept — the book explicitly blesses it.
+			</p>
+		{/if}
 		<div class="attr-grid">
 			<label class="field"><span>Swords</span><input type="text" value={draft.attributes.swords} oninput={(e) => setAttribute('swords', e.currentTarget.value)} /></label>
 			<label class="field"><span>Pentacles</span><input type="text" value={draft.attributes.pentacles} oninput={(e) => setAttribute('pentacles', e.currentTarget.value)} /></label>
@@ -420,12 +724,29 @@
 			<!-- Build-time pick instruction from the template, not stat-block content. -->
 			<p class="guidance"><em>{threat.chooseAttribute}</em></p>
 		{/if}
+		{#if personMode}
+			<label class="wounds-toggle">
+				<input
+					type="checkbox"
+					checked={personTracksWounds(draft)}
+					onchange={(e) =>
+						denizenBuilder.updateDraft((d) =>
+							setPersonWoundTracking(d, e.currentTarget.checked, data.personRules))}
+				/>
+				<span>
+					Track Wounds like an adventurer — sets Health to <strong>*</strong> and adds a note
+					listing the wound options.
+				</span>
+			</label>
+		{/if}
 		{#each statMessages as warning}
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		{#if draft.statNote || threat?.statNote}
 			<label class="field">
-				<span>Stat note (explains irregular stats — from the {threat?.name} template)</span>
+				<span>
+					Stat note (explains irregular stats{personMode ? '' : ` — from the ${threat?.name} template`})
+				</span>
 				<input type="text" value={draft.statNote} oninput={(e) => setField('statNote', e.currentTarget.value)} />
 			</label>
 		{/if}
@@ -529,18 +850,25 @@
 			</p>
 		{/if}
 
-		<h3>Lesser dooms <span class="from">from {theme?.name}</span></h3>
-		{#if theme?.lesserDooms?.length}
-			{@render templateDoomPicker('lesserDooms', theme.lesserDooms, theme.chooseLesserDooms)}
+		{#if personMode}
+			<p class="guidance">
+				People have no template pick-lists — <em>"give them a few special greater dooms that
+				represent their core gimmick"</em>. Add them below.
+			</p>
 		{:else}
-			<p class="empty">The {theme?.name} theme has no default lesser dooms.</p>
-		{/if}
+			<h3>Lesser dooms <span class="from">from {theme?.name}</span></h3>
+			{#if theme?.lesserDooms?.length}
+				{@render templateDoomPicker('lesserDooms', theme.lesserDooms, theme.chooseLesserDooms)}
+			{:else}
+				<p class="empty">The {theme?.name} theme has no default lesser dooms.</p>
+			{/if}
 
-		<h3>Greater dooms <span class="from">from {threat?.name}</span></h3>
-		{#if threat?.greaterDooms?.length}
-			{@render templateDoomPicker('greaterDooms', threat.greaterDooms, threat.chooseGreaterDooms)}
-		{:else}
-			<p class="empty">The {threat?.name} threat has no default greater dooms.</p>
+			<h3>Greater dooms <span class="from">from {threat?.name}</span></h3>
+			{#if threat?.greaterDooms?.length}
+				{@render templateDoomPicker('greaterDooms', threat.greaterDooms, threat.chooseGreaterDooms)}
+			{:else}
+				<p class="empty">The {threat?.name} threat has no default greater dooms.</p>
+			{/if}
 		{/if}
 
 		<h3>Your dooms</h3>
@@ -654,7 +982,8 @@
 		color: var(--ink-soft);
 	}
 	.field input,
-	.field textarea {
+	.field textarea,
+	.field select {
 		width: 100%;
 		padding: 0.5rem 0.7rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
@@ -815,6 +1144,45 @@
 	}
 	.guidance {
 		font-size: 0.9rem;
+		color: var(--ink-soft);
+	}
+	.wounds-toggle {
+		display: flex;
+		gap: 0.5rem;
+		align-items: baseline;
+		margin: 0.75rem 0;
+		font-size: 0.9rem;
+	}
+	.arete-preview {
+		margin: 0.35rem 0 0.75rem;
+		padding: 0.5rem 0.75rem;
+		font-size: 0.9rem;
+		border-left: 3px solid color-mix(in oklab, var(--accent) 45%, transparent);
+		background: color-mix(in oklab, var(--accent) 6%, transparent);
+	}
+	.kin-talent {
+		display: flex;
+		gap: 0.5rem;
+		align-items: baseline;
+		cursor: pointer;
+	}
+	.kin-talent + .kin-talent {
+		margin-top: 0.5rem;
+	}
+	.kin-talent em {
+		font-family: var(--font-subhead);
+		font-style: normal;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+	}
+	.offpath {
+		border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+		padding: 0.4rem 0;
+	}
+	.offpath summary {
+		font-family: var(--font-subhead);
+		font-size: 0.95rem;
+		cursor: pointer;
 		color: var(--ink-soft);
 	}
 	.pool-editor {

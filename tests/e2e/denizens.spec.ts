@@ -159,17 +159,18 @@ test.describe('denizen builder', () => {
 		await expect(page.locator('ul.current li', { hasText: 'Threshold' })).toHaveCount(0);
 	});
 
-	test('description-only templates are reference-only; pool threats are buildable', async ({
-		page
-	}) => {
+	test('person and pool templates are buildable with guidance', async ({ page }) => {
 		await page.goto('/denizens/build');
 		await page.getByRole('button', { name: 'Next →' }).click();
 
-		// The Man theme has no template — the book builds people as characters.
+		// The Man theme is selectable and carries the book's guidance.
 		await expect(page.getByRole('heading', { name: 'Theme', level: 2 })).toBeVisible();
-		const manCard = page.locator('.pick-card.unavailable', { hasText: 'Man' });
-		await expect(manCard).toBeVisible();
-		await expect(manCard.getByRole('radio')).toHaveCount(0);
+		// Match the card by its exact name — hasText is a case-insensitive
+		// substring match, and other cards' prose contains "man".
+		const exactMan = page.locator('.pick-name', { hasText: /^Man$/ });
+		await expect(page.locator('.pick-card.unavailable', { has: exactMan })).toHaveCount(0);
+		const manCard = page.locator('.pick-card', { has: exactMan });
+		await expect(manCard.getByRole('radio')).toHaveCount(1);
 		await expect(manCard.getByText('making actual characters')).toBeVisible();
 
 		await page.getByRole('radio', { name: 'Undead' }).check();
@@ -181,6 +182,140 @@ test.describe('denizen builder', () => {
 			0
 		);
 		await expect(page.getByRole('radio', { name: /Dungeon Lord/ })).toBeVisible();
+	});
+
+	test('builds a person adversary end to end', async ({ page, context }) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await page.goto('/denizens/build');
+
+		await page.getByLabel('Name').fill('Odo the Cannibal');
+		await page.getByLabel('Classic monster it starts from').fill('A hermit');
+		await page.getByLabel('The one exaggerated aspect').fill('his hunger never stops');
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Choosing Man swaps the path: Threat is replaced by a Person step.
+		await page.getByRole('radio', { name: /Man/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Person', level: 2 })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Threat' })).toHaveCount(0);
+
+		// Spread assignment swaps values instead of duplicating them — no warning.
+		await page.getByLabel('Cups spread value').selectOption('4');
+		await expect(page.getByLabel('Swords spread value')).toHaveValue('2');
+		await expect(page.locator('.warning')).toHaveCount(0);
+
+		// Kith is flavour, recorded as a note; a kin adds its arete talent,
+		// previewed right below the pick so the GM can judge it.
+		await page.getByRole('radio', { name: 'Orcs' }).check();
+		await page.getByLabel('Kin', { exact: true }).selectOption({ index: 1 });
+		// Both kin talents preview with checkboxes: arete on by default,
+		// the mastered talent opt-in.
+		await expect(page.locator('.arete-preview')).toBeVisible();
+		await expect(page.locator('.kin-talent', { hasText: 'Arete:' }).getByRole('checkbox')).toBeChecked();
+		const masteredBox = page.locator('.kin-talent', { hasText: 'Mastered:' }).getByRole('checkbox');
+		await expect(masteredBox).not.toBeChecked();
+		await masteredBox.check();
+
+		// Talents: the highest attribute's path (Cups) is open; pick the first.
+		await expect(page.getByRole('heading', { name: /their path/ })).toBeVisible();
+		await page.locator('ul.options input[type=checkbox]').first().check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Customize: person wording, HD pre-filled for simplicity (5/1), and the
+		// wound-tracking option toggles a * Health with the Wounds note.
+		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
+		await expect(page.getByText('pre-filled for simplicity')).toBeVisible();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('5');
+		await expect(page.getByLabel('Defense', { exact: true })).toHaveValue('1');
+
+		const woundsToggle = page.getByRole('checkbox', { name: /Track Wounds/ });
+		await woundsToggle.check();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('*');
+		await expect(page.locator('ul.current li', { hasText: 'Wounds.' })).toBeVisible();
+		await woundsToggle.uncheck();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('5');
+		await expect(page.locator('ul.current li', { hasText: 'Wounds.' })).toHaveCount(0);
+
+		await page.getByLabel('Health', { exact: true }).fill('6');
+		await page.getByLabel('Defense', { exact: true }).fill('2');
+		await expect(page.locator('ul.current li', { hasText: 'Kith: Orcs' })).toBeVisible();
+		await expect(page.locator('ul.current li', { hasText: 'Arete talent:' })).toBeVisible();
+		await expect(page.locator('ul.current li', { hasText: 'Talent:' }).first()).toBeVisible();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Dooms: no template pick-lists, straight to gimmick dooms.
+		await expect(page.getByRole('heading', { name: 'Dooms', level: 2 })).toBeVisible();
+		await expect(page.getByText('core gimmick')).toBeVisible();
+		await expect(page.getByRole('checkbox')).toHaveCount(0);
+		await page.getByPlaceholder('Doom name').fill('Hunger Beyond Reason');
+		await page.getByPlaceholder('What it does').fill('Play a greater doom card to bite and hold.');
+		await page.getByRole('button', { name: 'Add as greater doom' }).click();
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Review: no threat in the type line; kith and talent notes carry over.
+		await expect(page.getByRole('heading', { name: 'Review', level: 2 })).toBeVisible();
+		const preview = page.locator('.preview');
+		await expect(preview.getByRole('heading', { name: 'Odo the Cannibal' })).toBeVisible();
+		await expect(preview.getByText('Kith: Orcs.')).toBeVisible();
+		await expect(preview.getByText('Arete talent:')).toBeVisible();
+		await expect(preview.getByText('Health/Defense: 6/2')).toBeVisible();
+
+		// The Markdown export drops the threat entirely.
+		await page.getByRole('button', { name: 'Copy Markdown' }).click();
+		await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
+		const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+		expect(clipboard).toContain('_Man_');
+		expect(clipboard).not.toContain('threat:');
+		expect(clipboard).toContain('- **Kith: Orcs.**');
+		expect(clipboard).toContain('- **Hunger Beyond Reason.**');
+	});
+
+	test('switching modes stashes and restores work on both sides', async ({ page }) => {
+		await page.goto('/denizens/build');
+		await page.getByRole('button', { name: 'Next →' }).click();
+
+		// Person side: pick Man and a kith.
+		await page.getByRole('radio', { name: /Man/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Person', level: 2 })).toBeVisible();
+		await page.getByRole('radio', { name: 'Orcs' }).check();
+
+		// Creature side: switch to Undead Brute and customize Health.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Threat', level: 2 })).toBeVisible();
+		await page.getByRole('radio', { name: 'Brute' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByLabel('Health', { exact: true }).fill('4');
+
+		// Back to Man: the kith choice survived the round trip.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: /Man/ }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Person', level: 2 })).toBeVisible();
+		await expect(page.getByRole('radio', { name: 'Orcs' })).toBeChecked();
+
+		// And back to Undead: the customized Health survived too.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('4');
+
+		// Flipping to a different creature template and back keeps it as well.
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Sorcerous' }).check();
+		await page.getByRole('button', { name: 'Threat' }).click();
+		await page.getByRole('radio', { name: 'Elite' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).not.toHaveValue('4'); // reseeded pair
+
+		await page.getByRole('button', { name: 'Theme' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Threat' }).click();
+		await page.getByRole('radio', { name: 'Brute' }).check();
+		await page.getByRole('button', { name: 'Customize' }).click();
+		await expect(page.getByLabel('Health', { exact: true })).toHaveValue('4');
 	});
 
 	test('stat inputs warn on a starting Health of 0', async ({ page }) => {

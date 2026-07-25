@@ -273,7 +273,7 @@ export const denizenThemeSchema = z.object({
 	notes: z.array(denizenAbilitySchema).optional(),
 	lesserDooms: z.array(denizenAbilitySchema).optional(),
 	chooseLesserDooms: z.string().optional(),
-	builderMode: z.enum(['standard', 'unsupported']).optional(),
+	builderMode: z.enum(['standard', 'person', 'unsupported']).optional(),
 	builderNote: z.string().optional()
 });
 
@@ -352,7 +352,11 @@ export const denizenDefinitionSchema = z
 export const denizensFileSchema = z.object({
 	themes: z.array(denizenThemeSchema),
 	threats: z.array(denizenThreatSchema),
-	bestiary: z.array(denizenDefinitionSchema)
+	bestiary: z.array(denizenDefinitionSchema),
+	person: z.object({
+		health: denizenStatValueSchema,
+		defense: denizenStatValueSchema
+	})
 });
 
 export const ruleEntrySchema = z.object({

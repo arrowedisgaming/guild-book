@@ -11,9 +11,26 @@ import {
 	addPool,
 	removePool,
 	movePool,
-	updatePool
+	updatePool,
+	seedPersonFromTheme,
+	clearPersonState,
+	setPersonKith,
+	setPersonKin,
+	personHasTalent,
+	personHasAreteTalent,
+	togglePersonTalent,
+	togglePersonAreteTalent,
+	setPersonWoundTracking,
+	personTracksWounds,
+	assignPersonSpreadValue
 } from '$lib/engine/denizen-builder';
-import { getDenizenThemes, getDenizenThreats } from '$lib/server/content/loader';
+import {
+	getDenizenPersonRules,
+	getDenizenThemes,
+	getDenizenThreats,
+	getKiths,
+	getTalents
+} from '$lib/server/content/loader';
 
 const themes = getDenizenThemes();
 const threats = getDenizenThreats();
@@ -473,5 +490,253 @@ describe('denizen builder — sanitizing pool drafts', () => {
 	it('round-trips a pooled draft unchanged', () => {
 		const seeded = updatePool(seedLord(), 0, () => filledPool());
 		expect(sanitizeDraft(JSON.parse(JSON.stringify(seeded)))).toEqual(seeded);
+	});
+});
+
+// --- people (the Man theme's adversary path) ---------------------------------
+
+const manTheme = () => theme('man');
+const personRules = getDenizenPersonRules();
+const seedPerson = () => seedPersonFromTheme(createBlankDraft(), manTheme(), personRules);
+const kiths = getKiths();
+
+describe('denizen builder — person seeding', () => {
+	it('seeds the adventurer spread, simple default HD, and no threat', () => {
+		const draft = seedPerson();
+		expect(draft.kind).toBe('person');
+		expect(draft.threatId).toBeNull();
+		expect(draft.attributes).toEqual({ swords: '4', pentacles: '3', cups: '2', wands: '1' });
+		// HD pre-filled for simplicity; the Customize step explains it — the
+		// stat block itself carries no boilerplate note.
+		expect(draft.health).toBe('5');
+		expect(draft.defense).toBe('1');
+		expect(draft.statNote).toBe('');
+		expect(draft.pools).toEqual([]);
+	});
+
+	it('preserves identity fields across a person seed', () => {
+		const blank = { ...createBlankDraft(), name: 'Odo the Cannibal', concept: 'A hermit' };
+		const draft = seedPersonFromTheme(blank, manTheme(), personRules);
+		expect(draft.name).toBe('Odo the Cannibal');
+		expect(draft.concept).toBe('A hermit');
+	});
+
+
+	it('clears person-only state when leaving the person path', () => {
+		const person = setPersonKith(seedPerson(), kiths[0]);
+		const cleared = clearPersonState(person, personRules);
+		expect(cleared.kind).toBe('creature');
+		expect(cleared.kithId).toBeNull();
+		expect(cleared.statNote).toBe('');
+		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+	});
+
+	it('drops mastered path talent notes when leaving the person path', () => {
+		// Talent: notes are person-owned just like Kith:/Arete talent: — a
+		// mastered path talent must not survive the switch to a creature theme.
+		const talent = getTalents()[0];
+		const withTalent = togglePersonTalent(setPersonKith(seedPerson(), kiths[0]), talent, true);
+		const keeper = { name: 'Lair', text: 'A collapsed chapel.' };
+		const cleared = clearPersonState({ ...withTalent, notes: [...withTalent.notes, keeper] }, personRules);
+		expect(cleared.notes.some((n) => n.name.startsWith('Talent:'))).toBe(false);
+		expect(cleared.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+		expect(cleared.notes).toContainEqual(keeper);
+	});
+
+	it('leaving the person path undoes wound tracking too', () => {
+		// A person with Track Wounds on switches to a creature theme with no
+		// stashed creature draft — the creature must not keep the '*' Health,
+		// the Wounds note, or the stale healthBeforeWounds.
+		const tracking = setPersonWoundTracking({ ...seedPerson(), health: '7' }, true, personRules);
+		const cleared = clearPersonState(tracking, personRules);
+		expect(cleared.kind).toBe('creature');
+		expect(cleared.health).toBe('7');
+		expect(cleared.healthBeforeWounds).toBe('');
+		expect(personTracksWounds(cleared)).toBe(false);
+	});
+});
+
+describe('denizen builder — person kith and spread', () => {
+	it('keeps a single kith note in sync with the chosen kith', () => {
+		let draft = setPersonKith(seedPerson(), kiths[0]);
+		expect(draft.kithId).toBe(kiths[0].id);
+		expect(draft.notes.filter((n) => n.name.startsWith('Kith:'))).toHaveLength(1);
+		expect(draft.notes[0].name).toBe(`Kith: ${kiths[0].name}`);
+
+		draft = setPersonKith(draft, kiths[1]);
+		expect(draft.notes.filter((n) => n.name.startsWith('Kith:'))).toHaveLength(1);
+		expect(draft.notes[0].name).toBe(`Kith: ${kiths[1].name}`);
+
+		draft = setPersonKith(draft, null);
+		expect(draft.kithId).toBeNull();
+		expect(draft.notes.some((n) => n.name.startsWith('Kith:'))).toBe(false);
+	});
+
+	it('assigns a spread value by swapping with its current holder', () => {
+		// Seeded: swords 4, pentacles 3, cups 2, wands 1. Give cups the 4.
+		const draft = assignPersonSpreadValue(seedPerson(), 'cups', 4);
+		expect(draft.attributes).toEqual({ swords: '2', pentacles: '3', cups: '4', wands: '1' });
+		// Still a valid spread, so no warning.
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([]);
+	});
+
+	it('warns when the attributes are not the adventurer spread', () => {
+		const draft = { ...seedPerson(), attributes: { swords: '4', pentacles: '4', cups: '2', wands: '1' } };
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([
+			'A person uses the adventurer spread — assign 4, 3, 2, and 1 each to one suit.'
+		]);
+	});
+
+	it('applies the HD pair rule to people who are given stats', () => {
+		const draft = { ...seedPerson(), defense: '' };
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([
+			'Health and Defense are a pair — fill in both or leave both blank.'
+		]);
+	});
+});
+
+describe('denizen builder — materializing a person', () => {
+	it('omits the threat key and carries no boilerplate stat note', () => {
+		const denizen = toDenizenDefinition({ ...seedPerson(), name: 'Odo' });
+		expect(denizen.theme).toBe('man');
+		expect('threat' in denizen).toBe(false);
+		expect('statNote' in denizen).toBe(false);
+		// Simple default HD carries through.
+		expect(denizen.health).toBe(5);
+		expect(denizen.defense).toBe(1);
+	});
+
+	it('carries the kith note into the definition', () => {
+		const denizen = toDenizenDefinition(setPersonKith(seedPerson(), kiths[0]));
+		expect(denizen.notes?.[0].name).toBe(`Kith: ${kiths[0].name}`);
+	});
+});
+
+describe('denizen builder — person wound tracking', () => {
+	it('toggles the Wounds note and a * Health', () => {
+		const tracking = setPersonWoundTracking(seedPerson(), true, personRules);
+		expect(personTracksWounds(tracking)).toBe(true);
+		expect(tracking.health).toBe('*');
+		const note = tracking.notes.find((n) => n.name === 'Wounds')!;
+		expect(note.text).toMatch(/notch a piece of armor/i);
+		expect(note.text).toMatch(/Death's Door/);
+		expect(note.text).toMatch(/- \[ \] notch a piece of armor/); // rendered as a checklist
+
+		const off = setPersonWoundTracking(tracking, false, personRules);
+		expect(personTracksWounds(off)).toBe(false);
+		expect(off.health).toBe('5'); // the * restores to the simple default
+	});
+
+	it('never doubles the Wounds note and keeps a custom Health on toggle-off', () => {
+		let draft = setPersonWoundTracking(seedPerson(), true, personRules);
+		draft = setPersonWoundTracking(draft, true, personRules);
+		expect(draft.notes.filter((n) => n.name === 'Wounds')).toHaveLength(1);
+
+		draft = { ...draft, health: '8' }; // user overrode the * by hand
+		draft = setPersonWoundTracking(draft, false, personRules);
+		expect(draft.health).toBe('8');
+		expect(personTracksWounds(draft)).toBe(false);
+	});
+
+	it('restores a pre-toggle custom Health, not the default', () => {
+		// User set Health 7, tried wound tracking, changed their mind.
+		let draft = { ...seedPerson(), health: '7' };
+		draft = setPersonWoundTracking(draft, true, personRules);
+		expect(draft.health).toBe('*');
+		draft = setPersonWoundTracking(draft, false, personRules);
+		expect(draft.health).toBe('7');
+		expect(draft.healthBeforeWounds).toBe('');
+	});
+
+	it('kin selection keeps a single arete-talent note in sync', () => {
+		const kith = kiths[0];
+		const kin = kith.kins.find((k) => k.areteTalentId)!;
+		const arete = getTalents().find((t) => t.id === kin.areteTalentId)!;
+
+		let draft = setPersonKith(seedPerson(), kith);
+		draft = setPersonKin(draft, kin, arete);
+		expect(draft.kinId).toBe(kin.id);
+		expect(draft.notes.filter((n) => n.name.startsWith('Arete talent:'))).toHaveLength(1);
+		expect(draft.notes.some((n) => n.name === `Arete talent: ${arete.name}`)).toBe(true);
+
+		// Clearing the kin removes the note; changing kith clears kin too.
+		expect(setPersonKin(draft, null, null).notes.some((n) => n.name.startsWith('Arete'))).toBe(false);
+		const rekithed = setPersonKith(draft, kiths[1]);
+		expect(rekithed.kinId).toBeNull();
+		expect(rekithed.notes.some((n) => n.name.startsWith('Arete'))).toBe(false);
+	});
+
+	it('the arete note can be unticked without losing the kin', () => {
+		const kith = kiths[0];
+		const kin = kith.kins.find((k) => k.areteTalentId)!;
+		const arete = getTalents().find((t) => t.id === kin.areteTalentId)!;
+
+		let draft = setPersonKin(setPersonKith(seedPerson(), kith), kin, arete);
+		expect(personHasAreteTalent(draft, arete)).toBe(true);
+
+		draft = togglePersonAreteTalent(draft, arete, false);
+		expect(personHasAreteTalent(draft, arete)).toBe(false);
+		expect(draft.kinId).toBe(kin.id); // the kin choice survives
+
+		draft = togglePersonAreteTalent(draft, arete, true);
+		expect(draft.notes.filter((n) => n.name.startsWith('Arete talent:'))).toHaveLength(1);
+	});
+
+	it('talents toggle on and off as notes', () => {
+		const talent = getTalents()[0];
+		let draft = togglePersonTalent(seedPerson(), talent, true);
+		expect(personHasTalent(draft, talent)).toBe(true);
+		expect(draft.notes.some((n) => n.name === `Talent: ${talent.name}`)).toBe(true);
+
+		draft = togglePersonTalent(draft, talent, true); // no doubling
+		expect(draft.notes.filter((n) => n.name === `Talent: ${talent.name}`)).toHaveLength(1);
+
+		draft = togglePersonTalent(draft, talent, false);
+		expect(personHasTalent(draft, talent)).toBe(false);
+	});
+
+	it('a wound-tracking person still materializes and passes stat warnings', () => {
+		const draft = setPersonWoundTracking(seedPerson(), true, personRules);
+		expect(draftStatWarnings(draft, null, personRules)).toEqual([]);
+		const denizen = toDenizenDefinition(draft);
+		expect(denizen.health).toBe('*');
+		expect(denizen.notes?.some((n) => n.name === 'Wounds')).toBe(true);
+	});
+
+	it('the Wounds note renders drawn checkboxes in HTML and PDF', async () => {
+		const { renderMarkdown } = await import('$lib/utils/markdown');
+		const { buildDenizenDocDefinition } = await import('$lib/export/denizen-pdf-export');
+		const draft = setPersonWoundTracking(seedPerson(), true, personRules);
+		const note = draft.notes.find((n) => n.name === 'Wounds')!;
+
+		const html = renderMarkdown(note.text);
+		expect(html).toContain('<li class="task"><input type="checkbox" disabled />');
+		// The two talent wounds are separate lines — Obsidian and other GFM
+		// renderers only honour one checkbox per list item.
+		expect(html).toContain('disabled /> Wound a talent (two max)');
+		expect(html).toContain('disabled /> Wound a second talent');
+
+		const doc = buildDenizenDocDefinition(toDenizenDefinition(draft), 'Man', '');
+		const flattened = JSON.stringify(doc);
+		expect(flattened).toContain('"type":"rect"'); // vector-drawn boxes
+		expect(flattened).not.toContain('[ ]'); // no literal bracket boxes remain
+	});
+});
+
+describe('denizen builder — sanitizing person drafts', () => {
+	it('defaults kind and kith on old drafts', () => {
+		const draft = sanitizeDraft({ name: 'Old Draft' });
+		expect(draft.kind).toBe('creature');
+		expect(draft.kithId).toBeNull();
+	});
+
+	it('repairs a garbage kind to creature', () => {
+		expect(sanitizeDraft({ kind: 'werewolf' }).kind).toBe('creature');
+		expect(sanitizeDraft({ kind: 'person' }).kind).toBe('person');
+	});
+
+	it('round-trips a person draft unchanged', () => {
+		const person = setPersonKith(seedPerson(), kiths[2]);
+		expect(sanitizeDraft(JSON.parse(JSON.stringify(person)))).toEqual(person);
 	});
 });

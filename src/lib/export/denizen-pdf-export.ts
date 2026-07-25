@@ -36,14 +36,83 @@ function statLine(label: string, value: string) {
 	};
 }
 
+/**
+ * A drawn checkbox row for task-list lines (`- [ ] text`): the fonts carry no
+ * box glyphs, so boxes are vector rects beside the text.
+ */
+function checkboxRow(boxes: number, text: string) {
+	const size = 7;
+	const gap = 4;
+	return {
+		columns: [
+			{
+				width: boxes * (size + gap),
+				canvas: Array.from({ length: boxes }, (_, i) => ({
+					type: 'rect' as const,
+					x: i * (size + gap),
+					y: 2,
+					w: size,
+					h: size,
+					lineWidth: 0.75,
+					lineColor: INK
+				}))
+			},
+			{ width: '*', text: plain(text), style: 'body' }
+		],
+		columnGap: 4,
+		margin: [10, 1, 0, 1] as [number, number, number, number]
+	};
+}
+
+const TASK_LINE = /^-\s+((?:\[[ xX]\]\s*)+)(.*)$/;
+
+/**
+ * An ability's body. Plain text normally; abilities containing task-list
+ * lines (the person Wounds note) render those lines as drawn checkboxes.
+ */
+function abilityItem(a: DenizenAbility): unknown {
+	const lines = a.text.split('\n');
+	if (!lines.some((line) => TASK_LINE.test(line))) {
+		return { text: [{ text: `${abilityLabel(a.name)} `, bold: true }, { text: plain(a.text) }] };
+	}
+	const stack: unknown[] = [];
+	let lead: string[] = [];
+	const flushLead = (first: boolean) => {
+		const text = plain(lead.join(' ').trim());
+		lead = [];
+		if (!text && !first) return;
+		stack.push(
+			first
+				? { text: [{ text: `${abilityLabel(a.name)} `, bold: true }, { text }] }
+				: { text, style: 'body' }
+		);
+	};
+	let firstFlushed = false;
+	for (const line of lines) {
+		const task = TASK_LINE.exec(line);
+		if (task) {
+			flushLead(!firstFlushed);
+			firstFlushed = true;
+			stack.push(checkboxRow((task[1].match(/\[[ xX]\]/g) ?? []).length, task[2]));
+		} else if (line.trim() === '') {
+			if (lead.length) {
+				flushLead(!firstFlushed);
+				firstFlushed = true;
+			}
+		} else {
+			lead.push(line);
+		}
+	}
+	if (lead.length) flushLead(!firstFlushed);
+	return { stack };
+}
+
 function abilityList(title: string, list: DenizenAbility[] | undefined): unknown[] {
 	if (!list?.length) return [];
 	return [
 		sectionHeader(title),
 		{
-			ul: list.map((a) => ({
-				text: [{ text: `${abilityLabel(a.name)} `, bold: true }, { text: plain(a.text) }]
-			})),
+			ul: list.map(abilityItem),
 			style: 'body',
 			// A blank line's worth of air after the bullets, before the next heading.
 			margin: [0, 2, 0, 12] as [number, number, number, number]
@@ -61,7 +130,7 @@ export function buildDenizenDocDefinition(
 
 	const content: unknown[] = [
 		{ text: denizen.name, style: 'title' },
-		{ text: `${themeName} ${threatName}`, style: 'subtitle' },
+		{ text: [themeName, threatName].filter(Boolean).join(' '), style: 'subtitle' },
 		{ text: plain(denizen.flavor), style: 'flavor', margin: [0, 8, 0, 12] },
 		statLine(
 			'Attributes',

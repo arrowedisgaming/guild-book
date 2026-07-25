@@ -59,7 +59,7 @@
 			"id": "man",
 			"name": "Man",
 			"description": "\"Man\" is a misnomer; the term is chosen merely because it sounds archaic. This theme includes the sentient people (humans, elves, gnomes, etc.). These are people, not Underworld creatures.\n\nThere isn't a template, really. Represent people in your game by making actual characters. If the character is strange or monstrous (like a mutant or a ghoulish cannibal), give them a few special greater dooms that represent their core gimmick.",
-			"builderMode": "unsupported",
+			"builderMode": "person",
 			"builderNote": "There isn't a template, really. Represent people in your game by making actual characters — if the character is strange or monstrous, give them a few special greater dooms that represent their core gimmick."
 		},
 		{
@@ -1422,5 +1422,6 @@
 				}
 			]
 		}
-	]
+	],
+	"person": { "health": 5, "defense": 1 }
 }

@@ -22,9 +22,11 @@ import {
 	togglePersonAreteTalent,
 	setPersonWoundTracking,
 	personTracksWounds,
-	assignPersonSpreadValue
+	assignPersonSpreadValue,
+	draftFromDefinition
 } from '$lib/engine/denizen-builder';
 import {
+	getBestiary,
 	getDenizenPersonRules,
 	getDenizenThemes,
 	getDenizenThreats,
@@ -738,5 +740,50 @@ describe('denizen builder — sanitizing person drafts', () => {
 	it('round-trips a person draft unchanged', () => {
 		const person = setPersonKith(seedPerson(), kiths[2]);
 		expect(sanitizeDraft(JSON.parse(JSON.stringify(person)))).toEqual(person);
+	});
+});
+
+describe('denizen builder — drafts from bestiary entries', () => {
+	const byId = Object.fromEntries(getBestiary().map((d) => [d.id, d]));
+
+	it('pre-fills a simple creature and materializes back to the same block', () => {
+		const draft = draftFromDefinition(byId['skeleton'], false);
+		expect(draft.kind).toBe('creature');
+		expect(draft.themeId).toBe('undead');
+		expect(draft.health).toBe('6');
+		// seededFrom matches the entry, so loading it never triggers a reseed.
+		expect(needsReseed(draft)).toBe(false);
+
+		const back = toDenizenDefinition(draft);
+		expect(back.name).toBe(byId['skeleton'].name);
+		expect(back.attributes).toEqual(byId['skeleton'].attributes);
+		expect(back.health).toBe(byId['skeleton'].health);
+		expect(back.lesserDooms).toEqual(byId['skeleton'].lesserDooms ?? []);
+	});
+
+	it('maps a dungeon lord’s pools and special rules into pool drafts', () => {
+		const draft = draftFromDefinition(byId['lich-yellow-king'], false);
+		expect(draft.health).toBe('');
+		expect(draft.pools.length).toBeGreaterThan(0);
+		expect(draft.pools[0].name).toBe(byId['lich-yellow-king'].pools![0].name);
+
+		const back = toDenizenDefinition(draft);
+		expect(back.pools?.map((p) => [p.name, p.health, p.defense])).toEqual(
+			byId['lich-yellow-king'].pools!.map((p) => [p.name, p.health, p.defense])
+		);
+	});
+
+	it('sanitize round-trips a bestiary draft unchanged', () => {
+		const draft = draftFromDefinition(byId['titan-sporehulk'], false);
+		expect(sanitizeDraft(JSON.parse(JSON.stringify(draft)))).toEqual(draft);
+	});
+
+	it('folds sidebars into notes so no book content is silently lost', () => {
+		const draft = draftFromDefinition(byId['vampire'], false);
+		const sidebarNote = draft.notes.find((n) => n.name === 'Killing the Vampire');
+		expect(sidebarNote).toBeDefined();
+		// And it reaches the materialized block like any other note.
+		const back = toDenizenDefinition(draft);
+		expect(back.notes?.some((n) => n.name === 'Killing the Vampire')).toBe(true);
 	});
 });

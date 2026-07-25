@@ -79,6 +79,10 @@ export interface DenizenBuilderState {
 	 * newly chosen pair instead of reseeding it away.
 	 */
 	pairStash: Record<string, DenizenDraft>;
+	/** The saved denizen this draft edits, if any — saves become updates. */
+	editingId: string | null;
+	/** Version claim for the row being edited; sent with PUT, bumped on save. */
+	editingVersion: number | null;
 }
 
 /** Belt-and-braces bound — there are only ~20 usable template pairs. */
@@ -90,7 +94,9 @@ function createInitialState(): DenizenBuilderState {
 		currentStepId: 'concept',
 		draft: createBlankDraft(),
 		modeStash: { creature: null, person: null },
-		pairStash: {}
+		pairStash: {},
+		editingId: null,
+		editingVersion: null
 	};
 }
 
@@ -133,7 +139,9 @@ function loadFromStorage(): DenizenBuilderState {
 				creature: stash.creature ? sanitizeDraft(stash.creature) : null,
 				person: stash.person ? sanitizeDraft(stash.person) : null
 			},
-			pairStash
+			pairStash,
+			editingId: typeof state.editingId === 'string' ? state.editingId : null,
+			editingVersion: typeof state.editingVersion === 'number' ? state.editingVersion : null
 		};
 	} catch {
 		return createInitialState();
@@ -199,6 +207,51 @@ function createBuilderStore() {
 					modeStash: { ...s.modeStash, [from]: s.draft, [target]: null }
 				};
 			});
+		},
+
+		/**
+		 * Start a fresh draft from prepared content (e.g. a bestiary entry) —
+		 * not tied to a saved row, so saving creates a new denizen.
+		 */
+		startFrom(draft: DenizenDraft) {
+			update((s) => ({
+				...s,
+				draft,
+				editingId: null,
+				editingVersion: null,
+				modeStash: { creature: null, person: null },
+				pairStash: {},
+				currentStepId: 'review'
+			}));
+		},
+
+		/**
+		 * Load a stored draft for editing (sanitized — server rows are data).
+		 * Clears the mode stash: the loaded row is a fresh editing context.
+		 */
+		loadForEditing(rawDraft: unknown, editingId: string, editingVersion: number) {
+			update((s) => ({
+				...s,
+				draft: sanitizeDraft(rawDraft),
+				editingId,
+				editingVersion,
+				modeStash: { creature: null, person: null },
+				pairStash: {},
+				currentStepId: 'review'
+			}));
+		},
+
+		/** Record that the current draft now corresponds to a saved row version. */
+		setSavedRef(editingId: string, editingVersion: number) {
+			update((s) => ({ ...s, editingId, editingVersion }));
+		},
+
+		/**
+		 * Detach the draft from its saved row without touching the work itself —
+		 * the next save creates a new denizen instead of updating the old one.
+		 */
+		detachSavedRef() {
+			update((s) => ({ ...s, editingId: null, editingVersion: null }));
 		},
 
 		reset() {

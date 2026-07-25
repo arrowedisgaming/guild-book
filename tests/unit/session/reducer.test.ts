@@ -586,3 +586,40 @@ describe('reduceSession — apply-correction', () => {
 		});
 	});
 });
+
+describe('discard pile top convention', () => {
+	// Increment 4 Task 4: consult-discard-top procedures (GM twist, disposition)
+	// and Ch9's bracket tokens all read "the top card of the minor arcana
+	// discard pile", and the projection pins index 0 as that top. A discard
+	// must therefore PREPEND: with two cards discarded in sequence, the top is
+	// the most recent, not the first-ever.
+	it('the most recently discarded card is the pile top (index 0)', () => {
+		const state = makeSessionFixture();
+		const catalog = makeSessionCatalogFixture();
+		const gm: SessionActor = { kind: 'gm', userId: 'gm-1' };
+		const rng = makeRng('discard-top');
+		const [first, second] = state.playerDraw.slice(0, 2);
+
+		const zoned: SessionEngineStateV1 = {
+			...state,
+			playerDraw: state.playerDraw.slice(2),
+			publicZones: [{ id: 'played', kind: 'played', cards: [first, second] }]
+		};
+
+		let result = reduceSession(
+			zoned,
+			{ type: 'discard', sourceZoneId: 'played', cardId: first, destinationZoneId: 'playerDiscard' },
+			{ actor: gm, runtime: { catalog }, rng }
+		);
+		if (!result.ok) throw new Error(result.rejection.message);
+		result = reduceSession(
+			result.state,
+			{ type: 'discard', sourceZoneId: 'played', cardId: second, destinationZoneId: 'playerDiscard' },
+			{ actor: gm, runtime: { catalog }, rng }
+		);
+		if (!result.ok) throw new Error(result.rejection.message);
+
+		expect(result.state.playerDiscard[0]).toBe(second);
+		expect(result.state.playerDiscard).toContain(first);
+	});
+});

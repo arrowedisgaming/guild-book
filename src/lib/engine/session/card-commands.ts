@@ -61,7 +61,7 @@ import type {
 import type { Rng } from '../rng';
 import { findZoneDescriptor } from './state';
 import { drawWithReshuffle, reshuffleDeck } from './shuffle';
-import { type ZoneDescriptor, type ZoneOwner } from './zones';
+import { FIXED_ZONE_IDS, type ZoneDescriptor, type ZoneOwner } from './zones';
 import type { ReduceResult } from './result';
 
 export type SessionReduceResult = ReduceResult<SessionEngineStateV1, SessionEvent, SessionRejection>;
@@ -333,7 +333,17 @@ export function handleGenericMove(
 
 	const sourceCards = source.cards.filter((id) => id !== move.cardId);
 	let nextState = setZoneCards(state, source.id, sourceCards);
-	const destinationCards = findZoneDescriptor(nextState, destination.id)!.cards.concat(move.cardId);
+	// A discard pile's index 0 is its TOP — the card the projection surfaces
+	// (`playerDiscardTop`) and the card every consult-discard-top rule and Ch9
+	// bracket token reads. A card moved onto a discard pile must therefore
+	// PREPEND; appending would bury the newest discard and surface the oldest.
+	// Every other zone keeps append order (initiative rows, hands, play areas
+	// accumulate in play order).
+	const existing = findZoneDescriptor(nextState, destination.id)!.cards;
+	const destinationCards =
+		destination.id === FIXED_ZONE_IDS.majorDiscard || destination.id === FIXED_ZONE_IDS.playerDiscard
+			? [move.cardId, ...existing]
+			: existing.concat(move.cardId);
 	nextState = setZoneCards(nextState, destination.id, destinationCards);
 
 	const event = buildMoveEvent(eventKind, destination, ctx.actor, [move.cardId], {
@@ -435,7 +445,7 @@ export function handleMulligan(command: MulliganCommand, state: SessionEngineSta
 		return reject('illegal-command', `zone ${zone.id} cannot mulligan against its own deck pile`);
 	}
 	const oldCards = zone.cards.slice();
-	const discardPileWithOld = state[discardField].concat(oldCards);
+	const discardPileWithOld = [...oldCards, ...state[discardField]];
 
 	const result =
 		oldCards.length === 0

@@ -16,8 +16,8 @@
 				announce('Could not load that denizen for editing.');
 				return;
 			}
-			const row = (await res.json()) as { data: unknown };
-			denizenBuilder.loadForEditing(row.data, id);
+			const row = (await res.json()) as { data: unknown; version: number };
+			denizenBuilder.loadForEditing(row.data, id, row.version);
 			await goto('/denizens/build');
 		} catch {
 			announce('Could not load that denizen — check your connection and try again.');
@@ -47,11 +47,17 @@
 <section class="roster">
 	<div class="head">
 		<h1>My Denizens</h1>
-		<a class="new" href="/denizens/build">New denizen</a>
+		<!-- Detach any editing session first: "New" must never overwrite a saved row. -->
+		<a class="new" href="/denizens/build" onclick={() => denizenBuilder.detachSavedRef()}>
+			New denizen
+		</a>
 	</div>
 
 	{#if data.denizens.length === 0}
-		<p class="empty">No denizens yet. <a href="/denizens/build">Mix your first →</a></p>
+		<p class="empty">
+			No denizens yet.
+			<a href="/denizens/build" onclick={() => denizenBuilder.detachSavedRef()}>Mix your first →</a>
+		</p>
 	{:else}
 		<ul class="list">
 			{#each data.denizens as d (d.id)}

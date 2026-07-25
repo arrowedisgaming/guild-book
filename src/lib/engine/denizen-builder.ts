@@ -646,13 +646,20 @@ export function draftStatReminders(draft: DenizenDraft): string[] {
  * sidebar field — dropping them would silently lose book content like the
  * vampire's "Killing the Vampire"). `seededFrom` matches the entry's
  * templates so loading it never triggers a reseed.
+ *
+ * `personTheme` is the pack's verdict (`theme.builderMode === 'person'`),
+ * resolved by the caller — capability comes from content data, never from
+ * inferring it off a missing field.
  */
-export function draftFromDefinition(denizen: DenizenDefinition): DenizenDraft {
+export function draftFromDefinition(
+	denizen: DenizenDefinition,
+	personTheme: boolean
+): DenizenDraft {
 	const toDraftStat = (value: DenizenStatValue | undefined): string =>
 		value === undefined ? '' : String(value);
 	return {
 		...createBlankDraft(),
-		kind: denizen.threat ? 'creature' : 'person',
+		kind: personTheme ? 'person' : 'creature',
 		name: denizen.name,
 		flavor: denizen.flavor,
 		themeId: denizen.theme || null,

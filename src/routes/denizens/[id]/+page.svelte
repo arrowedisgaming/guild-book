@@ -11,7 +11,7 @@
 	// Load the book entry into the builder as a fresh, pre-filled custom
 	// denizen — saving it creates a new row, the book entry is untouched.
 	function customize() {
-		denizenBuilder.startFrom(draftFromDefinition(data.denizen));
+		denizenBuilder.startFrom(draftFromDefinition(data.denizen, data.personTheme));
 		goto('/denizens/build');
 	}
 </script>

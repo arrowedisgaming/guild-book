@@ -270,17 +270,36 @@
 	let savedAt = $state<number | null>(null);
 	let saveError = $state<string | null>(null);
 
+	/** Detach from the saved row and save the current work as a fresh denizen. */
+	function saveAsNew() {
+		denizenBuilder.detachSavedRef();
+		void saveDenizen();
+	}
+
 	async function saveDenizen() {
 		if (saving) return;
 		saving = true;
 		saveError = null;
 		try {
 			const editingId = $denizenBuilder.editingId;
-			const res = await fetch(editingId ? `/api/denizens/${editingId}` : '/api/denizens', {
-				method: editingId ? 'PUT' : 'POST',
+			const expectedVersion = $denizenBuilder.editingVersion;
+			const editing = editingId !== null && expectedVersion !== null;
+			const res = await fetch(editing ? `/api/denizens/${editingId}` : '/api/denizens', {
+				method: editing ? 'PUT' : 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ draft })
+				body: JSON.stringify(editing ? { draft, expectedVersion } : { draft })
 			});
+			if (res.status === 409) {
+				// A newer save exists (another tab, another device). Don't clobber
+				// it and don't adopt its claim blindly — send the user to compare.
+				saveError = 'This denizen was saved elsewhere — open it fresh from My Denizens to keep those changes, or press Save again to overwrite them.';
+				const body = (await res.json().catch(() => null)) as { currentVersion?: number } | null;
+				if (editingId && typeof body?.currentVersion === 'number') {
+					denizenBuilder.setSavedRef(editingId, body.currentVersion);
+				}
+				announce(saveError);
+				return;
+			}
 			if (!res.ok) {
 				const body = (await res.json().catch(() => null)) as { message?: string } | null;
 				// Shown right next to the button as well as announced.
@@ -288,10 +307,8 @@
 				announce(saveError);
 				return;
 			}
-			if (!editingId) {
-				const { id } = (await res.json()) as { id: string };
-				denizenBuilder.setEditingId(id);
-			}
+			const body = (await res.json()) as { id?: string; version: number };
+			denizenBuilder.setSavedRef(editingId ?? body.id!, body.version);
 			savedAt = Date.now();
 			announce('Denizen saved.');
 			setTimeout(() => (savedAt = null), 2000);
@@ -928,9 +945,6 @@
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		{#if data.user}
-			{#if saveError}
-				<p class="warning" role="alert">{saveError}</p>
-			{/if}
 			<div class="save-row">
 				<button type="button" class="save" disabled={saving} onclick={saveDenizen}>
 					{saving
@@ -942,9 +956,20 @@
 							: 'Save denizen'}
 				</button>
 				{#if $denizenBuilder.editingId}
+					<button type="button" class="save-as-new" disabled={saving} onclick={saveAsNew}>
+						Save as a new copy
+					</button>
 					<a href="/denizens/mine">My denizens →</a>
 				{/if}
 			</div>
+			{#if saveError}
+				<p class="warning" role="alert">{saveError}</p>
+			{/if}
+			{#if $denizenBuilder.editingId}
+				<p class="save-note">
+					Saving updates “{draft.name.trim() || 'Unnamed Denizen'}” in your denizens.
+				</p>
+			{/if}
 		{:else}
 			<p class="save-nudge">
 				<a href="/login?callbackUrl=/denizens/build">Sign in</a> to save this denizen to your
@@ -1335,6 +1360,27 @@
 	.save:disabled {
 		opacity: 0.6;
 		cursor: wait;
+	}
+	.save-as-new {
+		font: inherit;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		border: none;
+		background: none;
+		color: var(--accent);
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		padding: 0;
+	}
+	.save-as-new:disabled {
+		opacity: 0.5;
+		cursor: wait;
+	}
+	.save-note {
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+		margin: 0.25rem 0 0.75rem;
 	}
 	.save-nudge {
 		font-size: 0.9rem;

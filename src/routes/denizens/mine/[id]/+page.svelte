@@ -12,7 +12,7 @@
 	let denizen = $derived(toDenizenDefinition(data.draft));
 
 	function edit() {
-		denizenBuilder.loadForEditing(data.draft, data.id);
+		denizenBuilder.loadForEditing(data.draft, data.id, data.version);
 		goto('/denizens/build');
 	}
 </script>

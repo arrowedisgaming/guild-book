@@ -20,5 +20,12 @@ export const load: PageServerLoad = async (event) => {
 		usable(theme?.builderMode) &&
 		usable(threat?.builderMode) &&
 		!(theme?.builderMode === 'person' && denizen.threat);
-	return { denizen, themeName, threatName, builderReady };
+	return {
+		denizen,
+		themeName,
+		threatName,
+		builderReady,
+		// The pack decides what a person is; the client never infers it.
+		personTheme: theme?.builderMode === 'person'
+	};
 };

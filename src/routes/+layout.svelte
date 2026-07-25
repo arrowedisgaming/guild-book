@@ -8,8 +8,11 @@
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
-	// Sign in returns you to the page you were on, not a fixed landing page.
-	let signInHref = $derived(`/login?callbackUrl=${encodeURIComponent(page.url.pathname)}`);
+	// Sign in returns you to the page you were on — filters and all, so the
+	// query string rides along with the path.
+	let signInHref = $derived(
+		`/login?callbackUrl=${encodeURIComponent(page.url.pathname + page.url.search)}`
+	);
 </script>
 
 <div class="site">

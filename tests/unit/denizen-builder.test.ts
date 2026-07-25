@@ -747,7 +747,7 @@ describe('denizen builder — drafts from bestiary entries', () => {
 	const byId = Object.fromEntries(getBestiary().map((d) => [d.id, d]));
 
 	it('pre-fills a simple creature and materializes back to the same block', () => {
-		const draft = draftFromDefinition(byId['skeleton']);
+		const draft = draftFromDefinition(byId['skeleton'], false);
 		expect(draft.kind).toBe('creature');
 		expect(draft.themeId).toBe('undead');
 		expect(draft.health).toBe('6');
@@ -762,7 +762,7 @@ describe('denizen builder — drafts from bestiary entries', () => {
 	});
 
 	it('maps a dungeon lord’s pools and special rules into pool drafts', () => {
-		const draft = draftFromDefinition(byId['lich-yellow-king']);
+		const draft = draftFromDefinition(byId['lich-yellow-king'], false);
 		expect(draft.health).toBe('');
 		expect(draft.pools.length).toBeGreaterThan(0);
 		expect(draft.pools[0].name).toBe(byId['lich-yellow-king'].pools![0].name);
@@ -774,12 +774,12 @@ describe('denizen builder — drafts from bestiary entries', () => {
 	});
 
 	it('sanitize round-trips a bestiary draft unchanged', () => {
-		const draft = draftFromDefinition(byId['titan-sporehulk']);
+		const draft = draftFromDefinition(byId['titan-sporehulk'], false);
 		expect(sanitizeDraft(JSON.parse(JSON.stringify(draft)))).toEqual(draft);
 	});
 
 	it('folds sidebars into notes so no book content is silently lost', () => {
-		const draft = draftFromDefinition(byId['vampire']);
+		const draft = draftFromDefinition(byId['vampire'], false);
 		const sidebarNote = draft.notes.find((n) => n.name === 'Killing the Vampire');
 		expect(sidebarNote).toBeDefined();
 		// And it reaches the materialized block like any other note.

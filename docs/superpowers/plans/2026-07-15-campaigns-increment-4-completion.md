@@ -301,7 +301,7 @@ git commit -m "feat(session): add exploration and oracle procedures"
 - Test: `tests/integration/session-history.test.ts`
 - Test: `tests/e2e/session-history.spec.ts`
 
-- [ ] **Step 1: Write failing purge/history tests**
+- [x] **Step 1: Write failing purge/history tests**
 
 End a fixture session containing public cards, private hands, prepared cards, server draw order, and recipient event secrets. Assert:
 
@@ -316,15 +316,15 @@ expect(await countEventSecrets(sessionId)).toBe(0);
 
 Verify the checksum changes if ordered public history is accidentally altered and document that it is not a signature.
 
-- [ ] **Step 2: Implement compensating corrections**
+- [x] **Step 2: Implement compensating corrections**
 
 Corrections never edit/delete old commands or events. `apply-correction` requires GM, reason, and typed correction kind; it applies a legal compensating card transition through the invariant checker and appends `correction-applied` linking the original event/command. Death correction continues through the character life service and never restores a tenure.
 
-- [ ] **Step 3: Build current-member history pages**
+- [x] **Step 3: Build current-member history pages**
 
 GM and all current members can list completed sessions and see ordered public log/final table. Former/removed/nonmembers receive `404`. No private card image URL, alt text, JSON, or hidden DOM node is rendered. History responses are `private, no-store`.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run:
 

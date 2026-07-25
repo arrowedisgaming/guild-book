@@ -21,6 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Augury spell each invoke one from inside their own procedure — a test runs
   alongside whatever procedure is already in progress rather than replacing it.
   The GM still narrates every consequence; the app supplies only the numbers.
+- **Completed session history and GM corrections**: ending a session already
+  purged every private hand, prepared card, server draw order, and recipient
+  secret; those completed sessions are now readable. The GM and every current
+  member can list a campaign's completed sessions and open one to its ordered
+  public log and final table — former members and outsiders get a 404, and
+  history that stayed private when the session ended stays private forever,
+  because the rows that held it no longer exist. A checksum stamps the ordered
+  public history for corruption detection (documented as exactly that, not a
+  signature). Mistakes at the table are repaired with audited compensating
+  corrections: the GM names the event being corrected, a reason, and a legal
+  card move — applied through the ordinary rules engine and appended to the
+  journal, never an edit of it.
 - **Oracles, exploration, and City procedures at the table**: every remaining
   in-session tarot procedure now runs through one data-driven engine — Area
   Sense, Overland Travel, the Camp watches and Patrol, We're Doomed,

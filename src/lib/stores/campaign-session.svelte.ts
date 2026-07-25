@@ -631,6 +631,54 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/** Sends one GM correction — same conventions; the engine enforces GM-only. */
+	function sendCorrectionCommand(command: Record<string, unknown>, commandId?: string): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+		const key = `correction:${JSON.stringify(command)}`;
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+		const id = commandId ?? randomCommandId();
+		const promise = performCorrectionSend(session.sessionId, id, command).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performCorrectionSend(sessionId: string, commandId: string, command: Record<string, unknown>): Promise<SendCommandResult> {
+		const envelope = { commandId, observedSessionVersion: snapshot.session?.sessionVersion ?? 0, command };
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}/correction-commands`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify(envelope)
+			});
+			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
+				snapshot = {
+					...snapshot,
+					session: {
+						...snapshot.session,
+						sessionVersion: body.projection.sessionVersion,
+						campaignCursor: body.projection.campaignCursor,
+						projection: body.projection.projection
+					}
+				};
+			}
+			if (!body?.outcome?.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	/** Sends one finite-runner command — same dedup conventions as the other
 	 * procedure surfaces; no reconfirmation pair (nothing spends). */
 	function sendFiniteCommand(command: FiniteCommandInput, commandId?: string): Promise<SendCommandResult> {
@@ -780,6 +828,7 @@ export function createCampaignSessionStore(
 		sendGuidedTestCommand,
 		sendCampCommand,
 		sendFiniteCommand,
+		sendCorrectionCommand,
 		sendLifecycleAction,
 		refreshNow,
 		start,

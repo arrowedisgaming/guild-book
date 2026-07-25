@@ -59,6 +59,7 @@
 			onSendGuidedTestCommand={store.sendGuidedTestCommand}
 			onSendCampCommand={store.sendCampCommand}
 			onSendFiniteCommand={store.sendFiniteCommand}
+			onSendCorrectionCommand={store.sendCorrectionCommand}
 			procedureTitles={data.procedureTitles}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>

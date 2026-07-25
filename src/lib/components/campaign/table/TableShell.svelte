@@ -24,6 +24,7 @@
 	import CampProcedurePanel from './procedures/CampProcedurePanel.svelte';
 	import CrawlProcedurePanel from './procedures/CrawlProcedurePanel.svelte';
 	import OraclePanel from './procedures/OraclePanel.svelte';
+	import CorrectionDialog from './CorrectionDialog.svelte';
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
@@ -52,6 +53,7 @@
 		onSendGuidedTestCommand,
 		onSendCampCommand,
 		onSendFiniteCommand,
+		onSendCorrectionCommand,
 		procedureTitles,
 		onSendLifecycleAction
 	}: {
@@ -76,6 +78,7 @@
 		) => Promise<SendCommandResult>;
 		onSendCampCommand: (command: CampProcedureCommand, commandId?: string) => Promise<SendCommandResult>;
 		onSendFiniteCommand: (command: FiniteCommandInput, commandId?: string) => Promise<SendCommandResult>;
+		onSendCorrectionCommand: (command: Record<string, unknown>, commandId?: string) => Promise<SendCommandResult>;
 		/** id/title/phase for the finite panels' pickers, from the content pack. */
 		procedureTitles: Array<{ id: string; title: string; phase: string }>;
 		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
@@ -305,8 +308,14 @@
 				<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
 			<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
 			<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+			{#if role === 'gm'}
+				<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
+			{/if}
 				<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
 				<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+				{#if role === 'gm'}
+					<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
+				{/if}
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}

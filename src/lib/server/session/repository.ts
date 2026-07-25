@@ -63,6 +63,27 @@ export interface SessionPublicFragmentV1 {
 	schemaVersion: 1;
 	publicZones: PublicZone[];
 	procedurePublic: { procedureId: string; stepIndex: number; pendingZoneIds: string[] } | null;
+	/**
+	 * Additive (Increment 4 Task 2). `SessionEngineStateV1.guidedTest` — the
+	 * in-flight test of fate. It rides the PUBLIC fragment because a test of
+	 * fate holds no secrets: `test-of-fate`'s steps are both `visibility:
+	 * 'public'`/`resultVisibility: 'public'` in the content pack, so the tested
+	 * actor, the suit, favor, and the outcome are all table-visible, and the
+	 * drawn cards themselves live in ordinary public zones.
+	 *
+	 * `unknown` for the same reason `gmPrivateProcedure` is: the shape belongs
+	 * to the engine module that owns it, and this fragment must not import an
+	 * engine procedure module. Absent (not `null`) when no test is in flight,
+	 * so an untouched session's fragment is byte-identical to before this field
+	 * existed.
+	 */
+	guidedTest?: unknown;
+	/** Additive (Increment 4 Task 2). `SessionEngineStateV1.groupTest` — the
+	 * group test's sequencing wrapper. Public for the same reason `guidedTest`
+	 * is: Ch1's group test announces its two chosen adventurers to the table
+	 * before either draws, and both subtests are ordinary public tests of fate.
+	 * Absent (not `null`) when no group test has been declared. */
+	groupTest?: unknown;
 }
 
 /** Secret data owned by no single recipient: `sessionServerStates.serverStateJson`. */
@@ -103,7 +124,9 @@ const sessionPublicFragmentSchema = z
 				stepIndex: z.number().int().nonnegative(),
 				pendingZoneIds: z.array(z.string())
 			})
-			.nullable()
+			.nullable(),
+		guidedTest: z.unknown().optional(),
+		groupTest: z.unknown().optional()
 	})
 	.strict();
 
@@ -339,7 +362,11 @@ function describeCause(cause: unknown): string {
 	return cause instanceof Error ? cause.message : String(cause);
 }
 
-function reassembleEngineState(input: {
+/** Exported (Increment 4 Task 2) so the round trip can be tested as a round
+ * trip. `splitEngineState` was already exported; having only one half of an
+ * inverse pair reachable is what let a new engine-state field be silently
+ * dropped by the `.strict()` fragments in either direction. */
+export function reassembleEngineState(input: {
 	sessionId: string;
 	version: number;
 	phase: SessionPhase;
@@ -380,7 +407,12 @@ function reassembleEngineState(input: {
 		privateZones,
 		publicZones: input.publicFragment.publicZones,
 		pendingZones: input.serverFragment.pendingZones,
-		reshuffleAtBoundary: input.serverFragment.reshuffleAtBoundary
+		reshuffleAtBoundary: input.serverFragment.reshuffleAtBoundary,
+		// Spread-conditional, not `guidedTest: fragment.guidedTest ?? undefined`:
+		// an untouched session must reassemble WITHOUT the key at all, so a state
+		// that never held a test stays deep-equal to a pre-Increment-4 one.
+		...(input.publicFragment.guidedTest !== undefined ? { guidedTest: input.publicFragment.guidedTest } : {}),
+		...(input.publicFragment.groupTest !== undefined ? { groupTest: input.publicFragment.groupTest } : {})
 	};
 }
 
@@ -404,7 +436,9 @@ export function splitEngineState(
 		publicZones: state.publicZones,
 		procedurePublic: state.procedure
 			? { procedureId: state.procedure.procedureId, stepIndex: state.procedure.stepIndex, pendingZoneIds: state.procedure.pendingZoneIds }
-			: null
+			: null,
+		...(state.guidedTest !== undefined ? { guidedTest: state.guidedTest } : {}),
+		...(state.groupTest !== undefined ? { groupTest: state.groupTest } : {})
 	};
 
 	const serverFragment: SessionServerFragmentV1 = {

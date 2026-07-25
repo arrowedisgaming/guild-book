@@ -83,6 +83,46 @@ export interface SessionEngineStateV1 {
 	publicZones: PublicZone[];
 	pendingZones: PendingZone[];
 	reshuffleAtBoundary: { major: boolean; player: boolean };
+	/**
+	 * Additive (Increment 4 Task 2). The in-flight guided test of fate — a PEER
+	 * of `procedure`, never its occupant. Ch7 p.120's Test Fate action is
+	 * explicit that "the GM can call for a test of fate mid-Challenge", and Ch5
+	 * High Chant and Appendix A Augury invoke one from inside their own
+	 * procedures too, so a test genuinely runs CONCURRENTLY with whatever host
+	 * procedure holds `procedure`. A single slot cannot express that: the
+	 * generic `handleBeginProcedure` rejects with "a procedure is already
+	 * active", which would make Ch7's Test Fate, High Chant, and Augury all
+	 * unreachable.
+	 *
+	 * Typed `unknown` for exactly the reason `ProcedureState.gmPrivate` is:
+	 * the shape (`GuidedTestStateV1`) belongs to the engine module that owns
+	 * it, and a types-layer import of an engine module would invert the
+	 * dependency. `$lib/engine/session/procedures/test-of-fate.ts`'s
+	 * `readGuidedTest`/`writeGuidedTest` are the only validated accessors.
+	 *
+	 * Carries no card ids — a test's drawn cards live in real public zones
+	 * addressed by `guidedTestZoneId` — so the card-conservation invariant is
+	 * unaffected by this field.
+	 */
+	guidedTest?: unknown;
+	/**
+	 * Additive (Increment 4 Task 2). The in-flight GROUP test's wrapper
+	 * (`GroupTestStateV1`) — which two adventurers were chosen and what the
+	 * finished subtests scored.
+	 *
+	 * Separate from `guidedTest` rather than folded into it because Ch1's group
+	 * test IS two complete tests of fate run in sequence: `guidedTest` holds
+	 * whichever single subtest is being resolved right now (so every individual
+	 * transition applies to it unchanged, with no forked copy), and this field
+	 * holds the sequencing around them. Collapsing both into one slot would mean
+	 * either reimplementing the individual stage machine per subtest or losing
+	 * the per-subtest favor/Resolve/push independence the rules require.
+	 *
+	 * `unknown` for the same layering reason as `guidedTest`;
+	 * `$lib/engine/session/procedures/group-test.ts`'s `readGroupTest`/
+	 * `writeGroupTest` are the only validated accessors.
+	 */
+	groupTest?: unknown;
 }
 
 /** Who is issuing a session command. Supplied by server-side auth context,

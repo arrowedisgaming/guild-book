@@ -251,6 +251,14 @@ export interface SessionCommandEnvelope<C> {
 	expectedStructuralVersion?: number;
 	/** Present only on resource-spend commands (pre-test Resolve for favor). */
 	observedCharacterVersion?: number;
+	/**
+	 * The Resolve value the player agreed to spend from. Required together with
+	 * `observedCharacterVersion`, never alone — Increment 4 Task 1 Step 3's
+	 * reconfirmation contract, which the freeze anticipated but did not name:
+	 * the version alone cannot distinguish "an unrelated sheet edit happened"
+	 * (retry silently) from "your Resolve changed" (ask the player again).
+	 */
+	expectedResolveCurrent?: number;
 	command: C;
 }
 

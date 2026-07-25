@@ -19,6 +19,14 @@ import {
 	standardPublicZones
 } from '$lib/server/session/repository';
 import { endSession, startSession } from '$lib/server/session/lifecycle';
+import { attachAdventurer } from '$lib/server/campaign/tenure';
+import { createBlankCharacter } from '$lib/types/character';
+import {
+	buildResolveIntentStatements,
+	readResolveWriteContext,
+	toAtomicStatements,
+	type ResolveIntent
+} from '$lib/server/character/resource-write';
 import { executeCommand } from '$lib/server/session/command-service';
 import { reduceSession, type ReduceContext } from '$lib/engine/session/reducer';
 import { toSessionEngineRuntime, compileSessionRuntimeContent } from '$lib/server/content/session-runtime';
@@ -199,6 +207,94 @@ describe('session atomicity — SQLite failure-injection matrix', () => {
 		await runAtomic(ctx, statements);
 		expect(sqlite.prepare("SELECT status, version FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ status: 'ended', version: 3 });
 		expect(sqlite.prepare("SELECT count(*) AS n FROM session_private_states WHERE session_id = 'session-a'").get()).toEqual({ n: 0 });
+	});
+
+	/**
+	 * Increment 4 Task 1 Step 4: a Resolve spend rides in the SAME batch as the
+	 * command it pays for, so the failure-injection matrix has to cover the
+	 * spliced list too. At every statement index — the command claim, the
+	 * session fragments, the events, and each of the four character statements
+	 * — the whole batch must roll back: no half-spent Resolve, and no drawn card
+	 * that was never paid for.
+	 */
+	it('rolls back a command batch carrying a Resolve spend at every statement index', async () => {
+		seedResolveSpender(sqlite);
+		const attached = await attachAdventurer(ctx.db as unknown as AppDb, {
+			campaignId: 'campaign-a',
+			membershipId: 'member-a',
+			actorUserId: 'player-a',
+			characterId: 'character-a',
+			tenureId: 'tenure-a',
+			now: new Date(500)
+		});
+		if (!attached.ok) throw new Error('fixture: attach failed');
+
+		const started = await startSession({ dbContext: ctx, campaignId: 'campaign-a', actorUserId: 'gm-a', sessionId: 'session-a', shuffleSeed: 'resolve-seed', now: new Date(1_000) });
+		if (!started.ok) throw new Error('fixture session failed to start');
+
+		const db = ctx.db as unknown as AppDb;
+		const actor: SessionActor = { kind: 'player', userId: 'player-a' };
+		const loaded = await loadSessionForReduce(db, 'session-a');
+		const context: ReduceContext = { actor, runtime: toSessionEngineRuntime(loaded.runtimeContent), rng: makeRng('resolve-reduce-seed') };
+		const command: SessionCommand = { type: 'draw', deck: 'player', destinationZoneId: 'hand:player-a', count: 1 };
+		const reduceResult = reduceSession(loaded.engineState, command, context);
+		if (!reduceResult.ok) throw new Error('fixture reduce unexpectedly rejected');
+
+		const intent: ResolveIntent = {
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			characterId: 'character-a',
+			actorUserId: 'player-a',
+			expectedCharacterVersion: 1,
+			expectedResolveCurrent: 4,
+			delta: -1,
+			reason: 'advance-procedure',
+			now: new Date(2_000)
+		};
+		const read = await readResolveWriteContext(db, intent);
+		if (!read.ok) throw new Error(`fixture resolve read refused: ${read.reason}`);
+
+		const statements: AtomicStatement[] = [
+			...buildAcceptedCommandStatements({
+				commandRowId: nanoid(),
+				sessionId: 'session-a',
+				campaignId: 'campaign-a',
+				commandId: 'spend-1',
+				actorUserId: 'player-a',
+				requestHash: 'resolve-hash',
+				commandType: 'draw',
+				clientObservedVersion: 1,
+				structuralPreconditionVersion: null,
+				expectedVersion: loaded.currentVersion,
+				nextState: { ...reduceResult.state, version: loaded.currentVersion + 1 },
+				events: reduceResult.events,
+				shuffleSeed: loaded.shuffleSeed,
+				gmUserId: loaded.gmUserId,
+				recipientUserIds: loaded.recipientUserIds,
+				now: new Date(2_000),
+				idFactory: () => nanoid()
+			}),
+			...toAtomicStatements(buildResolveIntentStatements(db, intent, read.context))
+		];
+
+		// `attachAdventurer` already left its own claim/receipt pair behind —
+		// the baseline no corrupted attempt below may grow past.
+		const baselineReceipts = (sqlite.prepare('SELECT count(*) AS n FROM campaign_mutation_receipts').get() as { n: number }).n;
+
+		for (let i = 0; i < statements.length; i++) {
+			await expect(runAtomic(ctx, corruptAt(statements, i))).rejects.toThrow();
+			expect(sqlite.prepare("SELECT version FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ version: 1 });
+			expect(sqlite.prepare("SELECT count(*) AS n FROM session_commands WHERE session_id = 'session-a'").get()).toEqual({ n: 0 });
+			// The spend never lands by halves: version, document, claim, receipt.
+			expect(sqlite.prepare("SELECT version, json_extract(data, '$.resolve.current') AS resolve FROM characters WHERE id = 'character-a'").get()).toEqual({ version: 1, resolve: 4 });
+			expect(sqlite.prepare("SELECT count(*) AS n FROM character_version_claims WHERE character_id = 'character-a' AND mutation_kind = 'session-resolve'").get()).toEqual({ n: 0 });
+			expect(sqlite.prepare("SELECT count(*) AS n FROM campaign_mutation_claims WHERE kind = 'session.resolve'").get()).toEqual({ n: 0 });
+			expect(sqlite.prepare('SELECT count(*) AS n FROM campaign_mutation_receipts').get()).toEqual({ n: baselineReceipts });
+		}
+
+		await runAtomic(ctx, statements);
+		expect(sqlite.prepare("SELECT version FROM play_sessions WHERE id = 'session-a'").get()).toEqual({ version: 2 });
+		expect(sqlite.prepare("SELECT version, json_extract(data, '$.resolve.current') AS resolve FROM characters WHERE id = 'character-a'").get()).toEqual({ version: 2, resolve: 3 });
 	});
 
 	/**
@@ -390,6 +486,26 @@ function seedFoundation(sqlite: Database.Database): void {
 	sqlite
 		.prepare('INSERT INTO campaign_members (id, campaign_id, user_id, joined_at) VALUES (?, ?, ?, ?), (?, ?, ?, ?)')
 		.run('member-a', 'campaign-a', 'player-a', 100, 'member-b', 'campaign-a', 'player-b', 100);
+}
+
+/** One finalized, alive character for player-a at version 1 with a full pool of
+ * Resolve — the minimum a spend needs on top of `seedFoundation`. */
+function seedResolveSpender(sqlite: Database.Database): void {
+	const character = createBlankCharacter();
+	character.name = 'Resolve Spender';
+	character.isDraft = false;
+	sqlite
+		.prepare(
+			`INSERT INTO characters (id, user_id, name, data, version, life_status, is_draft, is_archived, created_at, updated_at)
+			VALUES ('character-a', 'player-a', ?, ?, 1, 'alive', 0, 0, 100, 100)`
+		)
+		.run(character.name, JSON.stringify(character));
+	sqlite
+		.prepare(
+			`INSERT INTO character_version_claims (character_id, resulting_version, mutation_kind, actor_user_id, created_at)
+			VALUES ('character-a', 1, 'create', 'player-a', 100)`
+		)
+		.run();
 }
 
 async function applyMigrationsD1(d1: D1Database): Promise<void> {

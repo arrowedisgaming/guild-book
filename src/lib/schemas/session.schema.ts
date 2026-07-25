@@ -203,12 +203,39 @@ export const sessionCommandSchema = z.discriminatedUnion('type', [
 	applyCorrectionCommandSchema
 ]);
 
+/**
+ * Increment 4 Task 1 Step 3 — the reconfirmation contract for a resource spend.
+ *
+ * A command that spends Resolve carries TWO numbers and nothing else: the
+ * character version the player observed, and the Resolve value they agreed to
+ * spend from. `.strict()` above and below is what keeps a character document
+ * out of the session write path entirely — a client cannot smuggle
+ * `characterData` (or any other unknown key) through this envelope, so
+ * `resource-write.ts` is structurally guaranteed to be rereading the stored
+ * document rather than trusting a client snapshot.
+ *
+ * The two fields are required together. One without the other is not a
+ * reconfirmation: `observedCharacterVersion` alone cannot detect a Resolve
+ * change (an unrelated sheet edit moves the version too), and
+ * `expectedResolveCurrent` alone gives the server no version to write against.
+ */
 export const sessionCommandEnvelopeSchema = z
 	.object({
 		commandId: z.string().trim().min(1).max(128),
 		observedSessionVersion: z.number().int().nonnegative(),
 		expectedStructuralVersion: z.number().int().nonnegative().optional(),
 		observedCharacterVersion: z.number().int().nonnegative().optional(),
+		expectedResolveCurrent: z.number().int().nonnegative().max(99).optional(),
 		command: sessionCommandSchema
 	})
-	.strict();
+	.strict()
+	.refine(
+		(envelope) =>
+			(envelope.observedCharacterVersion === undefined) ===
+			(envelope.expectedResolveCurrent === undefined),
+		{
+			message:
+				'observedCharacterVersion and expectedResolveCurrent must be sent together on a resource-spend command',
+			path: ['expectedResolveCurrent']
+		}
+	);

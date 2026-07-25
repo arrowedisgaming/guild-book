@@ -12,7 +12,12 @@
 import { nanoid } from 'nanoid';
 import { and, eq, exists, inArray, notExists } from 'drizzle-orm';
 import type { AppDb } from '$lib/server/db';
-import { runAtomic, isUniqueConstraintError, type AppDbContext } from '$lib/server/db/atomic';
+import {
+	runAtomic,
+	isUniqueConstraintError,
+	type AppDbContext,
+	type AtomicStatement
+} from '$lib/server/db/atomic';
 import { runCampaignAtomic, type CampaignAtomicStatement } from '$lib/server/campaign/atomic';
 import {
 	campaignEvents,
@@ -22,6 +27,14 @@ import {
 	sessionServerStates
 } from '$lib/server/db/schema';
 import { migrateCharacterData } from '$lib/engine/character-migration';
+import {
+	buildResolveIntentStatements,
+	readActorSpendingCharacterId,
+	readResolveWriteContext,
+	toAtomicStatements,
+	type ResolveIntent,
+	type ResolveWriteContext
+} from '$lib/server/character/resource-write';
 import {
 	challengeDeathStatements,
 	readChallengeDeathContext,
@@ -149,6 +162,20 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 	const isStructural = STRUCTURAL_COMMAND_TYPES.has(envelope.command.type);
 	const maxAttempts = isStructural ? 1 : MAX_NONSTRUCTURAL_ATTEMPTS;
 
+	// Increment 4 Task 1 Step 3: a command carrying the reconfirmation pair is
+	// a Resolve purchase. Only `advance-procedure` can be one — favor is bought
+	// by advancing a procedure past its purchase step (Task 2 narrows this
+	// further, to the specific step that offers it). Any other command type
+	// carrying the pair is a client bug or an attempt to spend outside a
+	// procedure, and is refused before anything is read, drawn, or persisted.
+	const spendsResolve = envelope.expectedResolveCurrent !== undefined;
+	if (spendsResolve && envelope.command.type !== 'advance-procedure') {
+		return {
+			outcome: { ok: false, code: 'illegal-command', message: 'only a procedure step may spend Resolve' },
+			projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+		};
+	}
+
 	let lastKnownVersion = envelope.observedSessionVersion;
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -222,6 +249,28 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		}
 		lastKnownVersion = loaded.currentVersion;
 
+		// The purchase is evaluated BEFORE the reduce, so a refused spend never
+		// draws a card (Step 3: "no command row/version is accepted"). Re-read
+		// on every attempt — a retry that lost a session version race may also
+		// have lost a character version race.
+		let resolveSpend: ResolveSpend | null = null;
+		if (spendsResolve) {
+			const evaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, envelope);
+			if (!evaluated.ok) {
+				// Deliberately NOT persisted as a rejection row. The client's whole
+				// job on `resource-changed` is to show the current numbers and ask
+				// again, and a persisted rejection under this commandId would make
+				// the reconfirmed retry replay the stale refusal (see
+				// `resolveDuplicateCommandOutcome`). Nothing was written, so there
+				// is nothing to audit.
+				return {
+					outcome: evaluated.outcome,
+					projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+				};
+			}
+			resolveSpend = evaluated.spend;
+		}
+
 		const rng = makeRng(deriveAttemptSeed(loaded.shuffleSeed, loaded.currentVersion, attempt));
 		const context: ReduceContext = { actor, runtime: toSessionEngineRuntime(loaded.runtimeContent), rng };
 
@@ -252,7 +301,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		}
 
 		const nextState: SessionEngineStateV1 = { ...reduceResult.state, version: loaded.currentVersion + 1 };
-		const statements = buildAcceptedCommandStatements({
+		const statements: AtomicStatement[] = buildAcceptedCommandStatements({
 			commandRowId: nanoid(),
 			sessionId,
 			campaignId,
@@ -272,6 +321,16 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			idFactory: () => nanoid()
 		});
 
+		if (resolveSpend) {
+			// ONE atomic unit: the command claim, the session fragments, the
+			// events, AND the character's narrow Resolve write. A spend that
+			// commits without its draw (or a draw that commits without its
+			// spend) is exactly the partial-purchase failure Step 2 forbids.
+			statements.push(
+				...toAtomicStatements(buildResolveIntentStatements(db, resolveSpend.intent, resolveSpend.context))
+			);
+		}
+
 		try {
 			await runAtomic(dbContext, statements);
 			// Fix round 1: close the same-isolate false-204 window at the
@@ -282,6 +341,20 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
 			};
 		} catch (cause) {
+			// A lost Resolve claim fails the batch through its FK receipt, not a
+			// unique index, so it would otherwise fall through to the `throw`
+			// below as a 500. Re-evaluate first: if Resolve genuinely moved
+			// between this attempt's read and its commit, that is the ordinary
+			// reconfirmation path, not an internal error.
+			if (resolveSpend) {
+				const reEvaluated = await evaluateResolveSpend(db, campaignId, sessionId, actorUserId, envelope);
+				if (!reEvaluated.ok) {
+					return {
+						outcome: reEvaluated.outcome,
+						projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+					};
+				}
+			}
 			if (!isUniqueConstraintError(cause)) throw cause;
 
 			// This unique-constraint failure came from one of two indexes:
@@ -337,6 +410,74 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		lastKnownVersion,
 		rejection
 	);
+}
+
+interface ResolveSpend {
+	intent: ResolveIntent;
+	context: ResolveWriteContext;
+}
+
+/**
+ * Increment 4 Task 1: turns the envelope's reconfirmation pair into a validated
+ * spend, or into the outcome the client should act on. Never mutates.
+ *
+ * The refusal codes deliberately reuse the existing rejection vocabulary rather
+ * than inventing session-level ones — `content-mismatch` is the frozen code for
+ * "your precondition no longer matches the server's facts," which is exactly
+ * what a moved Resolve value is. The numeric current values ride in `message`,
+ * where the UI already surfaces rejection text; no character document is ever
+ * returned (Step 3).
+ */
+async function evaluateResolveSpend(
+	db: AppDb,
+	campaignId: string,
+	sessionId: string,
+	actorUserId: string,
+	envelope: SessionCommandEnvelope<SessionCommand>
+): Promise<{ ok: true; spend: ResolveSpend } | { ok: false; outcome: CommandOutcome }> {
+	const characterId = await readActorSpendingCharacterId(db, campaignId, actorUserId);
+	if (!characterId) {
+		return {
+			ok: false,
+			outcome: { ok: false, code: 'illegal-command', message: 'no living adventurer at this table can spend Resolve' }
+		};
+	}
+
+	const intent: ResolveIntent = {
+		campaignId,
+		sessionId,
+		characterId,
+		actorUserId,
+		expectedCharacterVersion: envelope.observedCharacterVersion as number,
+		expectedResolveCurrent: envelope.expectedResolveCurrent as number,
+		delta: -1,
+		reason: envelope.command.type,
+		now: new Date()
+	};
+
+	const read = await readResolveWriteContext(db, intent);
+	if (read.ok) return { ok: true, spend: { intent, context: read.context } };
+
+	switch (read.reason) {
+		case 'resource-changed':
+			return {
+				ok: false,
+				outcome: {
+					ok: false,
+					code: 'content-mismatch',
+					message: `Resolve is now ${read.currentResolve} (version ${read.currentVersion}); confirm the spend again`
+				}
+			};
+		case 'insufficient-resolve':
+			return {
+				ok: false,
+				outcome: { ok: false, code: 'illegal-command', message: `not enough Resolve (${read.currentResolve} remaining)` }
+			};
+		case 'not-authorized':
+			return { ok: false, outcome: { ok: false, code: 'not-authorized', message: 'that adventurer is not yours' } };
+		default:
+			return { ok: false, outcome: { ok: false, code: 'illegal-command', message: 'that adventurer cannot spend Resolve' } };
+	}
 }
 
 async function persistRejection(

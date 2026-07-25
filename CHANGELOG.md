@@ -34,10 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cross-references linked to their entries. The flat 50% chances stay a manual
   yes/no that never draws a card, and the GM still adjudicates every
   consequence: the app supplies the rule text, nothing else.
-- **Fixed**: a discarded card now lands on TOP of its discard pile. Previously
-  the newest discard was buried at the bottom, so any rule reading "the top
-  card of the discard pile" — the GM twist, starting Dispositions, the bracket
-  tokens — would have read the oldest discard instead.
 - **Camp actions at the table**: the High Chant and leeches, the two Camp
   Actions whose mechanics are card operations. A bard selects inspiration cards
   from the minor arcana discard — as many as their Cups — and hands them out, at
@@ -95,6 +91,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A discarded card now lands on top of its discard pile**: the newest
+  discard was previously buried at the bottom, so any rule reading "the top
+  card of the discard pile" — the GM twist, starting Dispositions, the bracket
+  tokens — would have read the oldest discard instead.
 - **Stun now matches the rulebook**: the content pack described Stun as
   discarding a player's entire hand; it discards one card, chosen by the
   affected player. Content pack bumped to 3.3.0.

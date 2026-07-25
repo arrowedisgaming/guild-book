@@ -58,85 +58,25 @@ import { assertSessionInvariants } from '../../invariants';
  * behaviorId) — the only modifier `transfers.ts` implements end to end. */
 export const CHALLENGE_COUNSEL_ID = 'challenge-counsel';
 
-/** Moves `cardId` directly between two private zones, bypassing
- * `actorMayAccessZone` — see the file header for why this is safe ONLY when
- * the caller has already authorized the move itself. Validates the three
- * cases that would otherwise silently break card conservation (source ===
- * destination, a missing source/destination zone, or the card not actually
- * present in the source) and rejects rather than mutating — Increment 3 Task
- * 4 review, Minor 5: an earlier version of this function performed no
- * validation at all, which meant a missing source zone or an absent card
- * would silently CREATE a card at the destination instead of moving one. */
-export function movePrivateCard(
-	state: SessionEngineStateV1,
-	sourceZoneId: string,
-	destinationZoneId: string,
-	cardId: CardId
-): SessionReduceResult {
-	if (sourceZoneId === destinationZoneId) {
-		return reject('illegal-command', 'movePrivateCard: source and destination must be different zones');
-	}
-	const source = state.privateZones.find((zone) => zone.id === sourceZoneId);
-	if (!source) return reject('illegal-command', `movePrivateCard: source zone not found: ${sourceZoneId}`);
-	if (!source.cards.includes(cardId)) {
-		return reject('illegal-command', `movePrivateCard: named card is not present in source zone ${sourceZoneId}`);
-	}
-	const destination = state.privateZones.find((zone) => zone.id === destinationZoneId);
-	if (!destination) return reject('illegal-command', `movePrivateCard: destination zone not found: ${destinationZoneId}`);
-
-	const privateZones = state.privateZones.map((zone) => {
-		if (zone.id === sourceZoneId) return { ...zone, cards: zone.cards.filter((id) => id !== cardId) };
-		if (zone.id === destinationZoneId) return { ...zone, cards: zone.cards.concat(cardId) };
-		return zone;
-	});
-	return { ok: true, state: { ...state, privateZones }, events: [] };
-}
-
-export interface PrivateTransferOptions {
-	senderUserId: string;
-	recipientUserId: string;
-	senderZoneId: string;
-	recipientZoneId: string;
-	cardId: CardId;
-	eventKind: string;
-	reason: string;
-	/** Merged onto the public payload alongside `count`/`reason` — tenure ids,
-	 * never card identity (callers must not put a card id here). */
-	publicExtra: Record<string, unknown>;
-}
-
 /**
- * Validates the card is a real catalog entry, performs the cross-owner move
- * via `movePrivateCard` (which validates the zones/card presence itself and
- * rejects rather than mutating on failure), and builds the privacy-correct
- * event (file header). Does NOT touch `ChallengeStateV1` itself (per-round
- * caps, modifier instances) — that bookkeeping is caller-specific
- * (`counselTransfer` below; `modifiers.ts`'s `applyGuardianAngel`, which uses
- * `movePrivateCard` directly instead since its hand-off leg composes with an
- * already-budgeted `spendCard` leg rather than needing its own event).
+ * Re-exported from `$lib/engine/session/private-transfer.ts`, where Increment 4
+ * Task 3 moved both helpers: Camp's High Chant ("Distribute the cards to other
+ * players") is the second procedure to need a cross-owner private move, and a
+ * Camp module importing this Challenge module for a shared primitive would
+ * couple two unrelated procedures. Behavior is unchanged and every existing
+ * import of `movePrivateCard`/`performPrivateTransfer`/`PrivateTransferOptions`
+ * from this module keeps working.
+ *
+ * The one signature difference: `performPrivateTransfer` now takes a bare
+ * `{ catalog }` instead of a full `ChallengeReduceContext` (it only ever read
+ * `context.runtime.catalog`), so any procedure can call it without adopting
+ * Challenge's context shape. `ChallengeReduceContext.runtime` satisfies that
+ * structurally, so Challenge callers pass `context.runtime` unchanged.
  */
-export function performPrivateTransfer(
-	state: SessionEngineStateV1,
-	options: PrivateTransferOptions,
-	context: ChallengeReduceContext
-): SessionReduceResult {
-	if (!context.runtime.catalog[options.cardId]) {
-		return reject('content-mismatch', 'unrecognized card referenced for a private transfer');
-	}
-
-	const moveResult = movePrivateCard(state, options.senderZoneId, options.recipientZoneId, options.cardId);
-	if (!moveResult.ok) return moveResult;
-
-	const event: SessionEvent = {
-		kind: options.eventKind,
-		publicPayload: { ...options.publicExtra, count: 1, reason: options.reason },
-		privatePayloads: {
-			[options.senderUserId]: { cardId: options.cardId, direction: 'sent' },
-			[options.recipientUserId]: { cardId: options.cardId, direction: 'received' }
-		}
-	};
-	return { ok: true, state: moveResult.state, events: [event] };
-}
+export { movePrivateCard, performPrivateTransfer, type PrivateTransferOptions } from '../../private-transfer';
+// Also imported (not just re-exported) because `counselTransfer` below calls it:
+// a re-export does not bind the name in this module's own scope.
+import { performPrivateTransfer } from '../../private-transfer';
 
 /**
  * Counsel (Ch5 "Counsel", `paths-counsel`): "Any time during a Challenge, you
@@ -203,7 +143,7 @@ export function counselTransfer(
 			reason: 'counsel',
 			publicExtra: { senderTenureId, recipientTenureId }
 		},
-		context
+		context.runtime
 	);
 	if (!transferResult.ok) return transferResult;
 

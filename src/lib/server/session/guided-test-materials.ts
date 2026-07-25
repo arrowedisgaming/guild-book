@@ -36,7 +36,8 @@ export async function loadGuidedTestMaterials(db: AppDb, campaignId: string): Pr
 			tenureId: campaignAdventurerTenures.id,
 			characterId: characters.id,
 			userId: campaignMembers.userId,
-			data: characters.data
+			data: characters.data,
+			version: characters.version
 		})
 		.from(campaignAdventurerTenures)
 		.innerJoin(campaignMembers, eq(campaignMembers.id, campaignAdventurerTenures.membershipId))
@@ -58,6 +59,9 @@ export async function loadGuidedTestMaterials(db: AppDb, campaignId: string): Pr
 			userId: row.userId,
 			attributes: attributeValues(data),
 			resolveCurrent: data.resolve.current,
+			// Read in the SAME query as `resolveCurrent`, so the pair the tester
+			// reconfirms with can never describe two different moments.
+			characterVersion: row.version,
 			rosterOrder: index
 		};
 	});

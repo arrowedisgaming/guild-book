@@ -56,6 +56,7 @@
 			enemyThreatOptions={data.enemyThreatOptions}
 			onSendCommand={store.sendCommand}
 			onSendChallengeCommand={store.sendChallengeCommand}
+			onSendGuidedTestCommand={store.sendGuidedTestCommand}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
 	{:else if data.sessionUnavailable}

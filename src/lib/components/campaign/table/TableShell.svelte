@@ -19,16 +19,20 @@
 	import EventLog from './EventLog.svelte';
 	import MobileTableDrawers from './MobileTableDrawers.svelte';
 	import ChallengePanel from './challenge/ChallengePanel.svelte';
+	import TestOfFatePanel from './procedures/TestOfFatePanel.svelte';
+	import GroupTestPanel from './procedures/GroupTestPanel.svelte';
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
 		type LifecycleAction,
+		type ResolveReconfirmation,
 		type SendCommandResult,
 		type TableSession,
 		type WireSessionEventLike
 	} from '$lib/stores/campaign-session.svelte';
 	import type { SessionGmProjection, SessionPlayerProjection } from '$lib/types/session';
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
+	import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
 	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 
 	let {
@@ -40,6 +44,7 @@
 		enemyThreatOptions,
 		onSendCommand,
 		onSendChallengeCommand,
+		onSendGuidedTestCommand,
 		onSendLifecycleAction
 	}: {
 		role: 'gm' | 'player';
@@ -56,6 +61,11 @@
 		enemyThreatOptions: { id: string; name: string }[];
 		onSendCommand: (command: SessionCommand, expectedStructuralVersion?: number) => Promise<SendCommandResult>;
 		onSendChallengeCommand: (command: ChallengeCommand, commandId?: string) => Promise<SendCommandResult>;
+		onSendGuidedTestCommand: (
+			command: GuidedTestCommand,
+			commandId?: string,
+			reconfirmation?: ResolveReconfirmation
+		) => Promise<SendCommandResult>;
 		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
 	} = $props();
 
@@ -278,6 +288,8 @@
 			<div class="table-column">
 				<PublicTable publicProjection={session.projection.public} {otherHands} />
 				<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
+				<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+				<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}
@@ -305,6 +317,8 @@
 			     genuinely leads on mobile, not just visually. -->
 			<PublicTable publicProjection={session.projection.public} {otherHands} />
 			<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
+			<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+			<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 			<MobileTableDrawers
 				publicProjection={session.projection.public}
 				{role}

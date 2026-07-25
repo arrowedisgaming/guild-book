@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
 import { getDb } from '$lib/server/db';
-import { loadChallengeProjectionsForActor } from '$lib/server/session/challenge-command-service';
+import { loadTableProjectionsForActor } from '$lib/server/session/table-projections';
 import {
 	campaignCursor,
 	findOpenSessionForCampaign,
@@ -77,6 +77,8 @@ export const GET: RequestHandler = async (event) => {
 				projection: unknown;
 				challengeProjection: unknown;
 				challengeLegalCommands: unknown;
+				guidedTestProjection: unknown;
+				guidedTestLegalCommands: unknown;
 		  }
 		| null = null;
 	if (openSession) {
@@ -87,8 +89,10 @@ export const GET: RequestHandler = async (event) => {
 		const {
 			projection: projectionEnvelope,
 			challengeProjection,
-			challengeLegalCommands
-		} = await loadChallengeProjectionsForActor(db, openSession.sessionId, campaignId, { kind: role.kind, userId: role.userId });
+			challengeLegalCommands,
+			guidedTestProjection,
+			guidedTestLegalCommands
+		} = await loadTableProjectionsForActor(db, openSession.sessionId, campaignId, { kind: role.kind, userId: role.userId });
 		if (projectionEnvelope) {
 			session = {
 				sessionId: openSession.sessionId,
@@ -97,7 +101,9 @@ export const GET: RequestHandler = async (event) => {
 				campaignCursor: projectionEnvelope.campaignCursor,
 				projection: projectionEnvelope.projection,
 				challengeProjection,
-				challengeLegalCommands
+				challengeLegalCommands,
+				guidedTestProjection,
+				guidedTestLegalCommands
 			};
 		}
 	}

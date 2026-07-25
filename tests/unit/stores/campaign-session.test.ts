@@ -37,7 +37,9 @@ function makeInitialSnapshot(sessionVersion: number): SessionSyncSnapshot {
 			campaignCursor: 5,
 			projection: emptyProjection,
 			challengeProjection: null,
-			challengeLegalCommands: []
+			challengeLegalCommands: [],
+			guidedTestProjection: null,
+			guidedTestLegalCommands: []
 		}
 	};
 }

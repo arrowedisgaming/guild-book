@@ -76,6 +76,11 @@ export interface GuidedTestView {
 	 * button is absent instead of silently omitting it. `null` for viewers who
 	 * are not the tester. */
 	resolveAffordable: boolean | null;
+	/** The other half of Task 1's reconfirmation pair, for the tester only —
+	 * their `purchase-test-favor` envelope must send this alongside
+	 * `expectedResolveCurrent`, both read at the same moment. `null` for every
+	 * other viewer. */
+	characterVersion: number | null;
 	initialCard: CardSlot | null;
 	pushCard: CardSlot | null;
 	result: TestOfFateResult | null;
@@ -135,6 +140,7 @@ function buildTestView(
 		resolveSpent: test.resolvePurchase !== null,
 		resolveCurrent: isMine ? (facts?.resolveCurrent ?? null) : null,
 		resolveAffordable: isMine ? (facts?.resolveCurrent ?? 0) >= 1 : null,
+		characterVersion: isMine ? (facts?.characterVersion ?? null) : null,
 		initialCard: cardIn(state, test.initialCardZoneId ?? guidedTestZoneId(test.actorTenureId, 'initial'), catalog),
 		pushCard: cardIn(state, test.pushCardZoneId, catalog),
 		result: test.result

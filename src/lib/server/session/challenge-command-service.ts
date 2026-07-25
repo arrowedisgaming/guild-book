@@ -40,7 +40,8 @@ import {
 	legalChallengeCommands,
 	type ChallengeCommand
 } from '$lib/engine/session/procedures/challenge/command';
-import { projectChallengeForActor, type ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
+import { type ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
+import { loadTableProjectionsForActor } from './table-projections';
 import type { ChallengeModifierDerivationCaps } from '$lib/engine/session/procedures/challenge/modifiers';
 import { NO_EQUIPMENT, resolveChallengeEquipmentCaps } from '$lib/server/campaign/challenge-equipment';
 import { challengeCommandEnvelopeSchema } from '$lib/schemas/challenge-command.schema';
@@ -135,11 +136,12 @@ function modifierCapsFrom(materials: ReturnType<typeof buildChallengeModifierMat
 }
 
 /**
- * Builds BOTH the generic and Challenge-specific fresh projections for
- * `actor` — exported for Task 6's HTTP layer (GET reads, `/sync`, the
- * table's SSR load) exactly as `command-service.ts`'s `loadProjectionForActor`
- * is, so no route ever builds (and potentially leaks) its own divergent
- * projection.
+ * Thin delegation to `table-projections.ts`'s single combined loader — kept as a
+ * named export so every existing call site (this service, the challenge-death
+ * route) is unchanged. Increment 4 Task 2 moved the body there: a second
+ * procedure with its own projection arrived, and `GET /sync` polls ~1s, so
+ * loading and re-parsing the same session's fragments once per procedure was the
+ * wrong shape. One load, N slices.
  */
 export async function loadChallengeProjectionsForActor(
 	db: AppDb,
@@ -149,122 +151,16 @@ export async function loadChallengeProjectionsForActor(
 ): Promise<{
 	projection: SessionProjectionEnvelope<SessionProjection> | null;
 	challengeProjection: ChallengeProjection | null;
-	/**
-	 * The full legal Challenge command set for `actor` RIGHT NOW, computed
-	 * independent of whether a round is active — `challengeProjection` is
-	 * `null` before any round exists (there is no `ChallengeStateV1` yet), but
-	 * the GM still needs a server-computed answer to "may I begin one?"
-	 * (O1: never guessed client-side). `legalChallengeCommands` already
-	 * handles the no-round case correctly (`['begin-challenge']` for the GM,
-	 * `[]` otherwise), so this is the SAME derivation, just also exposed when
-	 * `challengeProjection` has nothing else to carry.
-	 */
 	challengeLegalCommands: ChallengeCommand['type'][];
-	/**
-	 * Why `projection` is null, when it is. `'not-found'` means there is no
-	 * such session *for this caller* — genuinely absent, or belonging to
-	 * another campaign (deliberately conflated, so this never confirms the
-	 * existence of a session outside the requested campaign). `'unloadable'`
-	 * means the session EXISTS and is open but cannot be projected: pinned
-	 * content that no longer satisfies today's schema, a fragment at the
-	 * wrong version, a corrupt payload.
-	 *
-	 * The distinction is not cosmetic. Callers previously saw one
-	 * indistinguishable `projection: null` for both and rendered "no session
-	 * is open" over a session that was very much open — leaving the GM with a
-	 * "Start session" button whose action could only ever refuse, since the
-	 * unloadable session still holds the campaign's one open-session slot.
-	 * `null` here means "no failure": either a live projection, or a caller
-	 * that never got as far as asking.
-	 */
 	loadFailure: 'not-found' | 'unloadable' | null;
 }> {
-	// Branch-fix I6's campaign check, hoisted AHEAD of the full load (which
-	// parses every fragment and so can fail for reasons of its own). Deciding
-	// ownership from the cheap summary read first means an out-of-campaign
-	// caller always gets a flat 'not-found', never an 'unloadable' that would
-	// confirm the session id exists somewhere. The redundant post-load check
-	// below stays as defence in depth.
-	const summary = await loadSessionSummary(db, sessionId);
-	if (!summary || summary.campaignId !== campaignId) {
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
-	}
-
-	let loaded: LoadedSession;
-	try {
-		loaded = await loadSessionForReduce(db, sessionId);
-	} catch (cause) {
-		if (cause instanceof SessionNotFoundError) {
-			return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
-		}
-		// Integrity failures used to be swallowed in silence — the one class of
-		// failure an operator most needs to see, since it never resolves on its
-		// own and leaves the campaign wedged. Logged (not persisted, not shown
-		// to the client) because the message carries schema paths, not secrets.
-		if (cause instanceof SessionLoadIntegrityError) {
-			console.error(`[challenge] session ${sessionId} is unloadable: ${cause.message}`);
-		} else {
-			console.error('[challenge] unexpected error loading session for projections', cause);
-		}
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'unloadable' };
-	}
-
-	// Branch-fix I6: the session must belong to the REQUESTED campaign. A GM of
-	// campaign A holding a session id from campaign B would otherwise receive
-	// B's full generic AND Challenge state through this loader (called before
-	// `executeChallengeCommand`'s own `summary.campaignId !== campaignId` check
-	// on the malformed-envelope and duplicate-lookup paths). Neither the generic
-	// nor the Challenge slice may leak across campaigns.
-	if (loaded.campaignId !== campaignId) {
-		// 'not-found', not 'unloadable': the caller is outside this session's
-		// campaign and must not learn that it exists at all.
-		return { projection: null, challengeProjection: null, challengeLegalCommands: [], loadFailure: 'not-found' };
-	}
-
-	const runtime = toSessionEngineRuntime(loaded.runtimeContent);
-
-	// Branch-fix I5: build and return the GENERIC projection first, wrapping
-	// ONLY the Challenge slice below in its own catch. Previously the generic
-	// projection AND `buildChallengeConfig` (which throws on missing Challenge
-	// content) shared one try/catch, so a Challenge-only fault nulled the
-	// generic projection for a NON-Challenge table — and `/sync`/SSR now route
-	// every session through here.
-	let genericProjection: SessionProjectionEnvelope<SessionProjection> | null;
-	try {
-		const projection = projectForActor(loaded.engineState, actor, runtime.catalog);
-		const cursor = await campaignCursor(db, campaignId);
-		genericProjection = { campaignCursor: cursor, sessionVersion: loaded.currentVersion, projection };
-	} catch (cause) {
-		if (!(cause instanceof SessionNotFoundError) && !(cause instanceof SessionLoadIntegrityError)) {
-			console.error('[challenge] unexpected error building generic projection', cause);
-		}
-		genericProjection = null;
-	}
-
-	let challengeProjection: ChallengeProjection | null = null;
-	let challengeLegalCommands: ChallengeCommand['type'][] = [];
-	try {
-		const config = buildChallengeConfig(loaded.runtimeContent.procedures, loaded.runtimeContent.formulas);
-		const equipment = await resolveEquipmentCapsFor(db, loaded.engineState, actor);
-		const materials = buildChallengeModifierMaterials(loaded.runtimeContent.modifiers, equipment);
-		const modifierCaps = modifierCapsFrom(materials);
-		challengeProjection = projectChallengeForActor(loaded.engineState, actor, runtime.catalog, config, modifierCaps);
-		challengeLegalCommands = legalChallengeCommands(loaded.engineState, actor, config, modifierCaps);
-	} catch (cause) {
-		console.error('[challenge] unexpected error building Challenge projection slice', cause);
-		challengeProjection = null;
-		challengeLegalCommands = [];
-	}
-
-	// A generic projection that failed to build is the same fact as a session
-	// that failed to load, as far as any caller is concerned: the session is
-	// there and cannot be shown.
-	return {
-		projection: genericProjection,
-		challengeProjection,
-		challengeLegalCommands,
-		loadFailure: genericProjection ? null : 'unloadable'
-	};
+	const { projection, challengeProjection, challengeLegalCommands, loadFailure } = await loadTableProjectionsForActor(
+		db,
+		sessionId,
+		campaignId,
+		actor
+	);
+	return { projection, challengeProjection, challengeLegalCommands, loadFailure };
 }
 
 /**

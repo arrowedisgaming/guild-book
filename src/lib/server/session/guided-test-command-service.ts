@@ -39,12 +39,8 @@ import { makeRng } from '$lib/engine/rng';
 import { projectForActor, type SessionProjection } from '$lib/engine/session/projection';
 import { toAtomicStatements, buildResolveIntentStatements } from '$lib/server/character/resource-write';
 import { applyGuidedTestCommand, spendsResolve, type GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
-import {
-	projectGuidedTestForActor,
-	legalGuidedTestCommands,
-	type GuidedTestControl,
-	type GuidedTestProjection
-} from '$lib/engine/session/procedures/guided-test-projection';
+import type { GuidedTestControl, GuidedTestProjection } from '$lib/engine/session/procedures/guided-test-projection';
+import { loadTableProjectionsForActor } from './table-projections';
 import { TEST_OF_FATE_PROCEDURE_ID, type GuidedTestMaterials, type GuidedTestReduceContext } from '$lib/engine/session/procedures/test-of-fate';
 import { guidedTestCommandEnvelopeSchema } from '$lib/schemas/guided-test-command.schema';
 import { loadGuidedTestMaterials } from './guided-test-materials';
@@ -123,9 +119,9 @@ function pinnedTestProcedure(procedures: readonly TarotProcedureDefinition[]): T
 }
 
 /**
- * Builds both the generic and guided-test projections for `actor` — exported so
- * the HTTP layer and the table's SSR load never build their own divergent
- * projection.
+ * Thin delegation to `table-projections.ts`'s single combined loader — see that
+ * module's header for why one load builds every procedure's slice. Kept as a
+ * named export so this service and its route never build a divergent projection.
  */
 export async function loadGuidedTestProjectionsForActor(
 	db: AppDb,
@@ -136,68 +132,15 @@ export async function loadGuidedTestProjectionsForActor(
 	projection: SessionProjectionEnvelope<SessionProjection> | null;
 	guidedTestProjection: GuidedTestProjection | null;
 	guidedTestLegalCommands: GuidedTestControl[];
-	/** Why `projection` is null, when it is — same two-value distinction
-	 * `loadChallengeProjectionsForActor` documents: `'not-found'` never confirms
-	 * a session outside the requested campaign exists, `'unloadable'` means it
-	 * exists and cannot be projected. */
 	loadFailure: 'not-found' | 'unloadable' | null;
 }> {
-	const empty = { projection: null, guidedTestProjection: null, guidedTestLegalCommands: [] as GuidedTestControl[] };
-
-	// Ownership decided from the cheap summary read FIRST, so an out-of-campaign
-	// caller always gets a flat 'not-found' rather than an 'unloadable' that
-	// would confirm the session id exists somewhere.
-	const summary = await loadSessionSummary(db, sessionId);
-	if (!summary || summary.campaignId !== campaignId) return { ...empty, loadFailure: 'not-found' };
-
-	let loaded: LoadedSession;
-	try {
-		loaded = await loadSessionForReduce(db, sessionId);
-	} catch (cause) {
-		if (cause instanceof SessionNotFoundError) return { ...empty, loadFailure: 'not-found' };
-		if (cause instanceof SessionLoadIntegrityError) {
-			console.error(`[guided-test] session ${sessionId} is unloadable: ${cause.message}`);
-		} else {
-			console.error('[guided-test] unexpected error loading session for projections', cause);
-		}
-		return { ...empty, loadFailure: 'unloadable' };
-	}
-
-	if (loaded.campaignId !== campaignId) return { ...empty, loadFailure: 'not-found' };
-
-	const runtime = toSessionEngineRuntime(loaded.runtimeContent);
-
-	// The generic projection is built in its OWN try/catch so a guided-test-only
-	// fault can never null the generic projection for the whole table — the same
-	// separation `loadChallengeProjectionsForActor` documents.
-	let genericProjection: SessionProjectionEnvelope<SessionProjection> | null;
-	try {
-		const projection = projectForActor(loaded.engineState, actor, runtime.catalog);
-		const cursor = await campaignCursor(db, campaignId);
-		genericProjection = { campaignCursor: cursor, sessionVersion: loaded.currentVersion, projection };
-	} catch (cause) {
-		console.error('[guided-test] unexpected error building generic projection', cause);
-		genericProjection = null;
-	}
-
-	let guidedTestProjection: GuidedTestProjection | null = null;
-	let guidedTestLegalCommands: GuidedTestControl[] = [];
-	try {
-		const materials = await loadGuidedTestMaterials(db, campaignId);
-		guidedTestProjection = projectGuidedTestForActor(loaded.engineState, actor, runtime.catalog, materials);
-		guidedTestLegalCommands = legalGuidedTestCommands(loaded.engineState, actor, materials);
-	} catch (cause) {
-		console.error('[guided-test] unexpected error building guided-test projection slice', cause);
-		guidedTestProjection = null;
-		guidedTestLegalCommands = [];
-	}
-
-	return {
-		projection: genericProjection,
-		guidedTestProjection,
-		guidedTestLegalCommands,
-		loadFailure: genericProjection ? null : 'unloadable'
-	};
+	const { projection, guidedTestProjection, guidedTestLegalCommands, loadFailure } = await loadTableProjectionsForActor(
+		db,
+		sessionId,
+		campaignId,
+		actor
+	);
+	return { projection, guidedTestProjection, guidedTestLegalCommands, loadFailure };
 }
 
 export async function executeGuidedTestCommand(input: ExecuteGuidedTestCommandInput): Promise<ExecuteGuidedTestCommandResult> {

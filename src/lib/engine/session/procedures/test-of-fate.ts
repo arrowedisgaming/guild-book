@@ -122,6 +122,16 @@ export interface GuidedTestActorFacts {
 	userId: string;
 	attributes: Record<SuitId, number>;
 	resolveCurrent: number;
+	/**
+	 * The character row's current version. The engine itself never reads this —
+	 * it exists so the projection can hand the TESTING player (and only them)
+	 * the second half of Task 1's reconfirmation pair, which their
+	 * `purchase-test-favor` envelope must carry alongside `expectedResolveCurrent`.
+	 * Without it the panel would have to fetch the sheet separately just to
+	 * name a version, and a version fetched at a different moment than the
+	 * Resolve value is exactly the mismatch the pair exists to detect.
+	 */
+	characterVersion: number;
 	/** Position in the guild's roster — `selectGroupTestActors`' stable
 	 * tie-break (Ch1 "Group tests"). */
 	rosterOrder: number;

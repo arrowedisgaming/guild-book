@@ -30,6 +30,8 @@ import type { CardSlot, SessionCommand, SessionStatus } from '$lib/types/session
 import type { SessionProjection } from '$lib/engine/session/projection';
 import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 import type { ChallengeProjection } from '$lib/engine/session/procedures/challenge/projection';
+import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
+import type { GuidedTestControl, GuidedTestProjection } from '$lib/engine/session/procedures/guided-test-projection';
 import type { DrawnCard } from '$lib/tarot/protocol';
 
 /** GM-only structural transitions the shared table exposes via
@@ -70,6 +72,21 @@ export interface TableSession {
 	 * controls from this, never from a client-side guess.
 	 */
 	challengeLegalCommands: ChallengeCommand['type'][];
+	/**
+	 * Additive (Increment 4 Task 2): the guided test of fate's OWN actor-scoped
+	 * projection slice — `null` whenever no test and no group test is in flight.
+	 * Same parallel-slice rationale as `challengeProjection`: not part of the
+	 * frozen projection contract, carried through the same sync/command wire
+	 * responses this store already reads.
+	 */
+	guidedTestProjection: GuidedTestProjection | null;
+	/**
+	 * Additive (Increment 4 Task 2): the legal guided-test command set for the
+	 * viewer right now, computed server-side even before any test exists (so the
+	 * GM's "Call for a test of fate" control renders from the server's answer,
+	 * never a client guess).
+	 */
+	guidedTestLegalCommands: GuidedTestControl[];
 }
 
 export interface SessionSyncSnapshot {
@@ -111,6 +128,24 @@ interface ChallengeCommandResponseBody {
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	challengeProjection?: ChallengeProjection | null;
 	challengeLegalCommands?: ChallengeCommand['type'][];
+}
+
+/** Response shape of `POST .../guided-test-commands` — the generic projection
+ * envelope PLUS the guided-test slice, both fresh. */
+interface GuidedTestCommandResponseBody {
+	outcome?: { ok: boolean };
+	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+	guidedTestProjection?: GuidedTestProjection | null;
+	guidedTestLegalCommands?: GuidedTestControl[];
+}
+
+/** The reconfirmation pair Task 1 requires on a Resolve purchase. Both values
+ * come from the SAME projection read (`GuidedTestView.characterVersion`/
+ * `resolveCurrent`), so they always describe one moment — which is the whole
+ * point of sending them together. */
+export interface ResolveReconfirmation {
+	observedCharacterVersion: number;
+	expectedResolveCurrent: number;
 }
 
 /** Shape of `PATCH /api/campaigns/[id]/sessions/[sessionId]` (see that
@@ -421,6 +456,88 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/**
+	 * Sends one guided test-of-fate command. Same dedup/retry-id conventions as
+	 * `sendChallengeCommand`. `reconfirmation` is required for — and legal only
+	 * on — `purchase-test-favor`: the server refuses the pair on any other
+	 * command type, and refuses a purchase that omits it.
+	 */
+	function sendGuidedTestCommand(
+		command: GuidedTestCommand,
+		commandId?: string,
+		reconfirmation?: ResolveReconfirmation
+	): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+
+		// The reconfirmation numbers are part of the dedup key: a retry AFTER the
+		// player reconfirmed against a changed Resolve value is a genuinely
+		// different request, and must not collapse onto the in-flight promise of
+		// the refused one.
+		const key = `guided-test:${JSON.stringify(command)}:${JSON.stringify(reconfirmation ?? null)}`;
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+
+		const id = commandId ?? randomCommandId();
+		const promise = performGuidedTestSend(session.sessionId, id, command, reconfirmation).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performGuidedTestSend(
+		sessionId: string,
+		commandId: string,
+		command: GuidedTestCommand,
+		reconfirmation?: ResolveReconfirmation
+	): Promise<SendCommandResult> {
+		const envelope = {
+			commandId,
+			observedSessionVersion: snapshot.session?.sessionVersion ?? 0,
+			...(reconfirmation ?? {}),
+			command
+		};
+
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}/guided-test-commands`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify(envelope)
+			});
+			const body = (await response.json().catch(() => null)) as GuidedTestCommandResponseBody | null;
+
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
+				snapshot = {
+					...snapshot,
+					session: {
+						...snapshot.session,
+						sessionVersion: body.projection.sessionVersion,
+						campaignCursor: body.projection.campaignCursor,
+						projection: body.projection.projection,
+						guidedTestProjection: body.guidedTestProjection ?? null,
+						guidedTestLegalCommands: body.guidedTestLegalCommands ?? []
+					}
+				};
+			}
+
+			// A refused purchase still refreshes the projection above, so the panel
+			// re-renders with the CURRENT Resolve and the player can reconfirm
+			// against it — the "refresh projection and require a second click"
+			// contract. The message itself stays the fixed generic string.
+			if (!body?.outcome?.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	/** GM lifecycle transitions (freeze/recover/end) against
 	 * `PATCH /sessions/[sessionId]`. Same dedup/error-surfacing conventions as
 	 * `sendCommand` above — a second call for the same action at the same
@@ -516,6 +633,7 @@ export function createCampaignSessionStore(
 		poll,
 		sendCommand,
 		sendChallengeCommand,
+		sendGuidedTestCommand,
 		sendLifecycleAction,
 		refreshNow,
 		start,

@@ -57,6 +57,7 @@ function actor(
 		characterId: `char-${userId}`,
 		userId,
 		attributes: { swords, pentacles: 2, cups: 2, wands: 2 },
+		characterVersion: 1,
 		resolveCurrent,
 		rosterOrder
 	};

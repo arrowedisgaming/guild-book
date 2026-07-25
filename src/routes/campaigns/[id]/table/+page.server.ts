@@ -6,7 +6,7 @@ import { loadActiveChallengeRoster } from '$lib/server/campaign/page-data';
 import { getDenizenThreats } from '$lib/server/content/loader';
 import { getDb, getDbContext } from '$lib/server/db';
 import { startSession } from '$lib/server/session/lifecycle';
-import { loadChallengeProjectionsForActor } from '$lib/server/session/challenge-command-service';
+import { loadTableProjectionsForActor } from '$lib/server/session/table-projections';
 import { campaignCursor, findOpenSessionForCampaign } from '$lib/server/session/repository';
 import type { SessionSyncSnapshot } from '$lib/stores/campaign-session.svelte';
 
@@ -41,7 +41,14 @@ export const load: PageServerLoad = async (event) => {
 	// hands the GM a button whose action can only ever refuse with a 409.
 	let sessionUnavailable = false;
 	if (openSession) {
-		const { projection: envelope, challengeProjection, challengeLegalCommands, loadFailure } = await loadChallengeProjectionsForActor(
+		const {
+			projection: envelope,
+			challengeProjection,
+			challengeLegalCommands,
+			guidedTestProjection,
+			guidedTestLegalCommands,
+			loadFailure
+		} = await loadTableProjectionsForActor(
 			db,
 			openSession.sessionId,
 			event.params.id,
@@ -56,7 +63,9 @@ export const load: PageServerLoad = async (event) => {
 				campaignCursor: envelope.campaignCursor,
 				projection: envelope.projection,
 				challengeProjection,
-				challengeLegalCommands
+				challengeLegalCommands,
+				guidedTestProjection,
+				guidedTestLegalCommands
 			};
 		}
 	}

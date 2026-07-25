@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Guided tests of fate at the shared table**: the GM calls for a test — naming
+  the adventurer and the attribute — and the acting player settles it. Favor and
+  disfavor are the GM's adjudication of the fiction; spending a point of Resolve
+  for favor is the player's explicit pre-draw purchase, and pushing fate stays
+  free and available only off a failure. Totals, the great-success condition, and
+  all three Fool rules come from the existing resolution engine rather than a
+  second implementation, and the Fool reshuffles both decks at the test's own
+  boundary instead of waiting for the end of a round. Because *His Majesty the
+  Worm* lets the GM call for a test mid-Challenge — and Camp's High Chant and the
+  Augury spell each invoke one from inside their own procedure — a test runs
+  alongside whatever procedure is already in progress rather than replacing it.
+  The GM still narrates every consequence; the app supplies only the numbers.
+- **Group tests**: the GM names the eligible group and the engine proposes the
+  most- and least-qualified adventurers from their current attributes, flagging
+  an apparent tie as the table's decision to talk out rather than presenting a
+  ruling the book does not make. Each of the two adventurers runs a complete test
+  with its own favor, Resolve, and push decisions; their hits total into the
+  configured group outcome band.
 - **Guided Challenge over the shared table**: campaigns can now run the full
   Challenge phase at the synchronized tarot table. The GM enters enemy facts as
   named groups, the engine deals each round from the content-defined formulas

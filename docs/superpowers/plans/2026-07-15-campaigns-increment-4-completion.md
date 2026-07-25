@@ -46,7 +46,7 @@ Task 4 Step 1's coverage matrix must therefore assert the resolved outcome text,
 - Test: `tests/integration/session-resolve.test.ts`
 - Test: `tests/integration/session-atomicity.test.ts`
 
-- [ ] **Step 1: Write failing resource-race tests**
+- [x] **Step 1: Write failing resource-race tests**
 
 Cover success, insufficient Resolve, unrelated sheet update collision, and a conflicting Resolve change:
 
@@ -64,7 +64,7 @@ expect(result).toMatchObject({ ok: true, version: 5, resolveCurrent: 2 });
 
 When a concurrent notes edit moves version 4→5 but Resolve stays 3, the service rereads, reapplies to version 6, and preserves notes. When Resolve changes 3→2, return `{ ok:false, reason:'resource-changed', currentResolve:2, currentVersion:5 }` and do not draw or spend.
 
-- [ ] **Step 2: Implement targeted JSON mutation**
+- [x] **Step 2: Implement targeted JSON mutation**
 
 Parse/migrate the latest full JSON, verify ownership/active tenure and resource facts, create a new object changing only:
 
@@ -77,11 +77,11 @@ const nextData: GuildBookCharacterData = {
 
 Insert the next character claim and update JSON/denormalized character version in the same session atomic mutation as command claim, session fragments, and events. Retry unrelated version collisions up to four attempts. Never accept a whole character body from a session command.
 
-- [ ] **Step 3: Add explicit reconfirmation contract**
+- [x] **Step 3: Add explicit reconfirmation contract**
 
 Session command includes both expected character version and expected Resolve value. On `resource-changed`, no command row/version is accepted. The response includes current numeric Resolve/version but no character document; UI must ask again.
 
-- [ ] **Step 4: Run failure injection and commit**
+- [x] **Step 4: Run failure injection and commit**
 
 Run: `npm test -- tests/integration/session-resolve.test.ts tests/integration/session-atomicity.test.ts`
 
@@ -104,13 +104,13 @@ git commit -m "feat(session): spend resolve with narrow versioned writes"
 - Test: `tests/unit/session/procedures/group-test.test.ts`
 - Test: `tests/e2e/campaign-tests-of-fate.spec.ts`
 
-- [ ] **Step 1: Write failing procedure transition tests**
+- [x] **Step 1: Write failing procedure transition tests**
 
 Individual stages: declare actor/suit, establish favor/disfavor/relevant aid or motif, optional Resolve confirmation, draw, classify, optionally push only after failure, finalize. Assert the server reads attached current attribute and Resolve; client-supplied attribute is rejected by strict schema.
 
 Group stages: GM selects eligible group, engine selects most/least by current attribute and stable roster order, independently completes both tests, maps outcomes to hits, and publishes the configured group result.
 
-- [ ] **Step 2: Implement individual test state**
+- [x] **Step 2: Implement individual test state**
 
 ```ts
 export interface GuidedTestStateV1 {
@@ -129,15 +129,15 @@ export interface GuidedTestStateV1 {
 
 Call `resolveTestOfFate` from Increment 0.5. The result is public only after the applicable draw/reveal step; pending card identity obeys procedure visibility. Drawing the Fool schedules configured reshuffle at procedure completion boundary.
 
-- [ ] **Step 3: Implement group composition**
+- [x] **Step 3: Implement group composition**
 
 Use `selectGroupTestActors` and `resolveGroupTest`; do not fork arithmetic. Each subtest owns separate favor/disfavor/Resolve/push decisions and card zones. Publish the chosen actor names before draws and the final two outcomes/hits after completion.
 
-- [ ] **Step 4: Build projection-driven panels**
+- [x] **Step 4: Build projection-driven panels**
 
 GM declares the fictional test and group; the acting player confirms Resolve/push. Render `Spend 1 Resolve for favor` only when current projection says affordable. On a resource-change conflict, refresh projection and require a second click. Announce every public result.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 Run:
 

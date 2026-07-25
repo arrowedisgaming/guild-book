@@ -48,6 +48,7 @@ const MATERIALS: GuidedTestMaterials = {
 			characterId: 'char-alice',
 			userId: 'user-alice',
 			attributes: { swords: 4, pentacles: 2, cups: 2, wands: 2 },
+			characterVersion: 1,
 			resolveCurrent: 3,
 			rosterOrder: 0
 		},
@@ -56,6 +57,7 @@ const MATERIALS: GuidedTestMaterials = {
 			characterId: 'char-bob',
 			userId: 'user-bob',
 			attributes: { swords: 1, pentacles: 1, cups: 1, wands: 1 },
+			characterVersion: 1,
 			resolveCurrent: 0,
 			rosterOrder: 1
 		},
@@ -66,6 +68,7 @@ const MATERIALS: GuidedTestMaterials = {
 			characterId: 'char-carol',
 			userId: 'user-carol',
 			attributes: { swords: 3, pentacles: 2, cups: 2, wands: 2 },
+			characterVersion: 1,
 			resolveCurrent: 2,
 			rosterOrder: 2
 		}

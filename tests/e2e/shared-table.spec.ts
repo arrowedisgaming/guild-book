@@ -132,10 +132,40 @@ test.describe('shared table sync', () => {
 		await playerB.setOffline(false);
 		await expect.poll(() => syncRequests.length, { timeout: 1000 }).toBeGreaterThan(0);
 
-		// --- Duplicate click with one commandId applies once ---
+		// --- Duplicate submit while the first is in flight sends one command ---
+		//
+		// The store's dedup is in-flight dedup: a second identical submit
+		// reuses the first's promise and commandId *while that request is
+		// outstanding*. Two clicks separated by a completed round-trip are two
+		// deliberate draws and must draw twice, so the trigger has to make the
+		// overlap real rather than hope for it.
+		//
+		// `Promise.all([click(), click()])` did not. Playwright re-resolves the
+		// locator and repeats actionability checks for the second click, and
+		// the first draw re-renders the hand in between; a trace of a failing
+		// run showed the second POST leaving 2ms *after* the first responded
+		// (8ms round-trip, 10ms between clicks), so `pending` had already been
+		// cleared and a second commandId was legitimately minted. Dispatching
+		// both clicks in one synchronous task removes the race: the second
+		// handler runs before any await can resolve, so it is guaranteed to
+		// find the first still pending.
+		const commandPosts: string[] = [];
+		playerAPage.on('request', (request) => {
+			if (request.method() === 'POST' && request.url().includes('/commands')) {
+				commandPosts.push(request.url());
+			}
+		});
+
 		const handCountBefore = await playerAPage.locator('[data-testid="hand-card"] .card').count();
-		const drawButton = playerAPage.getByRole('button', { name: 'Draw a card' });
-		await Promise.all([drawButton.click(), drawButton.click()]);
+		await playerAPage.evaluate(() => {
+			const button = [...document.querySelectorAll('button')].find(
+				(candidate) => candidate.textContent?.trim() === 'Draw a card'
+			);
+			if (!button) throw new Error('no "Draw a card" button to double-submit');
+			button.click();
+			button.click();
+		});
+
 		await expect
 			.poll(() => playerAPage.locator('[data-testid="hand-card"] .card').count())
 			.toBe(handCountBefore + 1);
@@ -145,6 +175,10 @@ test.describe('shared table sync', () => {
 		expect(await playerAPage.locator('[data-testid="hand-card"] .card').count()).toBe(
 			handCountBefore + 1
 		);
+		// The card count alone would also be satisfied by a second command that
+		// the server correctly rejected. Assert the dedup itself: exactly one
+		// request left the client.
+		expect(commandPosts).toHaveLength(1);
 
 		await gm.close();
 		await playerA.close();

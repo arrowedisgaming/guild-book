@@ -22,6 +22,8 @@
 	import TestOfFatePanel from './procedures/TestOfFatePanel.svelte';
 	import GroupTestPanel from './procedures/GroupTestPanel.svelte';
 	import CampProcedurePanel from './procedures/CampProcedurePanel.svelte';
+	import CrawlProcedurePanel from './procedures/CrawlProcedurePanel.svelte';
+	import OraclePanel from './procedures/OraclePanel.svelte';
 	import type { SessionCommand } from '$lib/types/session';
 	import {
 		COMMAND_ERROR_MESSAGE,
@@ -35,6 +37,7 @@
 	import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 	import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-test-command';
 	import type { CampProcedureCommand } from '$lib/engine/session/procedures/camp-command';
+	import type { FiniteCommandInput } from '$lib/schemas/finite-command.schema';
 	import type { ActiveChallengeTenureView } from '$lib/server/campaign/page-data';
 
 	let {
@@ -48,6 +51,8 @@
 		onSendChallengeCommand,
 		onSendGuidedTestCommand,
 		onSendCampCommand,
+		onSendFiniteCommand,
+		procedureTitles,
 		onSendLifecycleAction
 	}: {
 		role: 'gm' | 'player';
@@ -70,6 +75,9 @@
 			reconfirmation?: ResolveReconfirmation
 		) => Promise<SendCommandResult>;
 		onSendCampCommand: (command: CampProcedureCommand, commandId?: string) => Promise<SendCommandResult>;
+		onSendFiniteCommand: (command: FiniteCommandInput, commandId?: string) => Promise<SendCommandResult>;
+		/** id/title/phase for the finite panels' pickers, from the content pack. */
+		procedureTitles: Array<{ id: string; title: string; phase: string }>;
 		onSendLifecycleAction: (action: LifecycleAction) => Promise<SendCommandResult>;
 	} = $props();
 
@@ -295,6 +303,10 @@
 				<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
+			<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+			<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+				<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+				<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}

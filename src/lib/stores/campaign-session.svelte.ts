@@ -34,6 +34,8 @@ import type { GuidedTestCommand } from '$lib/engine/session/procedures/guided-te
 import type { GuidedTestControl, GuidedTestProjection } from '$lib/engine/session/procedures/guided-test-projection';
 import type { CampProcedureCommand } from '$lib/engine/session/procedures/camp-command';
 import type { CampControl, CampProjection } from '$lib/engine/session/procedures/camp-projection';
+import type { FiniteCommandInput } from '$lib/schemas/finite-command.schema';
+import type { FiniteControl, FiniteProjection } from '$lib/engine/session/procedures/finite-projection';
 import type { DrawnCard } from '$lib/tarot/protocol';
 
 /** GM-only structural transitions the shared table exposes via
@@ -99,6 +101,10 @@ export interface TableSession {
 	 * procedure exists, so "Perform the High Chant" renders from the server's
 	 * answer. */
 	campLegalCommands: CampControl[];
+	/** Additive (Increment 4 Task 4): the finite runner's slice — the Crawl,
+	 * City, sorcery, and Camp-watch procedures. */
+	finiteProjection: FiniteProjection | null;
+	finiteLegalCommands: FiniteControl[];
 }
 
 export interface SessionSyncSnapshot {
@@ -157,6 +163,14 @@ interface CampCommandResponseBody {
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	campProjection?: CampProjection | null;
 	campLegalCommands?: CampControl[];
+}
+
+/** Response shape of `POST .../finite-commands`. */
+interface FiniteCommandResponseBody {
+	outcome?: { ok: boolean };
+	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
+	finiteProjection?: FiniteProjection | null;
+	finiteLegalCommands?: FiniteControl[];
 }
 
 /** The reconfirmation pair Task 1 requires on a Resolve purchase. Both values
@@ -617,6 +631,57 @@ export function createCampaignSessionStore(
 		}
 	}
 
+	/** Sends one finite-runner command — same dedup conventions as the other
+	 * procedure surfaces; no reconfirmation pair (nothing spends). */
+	function sendFiniteCommand(command: FiniteCommandInput, commandId?: string): Promise<SendCommandResult> {
+		const session = snapshot.session;
+		if (!session) return Promise.resolve({ ok: false, message: COMMAND_ERROR_MESSAGE });
+		const key = `finite:${JSON.stringify(command)}`;
+		const inFlight = pending.get(key);
+		if (inFlight) return inFlight;
+		const id = commandId ?? randomCommandId();
+		const promise = performFiniteSend(session.sessionId, id, command).finally(() => {
+			pending.delete(key);
+		});
+		pending.set(key, promise);
+		return promise;
+	}
+
+	async function performFiniteSend(sessionId: string, commandId: string, command: FiniteCommandInput): Promise<SendCommandResult> {
+		const envelope = { commandId, observedSessionVersion: snapshot.session?.sessionVersion ?? 0, command };
+		try {
+			const response = await doFetch(`/api/campaigns/${campaignId}/sessions/${sessionId}/finite-commands`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+				cache: 'no-store',
+				body: JSON.stringify(envelope)
+			});
+			const body = (await response.json().catch(() => null)) as FiniteCommandResponseBody | null;
+			if (
+				body?.projection &&
+				snapshot.session &&
+				snapshot.session.sessionId === sessionId &&
+				!isOlderSessionVersion(snapshot.session.sessionVersion, body.projection.sessionVersion)
+			) {
+				snapshot = {
+					...snapshot,
+					session: {
+						...snapshot.session,
+						sessionVersion: body.projection.sessionVersion,
+						campaignCursor: body.projection.campaignCursor,
+						projection: body.projection.projection,
+						finiteProjection: body.finiteProjection ?? null,
+						finiteLegalCommands: body.finiteLegalCommands ?? []
+					}
+				};
+			}
+			if (!body?.outcome?.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			return { ok: true };
+		} catch {
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+	}
+
 	/** GM lifecycle transitions (freeze/recover/end) against
 	 * `PATCH /sessions/[sessionId]`. Same dedup/error-surfacing conventions as
 	 * `sendCommand` above — a second call for the same action at the same
@@ -714,6 +779,7 @@ export function createCampaignSessionStore(
 		sendChallengeCommand,
 		sendGuidedTestCommand,
 		sendCampCommand,
+		sendFiniteCommand,
 		sendLifecycleAction,
 		refreshNow,
 		start,

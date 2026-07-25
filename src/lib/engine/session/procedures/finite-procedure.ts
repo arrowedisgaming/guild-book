@@ -59,6 +59,12 @@ const OWN_MODULE_PROCEDURE_IDS = new Set(['challenge-round', 'camp-high-chant', 
  * shape, which IS supported; the mode choice is GM fiction. */
 const UNSUPPORTED_PROCEDURE_IDS = new Set(['crawl-meatgrinder']);
 
+/** Whether the runner owns `procedureId` — the projection's beginnable list
+ * and the service both key off this single predicate. */
+export function isRunnerProcedure(procedureId: string): boolean {
+	return !OWN_MODULE_PROCEDURE_IDS.has(procedureId) && !UNSUPPORTED_PROCEDURE_IDS.has(procedureId);
+}
+
 export function finiteZoneId(procedureId: string): string {
 	return `finite:${procedureId}`;
 }

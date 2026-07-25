@@ -58,6 +58,8 @@
 			onSendChallengeCommand={store.sendChallengeCommand}
 			onSendGuidedTestCommand={store.sendGuidedTestCommand}
 			onSendCampCommand={store.sendCampCommand}
+			onSendFiniteCommand={store.sendFiniteCommand}
+			procedureTitles={data.procedureTitles}
 			onSendLifecycleAction={store.sendLifecycleAction}
 		/>
 	{:else if data.sessionUnavailable}

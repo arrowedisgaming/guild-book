@@ -37,6 +37,7 @@ import {
 } from '$lib/engine/session/procedures/guided-test-projection';
 import { legalCampCommands, projectCampForActor, type CampControl, type CampProjection } from '$lib/engine/session/procedures/camp-projection';
 import { buildCampConfig } from '$lib/engine/session/procedures/camp';
+import { legalFiniteCommands, projectFiniteForActor, type FiniteControl, type FiniteProjection } from '$lib/engine/session/procedures/finite-projection';
 import { loadCampMaterials, loadGuidedTestMaterials } from './guided-test-materials';
 import {
 	campaignCursor,
@@ -64,6 +65,9 @@ export interface TableProjections {
 	 * "Perform the High Chant" / "Apply leeches" controls render from the
 	 * server's answer. */
 	campLegalCommands: CampControl[];
+	finiteProjection: FiniteProjection | null;
+	/** The finite runner's legal set — present before any procedure exists. */
+	finiteLegalCommands: FiniteControl[];
 	/**
 	 * Why `projection` is null, when it is. `'not-found'` means there is no such
 	 * session *for this caller* — genuinely absent, or belonging to another
@@ -89,7 +93,9 @@ const EMPTY: Omit<TableProjections, 'loadFailure'> = {
 	guidedTestProjection: null,
 	guidedTestLegalCommands: [],
 	campProjection: null,
-	campLegalCommands: []
+	campLegalCommands: [],
+	finiteProjection: null,
+	finiteLegalCommands: []
 };
 
 /** Resolves the Challenge-relevant equipment caps for `actor` against `state`:
@@ -205,6 +211,18 @@ export async function loadTableProjectionsForActor(
 		campLegalCommands = [];
 	}
 
+	let finiteProjection: FiniteProjection | null = null;
+	let finiteLegalCommands: FiniteControl[] = [];
+	try {
+		const materials = await loadCampMaterials(db, campaignId);
+		finiteProjection = projectFiniteForActor(loaded.engineState, actor, runtime.catalog, materials, loaded.runtimeContent.procedures);
+		finiteLegalCommands = legalFiniteCommands(loaded.engineState, actor, materials, loaded.runtimeContent.procedures);
+	} catch (cause) {
+		console.error('[table] unexpected error building finite projection slice', cause);
+		finiteProjection = null;
+		finiteLegalCommands = [];
+	}
+
 	return {
 		projection,
 		challengeProjection,
@@ -213,6 +231,8 @@ export async function loadTableProjectionsForActor(
 		guidedTestLegalCommands,
 		campProjection,
 		campLegalCommands,
+		finiteProjection,
+		finiteLegalCommands,
 		loadFailure: projection ? null : 'unloadable'
 	};
 }

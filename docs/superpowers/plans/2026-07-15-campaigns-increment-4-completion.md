@@ -209,7 +209,7 @@ git commit -m "feat(session): add camp tarot procedures"
 - Test: `tests/unit/session/procedures/oracles.test.ts`
 - Test: `tests/e2e/exploration-tarot.spec.ts`
 
-- [ ] **Step 1: Write the procedure coverage matrix as tests**
+- [x] **Step 1: Write the procedure coverage matrix as tests**
 
 One named test for each:
 
@@ -228,7 +228,7 @@ One named test for each:
 
 Each test asserts actor, deck, count, visibility, legal zone transitions, boundary, and public/private event shape from the audit/content definition.
 
-- [ ] **Step 2: Define a data-driven finite procedure runner**
+- [x] **Step 2: Define a data-driven finite procedure runner**
 
 For procedures expressible entirely through catalog steps, use:
 
@@ -245,7 +245,7 @@ export interface FiniteProcedureStateV1 {
 
 The runner maps the current validated content step to one generic card command, enforces its actor/visibility/completion mode, advances exactly one step, and rejects unsupported operations. Procedure-specific modules add typed calculations or selection rules only where the generic runner cannot express them.
 
-- [ ] **Step 3: Implement oracle table resolution**
+- [x] **Step 3: Implement oracle table resolution**
 
 Card draw and derived suit/value/tier/parity are authoritative and public/private as the audited rule requires. A step carrying a `lookupTableId` then resolves its result from the content pack. Implement the resolver as a pure function in `src/lib/engine/session/lookup.ts`:
 
@@ -267,11 +267,11 @@ Then resolve tokens against `tableState`: `[value]`/`[suit]` from the minor disc
 
 The GM still adjudicates the fictional consequence; the app supplies the rule text and never applies wounds, conditions, or narrative outcomes. It generates no prep content. Per-denizen oracle abilities use generic predicates and a content lookup ID, never hardcoded denizen names.
 
-- [ ] **Step 4: Preserve manual 50% behavior**
+- [x] **Step 4: Preserve manual 50% behavior**
 
 The `manual-choice` operation produces a confirmation UI with `yes`/`no` result and a public log. Reducer state and both deck orders remain byte-identical across the command except for procedure/log metadata.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 Run:
 

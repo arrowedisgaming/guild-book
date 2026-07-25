@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { requireCampaignAccess } from '$lib/server/campaign/access';
 import { loadCampaignProjection } from '$lib/server/campaign/service';
 import { loadActiveChallengeRoster } from '$lib/server/campaign/page-data';
-import { getDenizenThreats } from '$lib/server/content/loader';
+import { getDenizenThreats, getTarotProcedures } from '$lib/server/content/loader';
 import { getDb, getDbContext } from '$lib/server/db';
 import { startSession } from '$lib/server/session/lifecycle';
 import { loadTableProjectionsForActor } from '$lib/server/session/table-projections';
@@ -49,6 +49,8 @@ export const load: PageServerLoad = async (event) => {
 			guidedTestLegalCommands,
 			campProjection,
 			campLegalCommands,
+			finiteProjection,
+			finiteLegalCommands,
 			loadFailure
 		} = await loadTableProjectionsForActor(
 			db,
@@ -69,7 +71,9 @@ export const load: PageServerLoad = async (event) => {
 				guidedTestProjection,
 				guidedTestLegalCommands,
 				campProjection,
-				campLegalCommands
+				campLegalCommands,
+				finiteProjection,
+				finiteLegalCommands
 			};
 		}
 	}
@@ -83,8 +87,18 @@ export const load: PageServerLoad = async (event) => {
 	// `denizens.json`'s own `threats` catalog, never re-typed in the
 	// component. Trivial/cached, safe to compute unconditionally.
 	const enemyThreatOptions = getDenizenThreats().map((threat) => ({ id: threat.id, name: threat.name }));
+	// Display names for the finite panels' pickers. Titles only — the server
+	// resolves every command against the session's PINNED content, so a
+	// mid-campaign pack update can at worst mislabel a button, never change a
+	// live session's rules.
+	const procedureTitles = getTarotProcedures().procedures.map((procedure) => ({
+		id: procedure.id,
+		title: procedure.title,
+		phase: procedure.phase
+	}));
 
 	return {
+		procedureTitles,
 		campaignId: event.params.id,
 		campaignName: campaign.name,
 		role: role.kind,

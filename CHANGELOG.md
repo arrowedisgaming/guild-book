@@ -21,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Augury spell each invoke one from inside their own procedure — a test runs
   alongside whatever procedure is already in progress rather than replacing it.
   The GM still narrates every consequence; the app supplies only the numbers.
+- **Oracles, exploration, and City procedures at the table**: every remaining
+  in-session tarot procedure now runs through one data-driven engine — Area
+  Sense, Overland Travel, the Camp watches and Patrol, We're Doomed,
+  Maleficence (both invocation modes), Malediction, Random Totem, the GM twist,
+  starting Dispositions, City Doomsaying, Strange Communions, As Above So
+  Below, and the Augury spell with its private draw and accept-or-decline
+  choice. Oracles resolve the drawn card against the book's own tables — single
+  rows, ranges, the Random Totem grid, and Doomsaying's four-draw prophecy read
+  left to right — and the verbatim cell text is what the table sees, with
+  bracket tokens resolved from the top of the minor discard and
+  cross-references linked to their entries. The flat 50% chances stay a manual
+  yes/no that never draws a card, and the GM still adjudicates every
+  consequence: the app supplies the rule text, nothing else.
+- **Fixed**: a discarded card now lands on TOP of its discard pile. Previously
+  the newest discard was buried at the bottom, so any rule reading "the top
+  card of the discard pile" — the GM twist, starting Dispositions, the bracket
+  tokens — would have read the oldest discard instead.
 - **Camp actions at the table**: the High Chant and leeches, the two Camp
   Actions whose mechanics are card operations. A bard selects inspiration cards
   from the minor arcana discard — as many as their Cups — and hands them out, at

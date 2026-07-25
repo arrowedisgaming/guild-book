@@ -675,7 +675,10 @@ export async function loadProjectionForActor(
  * `sessionCommandClaimStatement`, inserting the identical row shape so it
  * competes for the identical unique index.
  */
-function sessionVersionClaimStatement(
+/** Exported (Increment 4 Task 6) so `member-cleanup.ts` claims versions
+ * through the same serialization index as every other version-advancing
+ * write. */
+export function sessionVersionClaimStatement(
 	db: AppDb,
 	input: { sessionId: string; actorUserId: string | null; commandType: string; expectedVersion: number; now: Date }
 ): CampaignAtomicStatement {

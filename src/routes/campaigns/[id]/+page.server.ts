@@ -1,3 +1,4 @@
+import { leaveCampaignWithCleanup, removeCampaignMemberWithCleanup, livePlaySessionStatePort } from '$lib/server/session/member-cleanup';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getEnv } from '$lib/server/auth';
@@ -8,8 +9,6 @@ import {
 } from '$lib/server/campaign/access';
 import {
 	archiveCampaign,
-	leaveCampaign,
-	removeCampaignMember
 } from '$lib/server/campaign/membership';
 import {
 	listEligibleAdventurersForUser,
@@ -79,7 +78,7 @@ export const actions: Actions = {
 	replace: async (event) => mutateAdventurer(event, 'replace'),
 	leave: async (event) => {
 		const role = await requireRole(event, 'player');
-		const result = await leaveCampaign(await getDb(event), {
+		const result = await leaveCampaignWithCleanup(await getDb(event), {
 			campaignId: event.params.id,
 			membershipId: role.membershipId,
 			userId: role.userId
@@ -90,7 +89,7 @@ export const actions: Actions = {
 	remove: async (event) => {
 		const role = await requireRole(event, 'gm');
 		const membershipId = requiredFormValue(await event.request.formData(), 'membershipId');
-		const result = await removeCampaignMember(await getDb(event), {
+		const result = await removeCampaignMemberWithCleanup(await getDb(event), {
 			campaignId: event.params.id,
 			membershipId,
 			ownerUserId: role.userId
@@ -129,11 +128,20 @@ export const actions: Actions = {
 	},
 	archive: async (event) => {
 		const role = await requireRole(event, 'gm');
-		const result = await archiveCampaign(await getDb(event), {
-			campaignId: event.params.id,
-			ownerUserId: role.userId
-		});
-		if (!result.ok) return fail(409, { message: 'The campaign could not be archived.' });
+		const db = await getDb(event);
+		// Task 6 Step 3: the archive boundary. The live port makes an open
+		// (active OR frozen) session a 409, checked again inside the atomic
+		// claim so a session that starts mid-request still rolls the archive
+		// back.
+		const result = await archiveCampaign(db, { campaignId: event.params.id, ownerUserId: role.userId }, livePlaySessionStatePort(db));
+		if (!result.ok) {
+			return fail(409, {
+				message:
+					result.reason === 'session-active'
+						? 'End the open session before archiving the campaign.'
+						: 'The campaign could not be archived.'
+			});
+		}
 		throw redirect(303, '/campaigns');
 	}
 };

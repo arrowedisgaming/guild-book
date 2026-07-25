@@ -1,13 +1,13 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { campaignHeaders, requireCampaignAccess } from '$lib/server/campaign/access';
-import { removeCampaignMember } from '$lib/server/campaign/membership';
+import { removeCampaignMemberWithCleanup } from '$lib/server/session/member-cleanup';
 import { getDb } from '$lib/server/db';
 
 export const DELETE: RequestHandler = async (event) => {
 	const role = await requireCampaignAccess(event, event.params.id);
 	if (role.kind !== 'gm') throw error(404, 'Campaign not found');
-	const result = await removeCampaignMember(await getDb(event), {
+	const result = await removeCampaignMemberWithCleanup(await getDb(event), {
 		campaignId: event.params.id,
 		membershipId: event.params.membershipId,
 		ownerUserId: role.userId

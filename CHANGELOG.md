@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Augury spell each invoke one from inside their own procedure — a test runs
   alongside whatever procedure is already in progress rather than replacing it.
   The GM still narrates every consequence; the app supplies only the numbers.
+- **Clean departures from a live table**: leaving a campaign — or being removed
+  by the GM — during an open session is one atomic action. Every card the
+  departing player privately held returns to its draw pile and the pile is
+  shuffled, so nobody learns what they had; an active Challenge drops their
+  seat; the public record shows only a count; and their access ends with their
+  membership. Archiving a campaign is refused while a session is open (active
+  or frozen) and archived campaigns stay read-only history for their members.
 - **Completed session history and GM corrections**: ending a session already
   purged every private hand, prepared card, server draw order, and recipient
   secret; those completed sessions are now readable. The GM and every current

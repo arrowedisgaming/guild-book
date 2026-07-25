@@ -349,11 +349,11 @@ git commit -m "feat(session): add corrections and sanitized history"
 - Test: `tests/integration/session-member-cleanup.test.ts`
 - Test: `tests/e2e/campaign-departure.spec.ts`
 
-- [ ] **Step 1: Write failing cleanup atomicity tests**
+- [x] **Step 1: Write failing cleanup atomicity tests**
 
 Player leaves and GM removes in each generic/Challenge stage. Assert membership revocation, living tenure end, every private hand/face-down/prepared card returning to its owning draw pile followed by an authoritative shuffle, public cards moving through their configured cleanup destinations, Challenge participant/pending-join removal, sanitized count-only public event, private-secret deletion, and immediate subsequent `404`. Inject every statement failure and assert original access/state remains intact.
 
-- [ ] **Step 2: Implement one cleanup service used by both paths**
+- [x] **Step 2: Implement one cleanup service used by both paths**
 
 ```ts
 export interface MemberCleanupIntent {
@@ -366,11 +366,11 @@ export interface MemberCleanupIntent {
 
 The session engine receives a typed `remove-participant` system command and determines legal card destinations. The server atomically claims the session version, persists fragments/events, ends tenure, and updates membership. Retry nonstructural collision up to four attempts. No auto-expiry or silent force-delete fallback exists.
 
-- [ ] **Step 3: Enforce archive boundary**
+- [x] **Step 3: Enforce archive boundary**
 
 Archive query checks for any `active` or `frozen` play session in the same atomic service call. On conflict return `409` with a safe message. Archived campaigns and completed histories remain read-only for the GM and current members, but are not joinable or playable.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `npm test -- tests/integration/session-member-cleanup.test.ts tests/integration/session-atomicity.test.ts`
 

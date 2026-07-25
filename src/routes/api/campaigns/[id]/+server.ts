@@ -7,6 +7,7 @@ import {
 } from '$lib/server/campaign/access';
 import { loadCampaignProjection, updateCampaignMetadata } from '$lib/server/campaign/service';
 import { archiveCampaign } from '$lib/server/campaign/membership';
+import { livePlaySessionStatePort } from '$lib/server/session/member-cleanup';
 import { getDb } from '$lib/server/db';
 import { updateCampaignSchema } from '$lib/schemas/campaign.schema';
 
@@ -41,10 +42,9 @@ export const PATCH: RequestHandler = async (event) => {
 export const DELETE: RequestHandler = async (event) => {
 	const role = await requireCampaignAccess(event, event.params.id);
 	if (role.kind !== 'gm') throw error(404, 'Campaign not found');
-	const result = await archiveCampaign(await getDb(event), {
-		campaignId: event.params.id,
-		ownerUserId: role.userId
-	});
+	const db = await getDb(event);
+	// Task 6 Step 3: an open (active or frozen) session blocks archiving — 409.
+	const result = await archiveCampaign(db, { campaignId: event.params.id, ownerUserId: role.userId }, livePlaySessionStatePort(db));
 	if (!result.ok) {
 		if (result.reason === 'not-found') throw error(404, 'Campaign not found');
 		return json(

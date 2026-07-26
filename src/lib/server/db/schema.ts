@@ -556,6 +556,35 @@ export const sessionCommands = sqliteTable(
 	]
 );
 
+/**
+ * A saved denizen. Denormalised `name`/`theme`/`threat` columns make listing
+ * cheap; the `data` JSON blob holds the **DenizenDraft only** — the draft is
+ * authoritative, and the definition is re-materialized from it on render so
+ * it can never drift stale against content-pack text. `threat` is '' for
+ * person-kind denizens (people have no threat template). No shareId yet —
+ * denizen sharing is a follow-up and adds it additively.
+ */
+export const denizens = sqliteTable(
+	'denizens',
+	{
+		id: text('id').primaryKey(),
+		userId: text('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		name: text('name').notNull().default(''),
+		theme: text('theme').notNull().default(''),
+		threat: text('threat').notNull().default(''),
+		/** DenizenDraft as a JSON blob (sanitized on read). */
+		data: text('data').notNull(),
+		/** Integer version claim — every write is conditional on it, like characters. */
+		version: integer('version').notNull().default(1),
+		isArchived: integer('is_archived', { mode: 'boolean' }).notNull().default(false),
+		createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [index('denizens_user_id_idx').on(table.userId)]
+);
+
 // ─── Guilds (schema-only; multiplayer UI deferred to a later phase) ─
 // These tables are defined now so the initial migration is clean and no
 // destructive migration is needed when the guild/multiplayer layer is built.

@@ -1,11 +1,18 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
+	import { page } from '$app/state';
 	import { signOut } from '@auth/sveltekit/client';
 	import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
+
+	// Sign in returns you to the page you were on — filters and all, so the
+	// query string rides along with the path.
+	let signInHref = $derived(
+		`/login?callbackUrl=${encodeURIComponent(page.url.pathname + page.url.search)}`
+	);
 </script>
 
 <div class="site">
@@ -24,7 +31,7 @@
 					Sign out
 				</button>
 			{:else}
-				<a href="/login">Sign in</a>
+				<a href={signInHref}>Sign in</a>
 			{/if}
 			<ThemeToggle />
 		</nav>

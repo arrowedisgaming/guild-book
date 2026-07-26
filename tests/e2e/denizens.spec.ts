@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { signInAs } from './fixtures/auth';
 
 test.describe('denizen reference', () => {
 	test('index lists the bestiary and filters by theme and threat', async ({ page }) => {
@@ -132,6 +133,11 @@ test.describe('denizen builder', () => {
 		await expect(preview.getByText('Fear.')).toBeVisible();
 		await expect(preview.getByText('Locust Cloud.')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
+
+		// Anonymous users export freely; saving shows a quiet sign-in nudge.
+		await expect(page.getByRole('button', { name: /Save denizen/ })).toHaveCount(0);
+		await expect(page.getByText('to save this denizen to your bestiary')).toBeVisible();
+		await expect(page.getByText('exports above work without an account')).toBeVisible();
 	});
 
 	test('elite notes are called out as optional and can be edited or removed', async ({ page }) => {
@@ -412,5 +418,91 @@ test.describe('denizen builder', () => {
 		const pdfDownload = page.waitForEvent('download');
 		await page.getByRole('button', { name: 'Download PDF' }).click();
 		expect((await pdfDownload).suggestedFilename()).toBe('gilded-horror.pdf');
+	});
+});
+
+test.describe('saved denizens (signed in)', () => {
+	test('save, list, edit, "new" never overwrites, archive', async ({ page }) => {
+		await signInAs(page, 'Denizen Keeper');
+
+		// Build a minimal Undead Brute and save it from the review step.
+		await page.goto('/denizens/build');
+		await page.getByLabel('Name').fill('Test Wight');
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Undead' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await page.getByRole('radio', { name: 'Brute' }).check();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Customize', level: 2 })).toBeVisible();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Dooms', level: 2 })).toBeVisible();
+		await page.getByRole('button', { name: 'Next →' }).click();
+		await expect(page.getByRole('heading', { name: 'Review', level: 2 })).toBeVisible();
+
+		await page.getByRole('button', { name: 'Save denizen' }).click();
+		await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible();
+		await expect(page.getByText('Saving updates “Test Wight” in your denizens.')).toBeVisible();
+
+		// The public reference gains the personal strip; My Denizens lists the row.
+		await page.goto('/denizens');
+		await expect(page.getByRole('heading', { name: 'Your denizens' })).toBeVisible();
+		await page.goto('/denizens/mine');
+		const rows = page.locator('li.row', { hasText: 'Test Wight' });
+		await expect(rows).toHaveCount(1);
+
+		// Open the saved page — the materialized stat block renders.
+		await rows.first().getByRole('link', { name: 'Open' }).click();
+		await expect(page.getByRole('heading', { name: 'Test Wight' })).toBeVisible();
+		await expect(page.getByText('Undead Brute')).toBeVisible();
+
+		// Edit in the builder and save changes back to the same row.
+		await page.getByRole('button', { name: 'Edit in the builder' }).click();
+		await page.waitForURL((url) => url.pathname === '/denizens/build');
+		await expect(page.getByRole('heading', { name: 'Review', level: 2 })).toBeVisible();
+		await page.getByRole('button', { name: 'Save changes' }).click();
+		await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible();
+
+		// "New denizen" detaches the editing session: the next save must create
+		// a second row, never overwrite the first.
+		await page.goto('/denizens/mine');
+		await page.getByRole('link', { name: 'New denizen' }).click();
+		await page.waitForURL((url) => url.pathname === '/denizens/build');
+		await page.getByRole('button', { name: 'Save denizen' }).click();
+		await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible();
+		await page.goto('/denizens/mine');
+		await expect(page.locator('li.row', { hasText: 'Test Wight' })).toHaveCount(2);
+
+		// Archive one — it leaves the list, the other stays.
+		page.once('dialog', (dialog) => dialog.accept());
+		await page
+			.locator('li.row', { hasText: 'Test Wight' })
+			.first()
+			.getByRole('button', { name: 'Archive' })
+			.click();
+		await expect(page.locator('li.row', { hasText: 'Test Wight' })).toHaveCount(1);
+
+		// The detach must survive a gesture that skips the click handler: middle-click
+		// and "open in new tab" load the href directly, and the builder rehydrates its
+		// saved-row binding from localStorage. Bind to a row, then follow the roster
+		// link's href the way a fresh tab would — it must still save a new row.
+		const newHref = await page.getByRole('link', { name: 'New denizen' }).getAttribute('href');
+		expect(newHref).toContain('new=1');
+
+		await page
+			.locator('li.row', { hasText: 'Test Wight' })
+			.first()
+			.getByRole('button', { name: 'Edit' })
+			.click();
+		await page.waitForURL((url) => url.pathname === '/denizens/build');
+		await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+
+		await page.goto(newHref!);
+		await expect(page.getByRole('button', { name: 'Save denizen' })).toBeVisible();
+		// The spent flag is stripped, so reloading this URL can't detach a row saved since.
+		await page.waitForURL((url) => url.pathname === '/denizens/build' && url.search === '');
+		await page.getByRole('button', { name: 'Save denizen' }).click();
+		await expect(page.getByRole('button', { name: 'Saved!' })).toBeVisible();
+		await page.goto('/denizens/mine');
+		await expect(page.locator('li.row', { hasText: 'Test Wight' })).toHaveCount(2);
 	});
 });

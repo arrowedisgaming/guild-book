@@ -30,10 +30,29 @@
 	import { renderMarkdown } from '$lib/utils/markdown';
 	import { abilityLabel } from '$lib/utils/ability-label';
 	import { announce } from '$lib/stores/announcer';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import type { DenizenAbility } from '$lib/types/content-pack';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// "New denizen" states its intent in the URL so every navigation gesture honours
+	// it — a click handler on the roster link is skipped by middle-click and "open in
+	// new tab", and this page would then rehydrate the old saved-row binding from
+	// localStorage and save straight over it. Strip the flag once it is spent, so a
+	// later reload of the same URL can't detach a row the user has since saved.
+	$effect(() => {
+		if (!page.url.searchParams.has('new')) return;
+		denizenBuilder.detachSavedRef();
+		const url = new URL(page.url);
+		url.searchParams.delete('new');
+		void goto(`${url.pathname}${url.search}`, {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true
+		});
+	});
 
 	let stepId = $derived($denizenBuilder.currentStepId);
 	let draft = $derived($denizenBuilder.draft);
@@ -262,6 +281,65 @@
 		editing = null;
 		poolCustom = {};
 		denizenBuilder.updateDraft((d) => movePool(d, index, direction));
+	}
+
+	// --- saving (signed-in only; anonymous building and exports unchanged) ----
+
+	let saving = $state(false);
+	let savedAt = $state<number | null>(null);
+	let saveError = $state<string | null>(null);
+
+	/**
+	 * Save the current work as a fresh denizen. The old row stays bound until the
+	 * POST lands — detaching up front would strand the edit session on a failed
+	 * save, so the next Save would create a duplicate instead of resuming.
+	 */
+	function saveAsNew() {
+		void saveDenizen({ asNew: true });
+	}
+
+	async function saveDenizen({ asNew = false }: { asNew?: boolean } = {}) {
+		if (saving) return;
+		saving = true;
+		saveError = null;
+		try {
+			const editingId = asNew ? null : $denizenBuilder.editingId;
+			const expectedVersion = asNew ? null : $denizenBuilder.editingVersion;
+			const editing = editingId !== null && expectedVersion !== null;
+			const res = await fetch(editing ? `/api/denizens/${editingId}` : '/api/denizens', {
+				method: editing ? 'PUT' : 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(editing ? { draft, expectedVersion } : { draft })
+			});
+			if (res.status === 409) {
+				// A newer save exists (another tab, another device). Don't clobber
+				// it and don't adopt its claim blindly — send the user to compare.
+				saveError = 'This denizen was saved elsewhere — open it fresh from My Denizens to keep those changes, or press Save again to overwrite them.';
+				const body = (await res.json().catch(() => null)) as { currentVersion?: number } | null;
+				if (editingId && typeof body?.currentVersion === 'number') {
+					denizenBuilder.setSavedRef(editingId, body.currentVersion);
+				}
+				announce(saveError);
+				return;
+			}
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { message?: string } | null;
+				// Shown right next to the button as well as announced.
+				saveError = body?.message ?? 'Could not save — fix the warnings above and try again.';
+				announce(saveError);
+				return;
+			}
+			const body = (await res.json()) as { id?: string; version: number };
+			denizenBuilder.setSavedRef(editingId ?? body.id!, body.version);
+			savedAt = Date.now();
+			announce('Denizen saved.');
+			setTimeout(() => (savedAt = null), 2000);
+		} catch {
+			saveError = 'Could not save — check your connection and try again.';
+			announce(saveError);
+		} finally {
+			saving = false;
+		}
 	}
 
 	// --- person (adversary) editing -------------------------------------------
@@ -888,6 +966,38 @@
 			<p class="warning" role="alert">{warning}</p>
 		{/each}
 		<DenizenExportButtons denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
+		{#if data.user}
+			<div class="save-row">
+				<button type="button" class="save" disabled={saving} onclick={() => void saveDenizen()}>
+					{saving
+						? 'Saving…'
+						: $denizenBuilder.editingId
+							? savedAt
+								? 'Saved!'
+								: 'Save changes'
+							: 'Save denizen'}
+				</button>
+				{#if $denizenBuilder.editingId}
+					<button type="button" class="save-as-new" disabled={saving} onclick={saveAsNew}>
+						Save as a new copy
+					</button>
+					<a href="/denizens/mine">My denizens →</a>
+				{/if}
+			</div>
+			{#if saveError}
+				<p class="warning" role="alert">{saveError}</p>
+			{/if}
+			{#if $denizenBuilder.editingId}
+				<p class="save-note">
+					Saving updates “{draft.name.trim() || 'Unnamed Denizen'}” in your denizens.
+				</p>
+			{/if}
+		{:else}
+			<p class="save-nudge">
+				<a href="/login?callbackUrl=/denizens/build">Sign in</a> to save this denizen to your
+				bestiary — exports above work without an account.
+			</p>
+		{/if}
 		<div class="preview">
 			<DenizenStatBlock denizen={preview} themeName={theme?.name ?? ''} threatName={threat?.name ?? ''} />
 		</div>
@@ -1252,6 +1362,52 @@
 		padding: 1rem 1.25rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
 		border-radius: 6px;
+	}
+	.save-row {
+		display: flex;
+		gap: 1rem;
+		align-items: baseline;
+		margin: 0.75rem 0 1rem;
+	}
+	.save {
+		font: inherit;
+		font-family: var(--font-subhead);
+		padding: 0.5rem 1.1rem;
+		border: 1px solid var(--accent);
+		border-radius: 4px;
+		background: var(--accent);
+		color: var(--parchment);
+		cursor: pointer;
+	}
+	.save:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+	.save-as-new {
+		font: inherit;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		border: none;
+		background: none;
+		color: var(--accent);
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		padding: 0;
+	}
+	.save-as-new:disabled {
+		opacity: 0.5;
+		cursor: wait;
+	}
+	.save-note {
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+		margin: 0.25rem 0 0.75rem;
+	}
+	.save-nudge {
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+		margin: 0.75rem 0 1rem;
 	}
 	.nav-buttons {
 		display: flex;

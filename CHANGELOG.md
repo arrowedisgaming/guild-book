@@ -5,6 +5,7 @@ All notable changes to Guild Book will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 
 ### Added
@@ -121,6 +122,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   discard was previously buried at the bottom, so any rule reading "the top
   card of the discard pile" — the GM twist, starting Dispositions, the bracket
   tokens — would have read the oldest discard instead.
+- **Stun now matches the rulebook**: the content pack described Stun as
+  discarding a player's entire hand; it discards one card, chosen by the
+  affected player. Content pack bumped to 3.3.0.
+- **Sessions pinned before the Stun correction are cleared**: a session is
+  loaded through the runtime content it pinned at start, so any session begun
+  under the old Stun shape could no longer be read — and a session that cannot
+  be read cannot be projected, recovered, or ended, while still holding its
+  campaign's single open-session slot. `0007_purge_pinned_sessions` removes
+  play sessions and their session-scoped rows once, leaving campaigns,
+  memberships, characters, tenures, and non-session campaign history intact.
+  This is a deliberate pre-release exception to the forward-only rule, not a
+  precedent; the roadmap now records why freezing was no answer here.
+- **An unloadable session no longer looks like no session at all**: the table
+  page told the GM "No session is currently open" over a session that was very
+  much open, offering a "Start session" button whose action could only ever
+  refuse. Session loads now distinguish "not found" from "cannot be loaded" —
+  without ever confirming a session outside the caller's campaign — the table
+  explains the wedged state instead of hiding it, integrity failures are logged
+  for the operator rather than swallowed, and a refused start says why.
+
+## [0.4.0] - 2026-07-25
+
+### Added
+
+- **Guided Challenge over the shared table**: campaigns can now run the full
+  Challenge phase at the synchronized tarot table. The GM enters enemy facts as
+  named groups, the engine deals each round from the content-defined formulas
+  (players from the minor arcana, the GM's hand sized from enemy count, types,
+  and threats), and every adventurer plays at one board. The procedure owns
+  hands, facedown initiative and its public reveal, the one-card-per-turn budget
+  with its action/minor-action exclusion, separate GM play and discard budgets,
+  lesser/greater Doom predicates, the Fool interrupt (paired play, an extra turn
+  with no minor actions, and a boundary reshuffle of both decks), the GM
+  mulligan, and round cleanup — while health, wounds, range, position, and every
+  fictional consequence stay manually adjudicated at the table.
+- **Seven typed Challenge modifiers** — black honey, stun, brainfever, counsel,
+  guardian angel, aim, and the shield Guard action — each driven entirely by
+  content parameters, with private card transfers whose public events carry only
+  a count and reason, never a card identity.
+- **Death and legal replacement during a Challenge**: marking a participating
+  adventurer dead is a single atomic mutation (character version claim, life
+  state, tenure end, private-zone redaction, participant update, public events,
+  and freed membership), and a replacement adventurer joins only at the next
+  round boundary, never midway through a deal.
+- A projection-driven Challenge table UI: components render controls solely from
+  the server-derived legal-command set, submit idempotent commands scoped per
+  intent, and announce deal counts, initiative order and ties, turns, plays,
+  round transitions, and completion for assistive technology. The feature stays
+  allowlisted behind `CAMPAIGNS_ENABLED` or pilot user IDs.
+- **Saved denizens**: signed-in users can save denizens from the builder's
+  review step, list and archive them at `/denizens/mine` (archiving is one-way
+  for now), view and re-export each at `/denizens/mine/[id]`, and edit them
+  back in the builder. The reference shows a "Your denizens" strip when signed
+  in with saved denizens. Saving stores the sanitized draft as the single
+  source of truth (definitions re-materialize on render), validates template
+  ids and stat invariants server-side, and bounds the request itself — a
+  byte-true payload cap plus a per-user row ceiling. Every write is guarded
+  by an integer version claim in the update statement, like character saves:
+  a stale tab gets a conflict answer, never a silent overwrite, and "New
+  denizen"/"Save as a new copy" explicitly detach the builder from the saved
+  row so starting fresh can never clobber it. All user-scoped denizen pages
+  and API responses are `private, no-store`. Anonymous building and exporting
+  are untouched — saving is the only signed-in feature. Every bestiary entry
+  with builder-supported templates gains "Customize in the builder", loading
+  a pre-filled copy as a new custom denizen. Save failures show inline next
+  to the button, and the header's Sign in link returns you to the page you
+  were on, query string included. Deploy note: run
+  `npm run db:migrate:d1:remote` (additive `denizens` table, migration 0008)
+  when deploying.
+- **People in the denizen builder**: the Man theme now follows the book's
+  "make actual characters" advice as an adversary path. Choosing it swaps the
+  wizard to a Person step (replacing Threat): the adventurer 4/3/2/1 spread
+  assigned by swap, an optional flavour-only kith recorded as a stat-block
+  note, a kin whose arete talent joins the block, path talents offered from
+  the path matching their highest attribute (other paths behind dropdowns),
+  HD pre-filled for simplicity (with an optional switch to proper Wounds
+  tracking and a checklist note of the book's wound options), and custom
+  gimmick dooms instead of template pick-lists. Exports omit the threat line
+  entirely for people. Switching themes — person to creature or between
+  creature template pairs — stashes and restores each side's work instead
+  of discarding it. Content pack bumped to 3.4.0 (person seed rules in
+  `denizens.json`, Man theme builderMode) with the digest re-recorded.
+
+### Fixed
+
 - **Stun now matches the rulebook**: the content pack described Stun as
   discarding a player's entire hand; it discards one card, chosen by the
   affected player. Content pack bumped to 3.3.0.

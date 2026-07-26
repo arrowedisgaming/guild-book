@@ -52,6 +52,23 @@
 		creatures. <a href="/denizens/build">Build a denizen →</a>
 	</p>
 
+	{#if data.mine.length > 0}
+		<aside class="mine">
+			<h2>Your denizens</h2>
+			<ul>
+				{#each data.mine as d (d.id)}
+					<li>
+						<a href="/denizens/mine/{d.id}">{d.name}</a>
+						<span class="mine-meta">
+							{[themeName(d.theme), d.threat ? threatName(d.threat) : ''].filter(Boolean).join(' ')}
+						</span>
+					</li>
+				{/each}
+			</ul>
+			<p class="mine-link"><a href="/denizens/mine">Manage your denizens →</a></p>
+		</aside>
+	{/if}
+
 	<RulesSearch bind:value={query} placeholder="Search denizens…" />
 
 	<div class="filters">
@@ -167,6 +184,33 @@
 	.lede {
 		color: var(--ink-soft);
 		margin-top: -0.25rem;
+	}
+	.mine {
+		margin: 1rem 0 1.5rem;
+		padding: 0.75rem 1rem;
+		border: 1px dashed color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 6px;
+	}
+	.mine h2 {
+		font-size: 1.1rem;
+		margin: 0 0 0.4rem;
+	}
+	.mine ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1.25rem;
+	}
+	.mine-meta {
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+		margin-left: 0.4rem;
+	}
+	.mine-link {
+		font-size: 0.85rem;
+		margin: 0.5rem 0 0;
 	}
 	.filters {
 		margin: 1rem 0;

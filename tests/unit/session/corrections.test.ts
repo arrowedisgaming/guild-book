@@ -29,26 +29,37 @@ function unwrap(result: ReturnType<typeof applyCorrection>): { state: SessionEng
 	return { state: result.state, events: result.events };
 }
 
+/** A card sitting face-up in a PUBLIC zone — the only kind of card a
+ * correction may move (see `corrections.ts`'s header). */
 const MOVE: CorrectionCommand = {
 	kind: 'move-card',
 	targetEventId: 'evt-42',
-	reason: 'the draw should have gone to the played zone',
-	sourceZoneId: 'hand:user-alice',
+	reason: 'this was played into the wrong area',
+	sourceZoneId: 'played',
 	cardId: 'cups-ii',
-	destinationZoneId: 'played'
+	destinationZoneId: 'revealed'
 };
 
 function stateWithHandAndPlayed(): SessionEngineStateV1 {
-	const state = fixtureWithHands({ 'user-alice': ['cups-ii'] });
-	return { ...state, publicZones: [...state.publicZones, { id: 'played', kind: 'played', cards: [] }] };
+	const state = fixtureWithHands({ 'user-alice': ['cups-iii'] });
+	const played = state.playerDraw.includes('cups-ii') ? 'cups-ii' : state.playerDraw[0];
+	return {
+		...state,
+		playerDraw: state.playerDraw.filter((id) => id !== played),
+		publicZones: [
+			...state.publicZones,
+			{ id: 'played', kind: 'played', cards: [played] },
+			{ id: 'revealed', kind: 'revealed', cards: [] }
+		]
+	};
 }
 
 describe('compensating corrections', () => {
 	it('moves the card through the ordinary reducer and links the original event', () => {
 		const { state, events } = unwrap(applyCorrection(stateWithHandAndPlayed(), MOVE, ctxFor(GM)));
 
-		expect(findZoneDescriptor(state, 'played')?.cards).toEqual(['cups-ii']);
-		expect(findZoneDescriptor(state, 'hand:user-alice')?.cards).toEqual([]);
+		expect(findZoneDescriptor(state, 'revealed')?.cards).toEqual(['cups-ii']);
+		expect(findZoneDescriptor(state, 'played')?.cards).toEqual([]);
 		expect(() => assertSessionInvariants(state, CATALOG)).not.toThrow();
 
 		const applied = (events as { kind: string; publicPayload: unknown }[]).find((event) => event.kind === 'correction-applied');
@@ -77,6 +88,32 @@ describe('compensating corrections', () => {
 		// The card is not in the named source zone — the repair itself must be a
 		// legal transition, never a state edit.
 		const result = applyCorrection(makeSessionFixture(), MOVE, ctxFor(GM));
+
+		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+	});
+
+	it('refuses to move a card out of a player’s private hand', () => {
+		// Review finding: corrections accepted ANY source zone, and the GM's
+		// generic full authority meant a correction could lift a card out of a
+		// hand and publish its identity — probing hidden state through a repair.
+		const state = fixtureWithHands({ 'user-alice': ['cups-ii'] });
+		const withPublic = { ...state, publicZones: [...state.publicZones, { id: 'played', kind: 'played' as const, cards: [] }] };
+
+		const result = applyCorrection(
+			withPublic,
+			{ ...MOVE, sourceZoneId: 'hand:user-alice', destinationZoneId: 'played' },
+			ctxFor(GM)
+		);
+
+		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
+	});
+
+	it('refuses to move a card off a draw pile', () => {
+		const result = applyCorrection(
+			stateWithHandAndPlayed(),
+			{ ...MOVE, sourceZoneId: 'playerDraw', destinationZoneId: 'played' },
+			ctxFor(GM)
+		);
 
 		expect(result).toMatchObject({ ok: false, rejection: { code: 'illegal-command' } });
 	});

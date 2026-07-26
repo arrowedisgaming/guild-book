@@ -11,10 +11,17 @@
  *
  * ## The one thing this surface does that Camp does not
  *
- * `purchase-test-favor` causes a CHARACTER write. Ch1 makes buying favor a
- * pre-draw purchase, so the spend and the draw it paid for must be indivisible.
- * The loop handles that (evaluate before the reduce, splice into the same
- * batch); `spendsResolve` below is how it knows which command to do it for.
+ * `purchase-test-favor` causes a CHARACTER write. The loop evaluates the spend
+ * before the reduce and splices its statements into the same atomic batch, so
+ * the Resolve decrement and the recorded purchase commit together or not at all
+ * — never a charge without the favor recorded, never a double charge.
+ * `spendsResolve` below is how the loop knows which command to do it for.
+ *
+ * It does NOT make the spend and the later draw one transaction (corrected after
+ * review): Ch1 makes buying favor a *prior* election, so the draw is its own
+ * command. A player who buys and then abandons the test has spent the point,
+ * which is what electing to spend before a test you never take means at the
+ * table.
  *
  * Never imports `@sveltejs/kit` — no HTTP status codes in this layer.
  */

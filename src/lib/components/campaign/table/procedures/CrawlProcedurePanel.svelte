@@ -12,12 +12,14 @@
 
 	let {
 		role,
+		userId,
 		session,
 		roster,
 		procedureTitles,
 		onSendFiniteCommand
 	}: {
 		role: 'gm' | 'player';
+		userId: string;
 		session: TableSession;
 		roster: ActiveChallengeTenureView[];
 		procedureTitles: Array<{ id: string; title: string; phase: string }>;
@@ -25,4 +27,4 @@
 	} = $props();
 </script>
 
-<OraclePanel {role} {session} {roster} phases={['crawl', 'camp']} heading="Crawl & Camp" {procedureTitles} {onSendFiniteCommand} />
+<OraclePanel {role} {userId} {session} {roster} phases={['crawl', 'camp']} heading="Crawl & Camp" {procedureTitles} {onSendFiniteCommand} />

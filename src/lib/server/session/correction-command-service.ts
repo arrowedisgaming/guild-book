@@ -6,6 +6,8 @@
  */
 
 import { z } from 'zod';
+import { and, eq } from 'drizzle-orm';
+import { campaignEvents } from '$lib/server/db/schema';
 import type { AppDb } from '$lib/server/db';
 import type { AppDbContext } from '$lib/server/db/atomic';
 import type { SessionProjection } from '$lib/engine/session/projection';
@@ -41,6 +43,10 @@ type WrappedCorrection = CorrectionCommand & { type: 'apply-correction' };
 
 const adapter: ProcedureCommandAdapter<WrappedCorrection, ReduceContext> = {
 	label: 'correction',
+	// `apply-correction` is STRUCTURAL in the frozen envelope contract: one
+	// attempt, real structural precondition, and a stale board is re-authored
+	// rather than silently re-applied.
+	structural: true,
 	parseEnvelope(raw) {
 		const parsed = correctionEnvelopeSchema.safeParse(raw);
 		if (!parsed.success) return { ok: false };
@@ -73,6 +79,32 @@ export interface ExecuteCorrectionResult {
 
 export async function executeCorrectionCommand(input: ExecuteCorrectionInput): Promise<ExecuteCorrectionResult> {
 	const db = input.dbContext.db as unknown as AppDb;
+
+	// The audited link must point at a REAL event in THIS session — an audit
+	// trail that can cite a nonexistent or foreign event is not an audit trail.
+	// Checked before the loop so a bad reference never reaches the reducer.
+	const parsed = correctionEnvelopeSchema.safeParse(input.envelope);
+	if (parsed.success) {
+		// Strictly canonical digits: `parseInt` would accept "42junk" and validate
+		// event 42 while the journal recorded "42junk" — an audit link that does
+		// not identify the event it was checked against (second-pass review).
+		const raw = parsed.data.command.targetEventId;
+		const targetId = /^\d+$/.test(raw) ? Number.parseInt(raw, 10) : Number.NaN;
+		const target = Number.isNaN(targetId)
+			? undefined
+			: await db
+					.select({ id: campaignEvents.id })
+					.from(campaignEvents)
+					.where(and(eq(campaignEvents.id, targetId), eq(campaignEvents.sessionId, input.sessionId)))
+					.get();
+		if (!target) {
+			return {
+				outcome: { ok: false, code: 'illegal-command', message: 'the corrected event does not belong to this session' },
+				projection: null
+			};
+		}
+	}
+
 	const { actor, outcome, suppressProjections } = await executeProcedureCommand(input, adapter);
 	if (!actor || suppressProjections) return { outcome, projection: null };
 	const { projection } = await loadTableProjectionsForActor(db, input.sessionId, input.campaignId, actor);

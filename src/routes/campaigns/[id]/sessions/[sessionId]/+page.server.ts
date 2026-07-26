@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { requireCampaignAccess } from '$lib/server/campaign/access';
+import { requireCampaignReadAccess } from '$lib/server/campaign/access';
 import { getDb } from '$lib/server/db';
 import { loadCompletedSessionHistory } from '$lib/server/session/history';
 
@@ -11,10 +11,11 @@ import { loadCompletedSessionHistory } from '$lib/server/session/history';
  * a projection of already-sanitized rows: the stamped final PUBLIC state and
  * the public event log. No private card image URL, alt text, JSON, or hidden
  * DOM node can be rendered because none reaches the page. `private, no-store`
- * comes from `requireCampaignAccess`.
+ * comes from the access check. Read access, so archived campaigns keep their
+ * history for current participants.
  */
 export const load: PageServerLoad = async (event) => {
-	const role = await requireCampaignAccess(event, event.params.id);
+	const role = await requireCampaignReadAccess(event, event.params.id);
 	const db = await getDb(event);
 
 	const history = await loadCompletedSessionHistory(db, event.params.id, event.params.sessionId, role.userId);

@@ -19,9 +19,11 @@
  * actually matter, which is how a shared helper becomes worse than the
  * duplication it replaced.
  *
- * No procedure command reaching this loop is "structural": every one retries on
- * a lost version-claim race rather than hard-rejecting, and none of their
- * envelopes carries a client-supplied structural precondition.
+ * Most procedure commands reaching this loop are non-structural: they retry a
+ * lost version-claim race rather than hard-rejecting. An adapter that sets
+ * `structural: true` (corrections) gets the opposite treatment — one attempt, a
+ * recorded structural precondition, and a `stale-structure` refusal if the board
+ * moved after the actor confirmed against it.
  *
  * Never imports `@sveltejs/kit` — no HTTP status codes in this layer.
  */
@@ -87,6 +89,17 @@ export interface ProcedureCommandAdapter<TCommand, TContext> {
 	spendsResolve?(command: TCommand): boolean;
 	/** Message used when the envelope's spend pair and the command disagree. */
 	spendMismatchMessage?: string;
+	/**
+	 * True for a surface the frozen envelope contract classifies as STRUCTURAL
+	 * (`apply-correction` is one — see `command-service.ts`'s
+	 * `STRUCTURAL_COMMAND_TYPES`). A structural command gets ONE attempt and
+	 * records `observedSessionVersion` as its structural precondition, so a
+	 * command confirmed against version N can never be silently re-reduced and
+	 * committed after another table action landed at N+1. Non-structural
+	 * surfaces retry a lost race, which is right for an ordinary card move and
+	 * wrong for a repair the GM authored against a specific board.
+	 */
+	structural?: boolean;
 	/** Builds the procedure's own reduce context from the loaded session. May
 	 * read the DB (materials) and must use the supplied `rng`, never its own. */
 	buildContext(input: {
@@ -180,9 +193,11 @@ export async function executeProcedureCommand<TCommand extends { type: string },
 	const initialDuplicate = await resolveDuplicateOutcome(db, sessionId, envelope, requestHash);
 	if (initialDuplicate) return { actor, outcome: initialDuplicate, suppressProjections: false };
 
+	const isStructural = adapter.structural === true;
+	const maxAttempts = isStructural ? 1 : MAX_ATTEMPTS;
 	let lastKnownVersion = envelope.observedSessionVersion;
 
-	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		const summary = await loadSessionSummary(db, sessionId);
 		if (!summary || summary.campaignId !== campaignId) {
 			return {
@@ -228,6 +243,27 @@ export async function executeProcedureCommand<TCommand extends { type: string },
 			throw cause;
 		}
 		lastKnownVersion = loaded.currentVersion;
+
+		// A structural command is bound to the board the actor confirmed against:
+		// if the session advanced past it, the repair no longer describes the
+		// state it was authored for and must be re-authored, never re-applied.
+		if (isStructural && envelope.observedSessionVersion !== loaded.currentVersion) {
+			const outcome = await persistRejectionOrReplay(
+				dbContext,
+				db,
+				sessionId,
+				envelope,
+				actorUserId,
+				requestHash,
+				loaded.currentVersion,
+				{
+					code: 'stale-structure',
+					message: `the session advanced to version ${loaded.currentVersion} after this was confirmed against ${envelope.observedSessionVersion}`
+				},
+				envelope.observedSessionVersion
+			);
+			return { actor, outcome, suppressProjections: false };
+		}
 
 		// Evaluated BEFORE the reduce so a refused purchase never moves a card.
 		// Re-read on every attempt: a retry that lost a session version race may
@@ -294,7 +330,7 @@ export async function executeProcedureCommand<TCommand extends { type: string },
 			requestHash,
 			commandType: envelope.command.type,
 			clientObservedVersion: envelope.observedSessionVersion,
-			structuralPreconditionVersion: null,
+			structuralPreconditionVersion: isStructural ? envelope.observedSessionVersion : null,
 			expectedVersion: loaded.currentVersion,
 			nextState,
 			events: reduceResult.events,
@@ -307,8 +343,9 @@ export async function executeProcedureCommand<TCommand extends { type: string },
 
 		if (resolveSpend) {
 			// ONE atomic unit: the command claim, the session fragments, the events,
-			// AND the character's narrow resource write. A spend that commits without
-			// what it bought is the partial purchase Task 1 forbids.
+			// AND the character's narrow resource write — so the charge and the state
+			// that records it can never come apart. (This scopes to THIS command; a
+			// later command that consumes what was bought is its own unit.)
 			statements.push(...toAtomicStatements(buildResolveIntentStatements(db, resolveSpend.intent, resolveSpend.context)));
 		}
 
@@ -337,6 +374,25 @@ export async function executeProcedureCommand<TCommand extends { type: string },
 
 			const duplicate = await resolveDuplicateOutcome(db, sessionId, envelope, requestHash);
 			if (duplicate) return { actor, outcome: duplicate, suppressProjections: false };
+
+			// A STRUCTURAL command does not retry: losing the claim means another
+			// command landed on the board this one was authored against, which is
+			// `stale-structure` — not the `retry-exhausted` the loop's tail would
+			// otherwise report after a single attempt (second-pass review).
+			if (isStructural) {
+				const outcome = await persistRejectionOrReplay(
+					dbContext,
+					db,
+					sessionId,
+					envelope,
+					actorUserId,
+					requestHash,
+					loaded.currentVersion,
+					{ code: 'stale-structure', message: 'the session advanced past the version this was confirmed against' },
+					envelope.observedSessionVersion
+				);
+				return { actor, outcome, suppressProjections: false };
+			}
 			// Someone else claimed this version first — loop back and retry.
 		}
 	}
@@ -373,7 +429,12 @@ async function persistRejectionOrReplay<TCommand extends { type: string }>(
 	actorUserId: string,
 	requestHash: string,
 	expectedVersion: number,
-	rejection: SessionRejection
+	rejection: SessionRejection,
+	/** The version the actor confirmed against, for a structural command. A
+	 * rejected structural command must record it (second-pass review): a
+	 * rejection row that loses the precondition cannot explain WHY it was
+	 * refused. `null` for the non-structural surfaces, which have none. */
+	structuralPreconditionVersion: number | null = null
 ): Promise<ProcedureCommandOutcome> {
 	try {
 		await runAtomic(
@@ -386,7 +447,7 @@ async function persistRejectionOrReplay<TCommand extends { type: string }>(
 				requestHash,
 				commandType: envelope.command.type,
 				clientObservedVersion: envelope.observedSessionVersion,
-				structuralPreconditionVersion: null,
+				structuralPreconditionVersion,
 				expectedVersion,
 				rejection,
 				now: new Date()

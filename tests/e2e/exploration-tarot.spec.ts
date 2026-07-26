@@ -99,6 +99,74 @@ test.describe('exploration and oracle procedures', () => {
 
 		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-complete'));
 
+		// --- Maleficence: the mode and realm must actually reach the server ---
+		// Review finding: the panel never sent `mode`/`realmTableId`, so both
+		// mode-gated steps were inapplicable and the procedure completed having
+		// drawn nothing.
+		await oraclePicker.selectOption('oracle-maleficence');
+		const panel = gmPage.getByTestId('finite-panel-cross-phase').first();
+		await expect(panel.getByTestId('finite-mode-picker')).toBeVisible({ timeout: 4000 });
+		await panel.getByTestId('finite-mode-picker').selectOption('appropriate-realm');
+		await panel.getByTestId('finite-realm-picker').selectOption('maleficence-weald');
+		await clickFinite(gmPage, panel.getByTestId('finite-begin'));
+
+		await clickFinite(gmPage, panel.getByTestId('finite-advance'));
+		// A real table cell resolved — not an immediately-completed no-op.
+		await expect(gmPage.getByTestId('finite-outcome-draw-applicable-maleficence').first()).toBeVisible({ timeout: 6000 });
+		await clickFinite(gmPage, panel.getByTestId('finite-complete'));
+
+		await gm.close();
+		await playerA.close();
+	});
+
+	test('Augury can be declined, and a flat-50% gate can answer no', async ({ browser }) => {
+		test.setTimeout(180_000);
+
+		const gm = await browser.newContext();
+		const playerA = await browser.newContext();
+		const gmPage = await gm.newPage();
+		const playerAPage = await playerA.newPage();
+
+		await signInAs(gmPage, 'Fork GM');
+		await signInAs(playerAPage, 'Fork Player A');
+		await createTestAdventurer(playerAPage, 'Augur Rell');
+
+		const invite = await createCampaignAndReadInvite(gmPage, 'Fork Table');
+		const campaignId = campaignIdFromUrl(gmPage.url());
+		await joinCampaign(playerAPage, invite);
+		await attachAdventurer(playerAPage, 'Augur Rell');
+
+		await gmPage.goto(`/campaigns/${campaignId}/table`);
+		await gmPage.getByRole('button', { name: 'Start session' }).click();
+		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+		await playerAPage.goto(`/campaigns/${campaignId}/table`);
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+
+		const panel = gmPage.getByTestId('finite-panel-cross-phase').first();
+		await panel.getByTestId('finite-procedure-picker').selectOption('test-augury');
+		await panel.getByTestId('finite-actor-picker').selectOption({ label: 'Augur Rell' });
+		await clickFinite(gmPage, panel.getByTestId('finite-begin'));
+
+		// The GM's private draw, then the GM's parable — the player has neither.
+		await expect(playerAPage.getByTestId('finite-advance')).toHaveCount(0);
+		await clickFinite(gmPage, panel.getByTestId('finite-advance'));
+		// The parable step is a confirm: BOTH answers are offered (review finding —
+		// it used to hardcode yes).
+		await expect(panel.getByTestId('finite-decline')).toBeVisible({ timeout: 4000 });
+		await clickFinite(gmPage, panel.getByTestId('finite-advance'));
+
+		// The player's choice, answered NO.
+		const playerPanel = playerAPage.getByTestId('finite-panel-cross-phase').first();
+		await expect(playerPanel.getByTestId('finite-decline')).toBeVisible({ timeout: 6000 });
+		await clickFinite(playerAPage, playerPanel.getByTestId('finite-decline'));
+
+		// The accept/decline FORK is now reachable in both directions.
+		await expect(panel.getByTestId('finite-fork-accept-card')).toBeVisible({ timeout: 6000 });
+		await expect(panel.getByTestId('finite-fork-decline-card')).toBeVisible();
+		await clickFinite(gmPage, panel.getByTestId('finite-fork-decline-card'));
+
+		await clickFinite(gmPage, panel.getByTestId('finite-complete'));
+
 		await gm.close();
 		await playerA.close();
 	});

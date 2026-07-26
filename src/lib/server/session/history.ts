@@ -17,7 +17,7 @@
  * that a hostile database could not have restamped both.
  */
 
-import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 import type { AppDb } from '$lib/server/db';
 import { campaignEvents, campaignMembers, campaigns, playSessions } from '$lib/server/db/schema';
 
@@ -50,10 +50,22 @@ async function isCurrentMember(db: AppDb, campaignId: string, userId: string): P
 		.get();
 	if (!campaign) return false;
 	if (campaign.ownerUserId === userId) return true;
+	// `leftAt`/`removedAt` are the soft-departure markers: a row survives after a
+	// member leaves or is removed, so matching on campaign+user alone would keep
+	// serving history to a FORMER member (review finding — the page loaders' own
+	// access check masked it, but this service is exported and documents itself
+	// as the gate).
 	const membership = await db
 		.select({ id: campaignMembers.id })
 		.from(campaignMembers)
-		.where(and(eq(campaignMembers.campaignId, campaignId), eq(campaignMembers.userId, userId)))
+		.where(
+			and(
+				eq(campaignMembers.campaignId, campaignId),
+				eq(campaignMembers.userId, userId),
+				isNull(campaignMembers.leftAt),
+				isNull(campaignMembers.removedAt)
+			)
+		)
 		.get();
 	return membership !== undefined;
 }

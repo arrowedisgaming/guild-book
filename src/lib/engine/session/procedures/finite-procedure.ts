@@ -173,6 +173,40 @@ function sourceNumeral(card: DrawnCard): string {
 	return ROMAN_NUMERALS[card.value] ?? String(card.value);
 }
 
+/**
+ * Steps that are ALTERNATIVES to `step` — Augury's `accept-card`/`decline-card`.
+ *
+ * "Same actor and adjacent" is not enough: Augury's `private-draw` then
+ * `describe-parable` are also same-actor and adjacent, and they are a SEQUENCE.
+ * What makes two steps alternatives is that both resolve the same already-pending
+ * card, so both must carry a card-resolution operation.
+ *
+ * This is the ONLY set `stepId` may target. Authorizing a skipped step proves
+ * the caller owns it, not that skipping it is legitimate — without this, a
+ * player could target Doomsaying's `draw-prophecy` and skip their own `pay-fee`,
+ * dodging the fee the procedure exists to charge (second-pass review finding).
+ */
+const CARD_RESOLUTION_OPERATIONS = new Set(['reveal', 'discard', 'play', 'place-facedown']);
+
+export function forkStepIdsFor(procedure: TarotProcedureDefinition, step: TarotProcedureStepDefinition): string[] {
+	if (!CARD_RESOLUTION_OPERATIONS.has(step.operation)) return [];
+	const index = procedure.steps.findIndex((candidate) => candidate.id === step.id);
+	if (index === -1) return [];
+	const siblings: string[] = [];
+	for (let n = index + 1; n < procedure.steps.length; n += 1) {
+		const candidate = procedure.steps[n];
+		if (
+			candidate.actor !== step.actor ||
+			(candidate.conditions?.length ?? 0) > 0 ||
+			!CARD_RESOLUTION_OPERATIONS.has(candidate.operation)
+		) {
+			break;
+		}
+		siblings.push(candidate.id);
+	}
+	return siblings.length > 0 ? [step.id, ...siblings] : [];
+}
+
 /** The Meatgrinder's own category labels, extracted from the verbatim cell
  * text — `previous-result` conditions classify by them. A cell with no
  * bracket ("Torches gutter") is a non-encounter. */
@@ -372,6 +406,21 @@ export function advanceFiniteProcedure(
 			continue;
 		}
 		if (input.stepId && candidate.id !== input.stepId) {
+			// `stepId` exists for a FORK only: the actor picks which branch of a
+			// mutually-exclusive pair runs, and the other is skipped. Two guards,
+			// both needed (second-pass review): the skipped step must be a genuine
+			// alternative of the one being targeted, AND the caller must own it.
+			// Ownership alone would let a player skip their own earlier step to
+			// dodge its cost; alternative-ness alone would let one actor skip
+			// another's step.
+			const alternatives = forkStepIdsFor(procedure, candidate);
+			if (!alternatives.includes(input.stepId)) {
+				return reject('illegal-command', `${candidate.id} is not an alternative branch and cannot be skipped`);
+			}
+			const skipAuth = authorizeStep(candidate, working, context);
+			if (skipAuth) {
+				return reject('not-authorized', `${candidate.id} belongs to another actor and cannot be skipped`);
+			}
 			working = { ...working, skippedSteps: [...working.skippedSteps, candidate.id], stepIndex: index + 1 };
 			index += 1;
 			continue;

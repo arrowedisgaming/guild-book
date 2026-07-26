@@ -206,6 +206,41 @@ describe('active-session member cleanup', () => {
 		expect(retried.ok).toBe(true);
 	});
 
+	it('adjusts the active initiative seat instead of clamping it', async () => {
+		// Review finding: `activeTurnIndex` was clamped to the shortened order's
+		// last index. For seats [A,B,C] with B active (index 1), removing A must
+		// leave B active — at its NEW index 0 — not jump to C.
+		const { adjustActiveTurnIndex } = await import('$lib/engine/session/member-removal');
+
+		// B active, A removed: B slides to 0.
+		expect(adjustActiveTurnIndex(['a', 'b', 'c'], 1, new Set(['a']))).toBe(0);
+		// B active, C removed: B stays at 1.
+		expect(adjustActiveTurnIndex(['a', 'b', 'c'], 1, new Set(['c']))).toBe(1);
+		// The ACTIVE seat itself removed: the turn passes to whoever now occupies
+		// that position.
+		expect(adjustActiveTurnIndex(['a', 'b', 'c'], 1, new Set(['b']))).toBe(1);
+		// The active seat was last and is removed: wraps to the first remaining.
+		expect(adjustActiveTurnIndex(['a', 'b', 'c'], 2, new Set(['c']))).toBe(0);
+		// Every seat gone: no active turn at all, never index 0 on an empty order.
+		expect(adjustActiveTurnIndex(['a'], 0, new Set(['a']))).toBeNull();
+		// No active turn stays no active turn.
+		expect(adjustActiveTurnIndex(['a', 'b'], null, new Set(['a']))).toBeNull();
+	});
+
+	it('keeps the right seat when a tenure holds TWO seats (a Fool extra turn)', async () => {
+		// Second-pass review: `initiativeOrder` legitimately repeats a tenure id —
+		// the Fool inserts a bonus seat for the same adventurer — so following the
+		// active seat by `indexOf(tenureId)` snapped back to that tenure's already
+		// spent normal turn. The mapping must be positional.
+		const { adjustActiveTurnIndex } = await import('$lib/engine/session/member-removal');
+
+		// Seats [a-normal, a-extra, b] with a-extra active (index 1); b leaves.
+		// a-extra is still index 1, NOT 0 (which is a's spent normal turn).
+		expect(adjustActiveTurnIndex(['a', 'a', 'b'], 1, new Set(['b']))).toBe(1);
+		// The first seat removed slides the extra turn down to 0 — still the extra.
+		expect(adjustActiveTurnIndex(['a', 'a', 'b'], 2, new Set(['a']))).toBe(0);
+	});
+
 	it('archiving is refused while a session is open, and works after it ends', async () => {
 		const refused = await archiveCampaign(db, { campaignId, ownerUserId: GM }, livePlaySessionStatePort(db));
 		expect(refused).toEqual({ ok: false, reason: 'session-active' });

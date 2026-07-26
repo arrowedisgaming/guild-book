@@ -369,8 +369,17 @@ export function setTestFavor(
  *
  * Affordability is checked against server-read `resolveCurrent`. The engine
  * records the purchase; the narrow character write is the server's
- * (`buildResolveIntentStatements`), spliced into the same atomic unit so the
- * spend and the draw it paid for can never come apart.
+ * (`buildResolveIntentStatements`), spliced into the same atomic unit as THIS
+ * command.
+ *
+ * What that does and does not guarantee (corrected after review): the Resolve
+ * decrement and the recorded `resolvePurchase` commit together or not at all, so
+ * a player can never be charged without the favor being recorded, nor charged
+ * twice for one test. The DRAW is a separate later command by design — Ch1 makes
+ * the spend a *prior* election — so a player who buys favor and then abandons
+ * the test has spent it, exactly as electing to spend before a test you never
+ * take would at the table. Refunding that is a GM adjudication, not an engine
+ * rollback.
  */
 export function purchaseTestFavorWithResolve(
 	state: SessionEngineStateV1,

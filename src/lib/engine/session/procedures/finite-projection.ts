@@ -17,6 +17,7 @@ import { hydrateVisible } from '../projection';
 import { findZoneDescriptor } from '../state';
 import {
 	finiteZoneId,
+	forkStepIdsFor,
 	isRunnerProcedure,
 	readFiniteProcedure,
 	type FiniteMaterials,
@@ -34,6 +35,29 @@ export interface FiniteStepView {
 	needs: 'nothing' | 'confirm' | 'chosen-card' | 'ordered-cards';
 	/** choose-one options (card ids from the source step's draws). */
 	options: string[];
+	/** How many cards a `reorder-top` step reorders (0 otherwise) — the panel
+	 * needs the count to submit a complete order. */
+	reorderCount: number;
+	/**
+	 * Mutually-exclusive sibling steps the SAME actor may run instead of this
+	 * one — Augury's `accept-card`/`decline-card`. Without this the panel had no
+	 * way to reach the second branch, so declining was unreachable (review
+	 * finding). Empty when the step is not a fork.
+	 */
+	forkStepIds: string[];
+}
+
+/** What a procedure needs supplied at BEGIN time. Derived from content, so the
+ * panel never hardcodes a procedure id: a procedure whose steps carry
+ * `invocation-mode` conditions must be begun with a mode, and its
+ * `choose-lookup-table` choice names the realms to pick from. */
+export interface FiniteBeginRequirement {
+	procedureId: string;
+	requiresMode: boolean;
+	realmTableIds: string[];
+	/** True when any step belongs to a player — the begin form must name an
+	 * acting adventurer. */
+	needsActor: boolean;
 }
 
 export interface FiniteProcedureView {
@@ -58,6 +82,8 @@ export interface FiniteProjection {
 	procedure: FiniteProcedureView | null;
 	/** Procedure ids the viewer may begin right now (empty while one runs). */
 	beginnable: string[];
+	/** Per-procedure begin requirements, for every id in `beginnable`. */
+	beginRequirements: FiniteBeginRequirement[];
 	controls: FiniteControl[];
 }
 
@@ -93,6 +119,21 @@ function needsOf(step: TarotProcedureStepDefinition): FiniteStepView['needs'] {
 	if (step.operation === 'manual-choice') return step.choice?.kind === 'choose-one' ? 'chosen-card' : 'confirm';
 	if (step.operation === 'reorder-top') return 'ordered-cards';
 	return 'nothing';
+}
+
+function beginRequirementsFor(procedures: readonly TarotProcedureDefinition[], ids: readonly string[]): FiniteBeginRequirement[] {
+	return ids.flatMap((procedureId) => {
+		const procedure = procedures.find((candidate) => candidate.id === procedureId);
+		if (!procedure) return [];
+		const requiresMode = procedure.steps.some((step) => step.conditions?.some((rule) => rule.kind === 'invocation-mode'));
+		const realmTableIds = [
+			...new Set(
+				procedure.steps.flatMap((step) => (step.choice?.kind === 'choose-lookup-table' ? step.choice.tableIds : []))
+			)
+		];
+		const needsActor = procedure.steps.some((step) => step.actor === 'player' || step.actor === 'each-player');
+		return [{ procedureId, requiresMode, realmTableIds, needsActor }];
+	});
 }
 
 export function legalFiniteCommands(
@@ -134,10 +175,10 @@ export function projectFiniteForActor(
 		const beginnable = controls.includes('begin-finite-procedure')
 			? procedures.filter((candidate) => isRunnerProcedure(candidate.id)).map((candidate) => candidate.id)
 			: [];
-		return { procedure: null, beginnable, controls };
+		return { procedure: null, beginnable, beginRequirements: beginRequirementsFor(procedures, beginnable), controls };
 	}
 	const procedure = procedures.find((candidate) => candidate.id === runner.procedureId);
-	if (!procedure) return { procedure: null, beginnable: [], controls: [] };
+	if (!procedure) return { procedure: null, beginnable: [], beginRequirements: [], controls: [] };
 
 	const step = currentStepOf(procedure, runner);
 	const stepView: FiniteStepView | null = step
@@ -146,7 +187,9 @@ export function projectFiniteForActor(
 				operation: step.operation,
 				actor: step.actor,
 				needs: needsOf(step),
-				options: step.choice?.kind === 'choose-one' ? (runner.draws[step.choice.fromStepId] ?? []) : []
+				options: step.choice?.kind === 'choose-one' ? (runner.draws[step.choice.fromStepId] ?? []) : [],
+				reorderCount: step.operation === 'reorder-top' && step.draw?.kind === 'fixed' ? step.draw.count : 0,
+				forkStepIds: forkStepIdsFor(procedure, step)
 			}
 		: null;
 
@@ -181,6 +224,7 @@ export function projectFiniteForActor(
 			peekTop
 		},
 		beginnable: [],
+		beginRequirements: [],
 		controls
 	};
 }

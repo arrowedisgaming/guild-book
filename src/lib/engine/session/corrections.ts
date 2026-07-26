@@ -8,8 +8,19 @@
  * reason. The journal stays append-only; the repair is itself history.
  *
  * `move-card` is the one correction kind v1 needs: every mis-play at a card
- * table is repaired by putting a card where it should have gone, and the GM's
- * full zone authority means the compensating `transfer` can reach any zone.
+ * table is repaired by putting a card where it should have gone.
+ *
+ * ## Why the SOURCE zone is restricted here
+ *
+ * The GM has full zone authority on the generic surface (`card-commands.ts`:
+ * "The GM has full authority — any zone, any visibility"), so a GM could always
+ * move a card out of a hidden zone with a plain `transfer`. Corrections do NOT
+ * inherit that reach: a correction names a card the GM must already be able to
+ * SEE, because a correction whose source is a player's hand or a draw pile is
+ * not repairing a visible mistake — it is either guessing at a hidden card or
+ * publishing one. Restricting the source to non-hidden, non-player-private
+ * zones is what makes `CorrectionDialog`'s promise ("the GM cannot name a card
+ * they cannot see") true in the SERVER, not just in the UI's option list.
  * Death correction is deliberately NOT here: reversing a death continues
  * through the character life service (`markCharacterDead`'s compensating
  * path), and never restores a tenure — a new tenure is attached instead,
@@ -21,6 +32,7 @@
 import type { SessionEngineStateV1, SessionEvent, SessionRejection } from '$lib/types/session';
 import { reduceSession, type ReduceContext } from './reducer';
 import type { ReduceResult } from './result';
+import { findZoneDescriptor } from './state';
 
 export type SessionReduceResult = ReduceResult<SessionEngineStateV1, SessionEvent, SessionRejection>;
 
@@ -47,6 +59,24 @@ export function applyCorrection(
 	}
 	if (command.reason.trim().length === 0) {
 		return { ok: false, rejection: { code: 'illegal-command', message: 'a correction requires a stated reason' } };
+	}
+
+	// The source must be a zone whose contents are already visible to the table
+	// (a public area or a discard pile). A hidden zone (draw piles, pending
+	// procedure zones) or a player's private zone is refused — see the file
+	// header on why corrections do not inherit the GM's generic full reach.
+	const source = findZoneDescriptor(state, command.sourceZoneId);
+	if (!source) {
+		return { ok: false, rejection: { code: 'illegal-command', message: `source zone not found: ${command.sourceZoneId}` } };
+	}
+	if (source.visibility !== 'public' && source.visibility !== 'public-top') {
+		return {
+			ok: false,
+			rejection: {
+				code: 'illegal-command',
+				message: 'a correction may only move a card the table can already see — not one from a hand, a draw pile, or a pending zone'
+			}
+		};
 	}
 
 	// The compensating transition is an ORDINARY transfer: full legality

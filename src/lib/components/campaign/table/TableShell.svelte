@@ -306,13 +306,13 @@
 				<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
 				<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
-			<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-			<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+			<CrawlProcedurePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+			<OraclePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
 			{#if role === 'gm'}
 				<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
 			{/if}
-				<CrawlProcedurePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-				<OraclePanel {role} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+				<CrawlProcedurePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
+				<OraclePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
 				{#if role === 'gm'}
 					<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
 				{/if}

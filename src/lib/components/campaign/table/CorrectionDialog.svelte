@@ -5,12 +5,11 @@
 	 * required reason. The engine applies the move through the ordinary
 	 * reducer and appends `correction-applied` — the journal is append-only.
 	 *
-	 * Sources offered are zones whose identities the GM can actually SEE in
-	 * their own projection (public zones, the discard tops, the GM hand,
-	 * pending zones). A player's hidden hand is deliberately absent: the GM
-	 * cannot name a card they cannot see, and repairing a mis-play into a
-	 * private hand is done by moving the PUBLIC card, not by reaching into the
-	 * hand.
+	 * Sources offered are zones whose identities the GM can actually SEE. That is
+	 * not merely a UI convenience: `corrections.ts` REFUSES any source that is
+	 * not public or public-top, so a hand, a draw pile, or a pending zone is
+	 * rejected server-side too. Repairing a mis-play into a private hand is done
+	 * by moving the PUBLIC card, never by reaching into the hand.
 	 */
 	import type { SendCommandResult, TableSession, WireSessionEventLike } from '$lib/stores/campaign-session.svelte';
 	import type { SessionGmProjection } from '$lib/types/session';
@@ -45,10 +44,9 @@
 			id: zone.id,
 			cards: zone.cards.filter((card) => !card.hidden).map((card) => ({ id: card.id, label: card.label }))
 		}));
-		zones.push({ id: 'gmHand', cards: gm.gmHand.filter((card) => !card.hidden).map((card) => ({ id: card.id, label: card.label })) });
-		for (const zone of gm.gmPendingZones) {
-			zones.push({ id: zone.id, cards: zone.cards.filter((card) => !card.hidden).map((card) => ({ id: card.id, label: card.label })) });
-		}
+		// `gmHand` and pending zones are deliberately NOT offered: the engine
+		// refuses them as sources (they are private/hidden), so listing them would
+		// only produce buttons that always fail.
 		const discardTop = gm.public.playerDiscardTop;
 		if (discardTop && !discardTop.hidden) zones.push({ id: 'playerDiscard', cards: [{ id: discardTop.id, label: discardTop.label }] });
 		const majorTop = gm.public.majorDiscardTop;

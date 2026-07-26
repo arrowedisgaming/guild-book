@@ -14,6 +14,7 @@
 
 	let {
 		role,
+		userId,
 		session,
 		roster,
 		phases = ['cross-phase', 'city'],
@@ -22,6 +23,7 @@
 		onSendFiniteCommand
 	}: {
 		role: 'gm' | 'player';
+		userId: string;
 		session: TableSession;
 		roster: ActiveChallengeTenureView[];
 		/** Which content-pack phases this placement offers to begin. */
@@ -53,26 +55,77 @@
 	let chosenProcedureId = $state('');
 	let chosenActorTenureId = $state('');
 	let chosenOption = $state('');
+	let chosenMode = $state<'appropriate-realm' | 'random-realm'>('appropriate-realm');
+	let chosenRealmTableId = $state('');
+	/** The order the player is building for a reorder-top step. */
+	let reorderPicks = $state<string[]>([]);
+
+	/** What the selected procedure needs supplied at begin time — from content,
+	 * never a hardcoded procedure id. */
+	const requirement = $derived(finite?.beginRequirements.find((entry) => entry.procedureId === chosenProcedureId) ?? null);
+	/** A player acts as their OWN adventurer — the roster entry matching them.
+	 * Without this a player's begin request omitted `actorTenureId` entirely and
+	 * was rejected (second-pass review). */
+	const myTenureId = $derived(roster.find((entry) => entry.userId === userId)?.tenureId ?? '');
+	/** The actor the begin request will name: the GM's pick, or the player's own. */
+	const effectiveActorTenureId = $derived(role === 'gm' ? chosenActorTenureId : myTenureId);
+	/** A procedure with player steps MUST name an actor, or nobody can advance
+	 * it once begun. */
+	const beginBlocked = $derived(
+		!chosenProcedureId ||
+			(requirement?.requiresMode && chosenMode === 'appropriate-realm' && !chosenRealmTableId) ||
+			(requirement?.needsActor === true && !effectiveActorTenureId)
+	);
 
 	function begin(): void {
 		if (!chosenProcedureId) return;
+		if (beginBlocked) return;
 		void actionRunner.run({
 			type: 'begin-finite-procedure',
 			procedureId: chosenProcedureId,
-			...(chosenActorTenureId ? { actorTenureId: chosenActorTenureId } : {})
+			...(effectiveActorTenureId ? { actorTenureId: effectiveActorTenureId } : {}),
+			// Maleficence and anything else with invocation-mode conditions: without
+			// these, neither mode-gated step is applicable and the procedure would
+			// complete having done nothing (review finding).
+			...(requirement?.requiresMode ? { mode: chosenMode } : {}),
+			...(requirement?.requiresMode && chosenMode === 'appropriate-realm' && chosenRealmTableId
+				? { realmTableId: chosenRealmTableId }
+				: {})
 		});
 	}
 
 	const step = $derived(running?.currentStep ?? null);
 
-	function advance(): void {
+	function advance(answer?: 'yes' | 'no', stepId?: string): void {
 		if (!step) return;
-		if (step.needs === 'confirm') return void actionRunner.run({ type: 'advance-finite-procedure', confirm: 'yes' });
+		if (step.needs === 'confirm') {
+			// Both answers must be reachable — a flat-50% gate that can only say
+			// "yes" is not a 50% gate (review finding).
+			return void actionRunner.run({
+				type: 'advance-finite-procedure',
+				confirm: answer ?? 'yes',
+				...(stepId ? { stepId } : {})
+			});
+		}
 		if (step.needs === 'chosen-card') {
 			if (!chosenOption) return;
 			return void actionRunner.run({ type: 'advance-finite-procedure', chosenCardId: chosenOption });
 		}
-		void actionRunner.run({ type: 'advance-finite-procedure' });
+		if (step.needs === 'ordered-cards') {
+			if (reorderPicks.length !== step.reorderCount) return;
+			const order = reorderPicks.slice();
+			reorderPicks = [];
+			return void actionRunner.run({ type: 'advance-finite-procedure', orderedCardIds: order });
+		}
+		void actionRunner.run({ type: 'advance-finite-procedure', ...(stepId ? { stepId } : {}) });
+	}
+
+	function togglePick(cardId: string): void {
+		reorderPicks = reorderPicks.includes(cardId) ? reorderPicks.filter((id) => id !== cardId) : [...reorderPicks, cardId];
+	}
+
+	function labelForStepId(stepId: string): string {
+		return stepId.replaceAll('-', ' ');
 	}
 
 	function nameFor(tenureId: string | null): string {
@@ -128,11 +181,54 @@
 								<option value={option}>{option}</option>
 							{/each}
 						</select>
-						<button type="button" onclick={advance} disabled={actionRunner.pending || !chosenOption} data-testid="finite-advance">Choose</button>
+						<button type="button" onclick={() => advance()} disabled={actionRunner.pending || !chosenOption} data-testid="finite-advance"
+							>Choose</button
+						>
+					</div>
+				{:else if step.needs === 'ordered-cards'}
+					<!-- As Above, So Below: click the peeked cards in the order you want
+					     them back on the deck. -->
+					<fieldset class="controls">
+						<legend>Put them back in this order (click in sequence)</legend>
+						{#each running.peekTop as slot, index (index)}
+							{#if !slot.hidden}
+								<button
+									type="button"
+									class:picked={reorderPicks.includes(slot.id)}
+									onclick={() => togglePick(slot.id)}
+									data-testid={`reorder-pick-${slot.id}`}
+								>
+									{reorderPicks.indexOf(slot.id) >= 0 ? `${reorderPicks.indexOf(slot.id) + 1}. ` : ''}{slot.label}
+								</button>
+							{/if}
+						{/each}
+						<button
+							type="button"
+							onclick={() => advance()}
+							disabled={actionRunner.pending || reorderPicks.length !== step.reorderCount}
+							data-testid="finite-advance">Set the order</button
+						>
+					</fieldset>
+				{:else if step.forkStepIds.length > 1}
+					<!-- A fork (Augury accept/decline): every branch is reachable. -->
+					<div class="controls">
+						{#each step.forkStepIds as forkId (forkId)}
+							<button
+								type="button"
+								onclick={() => advance('yes', forkId)}
+								disabled={actionRunner.pending}
+								data-testid={`finite-fork-${forkId}`}>{labelForStepId(forkId)}</button
+							>
+						{/each}
+					</div>
+				{:else if step.needs === 'confirm'}
+					<div class="controls">
+						<button type="button" onclick={() => advance('yes')} disabled={actionRunner.pending} data-testid="finite-advance">Yes</button>
+						<button type="button" onclick={() => advance('no')} disabled={actionRunner.pending} data-testid="finite-decline">No</button>
 					</div>
 				{:else}
-					<button type="button" onclick={advance} disabled={actionRunner.pending} data-testid="finite-advance">
-						{step.needs === 'confirm' ? 'Confirm' : step.operation === 'draw' ? 'Draw' : 'Continue'}
+					<button type="button" onclick={() => advance()} disabled={actionRunner.pending} data-testid="finite-advance">
+						{step.operation === 'draw' ? 'Draw' : 'Continue'}
 					</button>
 				{/if}
 			{/if}
@@ -153,15 +249,34 @@
 						<option value={entry.id}>{entry.title}</option>
 					{/each}
 				</select>
-				{#if role === 'gm'}
+				{#if role === 'gm' && requirement?.needsActor !== false}
 					<select bind:value={chosenActorTenureId} data-testid="finite-actor-picker">
-						<option value="">No acting adventurer</option>
+						<option value="">{requirement?.needsActor ? 'Choose the acting adventurer…' : 'No acting adventurer'}</option>
 						{#each roster as entry (entry.tenureId)}
 							<option value={entry.tenureId}>{entry.characterName}</option>
 						{/each}
 					</select>
 				{/if}
-				<button type="button" onclick={begin} disabled={actionRunner.pending || !chosenProcedureId} data-testid="finite-begin">Begin</button>
+				{#if requirement?.requiresMode}
+					<select bind:value={chosenMode} data-testid="finite-mode-picker">
+						<option value="appropriate-realm">Cast into the appropriate realm</option>
+						<option value="random-realm">Cast into a random realm</option>
+					</select>
+					{#if chosenMode === 'appropriate-realm'}
+						<select bind:value={chosenRealmTableId} data-testid="finite-realm-picker">
+							<option value="">Choose the realm…</option>
+							{#each requirement.realmTableIds as tableId (tableId)}
+								<option value={tableId}>{tableId.replace('maleficence-', '')}</option>
+							{/each}
+						</select>
+					{/if}
+				{/if}
+				<button
+					type="button"
+					onclick={begin}
+					disabled={actionRunner.pending || beginBlocked}
+					data-testid="finite-begin">Begin</button
+				>
 			</div>
 		{/if}
 
@@ -222,6 +337,10 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.5rem;
+	}
+	.picked {
+		border-color: var(--accent);
+		font-weight: 600;
 	}
 	.error {
 		margin: 0;

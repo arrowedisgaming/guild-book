@@ -111,6 +111,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A Resolve spend can no longer blank a character sheet**: if the stored
+  document could not be migrated, the narrow Resolve write fell back to a blank
+  character and wrote it back — losing name, attributes, equipment and notes. A
+  document the server cannot read now refuses the spend instead.
+- **Removing a player mid-Challenge keeps the right adventurer's turn**: the
+  active initiative seat was clamped rather than followed, so removing an
+  earlier seat silently handed the turn to the next player along, and removing
+  the last seat left a turn pointer on an empty order.
+- **Corrections can only move a card the table can already see**: the GM's
+  compensating correction accepted any source zone, so it could lift a card out
+  of a hand or off a draw pile and publish its identity. Sources are now limited
+  to public areas and discard piles, the corrected event must belong to the
+  session, and a correction confirmed against one board is refused rather than
+  re-applied if the table moved on.
+- **Oracle procedures are now fully drivable from the table**: the panel never
+  sent Maleficence's realm, could only answer "yes" to a chance gate, had no way
+  to decline an Augury, and could not submit a card order — so several
+  procedures the engine supported were unreachable in the app.
+- **A procedure step can no longer be skipped past another player**: choosing a
+  later branch marked the intervening steps skipped without checking whose they
+  were, letting a player jump the GM's step or the GM pre-empt the player's
+  choice.
+- **Archived campaigns keep their history**: the completed-session pages used
+  the access check that excludes archived campaigns, so archiving a campaign
+  404'd its own history for its members.
 - **The site navigation now wraps on narrow screens**: an unwrapped nav row made
   every page scroll sideways at phone widths and at 200% browser zoom.
 - **Tarot cards now announce themselves to screen readers**: card faces and

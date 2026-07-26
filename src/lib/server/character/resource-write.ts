@@ -135,6 +135,10 @@ export async function readResolveWriteContext(
 	if (!liveTenure) return { ok: false, reason: 'not-found' };
 
 	const currentData = parseCharacterData(row.data);
+	// Reported as `not-found` rather than a distinct code for the same reason a
+	// dead adventurer is: the caller has no separate branch for it, and a sheet
+	// the server cannot read is not a sheet it may spend from.
+	if (!currentData) return { ok: false, reason: 'not-found' };
 	const currentResolve = currentData.resolve.current;
 
 	// The hard precondition. Checked BEFORE the affordability check so a player
@@ -359,10 +363,22 @@ export function toAtomicStatements(statements: CampaignAtomicStatement[]): Atomi
 	});
 }
 
-function parseCharacterData(json: string): GuildBookCharacterData {
+/**
+ * Parses and migrates the stored document, or returns `null` when it cannot be
+ * understood.
+ *
+ * Review finding: this used to fall back to `migrateCharacterData(null)` — a
+ * BLANK character — which the caller then wrote back with only `resolve.current`
+ * changed. A legacy document with one malformed field (valid JSON, valid
+ * Resolve, so the SQL claim passes) would silently lose its name, attributes,
+ * equipment, and notes. A document we cannot migrate is a refusal, never a
+ * rewrite: the narrowest write in the app must not be the one that destroys a
+ * sheet.
+ */
+function parseCharacterData(json: string): GuildBookCharacterData | null {
 	try {
 		return migrateCharacterData(JSON.parse(json));
 	} catch {
-		return migrateCharacterData(null);
+		return null;
 	}
 }

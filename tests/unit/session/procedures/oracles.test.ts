@@ -319,6 +319,57 @@ describe('oracle coverage matrix', () => {
 		expect(() => assertSessionInvariants(state, CATALOG)).not.toThrow();
 	});
 
+	it('stepId may not skip a step that belongs to another actor', () => {
+		// Review finding: the stepId walk marked intervening steps skipped and
+		// authorized only the DESTINATION, so a player could target their own
+		// later step to jump past the GM's, and the GM could target `accept-card`
+		// to skip the player's choice and reveal the card.
+		let state = withTopOfPlayerDraw(makeSessionFixture(), ['cups-ix']);
+		state = unwrap(beginFiniteProcedure(state, { procedureId: 'test-augury', actorTenureId: 'tenure-1' }, ctxFor(GM)));
+		state = unwrap(advanceFiniteProcedure(state, {}, ctxFor(GM)));
+
+		// The next step is the GM's `describe-parable` — a SEQUENTIAL step, not a
+		// fork alternative, so Alice targeting her own later `choose-course`
+		// is refused as an illegal skip.
+		expect(advanceFiniteProcedure(state, { stepId: 'choose-course', confirm: 'yes' }, ctxFor(ALICE))).toMatchObject({
+			ok: false,
+			rejection: { code: 'illegal-command' }
+		});
+
+		// Once the GM has taken their own step, the player's step is reachable.
+		state = unwrap(advanceFiniteProcedure(state, { confirm: 'yes' }, ctxFor(GM)));
+		state = unwrap(advanceFiniteProcedure(state, { confirm: 'yes' }, ctxFor(ALICE)));
+
+		// The accept/decline pair IS a fork, so the alternative check passes — and
+		// the OWNERSHIP check is what stops a player from resolving the GM's
+		// branch. Both guards are load-bearing.
+		expect(advanceFiniteProcedure(state, { stepId: 'decline-card' }, ctxFor(ALICE))).toMatchObject({
+			ok: false,
+			rejection: { code: 'not-authorized' }
+		});
+		// The GM may take either branch.
+		expect(advanceFiniteProcedure(state, { stepId: 'decline-card' }, ctxFor(GM))).toMatchObject({ ok: true });
+	});
+
+	it('stepId may not skip a step that is not a fork alternative, even the actor’s own', () => {
+		// Second-pass review: authorizing a skipped step proves ownership, not
+		// that skipping is legitimate. Doomsaying's `pay-fee` and `draw-prophecy`
+		// are BOTH the player's and sequential — targeting the draw must not dodge
+		// the fee.
+		let state = withTopOfPlayerDraw(makeSessionFixture(), ['swords-ii', 'pentacles-ix', 'cups-iv', 'wands-knight']);
+		state = unwrap(beginFiniteProcedure(state, { procedureId: 'city-doomsaying', actorTenureId: 'tenure-1' }, ctxFor(GM)));
+
+		expect(advanceFiniteProcedure(state, { stepId: 'draw-prophecy' }, ctxFor(ALICE))).toMatchObject({
+			ok: false,
+			rejection: { code: 'illegal-command' }
+		});
+
+		// The fee still has to be paid, and then the draw runs normally.
+		state = unwrap(advanceFiniteProcedure(state, { confirm: 'yes' }, ctxFor(ALICE)));
+		expect(readFiniteProcedure(state)?.manual['pay-fee']).toBe('yes');
+		expect(advanceFiniteProcedure(state, {}, ctxFor(ALICE))).toMatchObject({ ok: true });
+	});
+
 	it('a player may not begin a GM oracle', () => {
 		expect(beginFiniteProcedure(makeSessionFixture(), { procedureId: 'gm-twist' }, ctxFor(ALICE))).toMatchObject({
 			ok: false,

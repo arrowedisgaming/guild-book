@@ -172,9 +172,14 @@ describe('completed session history', () => {
 		expect(await listCompletedSessions(db, campaignId, 'stranger')).toBeNull();
 	});
 
-	it('a removed member loses history access', async () => {
+	it('a removed member loses history access (soft removal, the real shape)', async () => {
 		await buildAndEnd();
-		sqlite.prepare('DELETE FROM campaign_members WHERE campaign_id = ? AND user_id = ?').run(campaignId, PLAYER_B);
+		// Departure is SOFT — the row survives with leftAt/removedAt stamped.
+		// Deleting the row would pass even with a membership check that ignores
+		// those columns, which is exactly the gap this now covers.
+		sqlite
+			.prepare('UPDATE campaign_members SET left_at = 500000, removed_at = 500000 WHERE campaign_id = ? AND user_id = ?')
+			.run(campaignId, PLAYER_B);
 
 		expect(await listCompletedSessions(db, campaignId, PLAYER_B)).toBeNull();
 		expect(await loadCompletedSessionHistory(db, campaignId, 'session-h', PLAYER_B)).toBeNull();

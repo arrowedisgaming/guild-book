@@ -84,12 +84,11 @@ export function removeParticipantFromSession(
 			tiedGroups: challenge.tiedGroups
 				.map((group) => group.filter((id) => !tenureSet.has(id)))
 				.filter((group) => group.length > 1),
-			// A removed seat can leave the active index past the end; clamp so the
-			// turn loop stays coherent.
-			activeTurnIndex:
-				challenge.activeTurnIndex === null
-					? null
-					: Math.min(challenge.activeTurnIndex, Math.max(0, challenge.initiativeOrder.filter((entry) => !tenureSet.has(entry.tenureId)).length - 1))
+			activeTurnIndex: adjustActiveTurnIndex(
+				challenge.initiativeOrder.map((entry) => entry.tenureId),
+				challenge.activeTurnIndex,
+				tenureSet
+			)
 		};
 		working = writeChallengeState(working, next);
 	}
@@ -118,6 +117,44 @@ export function removeParticipantFromSession(
 		}
 	];
 	return { state: working, events, returnedCardCount };
+}
+
+/**
+ * Re-points the active initiative seat after some seats are removed.
+ *
+ * Clamping was wrong (review finding): for seats `[A,B,C]` with B active
+ * (index 1), removing A left index 1 — which now addresses C, silently handing
+ * the turn to the wrong player. And removing the last remaining seat clamped to
+ * 0, leaving an index on an empty order that wedges every later turn command.
+ *
+ * The rule instead: keep the SAME SEAT active by counting how many surviving
+ * seats precede it — which is its new index. If the active seat itself departed,
+ * the turn passes to whoever now occupies that position (wrapping to the first
+ * remaining seat if the departing seat was last). An emptied order has no active
+ * turn at all.
+ *
+ * The count is POSITIONAL, never `indexOf(tenureId)` (second-pass review): a
+ * Fool interrupt inserts a second seat for the SAME tenure, so
+ * `initiativeOrder` legitimately repeats a tenure id and `indexOf` would snap
+ * the turn back to that tenure's already-spent normal seat.
+ *
+ * Exported for direct testing — the arithmetic is the whole defect.
+ */
+export function adjustActiveTurnIndex(
+	tenureIds: readonly string[],
+	activeTurnIndex: number | null,
+	removed: ReadonlySet<string>
+): number | null {
+	if (activeTurnIndex === null) return null;
+	const survivingCount = tenureIds.filter((tenureId) => !removed.has(tenureId)).length;
+	if (survivingCount === 0) return null;
+
+	// Surviving seats strictly before the active one — the active seat's new
+	// index if it survives, or the position the turn falls to if it does not.
+	const survivorsBefore = tenureIds.slice(0, activeTurnIndex).filter((tenureId) => !removed.has(tenureId)).length;
+	const activeTenureId = tenureIds[activeTurnIndex];
+	if (activeTenureId !== undefined && !removed.has(activeTenureId)) return survivorsBefore;
+	return survivorsBefore >= survivingCount ? 0 : survivorsBefore;
 }
 
 /** Closes any guided test / group test / Camp / finite procedure whose acting

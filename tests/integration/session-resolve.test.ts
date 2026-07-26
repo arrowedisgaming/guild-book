@@ -313,6 +313,28 @@ describe('session Resolve spend — narrow versioned writes', () => {
 		});
 	});
 
+	it('refuses the spend when the stored document cannot be migrated, rather than blanking the sheet', async () => {
+		// Review finding: `parseCharacterData` fell back to a BLANK character when
+		// `migrateCharacterData` threw, and that blank was then written back with
+		// only Resolve changed — silently destroying name, attributes, equipment
+		// and notes. A document we cannot understand must refuse the spend.
+		const original = readCharacterRow().data;
+		const poisoned = JSON.parse(original) as Record<string, unknown>;
+		// Valid JSON, valid Resolve (so the SQL claim would pass), but a shape
+		// the migrator rejects.
+		poisoned.talents = [null];
+		sqlite.prepare('UPDATE characters SET data = ? WHERE id = ?').run(JSON.stringify(poisoned), 'character-a');
+
+		const result = await applyResolveIntent(ctx, baseIntent());
+
+		expect(result).toMatchObject({ ok: false, reason: 'not-found' });
+		// The stored document is untouched — no blank sheet written.
+		const after = JSON.parse(readCharacterRow().data) as Record<string, unknown>;
+		expect(after.name).toBe(poisoned.name);
+		expect(after.attributes).toEqual(poisoned.attributes);
+		expect(readCharacterRow().version).toBe(4);
+	});
+
 	it('requires both reconfirmation fields together on the envelope', () => {
 		const base = {
 			commandId: 'cmd-2',

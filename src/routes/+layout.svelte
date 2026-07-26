@@ -71,6 +71,13 @@
 		align-items: baseline;
 		gap: 1.25rem;
 		font-family: var(--font-subhead);
+		/* Increment 4 Task 7: an unwrapped nav row was the single largest source
+		 * of two-dimensional page overflow at 320 CSS pixels and at 200% zoom —
+		 * it forced the whole document to scroll sideways on every page, not
+		 * just the table. Wrapping is the fix; the row still reads as one nav at
+		 * desktop widths because it only breaks when it genuinely cannot fit. */
+		flex-wrap: wrap;
+		row-gap: 0.5rem;
 	}
 	.linkish {
 		border: none;

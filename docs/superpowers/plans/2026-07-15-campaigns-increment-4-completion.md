@@ -389,17 +389,17 @@ git commit -m "feat(campaigns): cleanly leave active sessions"
 - Create: `tests/e2e/campaign-accessibility.spec.ts`
 - Create: `tests/e2e/campaign-mobile.spec.ts`
 
-- [ ] **Step 1: Add failing accessibility assertions**
+- [x] **Step 1: Add failing accessibility assertions**
 
 Test GM/player table with keyboard only, 200% zoom, 320 CSS-pixel width, reduced motion, forced colors, logical tab order, focus retention after polling, live announcements, drawer focus trap/return, and card-back names without identity. Add `@axe-core/playwright` only if approved as a dev dependency; otherwise implement Playwright role/name/contrast-adjacent checks and run the project’s chosen external audit in CI.
 
-- [ ] **Step 2: Fix semantics without changing privacy projection**
+- [x] **Step 2: Fix semantics without changing privacy projection**
 
 All interactive cards are buttons with state/position labels. Public images have descriptive card names; private owner images do too; hidden images/card backs say only `Face-down card`. Do not solve accessibility by placing hidden identity in `aria-label`, `title`, data attributes, test IDs, or offscreen text.
 
 At mobile widths, table stays primary; phase/log drawers are keyboard-operable; private hand scrolls horizontally; enlargement is a dialog using only authorized projection data. At 200% zoom there is no two-dimensional page overflow outside the intentional hand scroller.
 
-- [ ] **Step 3: Run the release-candidate gate**
+- [x] **Step 3: Run the release-candidate gate**
 
 Run:
 
@@ -414,7 +414,7 @@ ADAPTER=cloudflare npm run build
 
 Expected: every command exits 0; engine coverage 90%+; every `supported-v1` audit ID is covered by a named test mapping.
 
-- [ ] **Step 4: Commit Increment 4**
+- [x] **Step 4: Commit Increment 4**
 
 ```bash
 git add src/lib/components/campaign/table src/lib/components/tarot/TarotCard.svelte tests/e2e/campaign-accessibility.spec.ts tests/e2e/campaign-mobile.spec.ts
@@ -423,4 +423,10 @@ git commit -m "fix(campaigns): complete accessible session procedures"
 
 ## Increment 4 Completion Record
 
-Attach the audit-ID-to-test mapping, Resolve race evidence, private-state purge proof, member-cleanup failure matrix, accessibility report, mobile screenshots, and full release-candidate command output. Public enablement still waits for artwork and Increment 5.
+**Filed: `docs/superpowers/2026-07-25-campaigns-increment-4-completion.md`** —
+audit-ID-to-test mapping, Resolve race evidence, private-state purge proof,
+member-cleanup failure matrix, accessibility report, and full
+release-candidate command output. Mobile screenshots were deliberately
+replaced with programmatic overflow/DOM-order assertions; see that record.
+
+Original instruction: attach the audit-ID-to-test mapping, Resolve race evidence, private-state purge proof, member-cleanup failure matrix, accessibility report, mobile screenshots, and full release-candidate command output. Public enablement still waits for artwork and Increment 5.

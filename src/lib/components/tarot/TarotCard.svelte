@@ -18,16 +18,16 @@
 </script>
 
 {#if faceDown || !card}
-	<div class="card back {size}" aria-label="Face-down card">
+	<div class="card back {size}" role="img" aria-label="Face-down card">
 		<span class="mark">❦</span>
 	</div>
 {:else if card.kind === 'major'}
-	<div class="card major {size}" aria-label={card.label} data-card-id={card.id}>
+	<div class="card major {size}" role="img" aria-label={card.label} data-card-id={card.id}>
 		<span class="mnum">{card.value}</span>
 		<span class="mname">{card.label}</span>
 	</div>
 {:else}
-	<div class="card minor suit-{card.suit} {size}" aria-label={card.label} data-card-id={card.id}>
+	<div class="card minor suit-{card.suit} {size}" role="img" aria-label={card.label} data-card-id={card.id}>
 		<span class="rank">{card.label.split(' of ')[0]}</span>
 		<span class="glyph">{card.suit ? suitGlyph[card.suit] : ''}</span>
 		<span class="suit">{card.suit}</span>

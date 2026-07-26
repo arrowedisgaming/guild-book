@@ -264,7 +264,7 @@ test.describe('shared table sync', () => {
 		// the GM must have no Transfer button on any hand card, only
 		// Play/Play-face-down/Discard.
 		await expect(handCards.getByRole('button', { name: 'Transfer', exact: false })).toHaveCount(0);
-		await expect(handCards.first().getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+		await expect(handCards.first().getByRole('button', { name: /^Play (?!.*face down)/ })).toBeVisible();
 
 		await gm.close();
 	});

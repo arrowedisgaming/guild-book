@@ -110,6 +110,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The site navigation now wraps on narrow screens**: an unwrapped nav row made
+  every page scroll sideways at phone widths and at 200% browser zoom.
+- **Tarot cards now announce themselves to screen readers**: card faces and
+  backs carried a label with no role, so assistive technology had no name for
+  any card. Card controls also name the card and its position ("Play X of Cups",
+  "Card 1 of 3"), while a face-down card is only ever announced as "Face-down
+  card" — the identity never rides on a label.
 - **A discarded card now lands on top of its discard pile**: the newest
   discard was previously buried at the bottom, so any rule reading "the top
   card of the discard pile" — the GM twist, starting Dispositions, the bracket

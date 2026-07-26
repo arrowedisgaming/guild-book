@@ -76,18 +76,22 @@
 			{#each cards as slot, index (index)}
 				{@const rendered = renderableCard(slot)}
 				{@const cardId = slot.hidden ? undefined : slot.id}
-				<div data-testid="hand-card">
+				{@const cardName = slot.hidden ? 'Face-down card' : (rendered.card?.label ?? '')}
+				<!-- Position + identity in one group label (Task 7 Step 2: "buttons
+				     with state/position labels"). A hidden slot's name is only ever
+				     "Face-down card" — identity never rides an aria attribute. -->
+				<div data-testid="hand-card" role="group" aria-label={`Card ${index + 1} of ${cards.length}: ${cardName}`}>
 					<TarotCard card={rendered.card} faceDown={rendered.faceDown} />
 					{#if cardId && (canPlay || canPlaceFacedown || canDiscard || canTransfer)}
 						<div class="card-actions">
 							{#if canPlay}
-								<button type="button" onclick={() => onPlay?.(cardId)}>Play</button>
+								<button type="button" aria-label={`Play ${cardName}`} onclick={() => onPlay?.(cardId)}>Play</button>
 							{/if}
 							{#if canPlaceFacedown}
-								<button type="button" onclick={() => onPlaceFacedown?.(cardId)}>Play face down</button>
+								<button type="button" aria-label={`Play ${cardName} face down`} onclick={() => onPlaceFacedown?.(cardId)}>Play face down</button>
 							{/if}
 							{#if canDiscard}
-								<button type="button" onclick={() => onDiscard?.(cardId)}>Discard</button>
+								<button type="button" aria-label={`Discard ${cardName}`} onclick={() => onDiscard?.(cardId)}>Discard</button>
 							{/if}
 							{#if canTransfer}
 								<div class="transfer">

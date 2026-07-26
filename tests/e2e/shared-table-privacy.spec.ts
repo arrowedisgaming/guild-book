@@ -218,7 +218,7 @@ test.describe('shared table privacy', () => {
 		// --- Play: a public move — every client sees the same face ---
 		const playedLabel = await handCards.first().locator('.card').getAttribute('aria-label');
 		expect(playedLabel).toBeTruthy();
-		await handCards.first().getByRole('button', { name: 'Play', exact: true }).click();
+		await handCards.first().getByRole('button', { name: /^Play (?!.*face down)/ }).click();
 		await expect(handCards).toHaveCount(2);
 
 		const playedCardSelector = '[data-testid="public-table"] div[aria-label="Played"] .cards .card';
@@ -230,7 +230,7 @@ test.describe('shared table privacy', () => {
 		// --- Play face down: only the owner sees a face; everyone else sees an
 		// opaque back, the same "Private effects" projection `PublicTable`
 		// already renders for every private facedown/prepared zone ---
-		await handCards.first().getByRole('button', { name: 'Play face down', exact: true }).click();
+		await handCards.first().getByRole('button', { name: /face down$/ }).click();
 		await expect(handCards).toHaveCount(1);
 
 		const ownFacedown = playerAPage.locator('[data-testid="private-facedown"] [data-testid="facedown-card"] .card');
@@ -266,7 +266,7 @@ test.describe('shared table privacy', () => {
 		// client's visible "top of the player discard" card ---
 		const discardedLabel = await handCards.first().locator('.card').getAttribute('aria-label');
 		expect(discardedLabel).toBeTruthy();
-		await handCards.first().getByRole('button', { name: 'Discard', exact: true }).click();
+		await handCards.first().getByRole('button', { name: /^Discard / }).click();
 		await expect(handCards).toHaveCount(0);
 
 		const playerDiscardTopSelector =

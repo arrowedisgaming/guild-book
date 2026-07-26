@@ -361,7 +361,7 @@ test.describe('guided Challenge table privacy', () => {
 					} else {
 						const handCards = page.getByTestId('turn-hand-card');
 						if ((await handCards.count()) > 0) {
-							const playButton = handCards.first().getByRole('button', { name: 'Play', exact: true });
+							const playButton = handCards.first().getByRole('button', { name: /^Play (?!.*face down)/ });
 							if (await playButton.isVisible().catch(() => false)) await clickCommand(page, playButton);
 						}
 					}

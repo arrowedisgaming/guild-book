@@ -99,5 +99,6 @@ This is an intentional design trade-off: activity tracking enables the `/admin` 
 1. **Confirm the scope of data loss:** connect to `/admin`, compare the current user/character/denizen counts to known-good values from your monitoring or backups. Establish a specific recovery target (point-in-time).
 2. **Verify the restore window:** run `npx wrangler d1 time-travel info guild-book-db` and confirm the target bookmark is within the reported window.
 3. **Execute the restore:** run the restore command above with the confirmed bookmark.
-4. **Verify post-restore:** connect to `/admin` and confirm user/character/denizen counts match expectations. Test sign-in and basic operations.
-5. **Communicate:** update beta testers and stakeholders once the restore is confirmed.
+4. **Re-apply migrations immediately — before any verification:** run `npm run db:migrate:d1:remote`. Time Travel restores the *schema* as well as the data, so a bookmark from before a migration lands leaves the restored database behind the deployed code. In particular, restoring to a pre-`0009` point removes the activity columns that the `jwt` callback reads on every authenticated request, which means sign-in — and therefore step 5's `/admin` check — cannot work until the migration is replayed. Do not skip this step because the restore reported success.
+5. **Verify post-restore:** connect to `/admin` and confirm user/character/denizen counts match expectations. Test sign-in and basic operations.
+6. **Communicate:** update beta testers and stakeholders once the restore is confirmed.

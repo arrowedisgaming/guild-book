@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>%sveltekit.status% — Guild Book</title>
+		<!--
+			SvelteKit renders THIS file, not src/routes/+error.svelte, when the root
+			layout's load fails — the app shell never boots, so no component, theme
+			CSS, or layout data is available. Everything here must therefore be
+			self-contained and inline. Keep it in rough visual agreement with
+			src/lib/themes/*.css, but do not try to import from them.
+
+			No feedback link: FEEDBACK_URL is surfaced through the root layout load,
+			which by definition has not run if you are seeing this page.
+		-->
+		<style>
+			:root {
+				--parchment: oklch(0.945 0.018 85);
+				--surface: oklch(0.965 0.014 85);
+				--ink: oklch(0.24 0.02 60);
+				--ink-soft: oklch(0.45 0.02 60);
+				--accent: oklch(0.43 0.13 25);
+				color-scheme: light;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--parchment: oklch(0.19 0.012 60);
+					--surface: oklch(0.24 0.014 60);
+					--ink: oklch(0.9 0.02 85);
+					--ink-soft: oklch(0.68 0.02 85);
+					--accent: oklch(0.64 0.15 27);
+					color-scheme: dark;
+				}
+			}
+			html {
+				background: var(--parchment);
+				color: var(--ink);
+				font-family: Georgia, 'Times New Roman', serif;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 1.5rem;
+			}
+			main {
+				max-width: 34rem;
+				text-align: center;
+			}
+			.status {
+				margin: 0;
+				font-size: 3.5rem;
+				line-height: 1;
+				color: var(--ink-soft);
+			}
+			h1 {
+				margin: 0.5rem 0 1rem;
+				font-size: 1.5rem;
+			}
+			p {
+				color: var(--ink-soft);
+				line-height: 1.5;
+			}
+			a {
+				color: var(--accent);
+			}
+			.alpha {
+				margin-top: 2rem;
+				padding-top: 1rem;
+				border-top: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+				font-size: 0.85rem;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<p class="status">%sveltekit.status%</p>
+			<h1>Guild Book could not load</h1>
+			<p>%sveltekit.error.message%</p>
+			<p>
+				This one is on us, not you — the site failed before it could start up. Try again in a
+				moment, or head back to <a href="/">the front page</a>.
+			</p>
+			<p class="alpha">
+				Guild Book is alpha software and data loss may occur. If you were part-way through
+				creating an adventurer, your work may not have been saved.
+			</p>
+		</main>
+	</body>
+</html>

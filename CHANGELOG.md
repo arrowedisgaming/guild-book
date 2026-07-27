@@ -8,16 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-27
+
 ### Added
 
 - **Alpha notice and feedback loop**: every visitor sees an alpha banner warning
-  that data may be lost; the banner links to an optional `FEEDBACK_URL` for
-  reporting issues. The same feedback link appears on a custom error page (when
-  the app cannot render normally). Both links are omitted if `FEEDBACK_URL` is
-  unset.
+  that data may be lost, on every page including public share links. Dismissing
+  it hides it for that browser tab only, so the warning returns on the next
+  visit. The banner links to `/characters` for export, and to an optional
+  `FEEDBACK_URL` for reporting issues; the feedback link is omitted when
+  `FEEDBACK_URL` is unset. A branded error page carries the same links. A
+  separate static `src/error.html` covers the one case that page cannot: when
+  the root layout's own load fails, the app shell never boots, so SvelteKit
+  renders that file instead — self-contained, and without the feedback link,
+  since the value it would need comes from the load that just failed.
 - **User activity tracking**: three new columns on `users` (`first_seen_at`,
   `last_seen_at`, `login_count`) record when each visitor first appeared, when
-  they last signed in, and how many times they have signed in. Migration
+  they were last active, and how many times they have signed in. `last_seen_at`
+  is refreshed on ordinary authenticated activity, at most once per UTC day —
+  not only at sign-in — so it reflects returning visits rather than new
+  sessions. `login_count` increments only on a genuine sign-in, and because
+  sessions are long-lived JWTs it will read low for engaged users. Migration
   `0009_user_activity.sql` applies once; older backups cannot be backfilled
   retroactively with this data. **Deploy note — order matters, unlike 0008**:
   run `npm run db:migrate:d1:remote` **before** pushing this change to `main`.
@@ -27,13 +38,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   way 0008 was: every returning sign-in between push and migration throws
   `no such column: users.first_seen_at`, 500ing or force-signing-out every
   beta tester until the migration runs.
-- **Admin overview page** (`/admin`, gated by `ADMIN_EMAILS`): shows total user
-  count, character count, and denizen count, read from the production database.
-  The page is visible only to signed-in users whose email address appears in the
-  comma-separated `ADMIN_EMAILS` environment variable. Useful for spotting
-  data-loss incidents and confirming backup/restore drills. Deploy note: set
-  `ADMIN_EMAILS` in the Cloudflare Pages project's production variables after
-  deploying this change.
+- **Admin overview page** (`/admin`, gated by `ADMIN_EMAILS`): summary tiles for
+  users, users active in the last 7 days, adventurers (split complete vs draft),
+  adventurers created in the last 7 days, and denizens — plus two tables. **The
+  users table displays real email addresses**, alongside first seen, last seen,
+  sign-in count, and adventurer count; the adventurers table lists every
+  adventurer with its owner. Archived and draft rows are shown and flagged, never
+  filtered, so the page cannot disagree with the database. Access is restricted
+  to signed-in users whose stored `users.email` appears in the comma-separated
+  `ADMIN_EMAILS` variable — the address is read from the database column rather
+  than the session claim, and anyone else receives a 404 rather than a 403, so
+  the route's existence is not disclosed. An unset `ADMIN_EMAILS` means nobody
+  has access, including the owner. Deploy note: set `ADMIN_EMAILS` in the
+  Cloudflare Pages project's production variables after deploying this change.
+- **Backup and restore runbook** (`docs/operations/backup-restore.md`): the
+  snapshot, Time Travel, and restore-drill procedures behind the banner's
+  data-loss warning, plus an incident-response checklist. The snapshot and drill
+  sections ship marked **NOT YET PERFORMED** — the procedures are written and
+  the commands verified, but the rehearsal has not been run, and the document
+  says so rather than implying a recovery that has not been tested.
 
 ## [0.5.0] - 2026-07-25
 

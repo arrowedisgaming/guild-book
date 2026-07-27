@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Alpha notice and feedback loop**: every visitor sees an alpha banner warning
+  that data may be lost; the banner links to an optional `FEEDBACK_URL` for
+  reporting issues. The same feedback link appears on a custom error page (when
+  the app cannot render normally). Both links are omitted if `FEEDBACK_URL` is
+  unset.
+- **User activity tracking**: three new columns on `users` (`first_seen_at`,
+  `last_seen_at`, `login_count`) record when each visitor first appeared, when
+  they last signed in, and how many times they have signed in. Migration
+  `0009_user_activity.sql` applies once; older backups cannot be backfilled
+  retroactively with this data.
+- **Admin overview page** (`/admin`, gated by `ADMIN_EMAILS`): shows total user
+  count, character count, and denizen count, read from the production database.
+  The page is visible only to signed-in users whose email address appears in the
+  comma-separated `ADMIN_EMAILS` environment variable. Useful for spotting
+  data-loss incidents and confirming backup/restore drills. Deploy note: set
+  `ADMIN_EMAILS` in the Cloudflare Pages project's production variables after
+  deploying this change.
+
 ## [0.5.0] - 2026-07-25
 
 ### Added

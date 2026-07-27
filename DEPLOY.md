@@ -49,6 +49,8 @@ ships production; every other branch/PR gets a preview URL.
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | from Google Cloud Console (step 3) |
 | `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` | from Discord Developer Portal (step 3) |
 | `NODE_VERSION` | `22` |
+| `ADMIN_EMAILS` | Comma-separated admin addresses. Unset or empty means nobody can reach `/admin`. |
+| `FEEDBACK_URL` | Optional. Where the alpha banner's "Send feedback" link points. Omit to hide the link. |
 
 (`ADAPTER` is only a build-time switch and is set in the build command.
 Do **not** set `AUTH_DEV_LOGIN`/`AUTH_DEV_AUTOLOGIN` in production.)
@@ -110,6 +112,16 @@ it prints.
 - **Rollback**: Pages → Deployments → ⋯ → Rollback to this deployment.
 - Logs: Pages project → the deployment → **Functions** tab (real-time tail:
   `npx wrangler pages deployment tail --project-name guild-book`).
+
+## Backup and Restore
+
+See `docs/operations/backup-restore.md` for the complete disaster-recovery runbook, including:
+- Pre-beta snapshot export and storage
+- Time Travel restore window and coverage
+- Rehearsed restore drill results
+- Incident response checklist
+
+The runbook is designed to be followed under pressure during an actual data-loss event. Do not run the restore procedure except in response to a genuine production incident.
 
 ## Pre-launch licence reminder
 

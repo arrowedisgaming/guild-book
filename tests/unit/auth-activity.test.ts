@@ -83,6 +83,54 @@ describe('auth activity recording', () => {
 		vi.restoreAllMocks();
 	});
 
+	it('keeps the session valid when the activity read rejects asynchronously', async () => {
+		await db.insert(users).values({ id: 'user-d', email: 'd@example.test' });
+		const callbacks = createAuthCallbacks(db);
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		// The sign-in branch's read lives inside recordActivity's own try, since
+		// it has no separately-fetched `current` to fall back on. An async
+		// rejection here (not just a synchronous throw) must not escape.
+		vi.spyOn(db, 'select').mockReturnValue({
+			from: () => ({
+				where: () => ({
+					get: () => Promise.reject(new Error('D1 read unavailable'))
+				})
+			})
+		} as unknown as ReturnType<AppDb['select']>);
+
+		const result = await callbacks.jwt!({
+			token: {},
+			user: { id: 'user-d' }
+		} as unknown as JwtArgs);
+
+		expect(result).not.toBeNull();
+		expect(warn).toHaveBeenCalled();
+		vi.restoreAllMocks();
+
+		const row = await readUser('user-d');
+		expect(row?.loginCount).toBe(0);
+	});
+
+	it('keeps the session valid when the activity write rejects asynchronously', async () => {
+		await db.insert(users).values({ id: 'user-e', email: 'e@example.test' });
+		const callbacks = createAuthCallbacks(db);
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		vi.spyOn(db, 'update').mockReturnValue({
+			set: () => ({
+				where: () => Promise.reject(new Error('D1 write unavailable'))
+			})
+		} as unknown as ReturnType<AppDb['update']>);
+
+		const token = { sub: 'user-e', sessionVersion: AUTH_SESSION_VERSION };
+		const result = await callbacks.jwt!({ token } as unknown as JwtArgs);
+
+		// The whole point: an analytics failure — sync or async — must never
+		// sign a user out.
+		expect(result).toBe(token);
+		expect(warn).toHaveBeenCalled();
+		vi.restoreAllMocks();
+	});
+
 	it('still invalidates a token whose user row is gone', async () => {
 		const callbacks = createAuthCallbacks(db);
 

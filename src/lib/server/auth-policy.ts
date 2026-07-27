@@ -8,20 +8,37 @@ import { activityPatch, type ActivityState } from './admin/activity';
 
 export const AUTH_SESSION_VERSION = 2;
 
+const ZERO_ACTIVITY: ActivityState = { firstSeenAt: null, lastSeenAt: null, loginCount: 0 };
+
 /**
- * Best-effort beta activity write. Failure is swallowed on purpose: the caller
- * is the `jwt` callback, and throwing (or letting a rejection escape) there
- * would invalidate the token and sign the user out. No analytics figure is
- * worth that.
+ * Best-effort beta activity read-and-write. Every failure — a rejected read
+ * just as much as a rejected write — is swallowed on purpose: the caller is
+ * the `jwt` callback, and letting either escape (throw or unhandled
+ * rejection) there would invalidate the token and sign the user out. No
+ * analytics figure is worth that. When `current` is omitted, the read that
+ * fills it in happens inside this same try, so a transient DB error degrades
+ * to "skip activity tracking" rather than aborting sign-in.
  */
 async function recordActivity(
 	db: AppDb,
 	userId: string,
 	isSignIn: boolean,
-	current: ActivityState
+	current?: ActivityState
 ): Promise<void> {
 	try {
-		const patch = activityPatch({ now: new Date(), isSignIn, current });
+		const state =
+			current ??
+			(await db
+				.select({
+					firstSeenAt: users.firstSeenAt,
+					lastSeenAt: users.lastSeenAt,
+					loginCount: users.loginCount
+				})
+				.from(users)
+				.where(eq(users.id, userId))
+				.get()) ??
+			ZERO_ACTIVITY;
+		const patch = activityPatch({ now: new Date(), isSignIn, current: state });
 		if (!patch) return;
 		await db.update(users).set(patch).where(eq(users.id, userId));
 	} catch (err) {
@@ -39,22 +56,10 @@ export function createAuthCallbacks(db: AppDb): NonNullable<AuthConfig['callback
 				token.sessionVersion = AUTH_SESSION_VERSION;
 				// A sign-in happens at most once per token lifetime, so the extra
 				// read here is cheap and keeps every decision in the tested pure
-				// function rather than splitting it across SQL expressions.
-				const current = await db
-					.select({
-						firstSeenAt: users.firstSeenAt,
-						lastSeenAt: users.lastSeenAt,
-						loginCount: users.loginCount
-					})
-					.from(users)
-					.where(eq(users.id, user.id))
-					.get();
-				await recordActivity(
-					db,
-					user.id,
-					true,
-					current ?? { firstSeenAt: null, lastSeenAt: null, loginCount: 0 }
-				);
+				// function rather than splitting it across SQL expressions. The
+				// read lives inside recordActivity so a rejected read degrades to
+				// "skip tracking" instead of failing sign-in.
+				await recordActivity(db, user.id, true);
 			} else if (token.sessionVersion !== AUTH_SESSION_VERSION) {
 				// Invalidate legacy JWTs whose `sub` held the provider account id.
 				// Rotating AUTH_SECRET at rollout remains recommended, but correctness

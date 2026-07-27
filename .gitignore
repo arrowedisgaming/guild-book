@@ -65,3 +65,6 @@ Adherent of the Worm Template/
 secrets.*
 .superpowers/
 local.db.*
+
+# Local-only session notes (/done) — never commit
+SESSION_NOTES.md

@@ -56,3 +56,54 @@ binding = "DB"
 database_name = "guild-book-db"
 database_id = "3cab8443-35f9-4a1f-864d-49249ae80fc0"
 migrations_dir = "src/lib/server/db/migrations"
+
+# ---------------------------------------------------------------------------
+# Staging (Increment 5 Task 3). A SEPARATE Worker and a SEPARATE D1 database —
+# it shares nothing with production but the source tree.
+#
+# Wrangler does not inherit bindings into a named environment: `main`,
+# `compatibility_date` and `compatibility_flags` carry over from the top level,
+# but `[assets]`, `[[d1_databases]]` and `[[ratelimits]]` must each be
+# redeclared here or the staging Worker silently deploys without them.
+#
+# Migrations: use `npm run db:migrate:d1:staging`, NEVER `db:migrate:d1:remote`
+# — that script names `guild-book-db`, the production database, and takes no
+# environment flag.
+# ---------------------------------------------------------------------------
+[env.staging]
+name = "guild-book-staging"
+
+[env.staging.vars]
+CAMPAIGNS_ENABLED = "true"
+
+[env.staging.assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "guild-book-staging-db"
+database_id = "684b27e8-8593-4020-a3f8-b2b022c25a2f"
+migrations_dir = "src/lib/server/db/migrations"
+
+# Same limits as production: staging exists to measure production behaviour,
+# so a different budget here would invalidate the Task 4 capacity numbers.
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_SESSION_COMMAND_LIMITER"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_MUTATION_LIMITER"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_JOIN_LIMITER"
+namespace_id = "1003"
+simple = { limit = 10, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_POLL_LIMITER"
+namespace_id = "1004"
+simple = { limit = 30, period = 10 }

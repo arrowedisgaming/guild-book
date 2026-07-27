@@ -1,7 +1,11 @@
 import { json, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getDb, getDbContext } from '$lib/server/db';
-import { handle as authHandle } from '$lib/server/auth';
+import { handle as authHandle, getEnv, getUserId } from '$lib/server/auth';
+import {
+	classifyCampaignRequest,
+	createCampaignRateLimitHandle
+} from '$lib/server/rate-limit/campaign';
 
 // Optional dev-only auto-login bypass. The implementation file is gitignored
 // (see src/lib/server/dev-auto-login.example.ts). When absent — production,
@@ -23,21 +27,6 @@ if (devAutoLoginLoader) {
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_WRITES = 60;
-/**
- * The guided Challenge procedure (Increment 3 Task 6) fans out many more,
- * smaller writes per round than any other write path in the app — one
- * `/challenge-commands` POST per seat's Initiative placement, per turn's
- * play/discard/end-turn, and per modifier resolution, from EVERY
- * participant sharing one campaign. A single busy round easily produces a
- * dozen-plus writes, and a table cycling several rounds back-to-back (the
- * deck's own auto-reshuffle, or simply an engaged group) can legitimately
- * exceed the generic 60/60s budget below well within normal play — that
- * budget was sized for the old shared table's coarser, one-action-at-a-time
- * commands. Scoped to ONLY this endpoint family so every other write path
- * keeps the original, tighter abuse-prevention budget unchanged.
- */
-const RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS = 300;
-const CHALLENGE_COMMANDS_PATH_SEGMENT = '/challenge-commands';
 const writeBuckets = new Map<string, { count: number; resetAt: number }>();
 // On a long-lived Node process, distinct path keys accumulate forever otherwise.
 const RATE_LIMIT_MAX_BUCKETS = 4096;
@@ -64,9 +53,17 @@ const appHandle: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
+/**
+ * Sequenced AFTER `authHandle` on purpose (Increment 5 Task 1): the campaign
+ * limiter keys its buckets on the authenticated actor, which only exists once
+ * auth has installed `locals.auth()`. It still runs before every route
+ * handler, so a limited request is refused before it can spend a D1 read.
+ */
+const campaignRateLimitHandle = createCampaignRateLimitHandle({ getUserId, getEnv });
+
 export const handle = devAutoLoginHandle
-	? sequence(appHandle, devAutoLoginHandle, authHandle)
-	: sequence(appHandle, authHandle);
+	? sequence(appHandle, devAutoLoginHandle, authHandle, campaignRateLimitHandle)
+	: sequence(appHandle, authHandle, campaignRateLimitHandle);
 
 function isUnsafeRequest(request: Request): boolean {
 	return MUTATING_METHODS.has(request.method);
@@ -79,11 +76,26 @@ function isSameOrigin(request: Request): boolean {
 	return origin === new URL(request.url).origin;
 }
 
+/**
+ * Process-local write limiter for the NON-campaign API. Development defence
+ * only: the `Map` lives in one isolate, so on Cloudflare it resets with every
+ * isolate and enforces nothing durable.
+ *
+ * Campaign traffic is deliberately excluded (Increment 5 Task 1 Step 5) — it
+ * is handled by `campaignRateLimitHandle`, which is backed by the edge
+ * binding in production and by its own injectable-clock in-memory limiter
+ * elsewhere. Double-limiting the same request would make the effective budget
+ * the tighter of the two and produce false positives in the Task 4 capacity
+ * run. The 300/60s allowance the guided Challenge command routes used to get
+ * here now lives in `CAMPAIGN_RATE_LIMIT_POLICIES['session-command']`.
+ */
 function isRateLimited(request: Request, clientAddress: string): boolean {
 	if (!request.url.includes('/api/') || !isUnsafeRequest(request)) return false;
 
 	const now = Date.now();
 	const pathname = new URL(request.url).pathname;
+	if (classifyCampaignRequest(pathname, request.method)) return false;
+
 	const key = `${clientAddress}:${pathname}`;
 	const bucket = writeBuckets.get(key);
 
@@ -94,12 +106,7 @@ function isRateLimited(request: Request, clientAddress: string): boolean {
 	}
 
 	bucket.count += 1;
-	// `endsWith`, not `includes` (review round): the route is always
-	// `.../challenge-commands` at the END of the path — an exact structural
-	// match, not merely a substring that some unrelated future path could
-	// coincidentally contain in its middle.
-	const maxWrites = pathname.endsWith(CHALLENGE_COMMANDS_PATH_SEGMENT) ? RATE_LIMIT_MAX_WRITES_CHALLENGE_COMMANDS : RATE_LIMIT_MAX_WRITES;
-	return bucket.count > maxWrites;
+	return bucket.count > RATE_LIMIT_MAX_WRITES;
 }
 
 function pruneExpired(now: number): void {

@@ -19,7 +19,12 @@ const INVITE_CANARY = 'INVITE_TOKEN_CANARY';
 interface HealthBody {
 	campaignsEnabled: boolean;
 	pilotAllowlistSize: number;
-	rateLimit: { bindingsPresent: string[]; bindingsMissing: string[]; degradedPolls: number };
+	rateLimit: {
+		bindingsPresent: string[];
+		bindingsMissing: string[];
+		degradedPolls: number;
+		enforcement: 'enforcing' | 'not-enforcing' | 'unavailable' | 'absent';
+	};
 	database: {
 		reachable: boolean;
 		migrationsApplied: number | null;
@@ -217,6 +222,28 @@ describe('internal campaign health', () => {
 			const { json } = await body();
 			expect(json.rateLimit.bindingsPresent).toEqual([]);
 			expect(json.rateLimit.bindingsMissing).toHaveLength(4);
+			expect(json.rateLimit.enforcement).toBe('absent');
+		});
+
+		it('reports a binding that never counts as not-enforcing', async () => {
+			// A green health check must not be reachable while nothing is
+			// actually limited — this is the staging failure, surfaced.
+			const { json } = await body({
+				platformEnv: { CAMPAIGN_LIMITER_SELFTEST: { limit: async () => ({ success: true }) } }
+			});
+
+			expect(json.rateLimit.enforcement).toBe('not-enforcing');
+		});
+
+		it('reports a working binding as enforcing', async () => {
+			let calls = 0;
+			const { json } = await body({
+				platformEnv: {
+					CAMPAIGN_LIMITER_SELFTEST: { limit: async () => ({ success: ++calls <= 1 }) }
+				}
+			});
+
+			expect(json.rateLimit.enforcement).toBe('enforcing');
 		});
 	});
 

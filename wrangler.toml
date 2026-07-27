@@ -51,6 +51,16 @@ name = "CAMPAIGN_POLL_LIMITER"
 namespace_id = "1004"
 simple = { limit = 30, period = 10 }
 
+# Self-test only — never used to limit a real request. The internal health
+# endpoint calls this twice against a fixed key and expects the second call to
+# be denied; if it is not, the provider is present but not counting, which is
+# otherwise indistinguishable from "under the limit". `limit` must stay in
+# step with SELF_TEST_LIMIT in src/lib/server/rate-limit/cloudflare.ts.
+[[ratelimits]]
+name = "CAMPAIGN_LIMITER_SELFTEST"
+namespace_id = "1005"
+simple = { limit = 1, period = 10 }
+
 [[d1_databases]]
 binding = "DB"
 database_name = "guild-book-db"
@@ -107,3 +117,8 @@ simple = { limit = 10, period = 60 }
 name = "CAMPAIGN_POLL_LIMITER"
 namespace_id = "1004"
 simple = { limit = 30, period = 10 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_LIMITER_SELFTEST"
+namespace_id = "1005"
+simple = { limit = 1, period = 10 }

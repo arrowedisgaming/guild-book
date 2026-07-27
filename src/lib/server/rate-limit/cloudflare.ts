@@ -69,6 +69,58 @@ export function createCloudflareRateLimiter(
 }
 
 /**
+ * Name of the dedicated self-test binding, and the limit it is configured
+ * with in `wrangler.toml`. Kept deliberately tiny so proving enforcement
+ * costs two calls.
+ *
+ * MUST match `simple.limit` on the `CAMPAIGN_LIMITER_SELFTEST` entry in
+ * `wrangler.toml` (both the top level and `[env.staging]`). If they drift the
+ * probe reports `not-enforcing` on a healthy binding, which is the safe
+ * direction — a false alarm, never a false all-clear.
+ */
+export const SELF_TEST_BINDING_NAME = 'CAMPAIGN_LIMITER_SELFTEST';
+export const SELF_TEST_LIMIT = 1;
+
+export type RateLimitEnforcement = 'enforcing' | 'not-enforcing' | 'unavailable' | 'absent';
+
+/**
+ * Actively prove the provider counts, rather than trusting that it exists.
+ *
+ * A binding that is missing throws, and `campaign.ts` fails mutations closed —
+ * that failure mode is loud. The dangerous one is a binding that is present,
+ * type-checks, deploys, appears in `wrangler deploy` output as a Rate Limit
+ * resource, and silently returns `success: true` forever: it is
+ * indistinguishable from "under the limit", so every gate goes green while
+ * nothing is enforced. Verified empirically on 2026-07-27 against a throwaway
+ * Worker — a 5-per-60s limiter on a fixed key allowed 13 consecutive
+ * requests, with no application code involved.
+ *
+ * So: call the limiter `limit + 1` times against one fixed key. A working
+ * limiter must deny at least once. Zero denials means it is not counting.
+ *
+ * Uses its own binding and its own key, so it never spends a real policy's
+ * budget and can never deny a real request.
+ */
+export async function probeRateLimitEnforcement(
+	binding: CloudflareRateLimitBinding | undefined,
+	limit: number = SELF_TEST_LIMIT
+): Promise<RateLimitEnforcement> {
+	if (!binding) return 'absent';
+
+	try {
+		for (let attempt = 0; attempt <= limit; attempt++) {
+			const { success } = await binding.limit({ key: 'health-self-test' });
+			// One denial is proof enough; stop rather than spend the rest.
+			if (!success) return 'enforcing';
+		}
+	} catch {
+		return 'unavailable';
+	}
+
+	return 'not-enforcing';
+}
+
+/**
  * Binding names as declared in `wrangler.toml`. Kept beside the adapter so a
  * rename cannot drift between the config and the lookup.
  */

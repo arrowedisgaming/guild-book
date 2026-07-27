@@ -10,7 +10,12 @@ import { getDb } from '$lib/server/db';
 import { campaignEvents, playSessions } from '$lib/server/db/schema';
 import { privateHeaders } from '$lib/server/http';
 import { readDegradedPollCount } from '$lib/server/rate-limit/campaign';
-import { CLOUDFLARE_RATE_LIMIT_BINDING_NAMES } from '$lib/server/rate-limit/cloudflare';
+import {
+	CLOUDFLARE_RATE_LIMIT_BINDING_NAMES,
+	SELF_TEST_BINDING_NAME,
+	probeRateLimitEnforcement,
+	type CloudflareRateLimitBinding
+} from '$lib/server/rate-limit/cloudflare';
 
 /**
  * Internal operations health check (Increment 5 Task 2 Step 3).
@@ -53,7 +58,15 @@ export const GET: RequestHandler = async (event) => {
 			rateLimit: {
 				bindingsPresent,
 				bindingsMissing,
-				degradedPolls: readDegradedPollCount()
+				degradedPolls: readDegradedPollCount(),
+				/**
+				 * `enforcing` is the only healthy value in production.
+				 * `not-enforcing` means the binding exists but does not count —
+				 * the silent failure that looks green everywhere else.
+				 */
+				enforcement: await probeRateLimitEnforcement(
+					platformEnv?.[SELF_TEST_BINDING_NAME] as CloudflareRateLimitBinding | undefined
+				)
 			},
 			database,
 			content

@@ -6,7 +6,10 @@ import {
 	readDegradedPollCount,
 	resetRateLimitCountersForTest
 } from '$lib/server/rate-limit/campaign';
-import { createCloudflareRateLimiter } from '$lib/server/rate-limit/cloudflare';
+import {
+	createCloudflareRateLimiter,
+	probeRateLimitEnforcement
+} from '$lib/server/rate-limit/cloudflare';
 import { createMemoryRateLimiter } from '$lib/server/rate-limit/memory';
 import { RateLimitUnavailableError, type RateLimitPolicy } from '$lib/server/rate-limit/types';
 
@@ -190,6 +193,50 @@ describe('cloudflare adapter', () => {
 		await expect(
 			limiter.check({ key: 'session-command:abc', policy: 'session-command' })
 		).rejects.toBeInstanceOf(RateLimitUnavailableError);
+	});
+});
+
+describe('enforcement self-test', () => {
+	it('reports enforcing when the binding eventually denies', async () => {
+		let calls = 0;
+		const binding = { limit: vi.fn(async () => ({ success: ++calls <= 1 })) };
+
+		await expect(probeRateLimitEnforcement(binding, 1)).resolves.toBe('enforcing');
+	});
+
+	it('reports not-enforcing when the binding always allows', async () => {
+		// The staging failure, reproduced: a binding that is present, returns a
+		// well-formed outcome, and never counts. Indistinguishable from "under
+		// the limit" to every other code path — which is why this probe exists.
+		const binding = { limit: vi.fn(async () => ({ success: true })) };
+
+		await expect(probeRateLimitEnforcement(binding, 1)).resolves.toBe('not-enforcing');
+		expect(binding.limit).toHaveBeenCalledTimes(2);
+	});
+
+	it('reports absent when the binding is not configured', async () => {
+		await expect(probeRateLimitEnforcement(undefined, 1)).resolves.toBe('absent');
+	});
+
+	it('reports unavailable when the binding throws', async () => {
+		const binding = { limit: vi.fn().mockRejectedValue(new Error('edge down')) };
+		await expect(probeRateLimitEnforcement(binding, 1)).resolves.toBe('unavailable');
+	});
+
+	it('stops as soon as it has proof, rather than spending the whole budget', async () => {
+		const binding = { limit: vi.fn(async () => ({ success: false })) };
+
+		await expect(probeRateLimitEnforcement(binding, 30)).resolves.toBe('enforcing');
+		expect(binding.limit).toHaveBeenCalledOnce();
+	});
+
+	it('always uses one fixed, non-identifying key', async () => {
+		const binding = { limit: vi.fn(async (_input: { key: string }) => ({ success: true })) };
+		await probeRateLimitEnforcement(binding, 2);
+
+		const keys = binding.limit.mock.calls.map(([input]) => input.key);
+		expect(new Set(keys).size).toBe(1);
+		expect(keys[0]).toBe('health-self-test');
 	});
 });
 

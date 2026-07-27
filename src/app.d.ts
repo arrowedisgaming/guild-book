@@ -46,6 +46,12 @@ declare global {
 				CAMPAIGN_MUTATION_LIMITER?: RateLimit;
 				CAMPAIGN_JOIN_LIMITER?: RateLimit;
 				CAMPAIGN_POLL_LIMITER?: RateLimit;
+				/**
+				 * Never limits a real request — the health endpoint calls it to
+				 * prove the provider actually counts. See
+				 * `probeRateLimitEnforcement`.
+				 */
+				CAMPAIGN_LIMITER_SELFTEST?: RateLimit;
 			};
 		}
 	}

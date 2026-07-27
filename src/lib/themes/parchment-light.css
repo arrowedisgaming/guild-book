@@ -11,5 +11,7 @@
 	--ink: oklch(0.24 0.02 60);
 	--ink-soft: oklch(0.45 0.02 60);
 	--accent: oklch(0.43 0.13 25);
+	--alert: oklch(0.9 0.062 85);
+	--alert-ink: oklch(0.3 0.06 60);
 	color-scheme: light;
 }

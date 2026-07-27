@@ -9,5 +9,7 @@
 	--ink: oklch(0.9 0.02 85);
 	--ink-soft: oklch(0.68 0.02 85);
 	--accent: oklch(0.64 0.15 27);
+	--alert: oklch(0.29 0.045 75);
+	--alert-ink: oklch(0.89 0.04 85);
 	color-scheme: dark;
 }

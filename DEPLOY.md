@@ -49,6 +49,8 @@ ships production; every other branch/PR gets a preview URL.
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | from Google Cloud Console (step 3) |
 | `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` | from Discord Developer Portal (step 3) |
 | `NODE_VERSION` | `22` |
+| `ADMIN_EMAILS` | Comma-separated admin addresses. Unset or empty means nobody can reach `/admin`. |
+| `FEEDBACK_URL` | Optional. Where the alpha banner's "Send feedback" link points. Omit to hide the link. |
 
 (`ADAPTER` is only a build-time switch and is set in the build command.
 Do **not** set `AUTH_DEV_LOGIN`/`AUTH_DEV_AUTOLOGIN` in production.)
@@ -102,6 +104,16 @@ it prints.
 - **Schema changes**: `npm run db:generate` locally and commit the migration.
   Apply every required remote migration **before** pushing or merging code that
   depends on it; pushes to `main` deploy immediately and CI does not migrate D1.
+- **User activity tracking (migration `0009_user_activity.sql`) — this
+  ordering is not optional**: run `npm run db:migrate:d1:remote` **before**
+  pushing the activity-tracking code to `main`. The `jwt` callback in
+  `src/lib/server/auth-policy.ts` reads `first_seen_at`, `last_seen_at`, and
+  `login_count` on every authenticated request, and that read is deliberately
+  not guarded by a try/catch. If the code deploys before the migration runs,
+  every returning sign-in throws `no such column: users.first_seen_at` —
+  every beta tester is 500'd or force-signed-out until the migration is
+  applied. This is unlike migration `0008`, where code-before-migration was
+  harmless.
 - **Auth account-linking migrations**: before merging this release, run
   `npm run db:auth:preflight:d1:remote`, confirm both result sets are empty,
   then run `npm run db:migrate:d1:remote`. Do not deploy the adapter-backed auth
@@ -110,6 +122,12 @@ it prints.
 - **Rollback**: Pages → Deployments → ⋯ → Rollback to this deployment.
 - Logs: Pages project → the deployment → **Functions** tab (real-time tail:
   `npx wrangler pages deployment tail --project-name guild-book`).
+
+## Backup and Restore
+
+See `docs/operations/backup-restore.md` for the complete disaster-recovery procedure, including backup export, Time Travel coverage checks, and a restore drill to rehearse before any incident occurs.
+
+Do not run the restore procedure except in response to a genuine production incident involving data loss.
 
 ## Pre-launch licence reminder
 

@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { signOut } from '@auth/sveltekit/client';
 	import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
+	import AlphaBanner from '$lib/components/layout/AlphaBanner.svelte';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
@@ -16,6 +17,8 @@
 </script>
 
 <div class="site">
+	<AlphaBanner feedbackUrl={data.feedbackUrl} />
+
 	<header class="site-header">
 		<a class="brand" href="/">Guild Book</a>
 		<nav class="site-nav">

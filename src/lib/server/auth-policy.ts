@@ -4,8 +4,47 @@ import type { GoogleProfile } from '@auth/core/providers/google';
 import { eq } from 'drizzle-orm';
 import type { AppDb } from './db';
 import { users } from './db/schema';
+import { activityPatch, type ActivityState } from './admin/activity';
 
 export const AUTH_SESSION_VERSION = 2;
+
+const ZERO_ACTIVITY: ActivityState = { firstSeenAt: null, lastSeenAt: null, loginCount: 0 };
+
+/**
+ * Best-effort beta activity read-and-write. Every failure — a rejected read
+ * just as much as a rejected write — is swallowed on purpose: the caller is
+ * the `jwt` callback, and letting either escape (throw or unhandled
+ * rejection) there would invalidate the token and sign the user out. No
+ * analytics figure is worth that. When `current` is omitted, the read that
+ * fills it in happens inside this same try, so a transient DB error degrades
+ * to "skip activity tracking" rather than aborting sign-in.
+ */
+async function recordActivity(
+	db: AppDb,
+	userId: string,
+	isSignIn: boolean,
+	current?: ActivityState
+): Promise<void> {
+	try {
+		const state =
+			current ??
+			(await db
+				.select({
+					firstSeenAt: users.firstSeenAt,
+					lastSeenAt: users.lastSeenAt,
+					loginCount: users.loginCount
+				})
+				.from(users)
+				.where(eq(users.id, userId))
+				.get()) ??
+			ZERO_ACTIVITY;
+		const patch = activityPatch({ now: new Date(), isSignIn, current: state });
+		if (!patch) return;
+		await db.update(users).set(patch).where(eq(users.id, userId));
+	} catch (err) {
+		console.warn('[auth] activity write failed:', (err as Error)?.message ?? err);
+	}
+}
 
 /** Shared verbatim with the Auth.js lifecycle integration tests. */
 export function createAuthCallbacks(db: AppDb): NonNullable<AuthConfig['callbacks']> {
@@ -15,6 +54,12 @@ export function createAuthCallbacks(db: AppDb): NonNullable<AuthConfig['callback
 				// With the adapter, Auth.js supplies the durable local users.id.
 				token.sub = user.id;
 				token.sessionVersion = AUTH_SESSION_VERSION;
+				// A sign-in happens at most once per token lifetime, so the extra
+				// read here is cheap and keeps every decision in the tested pure
+				// function rather than splitting it across SQL expressions. The
+				// read lives inside recordActivity so a rejected read degrades to
+				// "skip tracking" instead of failing sign-in.
+				await recordActivity(db, user.id, true);
 			} else if (token.sessionVersion !== AUTH_SESSION_VERSION) {
 				// Invalidate legacy JWTs whose `sub` held the provider account id.
 				// Rotating AUTH_SECRET at rollout remains recommended, but correctness
@@ -23,13 +68,20 @@ export function createAuthCallbacks(db: AppDb): NonNullable<AuthConfig['callback
 			} else if (token.sub) {
 				// A signed JWT must not outlive its durable local user. This also keeps
 				// the application shell and protected API routes in agreement after an
-				// account is removed.
+				// account is removed. The activity columns ride along on this
+				// already-required lookup, so tracking costs no extra query.
 				const existing = await db
-					.select({ id: users.id })
+					.select({
+						id: users.id,
+						firstSeenAt: users.firstSeenAt,
+						lastSeenAt: users.lastSeenAt,
+						loginCount: users.loginCount
+					})
 					.from(users)
 					.where(eq(users.id, token.sub))
 					.get();
 				if (!existing) return null;
+				await recordActivity(db, existing.id, false, existing);
 			}
 			return token;
 		},

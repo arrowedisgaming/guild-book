@@ -22,7 +22,12 @@ export const users = sqliteTable(
 		name: text('name'),
 		email: text('email').unique(),
 		emailVerified: integer('email_verified', { mode: 'timestamp' }),
-		image: text('image')
+		image: text('image'),
+		/** Beta activity signals. Nullable/defaulted so the migration is additive
+		 * and needs no backfill — pre-migration sign-ins are unrecoverable. */
+		firstSeenAt: integer('first_seen_at', { mode: 'timestamp' }),
+		lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
+		loginCount: integer('login_count').notNull().default(0)
 	},
 	(table) => [
 		// Provider profiles are normalized before adapter lookup. Keep this

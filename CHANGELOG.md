@@ -8,6 +8,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Deployment target moved from Cloudflare Pages to Cloudflare Workers**
+  (roadmap decision D4). No application code changed: `@sveltejs/adapter-cloudflare`
+  already emits `_worker.js` alongside the static asset tree, so
+  `wrangler.toml` swapped `pages_build_output_dir` for `main` + `[assets]` and
+  the build command is untouched. `nodejs_compat` is retained — it is required
+  for `node:crypto` and already supplies AsyncLocalStorage, so the adapter's
+  suggested `nodejs_als` flag proved unnecessary. `guildbook.arrowed.games` now
+  resolves to the Worker; the Pages project is retained, undeleted, as the
+  rollback path. Deploys are manual (`wrangler deploy`) until Workers Builds is
+  connected — pushing `main` no longer ships production on its own.
+- Rotated `AUTH_SECRET` during the cutover, signing out existing sessions as
+  `src/lib/server/auth-policy.ts` recommends. Share links are unaffected: they
+  resolve a stored `shareId` rather than a signed token.
+
+### Added
+
+- **Campaign rate limiting** behind a provider-neutral port, with a Cloudflare
+  rate-limit binding as the production adapter and an injectable-clock
+  in-memory limiter as development defence. Four independent policies — session
+  commands, campaign mutations, invite joins and session polling — keyed on a
+  hash of actor plus campaign, falling back to the client address for
+  unauthenticated join attempts, so no raw identifier reaches provider
+  analytics. Denials return `Retry-After` without disclosing whether the
+  campaign exists. Note the provider's counters are **per Cloudflare location,
+  not global**. When the binding is unreachable, mutations fail closed while
+  polls are served degraded and counted — polling GETs were previously
+  unlimited, so refusing them would be a regression rather than a protection.
+- **A rate-limiter self-test** on the health endpoint. A binding can deploy,
+  type-check, appear as a Rate Limit resource, and still never count, which is
+  indistinguishable from "under the limit" to every other signal. The health
+  check now calls a dedicated binding past its own limit and reports
+  `rateLimit.enforcement`; anything but `"enforcing"` blocks making campaigns
+  public. This is currently `"not-enforcing"` on Cloudflare and is open with
+  their support.
+- **Privacy-safe campaign operations metrics** with a closed metric-name union
+  and a fixed tag shape — no `Record<string, unknown>` sink and no free-text
+  field, so command bodies, card identities, invite tokens, character payloads
+  and ids have nowhere to leak. Command types and procedure phases are
+  sanitised against known enums; unrecognised values collapse to a coarse
+  label.
+- **An internal health endpoint** at `/api/internal/campaign-health`, guarded
+  by a dedicated secret compared in constant time, reporting aggregate data
+  only: feature flag, allowlist size, D1 reachability, applied migration count,
+  content digest, rate-limit binding presence and enforcement, active/frozen
+  session counts, and the age of the longest-frozen session. It returns 404 to
+  everyone when the secret is unset, and 404 rather than 401 on a bad token.
+- **A staging environment** — a separate Worker and a separate D1 database,
+  sharing nothing with production but the source tree, plus a
+  `db:migrate:d1:staging` script that names its own database rather than
+  risking the production-only `db:migrate:d1:remote`.
+- `wrangler deploy --dry-run` now runs in CI for both environments, validating
+  bindings, routes and config against the installed Wrangler's schema on every
+  push.
+
 ## [0.6.0] - 2026-07-27
 
 ### Added

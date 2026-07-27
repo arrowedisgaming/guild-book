@@ -4,11 +4,23 @@ compatibility_date = "2026-07-01"
 # only provides behind this flag — `node:crypto` (content digests in
 # content/canonical-json.ts, invite nonces in session/lifecycle.ts) and
 # `node:async_hooks` (via @sveltejs/kit's request-event internals). Without it
-# the assets still upload but publishing the Function fails outright with
-# `No such module "node:crypto"`, which leaves Pages serving the previous
-# build — a silent failure. Do not remove.
+# publishing fails outright with `No such module "node:crypto"`. Do not remove.
+#
+# `nodejs_als` is deliberately absent: the adapter's Workers documentation lists
+# it, but `nodejs_compat` on a compatibility_date at or after 2024-09-23 already
+# provides AsyncLocalStorage, so it would be redundant. See the migration plan
+# Task 1 Step 2.
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# Workers Static Assets (migrated from Cloudflare Pages — roadmap decision D4,
+# 2026-07-27). `@sveltejs/adapter-cloudflare` emits `_worker.js` alongside the
+# static tree in the same directory, and writes an `.assetsignore` so the
+# server bundle and `_routes.json` are not served as public assets.
+main = ".svelte-kit/cloudflare/_worker.js"
+
+[assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
 
 [[d1_databases]]
 binding = "DB"

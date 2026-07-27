@@ -26,6 +26,10 @@ const normalizedEmailMigration = readFileSync(
 	new URL('../../src/lib/server/db/migrations/0002_auth_email_normalization.sql', import.meta.url),
 	'utf8'
 );
+const userActivityMigration = readFileSync(
+	new URL('../../src/lib/server/db/migrations/0009_user_activity.sql', import.meta.url),
+	'utf8'
+);
 
 describe('Auth.js account adapter', () => {
 	let sqlite: Database.Database;
@@ -37,6 +41,7 @@ describe('Auth.js account adapter', () => {
 		sqlite.exec(baseMigration);
 		sqlite.exec(authMigration);
 		sqlite.exec(normalizedEmailMigration);
+		sqlite.exec(userActivityMigration);
 		db = drizzle(sqlite, { schema });
 	});
 

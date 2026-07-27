@@ -64,6 +64,13 @@
       "when": 1784989704561,
       "tag": "0008_saved_denizens",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1785171583602,
+      "tag": "0009_user_activity",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,13 @@
 name = "guild-book"
 compatibility_date = "2026-07-01"
+# Required: the server bundle pulls in Node builtins that the Workers runtime
+# only provides behind this flag — `node:crypto` (content digests in
+# content/canonical-json.ts, invite nonces in session/lifecycle.ts) and
+# `node:async_hooks` (via @sveltejs/kit's request-event internals). Without it
+# the assets still upload but publishing the Function fails outright with
+# `No such module "node:crypto"`, which leaves Pages serving the previous
+# build — a silent failure. Do not remove.
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".svelte-kit/cloudflare"
 
 [[d1_databases]]

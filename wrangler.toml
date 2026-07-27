@@ -18,6 +18,16 @@ compatibility_flags = ["nodejs_compat"]
 # server bundle and `_routes.json` are not served as public assets.
 main = ".svelte-kit/cloudflare/_worker.js"
 
+# Non-secret production values only. Everything sensitive is a secret set via
+# `wrangler secret put` — secrets survive a deploy, whereas `[vars]` is
+# REPLACED wholesale on every deploy, so a value set in the dashboard but not
+# listed here would silently disappear on the next push.
+#
+# `CAMPAIGNS_ENABLED` is deliberately absent: campaigns stay server-gated off
+# until Increment 5 Task 6 Step 5 enables them explicitly.
+[vars]
+AUTH_URL = "https://guildbook.arrowed.games"
+
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"

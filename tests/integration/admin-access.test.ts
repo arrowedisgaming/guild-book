@@ -65,6 +65,18 @@ describe('admin page access', () => {
 				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 			)
 			.run('char-2', 'plain-user', 'Draft Dan', 'Elf', 'Thief', '{}', 1, 0, 1000, 1000);
+		// Archived but otherwise complete — must still show up (and still show
+		// as archived) in the adventurers table and in the aggregate counts.
+		sqlite
+			.prepare(
+				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+			)
+			.run('char-3', 'plain-user', 'Old Gravedigger', 'Human', 'Fighter', '{}', 0, 1, 1000, 1000);
+		sqlite
+			.prepare(
+				'INSERT INTO denizens (id, user_id, name, theme, threat, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+			)
+			.run('denizen-1', 'plain-user', 'The Rat King', 'Vermin', 'Swarm', '{}', 1000, 1000);
 
 		mocks.getDb.mockResolvedValue(drizzle(sqlite, { schema }));
 	});
@@ -101,16 +113,23 @@ describe('admin page access', () => {
 		const data = (await load(adminEvent() as never)) as {
 			summary: Record<string, number>;
 			users: unknown[];
-			characters: unknown[];
+			characters: Array<{ id: string; isDraft: boolean; isArchived: boolean }>;
 		};
 
 		expect(data.summary.totalUsers).toBe(2);
-		expect(data.summary.totalCharacters).toBe(2);
+		expect(data.summary.totalCharacters).toBe(3);
 		expect(data.summary.draftCharacters).toBe(1);
-		expect(data.summary.completedCharacters).toBe(1);
-		expect(data.summary.totalDenizens).toBe(0);
+		expect(data.summary.completedCharacters).toBe(2);
+		expect(data.summary.totalDenizens).toBe(1);
 		expect(data.users).toHaveLength(2);
-		expect(data.characters).toHaveLength(2);
+		expect(data.characters).toHaveLength(3);
+
+		// The inclusion property, exercised: an archived character is not
+		// dropped from the table, and its archived state survives the read.
+		const archived = data.characters.find((row) => row.id === 'char-3');
+		expect(archived).toBeDefined();
+		expect(archived?.isArchived).toBe(true);
+		expect(archived?.isDraft).toBe(false);
 	});
 
 	it('clamps unrecognised sort and page params instead of erroring', async () => {
@@ -121,5 +140,24 @@ describe('admin page access', () => {
 
 		expect(data.usersPage).toBe(1);
 		expect(data.users).toHaveLength(2);
+	});
+
+	it('clamps a page value of 0 to page 1', async () => {
+		mocks.getUserId.mockResolvedValue('admin-user');
+		const data = (await load(adminEvent({ usersPage: '0' }) as never)) as { usersPage: number };
+
+		expect(data.usersPage).toBe(1);
+	});
+
+	it('returns an empty page past the last page instead of erroring', async () => {
+		mocks.getUserId.mockResolvedValue('admin-user');
+		const data = (await load(
+			adminEvent({ usersPage: '5', charactersPage: '5' }) as never
+		)) as { usersPage: number; charactersPage: number; users: unknown[]; characters: unknown[] };
+
+		expect(data.usersPage).toBe(5);
+		expect(data.charactersPage).toBe(5);
+		expect(data.users).toHaveLength(0);
+		expect(data.characters).toHaveLength(0);
 	});
 });

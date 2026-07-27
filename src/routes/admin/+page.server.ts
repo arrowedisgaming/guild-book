@@ -6,6 +6,15 @@ import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 50;
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+/**
+ * Any finite integer is otherwise a legal `?usersPage=`/`?charactersPage=`
+ * value, so an astronomically large one turns `(page - 1) * PAGE_SIZE` into
+ * an unsafe-integer OFFSET that better-sqlite3/D1 reject outright — an error,
+ * not the empty page the spec calls for past the real last page. This cap is
+ * far past any page count this table will ever reach while keeping the
+ * resulting offset a safe integer.
+ */
+const MAX_PAGE = 100_000;
 
 /**
  * Sorting is an allowlist, not a passthrough: the request value selects a
@@ -29,10 +38,15 @@ const CHARACTER_SORTS = {
 type UserSort = keyof typeof USER_SORTS;
 type CharacterSort = keyof typeof CHARACTER_SORTS;
 
-/** 1-based in the URL, 0-based as an offset. Anything unparseable is page 1. */
+/**
+ * 1-based in the URL, 0-based as an offset. Anything unparseable is page 1;
+ * anything past `MAX_PAGE` is clamped down to it rather than left to produce
+ * an unsafe-integer OFFSET.
+ */
 function readPage(url: URL, key: string): number {
 	const raw = Number.parseInt(url.searchParams.get(key) ?? '', 10);
-	return Number.isFinite(raw) && raw > 1 ? raw : 1;
+	if (!Number.isFinite(raw) || raw < 1) return 1;
+	return Math.min(raw, MAX_PAGE);
 }
 
 function readSort<K extends string>(url: URL, key: string, allowed: Record<K, unknown>, fallback: K): K {
@@ -56,10 +70,6 @@ export const load: PageServerLoad = async (event) => {
 		'created'
 	);
 
-	// Every figure is a SQL aggregate — no query pulls rows into JS to count
-	// them. Each `.get()` is awaited inline rather than through a helper:
-	// better-sqlite3 resolves it synchronously and D1 returns a promise, and
-	// `await` handles both, but a helper typed as `Promise<T>` would not.
 	const totalUsers =
 		(await db.select({ value: count() }).from(users).get())?.value ?? 0;
 	const activeUsers =
@@ -87,7 +97,7 @@ export const load: PageServerLoad = async (event) => {
 			firstSeenAt: users.firstSeenAt,
 			lastSeenAt: users.lastSeenAt,
 			loginCount: users.loginCount,
-			characterCount: sql<number>`(select count(*) from ${characters} where ${characters.userId} = ${users.id})`
+			characterCount: sql<number>`(select count(*) from ${characters} where ${characters.userId} = ${sql.raw('"users"."id"')})`
 		})
 		.from(users)
 		.orderBy(USER_SORTS[userSort])

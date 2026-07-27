@@ -21,6 +21,10 @@ git check-ignore .backups/guild-book-prebeta.sql
 
 If that command prints nothing, add `.backups/` to `.gitignore` and commit that change — the dump contains real user emails and must never be committed to version control.
 
+Immediately after exporting, visit `/admin` and record the total user count. This is the snapshot-time baseline the restore drill below compares against — not whatever `/admin` reports when the drill is actually run, since signups between the snapshot and the drill will legitimately move that number.
+
+- **Production user count at snapshot time:** `_____` (owner to fill in — visit `/admin` right after running the export above)
+
 ## Time Travel Coverage
 
 Guild Book's D1 database benefits from Cloudflare's Time Travel feature, which allows restoration to any point within a rolling restore window.
@@ -40,7 +44,7 @@ To restore the production database `guild-book-db` to a specific point in time, 
 npx wrangler d1 time-travel restore guild-book-db --bookmark=<BOOKMARK>
 ```
 
-Replace `<BOOKMARK>` with the exact bookmark value (e.g. `2026-07-27T15:30:00Z`). Cloudflare will confirm the bookmark is within the restorable window before executing.
+Replace `<BOOKMARK>` with the exact bookmark value reported by the Time Travel info command (an opaque hex string, e.g. `00000004-0000497e-0041e068-e59a013a05...` — not a timestamp). Cloudflare will confirm the bookmark is within the restorable window before executing.
 
 Alternatively, you can restore to a specific timestamp using the `--timestamp` flag:
 
@@ -48,7 +52,7 @@ Alternatively, you can restore to a specific timestamp using the `--timestamp` f
 npx wrangler d1 time-travel restore guild-book-db --timestamp=<TIMESTAMP>
 ```
 
-**Restoration is atomic:** the command succeeds entirely or rolls back entirely. Partial restores are not possible.
+Cloudflare documents Time Travel restore as all-or-nothing: the command succeeds entirely or rolls back entirely. Partial restores are not possible.
 
 ## Restore Drill
 
@@ -62,10 +66,7 @@ npx wrangler d1 execute guild-book-restore-drill --remote --file=.backups/guild-
 npx wrangler d1 execute guild-book-restore-drill --remote --command="SELECT count(*) FROM users;"
 ```
 
-Record the user count from the last command. Then compare it to the production user count:
-
-1. Visit `/admin` in the production app and record the total user count.
-2. The counts must match to confirm the snapshot is complete and correct.
+Record the user count from the last command. Then compare it to the **production user count at snapshot time** recorded in the Pre-Beta Snapshot section above — not the current `/admin` count. Any signup between the snapshot and this drill legitimately grows the current count, so comparing against "now" would misreport a healthy backup as corrupt.
 
 Then delete the drill database:
 
@@ -78,9 +79,9 @@ npx wrangler d1 delete guild-book-restore-drill
 - **Scratch database name used:** `guild-book-restore-drill`
 - **SQL dump restored:** `.backups/guild-book-prebeta.sql`
 - **User count after restore:** `_____` (owner to fill in — run the SELECT count query above)
-- **Production user count at backup time:** `_____` (owner to fill in — visit `/admin` before the restore drill and record it)
+- **Production user count at snapshot time:** `_____` (owner to fill in — copy the value recorded in the Pre-Beta Snapshot section above; do not re-visit `/admin` now)
 
-The counts must match. If they do not, the backup is incomplete or corrupted and must not be relied upon for recovery.
+The restored count must match the production count **at snapshot time**. If it does not, the backup is incomplete or corrupted and must not be relied upon for recovery.
 
 ## Important: Activity Tracking Cannot Be Backfilled
 

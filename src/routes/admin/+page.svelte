@@ -3,7 +3,11 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const dateFormat = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+	const dateFormat = new Intl.DateTimeFormat('en-GB', {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+		timeZone: 'UTC'
+	});
 
 	function when(value: Date | null): string {
 		return value ? dateFormat.format(value) : '—';
@@ -49,7 +53,7 @@
 	<table>
 		<thead>
 			<tr>
-				<th>Name</th><th>Email</th><th>First seen</th><th>Last seen</th>
+				<th>Name</th><th>Email</th><th>First seen (UTC)</th><th>Last seen (UTC)</th>
 				<th>Logins</th><th>Adventurers</th>
 			</tr>
 		</thead>
@@ -83,7 +87,7 @@
 		<thead>
 			<tr>
 				<th>Name</th><th>Kith</th><th>Path</th><th>Owner</th>
-				<th>State</th><th>Created</th><th>Updated</th>
+				<th>State</th><th>Created (UTC)</th><th>Updated (UTC)</th>
 			</tr>
 		</thead>
 		<tbody>

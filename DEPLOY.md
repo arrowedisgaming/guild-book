@@ -104,6 +104,16 @@ it prints.
 - **Schema changes**: `npm run db:generate` locally and commit the migration.
   Apply every required remote migration **before** pushing or merging code that
   depends on it; pushes to `main` deploy immediately and CI does not migrate D1.
+- **User activity tracking (migration `0009_user_activity.sql`) — this
+  ordering is not optional**: run `npm run db:migrate:d1:remote` **before**
+  pushing the activity-tracking code to `main`. The `jwt` callback in
+  `src/lib/server/auth-policy.ts` reads `first_seen_at`, `last_seen_at`, and
+  `login_count` on every authenticated request, and that read is deliberately
+  not guarded by a try/catch. If the code deploys before the migration runs,
+  every returning sign-in throws `no such column: users.first_seen_at` —
+  every beta tester is 500'd or force-signed-out until the migration is
+  applied. This is unlike migration `0008`, where code-before-migration was
+  harmless.
 - **Auth account-linking migrations**: before merging this release, run
   `npm run db:auth:preflight:d1:remote`, confirm both result sets are empty,
   then run `npm run db:migrate:d1:remote`. Do not deploy the adapter-backed auth

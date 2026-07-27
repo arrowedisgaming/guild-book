@@ -19,7 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `last_seen_at`, `login_count`) record when each visitor first appeared, when
   they last signed in, and how many times they have signed in. Migration
   `0009_user_activity.sql` applies once; older backups cannot be backfilled
-  retroactively with this data.
+  retroactively with this data. **Deploy note — order matters, unlike 0008**:
+  run `npm run db:migrate:d1:remote` **before** pushing this change to `main`.
+  The `jwt` callback (`src/lib/server/auth-policy.ts`) reads these three
+  columns on every authenticated request and is deliberately not wrapped in a
+  try/catch, so deploying the code ahead of the migration is not harmless the
+  way 0008 was: every returning sign-in between push and migration throws
+  `no such column: users.first_seen_at`, 500ing or force-signing-out every
+  beta tester until the migration runs.
 - **Admin overview page** (`/admin`, gated by `ADMIN_EMAILS`): shows total user
   count, character count, and denizen count, read from the production database.
   The page is visible only to signed-in users whose email address appears in the

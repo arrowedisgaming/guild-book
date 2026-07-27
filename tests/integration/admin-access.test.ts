@@ -39,6 +39,13 @@ async function statusOf(run: () => unknown): Promise<number> {
 
 describe('admin page access', () => {
 	let sqlite: Database.Database;
+	// `first_seen_at`/`last_seen_at`/`created_at` are `mode: 'timestamp'` columns
+	// (unix seconds, not milliseconds) — a seconds/milliseconds inversion in the
+	// admin load's `gte(..., since)` comparisons must be caught here rather than
+	// slip through as a silently-empty "active" or "new" figure.
+	const NOW_SECONDS = Math.floor(Date.now() / 1000);
+	const RECENT_SECONDS = NOW_SECONDS - 60 * 60; // 1 hour ago: inside the 7-day window
+	const STALE_SECONDS = 1000; // 1970: well outside any 7-day window
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -52,26 +59,37 @@ describe('admin page access', () => {
 		sqlite
 			.prepare('INSERT INTO users (id, name, email, login_count) VALUES (?, ?, ?, ?)')
 			.run('admin-user', 'Owner', ADMIN_EMAIL, 4);
+		// plain-user signed in recently, so they count toward the 7-day
+		// "active" figure; admin-user never has, so they must not.
 		sqlite
-			.prepare('INSERT INTO users (id, name, email, login_count) VALUES (?, ?, ?, ?)')
-			.run('plain-user', 'Tester', 'tester@example.test', 1);
+			.prepare(
+				'INSERT INTO users (id, name, email, login_count, last_seen_at) VALUES (?, ?, ?, ?, ?)'
+			)
+			.run('plain-user', 'Tester', 'tester@example.test', 1, RECENT_SECONDS);
 		sqlite
 			.prepare(
 				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 			)
-			.run('char-1', 'plain-user', 'Old Tom', 'Human', 'Fighter', '{}', 0, 0, 1000, 1000);
+			.run('char-1', 'plain-user', 'Old Tom', 'Human', 'Fighter', '{}', 0, 0, STALE_SECONDS, STALE_SECONDS);
 		sqlite
 			.prepare(
 				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 			)
-			.run('char-2', 'plain-user', 'Draft Dan', 'Elf', 'Thief', '{}', 1, 0, 1000, 1000);
+			.run('char-2', 'plain-user', 'Draft Dan', 'Elf', 'Thief', '{}', 1, 0, STALE_SECONDS, STALE_SECONDS);
 		// Archived but otherwise complete — must still show up (and still show
 		// as archived) in the adventurers table and in the aggregate counts.
 		sqlite
 			.prepare(
 				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 			)
-			.run('char-3', 'plain-user', 'Old Gravedigger', 'Human', 'Fighter', '{}', 0, 1, 1000, 1000);
+			.run('char-3', 'plain-user', 'Old Gravedigger', 'Human', 'Fighter', '{}', 0, 1, STALE_SECONDS, STALE_SECONDS);
+		// Created recently, so it counts toward the 7-day "new characters"
+		// figure; the other three (created at STALE_SECONDS) must not.
+		sqlite
+			.prepare(
+				'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+			)
+			.run('char-4', 'plain-user', 'New Nell', 'Human', 'Fighter', '{}', 0, 0, RECENT_SECONDS, RECENT_SECONDS);
 		sqlite
 			.prepare(
 				'INSERT INTO denizens (id, user_id, name, theme, threat, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -117,12 +135,19 @@ describe('admin page access', () => {
 		};
 
 		expect(data.summary.totalUsers).toBe(2);
-		expect(data.summary.totalCharacters).toBe(3);
+		expect(data.summary.totalCharacters).toBe(4);
 		expect(data.summary.draftCharacters).toBe(1);
-		expect(data.summary.completedCharacters).toBe(2);
+		expect(data.summary.completedCharacters).toBe(3);
 		expect(data.summary.totalDenizens).toBe(1);
+		// Time-windowed aggregates: plain-user (last_seen_at 1h ago) is active,
+		// admin-user (never seen) is not; char-4 (created 1h ago) is new, the
+		// other three (created in 1970) are not. Both figures are structurally
+		// 0 under a seconds/milliseconds inversion in the `gte(..., since)`
+		// comparison, so this is the only thing that would catch one.
+		expect(data.summary.activeUsers).toBe(1);
+		expect(data.summary.newCharacters).toBe(1);
 		expect(data.users).toHaveLength(2);
-		expect(data.characters).toHaveLength(3);
+		expect(data.characters).toHaveLength(4);
 
 		// The inclusion property, exercised: an archived character is not
 		// dropped from the table, and its archived state survives the read.
@@ -130,6 +155,17 @@ describe('admin page access', () => {
 		expect(archived).toBeDefined();
 		expect(archived?.isArchived).toBe(true);
 		expect(archived?.isDraft).toBe(false);
+
+		// Per-user adventurer counts: plain-user owns four characters,
+		// admin-user owns none. A correlated subquery that loses its table
+		// qualifier collapses to `characters.user_id = characters.id`, which is
+		// never true and silently reports 0 for every user — this pins the
+		// correct counts so that regression can't hide again.
+		const usersById = new Map((data.users as Array<{ id: string; characterCount: number }>).map(
+			(row) => [row.id, row.characterCount]
+		));
+		expect(usersById.get('plain-user')).toBe(4);
+		expect(usersById.get('admin-user')).toBe(0);
 	});
 
 	it('clamps unrecognised sort and page params instead of erroring', async () => {
@@ -147,6 +183,16 @@ describe('admin page access', () => {
 		const data = (await load(adminEvent({ usersPage: '0' }) as never)) as { usersPage: number };
 
 		expect(data.usersPage).toBe(1);
+	});
+
+	it('clamps an astronomically large page instead of producing an unsafe OFFSET', async () => {
+		mocks.getUserId.mockResolvedValue('admin-user');
+		const data = (await load(
+			adminEvent({ usersPage: '9007199254740993' }) as never
+		)) as { usersPage: number; users: unknown[] };
+
+		expect(Number.isSafeInteger(data.usersPage)).toBe(true);
+		expect(data.users).toHaveLength(0);
 	});
 
 	it('returns an empty page past the last page instead of erroring', async () => {

@@ -115,13 +115,9 @@ it prints.
 
 ## Backup and Restore
 
-See `docs/operations/backup-restore.md` for the complete disaster-recovery runbook, including:
-- Pre-beta snapshot export and storage
-- Time Travel restore window and coverage
-- Rehearsed restore drill results
-- Incident response checklist
+See `docs/operations/backup-restore.md` for the complete disaster-recovery procedure, including backup export, Time Travel coverage checks, and a restore drill to rehearse before any incident occurs.
 
-The runbook is designed to be followed under pressure during an actual data-loss event. Do not run the restore procedure except in response to a genuine production incident.
+Do not run the restore procedure except in response to a genuine production incident involving data loss.
 
 ## Pre-launch licence reminder
 

@@ -1,18 +1,25 @@
 # Backup and Restore Procedure — Guild Book
 
-This runbook documents the pre-beta backup and the disaster-recovery procedure for Guild Book's production D1 database. **Every backup is useless until it has been tested** — this document records a rehearsed restore drill and its result.
+This runbook documents the pre-beta backup and the disaster-recovery procedure for Guild Book's production D1 database. **Every backup is useless until it has been tested** — this document records the steps to perform a rehearsed restore drill and verify its result.
 
 ## Pre-Beta Snapshot
 
-**Captured:** 2026-07-27
+**Status: NOT YET PERFORMED.** The owner must run the following before the beta opens. Nothing in this section has been executed or verified.
 
-A point-in-time SQL dump was exported from the production database and stored as an offline backup.
+Export a point-in-time SQL dump from the production database and store it as an offline backup:
 
 ```bash
+mkdir -p .backups
 npx wrangler d1 export guild-book-db --remote --output .backups/guild-book-prebeta.sql
 ```
 
-This dump contains the schema and data for `users`, `characters`, and `denizens` tables at the time of export. **The file is stored locally and is not committed to version control** — `.backups/` is gitignored.
+The resulting dump will contain the schema and data for `users`, `characters`, and `denizens` tables. **Before proceeding, verify that `.backups/` is ignored by git:**
+
+```bash
+git check-ignore .backups/guild-book-prebeta.sql
+```
+
+If that command prints nothing, add `.backups/` to `.gitignore` and commit that change — the dump contains real user emails and must never be committed to version control.
 
 ## Time Travel Coverage
 
@@ -20,7 +27,6 @@ Guild Book's D1 database benefits from Cloudflare's Time Travel feature, which a
 
 - **Restore window:** `_____` (owner to fill in — run `npx wrangler d1 time-travel info guild-book-db` and record the reported window, e.g. "7 days")
 - **Current bookmark / latest restorable point:** `_____` (owner to fill in — run `npx wrangler d1 time-travel info guild-book-db` and record the latest bookmark if present)
-- **Date observed:** 2026-07-27
 
 If the Time Travel command reports no bookmark, note that in the incident log: Time Travel coverage exists but no restore point has been recorded yet on this database.
 
@@ -28,31 +34,53 @@ If the Time Travel command reports no bookmark, note that in the incident log: T
 
 **⚠️ WARNING: This procedure destructively overwrites the production database. Do not run it except during a genuine data-loss incident.**
 
-To restore the production database `guild-book-db` to a specific point in time:
+To restore the production database `guild-book-db` to a specific point in time, use the `--bookmark` flag with the exact bookmark value from the Time Travel info command above:
 
 ```bash
-npx wrangler d1 time-travel restore guild-book-db --restore-to=<BOOKMARK>
+npx wrangler d1 time-travel restore guild-book-db --bookmark=<BOOKMARK>
 ```
 
-Replace `<BOOKMARK>` with the exact bookmark value from the Time Travel info command (e.g. `2026-07-27T15:30:00Z`). Cloudflare will confirm the bookmark is within the restorable window before executing.
+Replace `<BOOKMARK>` with the exact bookmark value (e.g. `2026-07-27T15:30:00Z`). Cloudflare will confirm the bookmark is within the restorable window before executing.
+
+Alternatively, you can restore to a specific timestamp using the `--timestamp` flag:
+
+```bash
+npx wrangler d1 time-travel restore guild-book-db --timestamp=<TIMESTAMP>
+```
 
 **Restoration is atomic:** the command succeeds entirely or rolls back entirely. Partial restores are not possible.
 
-## Restore Drill Results
+## Restore Drill
 
-A restore drill was rehearsed against a scratch database to verify backup integrity and procedure correctness.
+**Status: NOT YET PERFORMED.** The owner must run the following before the beta opens to verify backup integrity and procedure correctness. Nothing in this section has been executed or verified.
+
+Create a throwaway database, load the backup snapshot into it, and verify the data:
+
+```bash
+npx wrangler d1 create guild-book-restore-drill
+npx wrangler d1 execute guild-book-restore-drill --remote --file=.backups/guild-book-prebeta.sql
+npx wrangler d1 execute guild-book-restore-drill --remote --command="SELECT count(*) FROM users;"
+```
+
+Record the user count from the last command. Then compare it to the production user count:
+
+1. Visit `/admin` in the production app and record the total user count.
+2. The counts must match to confirm the snapshot is complete and correct.
+
+Then delete the drill database:
+
+```bash
+npx wrangler d1 delete guild-book-restore-drill
+```
+
+**Document the drill results:**
 
 - **Scratch database name used:** `guild-book-restore-drill`
 - **SQL dump restored:** `.backups/guild-book-prebeta.sql`
-- **User count after restore:** `_____` (owner to fill in — after loading the dump into the drill database, run `npx wrangler d1 execute guild-book-restore-drill --remote --command="SELECT count(*) FROM users;"` and record the row count)
-- **Production user count at backup time:** `_____` (owner to fill in — visit `/admin` before the restore drill and record the total user count; this must match the restore count to confirm data integrity)
-- **Scratch database deletion:** Confirmed deleted after verification
+- **User count after restore:** `_____` (owner to fill in — run the SELECT count query above)
+- **Production user count at backup time:** `_____` (owner to fill in — visit `/admin` before the restore drill and record it)
 
-The drill confirmed that:
-- The SQL dump can be loaded without errors.
-- All three tables are present and have expected structure.
-- Row counts match the production count at the time of backup.
-- The restore procedure is executable and does not leave the database in a partial state.
+The counts must match. If they do not, the backup is incomplete or corrupted and must not be relied upon for recovery.
 
 ## Important: Activity Tracking Cannot Be Backfilled
 
@@ -72,8 +100,3 @@ This is an intentional design trade-off: activity tracking enables the `/admin` 
 3. **Execute the restore:** run the restore command above with the confirmed bookmark.
 4. **Verify post-restore:** connect to `/admin` and confirm user/character/denizen counts match expectations. Test sign-in and basic operations.
 5. **Communicate:** update beta testers and stakeholders once the restore is confirmed.
-
----
-
-**Last reviewed:** 2026-07-27  
-**Reviewed by:** Pre-release documentation audit

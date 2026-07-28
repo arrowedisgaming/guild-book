@@ -518,13 +518,44 @@ The "1 lost command" is the grace-window artifact already described for the
 00:26 run — 81/81 accepted, 0 duplicates, and a 60s window leaves little room
 for the tail. It is not evidence of data loss.
 
+#### Both remaining poll-path duplicates taken — 60s smoke, `SEA`
+
+The two reductions held back above were then applied: the duplicated
+`play_sessions` read, and the three slices each issuing the same
+tenure/characters join. `loadTableProjectionsForActor` went **7 → 4** round
+trips, or **3** when `/sync` hands over the cursor it already holds — down from
+10 before any of this work.
+
+| | 17:49 gate (`IAD`) | A/B/C/E (`SJC`) | + both dedupes (`SEA`) |
+| --- | --- | --- | --- |
+| Command round trips | 20.00 | 10.00 | **10.00** |
+| Poll round trips (mean / p95) | 8.68 / 18 | 6.35 / 13 | **5.84 / 10** |
+| Command p95 | 2090.9 **FAIL** | 1586.8 PASS | **1499.8 PASS** |
+| Poll p95 | 1556.4 **FAIL** | 1786.7 **FAIL** | **1199.7 PASS** |
+| Max visible-change | 8260 **FAIL** | 3112 **FAIL** | **2477 FAIL** |
+| ms per round trip | 78–80 | 122–129 | 108–120 |
+
+**Poll p95 passed by 0.3 ms.** That is not a margin, it is a coin flip: the same
+code on the same path would fail a rerun that landed a few milliseconds slower.
+Treat the poll gate as unproven, not met.
+
+Three colos have now served three runs — `IAD`, `SJC`, `SEA` — spanning 78–129 ms
+per round trip against the same `MIA` primary. This run drew the second-worst of
+them, so the round-trip counts are the durable result and the wall-clock figures
+are not.
+
 #### Still open
 
-Poll p95 remains outside budget. The two reductions recorded above and not
-taken — the duplicated `play_sessions` read, and the three loaders each issuing
-the same tenure/characters join — are both on the poll path and would take a
-changed poll from 7 round trips to 4. Reduction D remains the only one that
-touches the no-op poll path, which is ~77% of all traffic.
+- **Max visible-change latency still fails** (2477 ms against a hard 2000 ms
+  Gate C). It is the only gate never yet met, and it is the one the spec calls
+  non-negotiable.
+- **A 30-minute run has not been done since any of these reductions.** Every
+  figure in the last two rows is from a 60-second window, which has far less
+  opportunity to produce a tail than the window the gate is actually defined
+  against.
+- **Reduction D is untouched**, and remains the only one that helps the ~77% of
+  polls answered from the cursor hint, which still pay 2 round trips of
+  authentication and authorization each.
 
 ### Open question: which location the thresholds describe
 

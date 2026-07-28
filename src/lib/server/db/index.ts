@@ -4,6 +4,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import type { AppDbContext } from './atomic';
+import { instrumentD1 } from '../observability/request-timing';
 
 // Dual-target resolver: Cloudflare D1 in production (via platform.env.DB),
 // better-sqlite3 for local Node dev. Same Drizzle schema and queries either
@@ -27,8 +28,16 @@ function getD1Context(database: D1Database): AppDbContext {
 	const existing = d1Contexts.get(database);
 	if (existing) return existing;
 
-	const db = drizzleD1(database, { schema });
-	const context: AppDbContext = { kind: 'd1', db, raw: database };
+	// Wrapped once per binding, and cached — attribution is per request via
+	// AsyncLocalStorage inside the wrapper, not per instance, so sharing one
+	// instrumented binding across an isolate's concurrent requests is correct.
+	// Both the Drizzle query surface and `raw` (which `runAtomic` batches
+	// through) go through the wrapper, or `batch` round trips would go
+	// uncounted — and batches are exactly the writes the capacity gate is
+	// trying to account for. See `observability/request-timing.ts`.
+	const instrumented = instrumentD1(database);
+	const db = drizzleD1(instrumented, { schema });
+	const context: AppDbContext = { kind: 'd1', db, raw: instrumented };
 	d1Contexts.set(database, context);
 	return context;
 }

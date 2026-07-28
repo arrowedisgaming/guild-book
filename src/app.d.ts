@@ -52,7 +52,22 @@ declare global {
 				 * `probeRateLimitEnforcement`.
 				 */
 				CAMPAIGN_LIMITER_SELFTEST?: RateLimit;
+				/**
+				 * Opt-in `Server-Timing` on responses (Increment 5 Task 4
+				 * follow-up). Set only in `[env.staging.vars]` — staging is where
+				 * the capacity gate measures, and production has no reason to
+				 * publish its internal timings to every client. See
+				 * `observability/request-timing.ts`.
+				 */
+				CAMPAIGN_TIMING_HEADER?: string;
 			};
+			/**
+			 * Cloudflare's per-request properties, supplied by
+			 * `@sveltejs/adapter-cloudflare`. Absent off the edge. Only `colo` is
+			 * read today — the capacity gate needs to record which colo served a
+			 * run rather than infer it from where the harness was launched.
+			 */
+			cf?: IncomingRequestCfProperties;
 		}
 	}
 }

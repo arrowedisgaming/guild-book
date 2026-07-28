@@ -42,6 +42,19 @@ Every latency figure here is therefore *inflated* relative to production, making
 these gates harder to pass than reality — conservative, not flattering. Do not
 "correct" for this by loosening the thresholds.
 
+> **Amendment, 2026-07-28 (Arrowed) — the paragraph above is probably wrong, and
+> in the unsafe direction.** It reasons about the client→colo hop only. It omits
+> the colo→D1-primary hop, which for a request path made of sequential dependent
+> D1 statements is the term that dominates. A developer sitting near the same
+> region as the staging D1 primary is close to the *best* case for that term, not
+> the worst: their Worker executes beside the database. A player in Seattle gets a
+> nearby colo but the same distant primary. The 03:00 UTC datacenter run below is
+> the first evidence for this and is consistent with it, but does not prove it —
+> nothing here yet separates wire time from server time. **The thresholds are
+> unchanged.** What changes is that a workstation run must no longer be described
+> as conservative; until the instrumentation described in "What the next run must
+> measure" lands, treat its absolute numbers as un-calibrated.
+
 ## Scenario
 
 Nine simultaneous campaigns, each with a GM and two players (27 polling
@@ -191,6 +204,144 @@ So, explicitly forbidden as a response to this result:
 
 Any of those may turn out to be the *right* decision — but each is a deliberate,
 recorded architecture decision, not a fix to apply quietly.
+
+### 30-minute datacenter re-run — 2026-07-28, 03:00–03:30 UTC: **FAILED**
+
+The diagnostic the previous section called for: the identical harness, identical
+scenario, run from GitHub Actions (`.github/workflows/capacity-gate.yml`) instead
+of a developer workstation, to test whether the tail was the residential network.
+
+| Gate | Threshold | Observed | Result |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms, 100% | **9898 ms** | **FAIL** |
+| Poll p95 | ≤ 1200 ms | **2109.3 ms** | **FAIL** |
+| Command p95 | ≤ 2000 ms | **2707.8 ms** | **FAIL** |
+| Error rate | < 0.1% | 0.0000% (0 of 26 404) | PASS |
+| Lost / duplicated command | zero | 0 lost / 0 duplicate | PASS |
+
+| Metric | Observed |
+| --- | --- |
+| Poll requests | 24 182 (`204` no-change 74.29%) |
+| Poll latency p50 / p95 / p99 / max | 605.1 / 2109.3 / 2384.9 / 2847.8 ms |
+| Commands attempted / accepted / errors | 2222 / 2222 / 0 |
+| Command latency p50 / p95 / p99 / max | 2247.6 / 2707.8 / 2964.1 / 3882.5 ms |
+| Visible-change observations | 4441 |
+| Visible-change p50 / p95 / p99 / max | 1415.0 / 2288.0 / 2574.0 / **9898.0** ms |
+| Observations > 1500 ms | 1987 (44.7%) |
+| Observations > 2000 ms | **682 (15.4%)** |
+| Harness event-loop lag p50 / p95 / max | 0.2 / 1.1 / 3.4 ms |
+| HTTP-observable read / write proxy | 26 404 reads / 2222 writes |
+
+#### It is a different failure from the 00:26 run, not a worse one
+
+| | 00:26 workstation | 03:00 GitHub Actions | Ratio |
+| --- | --- | --- | --- |
+| Poll p50 | 204.5 ms | 605.1 ms | 2.96× |
+| Poll p95 | 759.2 ms | 2109.3 ms | 2.78× |
+| Command p50 | 665.7 ms | 2247.6 ms | 3.38× |
+| Command p95 | 1179.9 ms | 2707.8 ms | 2.30× |
+| Visible p50 | 842.0 ms | 1415.0 ms | 1.68× |
+| Observations > 2000 ms | 0.90% | 15.4% | — |
+
+The 00:26 run was fast with a thin breaching tail: p99 was 1959 ms, inside
+budget, and only 0.90% of observations breached. This run's whole distribution
+moved up. Its p99 (2574 ms) is outside budget on its own. Nothing here is a tail
+phenomenon; the poll p95 and command p95 gates failed for the first time.
+
+#### The run went ~3× slower while offering ~32% less traffic
+
+The harness is closed-loop: each client awaits its response before sleeping, so
+slower responses mechanically reduce the request rate.
+
+| | 00:26 workstation | 03:00 GitHub Actions |
+| --- | --- | --- |
+| Polls in the 1800 s window | 35 581 (19.8/s) | 24 182 (13.4/s) |
+| Commands in the window | 2827 (1.57/s) | 2222 (1.23/s) |
+
+Both loops match their own latency exactly: the command loop sleeps 5000 ms and
+saw a 2247 ms p50, giving a ~7.25 s cycle, which over nine campaigns predicts
+2234 commands against 2222 observed.
+
+**This is the load-bearing observation.** Contention degrades as offered load
+rises. This run offered 32% fewer reads and 21% fewer writes to the same single
+database and was three times slower. That is the signature of added *fixed cost
+per request*, not of queueing at D1 — which makes the "D1 contention" candidate
+from the 00:26 post-mortem the weaker of the two, not the stronger.
+
+Corroborating: the 00:26 outliers clustered into specific minutes (`:36`, `:38`,
+`:54`) and hit different campaigns within the same second — the burst shape that
+suggested a shared bottleneck. In this run they are spread evenly across all
+thirty minutes. The burst signature is gone.
+
+#### The harness is again exonerated
+
+Event-loop lag maxed at **3.4 ms** across 35 981 samples, and the maximum lag in
+the 3 s preceding each of the 682 breaching observations never exceeded 3.4 ms.
+Zero errors in 26 404 requests, zero lost commands, zero duplicate resulting
+versions across 2222 accepted. The latency is the server's or the network's.
+
+#### The experiment did not answer its question, and could not have
+
+The 00:26 post-mortem asked for "a cloud VM in the same region as the colo."
+`ubuntu-latest` is not that: it is an Azure runner whose region is not
+selectable. So this run did not remove the network variable, it substituted a
+different and worse-performing unknown path for it. It cannot distinguish the
+two candidates any more than the first run could.
+
+The reason it could not is structural, and applies to every future run too:
+
+```
+src/lib/server/observability/campaign-metrics.ts   setCampaignMetricSink()
+```
+
+was never called outside tests, so `recordPoll()` and `recordCommandOutcome()`
+were **no-ops in the deployed Worker**. Every number in both post-mortems is
+client-observed wall clock with no way to subtract the network. Two runs have now
+ended at "we cannot tell whether it is the network or D1." A third, framed the
+same way, ends there as well.
+
+#### Leading hypothesis, explicitly unconfirmed
+
+Latency on the command path is bound by *round-trip count × Worker-to-D1-primary
+distance*, not by D1 throughput. `session/command-service.ts` runs a chain of
+dependent awaits — `findSessionCommand` → `loadSessionForReduce` → reduce →
+commit → `loadProjectionForActor` — each helper itself several statements, none
+of which can be batched away because each depends on the last. A Worker
+co-located with the D1 primary pays almost nothing per hop; a distant one pays a
+full cross-region RTT per statement.
+
+This predicts exactly the observed asymmetry: commands (many dependent hops)
+inflated 3.38× while polls (few hops, and 74% answered from the isolate-local
+cursor hint with no D1 read at all) inflated 2.96×.
+
+**It is a hypothesis. It has not been measured, and must not be acted on until it
+is.** In particular it is not a licence to start batching queries — that would be
+optimising against an unverified model.
+
+#### What the next run must measure
+
+Server-side timing, so the split is read off directly rather than argued about:
+
+- `srv` — wall time inside the Worker, from `hooks.server.ts` around `resolve()`
+- `d1` — cumulative wall time inside D1 calls, and `n`, the number of round trips
+- the serving Cloudflare colo, so the geography is recorded and not inferred
+
+Delivered as a `Server-Timing` response header (staging-gated behind
+`CAMPAIGN_TIMING_HEADER`), recorded per request by the load harness, and reported
+alongside the existing latency percentiles. `total − srv` is then the wire, and
+`srv − d1` is Worker CPU plus non-D1 awaits.
+
+The decision rule for the next run, written down before it is run:
+
+- **`d1` small and `total − srv` large** → the path, not the database. The
+  Global Constraints' redesign clause is not triggered; the gate needs a
+  measurement location that represents real players, and the thresholds need
+  re-deriving against it.
+- **`d1` large with a small `n`** → D1 execution or contention. Redesign
+  discussion is live.
+- **`d1` large with a large `n`** → round-trip-bound, as hypothesised above.
+  The lever is the number of dependent statements per request, which is an
+  architecture decision to be recorded, not a quiet optimisation.
 
 ### Monthly consumption projection and headroom
 

@@ -26,6 +26,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Server-side request timing**, so the campaign capacity gate can separate
+  network time from database time. Both 30-minute gate runs on 2026-07-28
+  failed and both ended at "we cannot tell whether it is the network or D1",
+  because the deployed Worker never measured its own time — `recordPoll` was
+  called but no metric sink was ever installed. Responses now carry
+  `Server-Timing: srv;dur=…, d1;dur=…;desc="n=… stmts=…"` plus the serving
+  Cloudflare colo, with per-request attribution through `AsyncLocalStorage` (a
+  module-level counter would blend an isolate's concurrent requests) and D1
+  round trips counted by wrapping the binding in a pass-through `Proxy`. A
+  batch is reported as one round trip carrying many statements, because the
+  open question is round-trip *count*, not statement count. The load harness
+  records the header per request and reports the resulting split, including
+  coverage — a run where the header never arrived must not look like a run
+  where the server took no time. Off by default and gated behind
+  `CAMPAIGN_TIMING_HEADER`, which staging sets and production deliberately does
+  not.
 - **Campaign rate limiting** behind a provider-neutral port, with a Cloudflare
   rate-limit binding as the production adapter and an injectable-clock
   in-memory limiter as development defence. Four independent policies — session

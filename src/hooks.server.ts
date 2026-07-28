@@ -6,6 +6,7 @@ import {
 	classifyCampaignRequest,
 	createCampaignRateLimitHandle
 } from '$lib/server/rate-limit/campaign';
+import { formatServerTiming, runWithRequestTiming } from '$lib/server/observability/request-timing';
 
 // Optional dev-only auto-login bypass. The implementation file is gitignored
 // (see src/lib/server/dev-auto-login.example.ts). When absent — production,
@@ -43,7 +44,26 @@ const appHandle: Handle = async ({ event, resolve }) => {
 		return json({ message: 'Too many requests' }, { status: 429 });
 	}
 
-	const response = await resolve(event);
+	// Everything downstream — the rest of the `handle` sequence and the route
+	// handler — runs inside one timing scope, so every D1 round trip it makes is
+	// attributed to this request. `startedAt` is taken here rather than at the
+	// top of the function so the two cheap synchronous guards above, which issue
+	// no I/O, are not counted as server time.
+	const startedAt = Date.now();
+	const { response, timing } = await runWithRequestTiming(async (scope) => ({
+		response: await resolve(event),
+		timing: scope
+	}));
+	const serverMs = Date.now() - startedAt;
+
+	if (timingHeaderEnabled(event)) {
+		response.headers.set('Server-Timing', formatServerTiming({ serverMs, timing }));
+		const colo = event.platform?.cf?.colo;
+		// Which colo served the run is the one geographic fact the capacity gate
+		// cannot obtain from the client side, and the 2026-07-28 runs turned on
+		// exactly that question. Server-side infrastructure detail, not user data.
+		if (typeof colo === 'string' && colo.length > 0) response.headers.set('X-Guildbook-Colo', colo);
+	}
 
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -64,6 +84,25 @@ const campaignRateLimitHandle = createCampaignRateLimitHandle({ getUserId, getEn
 export const handle = devAutoLoginHandle
 	? sequence(appHandle, devAutoLoginHandle, authHandle, campaignRateLimitHandle)
 	: sequence(appHandle, authHandle, campaignRateLimitHandle);
+
+/**
+ * `Server-Timing` is opt-in, and off unless `CAMPAIGN_TIMING_HEADER` is
+ * explicitly `true`/`1` (Increment 5 Task 4 follow-up).
+ *
+ * On by default would publish the application's internal I/O timings to every
+ * client on every response — a mild timing side channel with no upside outside
+ * a measured run. Staging sets it in `[env.staging.vars]`; production does not.
+ * `tests/load/session-polling.mjs` sets it in the environment of the preview
+ * server it boots, so a local run exercises the same path without a deploy;
+ * an ordinary `npm run dev` leaves it unset.
+ *
+ * Fails closed: an unset, misspelt or unparsed value means no header, which the
+ * harness reports as missing coverage rather than as a zero.
+ */
+function timingHeaderEnabled(event: Parameters<Handle>[0]['event']): boolean {
+	const raw = getEnv(event, 'CAMPAIGN_TIMING_HEADER');
+	return raw === 'true' || raw === '1';
+}
 
 function isUnsafeRequest(request: Request): boolean {
 	return MUTATING_METHODS.has(request.method);

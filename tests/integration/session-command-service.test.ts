@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as schema from '$lib/server/db/schema';
+import type { AppDb } from '$lib/server/db';
 import type { AppDbContext } from '$lib/server/db/atomic';
-import { executeCommand } from '$lib/server/session/command-service';
+import { executeCommand, loadProjectionForActor } from '$lib/server/session/command-service';
 import { endSession, recoverSession, startSession } from '$lib/server/session/lifecycle';
 import { canonicalJsonStringify, sha256Hex } from '$lib/server/content/canonical-json';
 import type { SessionCommandEnvelope, SessionCommand } from '$lib/types/session';
@@ -64,6 +65,40 @@ describe('session command service — idempotency and contention', () => {
 		// The session was NOT re-mutated by the replay: only one draw's worth
 		// of version advancement happened.
 		expect(currentVersion(sqlite, 'session-a')).toBe(2);
+	});
+
+	/**
+	 * Characterization test pinned before the 2026-07-28 round-trip reduction.
+	 *
+	 * An accepted command used to answer by re-loading the whole session from the
+	 * database purely to build its response — five round trips, ~400ms on a
+	 * non-co-located Worker. It now projects the post-reduce state it already
+	 * holds in memory, which is by definition the state it just committed.
+	 *
+	 * This test is the safety net for that: if the in-memory state ever diverges
+	 * from what the fragments round-trip back as, the two projections stop
+	 * matching and this fails. It must keep passing whatever the implementation
+	 * does — it is the definition of "reuse is safe".
+	 */
+	it('returns the same projection an authoritative reload would produce', async () => {
+		await startFixtureSession();
+		const result = await executeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: 'gm-a',
+			envelope: drawEnvelope('command-1')
+		});
+		expect(result.outcome.ok).toBe(true);
+
+		const reloaded = await loadProjectionForActor(
+			ctx.db as unknown as AppDb,
+			'session-a',
+			'campaign-a',
+			{ kind: 'gm', userId: 'gm-a' }
+		);
+
+		expect(result.projection).toEqual(reloaded);
 	});
 
 	it('returns a fresh actor projection on a duplicate replay, not a stale cached one', async () => {

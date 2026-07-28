@@ -124,7 +124,18 @@ export async function loadTableProjectionsForActor(
 	db: AppDb,
 	sessionId: string,
 	campaignId: string,
-	actor: SessionActor
+	actor: SessionActor,
+	/**
+	 * The campaign cursor, when the caller has already read it for this request.
+	 * `sync/+server.ts` always has — it reads the cursor to decide whether there
+	 * is anything to send at all, and this function would otherwise read the same
+	 * `max(id)` a second time on every changed poll. One redundant round trip is
+	 * ~80ms on a non-co-located Worker (docs/operations/campaign-capacity.md).
+	 *
+	 * Pass only a cursor read in the SAME request. Omit it and the authoritative
+	 * read below still happens, which is what every other caller does.
+	 */
+	knownCampaignCursor?: number
 ): Promise<TableProjections> {
 	// Ownership decided from the cheap summary read FIRST, ahead of the full load
 	// (which parses every fragment and so can fail for reasons of its own): an
@@ -161,7 +172,7 @@ export async function loadTableProjectionsForActor(
 	let projection: SessionProjectionEnvelope<SessionProjection> | null;
 	try {
 		const built = projectForActor(loaded.engineState, actor, runtime.catalog);
-		const cursor = await campaignCursor(db, campaignId);
+		const cursor = knownCampaignCursor ?? (await campaignCursor(db, campaignId));
 		projection = { campaignCursor: cursor, sessionVersion: loaded.currentVersion, projection: built };
 	} catch (cause) {
 		console.error('[table] unexpected error building generic projection', cause);

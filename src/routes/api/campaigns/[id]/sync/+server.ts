@@ -11,6 +11,7 @@ import {
 } from '$lib/server/session/repository';
 import { capEventRows, MAX_EVENTS_PER_RESPONSE, parseNonNegativeIntParam, toWireEvent } from '$lib/server/session/sanitize';
 import { hasFreshMatchingCursorHint, recordCursorHint } from '$lib/server/session/latest-cursor';
+import { recordCampaignMetric, recordPoll } from '$lib/server/observability/campaign-metrics';
 
 const NO_CONTENT_HEADERS = campaignHeaders();
 
@@ -26,6 +27,12 @@ const NO_CONTENT_HEADERS = campaignHeaders();
  * same actor-scoped builder every other session route uses.
  */
 export const GET: RequestHandler = async (event) => {
+	// Increment 5 Task 2: poll latency and the no-change ratio are the two
+	// numbers the Task 4 capacity gate is argued from, and neither can be
+	// measured anywhere but here — `latest-cursor.ts` sees only the hint hits.
+	// Started after authorization so a rejected caller never appears in the
+	// latency distribution.
+	const startedAt = Date.now();
 	const role = await requireCampaignAccess(event, event.params.id);
 	const campaignId = event.params.id;
 
@@ -43,6 +50,8 @@ export const GET: RequestHandler = async (event) => {
 	// broken by a future command/lifecycle type, this hint must start
 	// tracking version as well or it can mask a real session change.
 	if (hasFreshMatchingCursorHint(campaignId, after)) {
+		// `hasFreshMatchingCursorHint` already counted the no-change itself.
+		recordCampaignMetric({ name: 'poll_duration_ms', value: Date.now() - startedAt, tags: {} });
 		return new Response(null, { status: 204, headers: NO_CONTENT_HEADERS });
 	}
 
@@ -55,6 +64,7 @@ export const GET: RequestHandler = async (event) => {
 	const sessionVersionChanged = openSession !== null && openSession.version !== clientVersion;
 	if (currentCursor === after && !sessionVersionChanged) {
 		recordCursorHint(campaignId, currentCursor);
+		recordPoll({ durationMs: Date.now() - startedAt, changed: false, outcome: 'authoritative' });
 		return new Response(null, { status: 204, headers: NO_CONTENT_HEADERS });
 	}
 
@@ -125,5 +135,6 @@ export const GET: RequestHandler = async (event) => {
 	// poll again before "caught up" can be trusted.
 	if (!truncated) recordCursorHint(campaignId, currentCursor);
 
+	recordPoll({ durationMs: Date.now() - startedAt, changed: true });
 	return json({ cursor: nextCursor, events, session }, { headers: campaignHeaders() });
 };

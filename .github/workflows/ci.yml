@@ -29,6 +29,15 @@ jobs:
         env:
           ADAPTER: cloudflare
           AUTH_SECRET: ci-build-validation-only
+      # Standing guard that the Workers config stays deployable: validates
+      # `main`, `[assets]`, the D1 binding, every `[[ratelimits]]` entry and the
+      # custom-domain route against the installed Wrangler's own schema, without
+      # shipping anything. This is what caught `binding =` vs `name =` on the
+      # rate-limit bindings during Increment 5. Needs no Cloudflare credentials.
+      - name: Validate the Workers deployment config
+        run: npx wrangler deploy --dry-run
+      - name: Validate the staging Workers deployment config
+        run: npx wrangler deploy --dry-run --env staging
 
   e2e:
     runs-on: ubuntu-latest

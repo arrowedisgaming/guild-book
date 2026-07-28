@@ -28,6 +28,30 @@ declare global {
 				CAMPAIGNS_ENABLED?: string;
 				CAMPAIGNS_PILOT_USER_IDS?: string;
 				CAMPAIGN_INVITE_SECRET?: string;
+				/**
+				 * Campaign rate-limit bindings, declared as `[[ratelimits]]` in
+				 * `wrangler.toml`. `RateLimit` comes from
+				 * `@cloudflare/workers-types` (already in tsconfig `types`) and is
+				 * byte-identical to what `npx wrangler types` generates for these
+				 * four bindings — verified 2026-07-27 against workerd
+				 * 1.20260630.1. The generated `worker-configuration.d.ts` is not
+				 * committed because this repository consumes the published types
+				 * package instead; re-run `npx wrangler types` and diff against
+				 * this block if the binding shape ever changes.
+				 *
+				 * Optional on purpose: they are absent off the edge, and
+				 * `rate-limit/campaign.ts` decides what that means per policy.
+				 */
+				CAMPAIGN_SESSION_COMMAND_LIMITER?: RateLimit;
+				CAMPAIGN_MUTATION_LIMITER?: RateLimit;
+				CAMPAIGN_JOIN_LIMITER?: RateLimit;
+				CAMPAIGN_POLL_LIMITER?: RateLimit;
+				/**
+				 * Never limits a real request — the health endpoint calls it to
+				 * prove the provider actually counts. See
+				 * `probeRateLimitEnforcement`.
+				 */
+				CAMPAIGN_LIMITER_SELFTEST?: RateLimit;
 			};
 		}
 	}

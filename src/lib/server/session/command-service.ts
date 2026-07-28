@@ -18,6 +18,7 @@ import {
 	type AppDbContext,
 	type AtomicStatement
 } from '$lib/server/db/atomic';
+import { recordCommandOutcome } from '$lib/server/observability/campaign-metrics';
 import { runCampaignAtomic, type CampaignAtomicStatement } from '$lib/server/campaign/atomic';
 import {
 	campaignEvents,
@@ -120,7 +121,58 @@ export interface ExecuteCommandResult {
 	projection: SessionProjectionEnvelope<SessionProjection> | null;
 }
 
+/**
+ * Increment 5 Task 2: what the instrumented wrapper below is allowed to know.
+ * Every field is a coarse label or a count — no ids, no envelope, no payload.
+ * Threaded rather than returned so the many early-return paths inside
+ * `executeCommandInstrumented` do not each have to carry it.
+ */
+interface CommandTelemetry {
+	attempts: number;
+	commandType?: string;
+	procedureKind?: string;
+	actorRole?: 'gm' | 'player';
+	duplicate?: boolean;
+}
+
 export async function executeCommand(input: ExecuteCommandInput): Promise<ExecuteCommandResult> {
+	const startedAt = Date.now();
+	const telemetry: CommandTelemetry = { attempts: 1 };
+
+	try {
+		const result = await executeCommandInstrumented(input, telemetry);
+		recordCommandOutcome({
+			durationMs: Date.now() - startedAt,
+			attempts: telemetry.attempts,
+			commandType: telemetry.commandType,
+			procedureKind: telemetry.procedureKind,
+			actorRole: telemetry.actorRole,
+			outcome: result.outcome.ok
+				? telemetry.duplicate
+					? 'duplicate'
+					: 'accepted'
+				: result.outcome.code
+		});
+		return result;
+	} catch (cause) {
+		// An unexpected throw is still an operational signal; `internal-error`
+		// is not on the outcome allowlist, so it is recorded as `other`.
+		recordCommandOutcome({
+			durationMs: Date.now() - startedAt,
+			attempts: telemetry.attempts,
+			commandType: telemetry.commandType,
+			procedureKind: telemetry.procedureKind,
+			actorRole: telemetry.actorRole,
+			outcome: 'internal-error'
+		});
+		throw cause;
+	}
+}
+
+async function executeCommandInstrumented(
+	input: ExecuteCommandInput,
+	telemetry: CommandTelemetry
+): Promise<ExecuteCommandResult> {
 	const { dbContext, campaignId, sessionId, actorUserId } = input;
 	const db = dbContext.db as unknown as AppDb;
 
@@ -133,6 +185,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			projection: null
 		};
 	}
+	telemetry.actorRole = actor.kind;
 
 	// Step 2 — strict-parse the envelope. A malformed envelope can't safely
 	// yield an idempotency key, so it's never persisted.
@@ -144,6 +197,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 		};
 	}
 	const envelope = parsed.data as unknown as SessionCommandEnvelope<SessionCommand>;
+	telemetry.commandType = envelope.command.type;
 	// Hashes only `envelope.command` — deliberately excludes
 	// `expectedStructuralVersion` (and `observedSessionVersion`/
 	// `observedCharacterVersion`). This is a Task 6 client contract, not an
@@ -157,7 +211,10 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 
 	// Step 3 — idempotency lookup by (sessionId, commandId).
 	const initialDuplicate = await resolveDuplicateCommandOutcome(db, sessionId, campaignId, envelope, requestHash, actor);
-	if (initialDuplicate) return initialDuplicate;
+	if (initialDuplicate) {
+		telemetry.duplicate = true;
+		return initialDuplicate;
+	}
 
 	const isStructural = STRUCTURAL_COMMAND_TYPES.has(envelope.command.type);
 	const maxAttempts = isStructural ? 1 : MAX_NONSTRUCTURAL_ATTEMPTS;
@@ -179,6 +236,7 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 	let lastKnownVersion = envelope.observedSessionVersion;
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		telemetry.attempts = attempt;
 		// A cheap status/version check first, via the lightweight summary — not
 		// `loadSessionForReduce`. This matters for an *ended* session
 		// specifically: end cleanup (amendment 9) deliberately deletes/clears
@@ -248,6 +306,8 @@ export async function executeCommand(input: ExecuteCommandInput): Promise<Execut
 			throw cause;
 		}
 		lastKnownVersion = loaded.currentVersion;
+		// Coarse phase only — never the specific procedure the table is running.
+		telemetry.procedureKind = loaded.engineState.phase;
 
 		// The purchase is evaluated BEFORE the reduce, so a refused spend never
 		// draws a card (Step 3: "no command row/version is accepted"). Re-read

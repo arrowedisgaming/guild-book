@@ -18,12 +18,137 @@ compatibility_flags = ["nodejs_compat"]
 # server bundle and `_routes.json` are not served as public assets.
 main = ".svelte-kit/cloudflare/_worker.js"
 
+# Production hostname (migration Task 3, cut over 2026-07-27). Declared here
+# rather than clicked into the dashboard so the trigger is reproducible and
+# reviewable.
+#
+# A hostname can only be attached to ONE Cloudflare service at a time, so this
+# deploy fails with "already in use" until the domain is removed from the
+# `guild-book` PAGES project first. That ordering is the cutover.
+#
+# Rollback: remove the custom domain here, redeploy, and re-attach it to the
+# Pages project — its last successful deployment is still servable even though
+# its Git builds now fail on the missing `pages_build_output_dir`.
+routes = [{ pattern = "guildbook.arrowed.games", custom_domain = true }]
+
+# Non-secret production values only. Everything sensitive is a secret set via
+# `wrangler secret put` — secrets survive a deploy, whereas `[vars]` is
+# REPLACED wholesale on every deploy, so a value set in the dashboard but not
+# listed here would silently disappear on the next push.
+#
+# `CAMPAIGNS_ENABLED` is deliberately absent: campaigns stay server-gated off
+# until Increment 5 Task 6 Step 5 enables them explicitly.
+[vars]
+AUTH_URL = "https://guildbook.arrowed.games"
+
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"
+
+# Campaign rate limiting (Increment 5 Task 1). One namespace per policy so a
+# burst of session commands cannot exhaust the budget that protects invite
+# joins. `period` may only be 10 or 60 — the binding accepts nothing else —
+# and the limits here must stay in step with CAMPAIGN_RATE_LIMIT_POLICIES in
+# src/lib/server/rate-limit/types.ts, which is what the application enforces
+# its Retry-After against.
+#
+# These counters are per Cloudflare location, not global. See the caveat at
+# the top of src/lib/server/rate-limit/cloudflare.ts.
+[[ratelimits]]
+name = "CAMPAIGN_SESSION_COMMAND_LIMITER"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
+[[ratelimits]]
+name = "CAMPAIGN_MUTATION_LIMITER"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "CAMPAIGN_JOIN_LIMITER"
+namespace_id = "1003"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "CAMPAIGN_POLL_LIMITER"
+namespace_id = "1004"
+simple = { limit = 30, period = 10 }
+
+# Self-test only — never used to limit a real request. The internal health
+# endpoint calls this twice against a fixed key and expects the second call to
+# be denied; if it is not, the provider is present but not counting, which is
+# otherwise indistinguishable from "under the limit". `limit` must stay in
+# step with SELF_TEST_LIMIT in src/lib/server/rate-limit/cloudflare.ts.
+[[ratelimits]]
+name = "CAMPAIGN_LIMITER_SELFTEST"
+namespace_id = "1005"
+simple = { limit = 1, period = 10 }
 
 [[d1_databases]]
 binding = "DB"
 database_name = "guild-book-db"
 database_id = "3cab8443-35f9-4a1f-864d-49249ae80fc0"
 migrations_dir = "src/lib/server/db/migrations"
+
+# ---------------------------------------------------------------------------
+# Staging (Increment 5 Task 3). A SEPARATE Worker and a SEPARATE D1 database —
+# it shares nothing with production but the source tree.
+#
+# Wrangler does not inherit bindings into a named environment: `main`,
+# `compatibility_date` and `compatibility_flags` carry over from the top level,
+# but `[assets]`, `[[d1_databases]]` and `[[ratelimits]]` must each be
+# redeclared here or the staging Worker silently deploys without them.
+#
+# Migrations: use `npm run db:migrate:d1:staging`, NEVER `db:migrate:d1:remote`
+# — that script names `guild-book-db`, the production database, and takes no
+# environment flag.
+# ---------------------------------------------------------------------------
+[env.staging]
+name = "guild-book-staging"
+# REQUIRED, not cosmetic. `routes` IS inherited into named environments, so
+# without this an ordinary `wrangler deploy --env staging` reassigns
+# guildbook.arrowed.games away from the production Worker and onto staging —
+# which has an empty database and no OAuth providers. That is a production
+# outage triggered by a routine staging deploy. Wrangler warns about it; this
+# silences the warning by actually fixing it. Never delete this line.
+routes = []
+
+[env.staging.vars]
+CAMPAIGNS_ENABLED = "true"
+
+[env.staging.assets]
+binding = "ASSETS"
+directory = ".svelte-kit/cloudflare"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "guild-book-staging-db"
+database_id = "684b27e8-8593-4020-a3f8-b2b022c25a2f"
+migrations_dir = "src/lib/server/db/migrations"
+
+# Same limits as production: staging exists to measure production behaviour,
+# so a different budget here would invalidate the Task 4 capacity numbers.
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_SESSION_COMMAND_LIMITER"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_MUTATION_LIMITER"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_JOIN_LIMITER"
+namespace_id = "1003"
+simple = { limit = 10, period = 60 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_POLL_LIMITER"
+namespace_id = "1004"
+simple = { limit = 30, period = 10 }
+
+[[env.staging.ratelimits]]
+name = "CAMPAIGN_LIMITER_SELFTEST"
+namespace_id = "1005"
+simple = { limit = 1, period = 10 }

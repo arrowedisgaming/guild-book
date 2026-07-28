@@ -45,7 +45,7 @@ Do not re-derive these; they were checked empirically on 2026-07-27.
 **Files:**
 - Modify: `wrangler.toml`
 
-- [ ] **Step 1: Replace the Pages declaration**
+- [x] **Step 1: Replace the Pages declaration**
 
 Remove `pages_build_output_dir`. Add `main`, an `[assets]` block, and the compatibility flags. Keep `name`, `compatibility_date`, and the entire `[[d1_databases]]` block byte-identical.
 
@@ -65,11 +65,11 @@ database_id = "3cab8443-35f9-4a1f-864d-49249ae80fc0"
 migrations_dir = "src/lib/server/db/migrations"
 ```
 
-- [ ] **Step 2: Determine whether `nodejs_als` is actually required**
+- [x] **Step 2: Determine whether `nodejs_als` is actually required**
 
 The adapter's documentation lists `compatibility_flags = ["nodejs_als"]` for the Workers target, but this repository currently runs on Pages with **no compatibility flags at all** and works. Do not cargo-cult the flag. Build, run `wrangler deploy --dry-run`, and add it only if the dry run or a preview deployment demonstrates a need (Auth.js / AsyncLocalStorage is the likely trigger). Record the finding in the completion record either way.
 
-- [ ] **Step 3: Verify the dry run**
+- [x] **Step 3: Verify the dry run**
 
 Run:
 
@@ -80,7 +80,7 @@ npx wrangler deploy --dry-run
 
 Expected: both exit 0. This is the gate Increment 5 amendment 1 names — Increment 5 Task 1 may not begin until it passes on `main`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add wrangler.toml
@@ -95,17 +95,17 @@ No repository changes. The Pages project keeps serving production throughout thi
 
 Cloudflare dashboard → Workers & Pages → Create → Worker → connect the `guild-book` repository via **Workers Builds**. Production branch `main`; build command `ADAPTER=cloudflare npm run build`. Set `preview_urls = true` to retain per-branch preview deployments equivalent to the Pages previews.
 
-- [ ] **Step 2: Re-enter environment variables and secrets**
+- [x] **Step 2: Re-enter environment variables and secrets**
 
 Every variable listed in `DEPLOY.md` §2 must exist on the Worker: `AUTH_SECRET` (secret), `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_DISCORD_ID`, `AUTH_DISCORD_SECRET`, `NODE_VERSION`. Do **not** set `AUTH_DEV_LOGIN` / `AUTH_DEV_AUTOLOGIN`. Confirm the `DB` binding resolves to `guild-book-db` under the Worker's settings.
 
 Note `AUTH_URL` still points at the production domain while the Worker is only reachable on `*.workers.dev`; OAuth sign-in on the workers.dev URL will not complete until Task 3. Test what can be tested without auth first.
 
-- [ ] **Step 3: Verify assets-first ordering against gated routes**
+- [x] **Step 3: Verify assets-first ordering against gated routes**
 
 On the `*.workers.dev` URL, confirm the feature gate and auth guards still behave: `/campaigns` returns the same status for a signed-out visitor as it does on Pages, and no static path shadows a dynamic route. If any gated route is served as a static asset without invoking the Worker, set `run_worker_first` for that path and record it.
 
-- [ ] **Step 4: Smoke the Worker without the custom domain**
+- [x] **Step 4: Smoke the Worker without the custom domain**
 
 Public pages render with correct fonts and typography; `/licensing` shows the required notice; a content-pack JSON asset loads; the deck page renders tarot cards. Defer everything requiring OAuth to Task 3.
 
@@ -113,19 +113,19 @@ Public pages render with correct fonts and typography; `/licensing` shows the re
 
 This is the one step with production-visible risk. Pick a low-traffic window.
 
-- [ ] **Step 1: Record rollback facts before touching DNS**
+- [x] **Step 1: Record rollback facts before touching DNS**
 
 Note the current Pages deployment ID and confirm the Pages project still builds. The rollback is: remove the domain from the Worker, reattach it to the Pages project.
 
-- [ ] **Step 2: Move `guildbook.arrowed.games` to the Worker**
+- [x] **Step 2: Move `guildbook.arrowed.games` to the Worker**
 
 Remove the custom domain from the Pages project, then add it to the Worker. The zone is already Cloudflare-managed so the record is created automatically.
 
-- [ ] **Step 3: Full production smoke**
+- [x] **Step 3: Full production smoke**
 
 Run `DEPLOY.md` §5 end to end on the live domain: sign in with Google **and** Discord (this is the first real test of `AUTH_URL` and the callback paths), create an adventurer and save it (a D1 round-trip), open the sheet, toggle a condition, take a wound, download the PDF, mint a share link and open it in a private window.
 
-- [ ] **Step 4: Check the optional preview redirect**
+- [x] **Step 4: Check the optional preview redirect**
 
 If a `<project>.pages.dev` callback URL was ever registered in the Google or Discord OAuth apps, previews now live on `*.workers.dev` — update or remove it. This is optional and may never have been configured.
 
@@ -136,15 +136,15 @@ If a `<project>.pages.dev` callback URL was ever registered in the Google or Dis
 - Modify: `.github/workflows/ci.yml`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Rewrite `DEPLOY.md` for Workers**
+- [x] **Step 1: Rewrite `DEPLOY.md` for Workers**
 
 Retitle from "Cloudflare Pages + D1". Replace §2's Pages project creation with the Workers Builds connection, replace the rollback line (Pages Deployments → Rollback) with Workers versions/gradual deployments, and replace the log tail command (`wrangler pages deployment tail`) with the Workers equivalent. §1 (D1 creation), §3 (OAuth apps), §4 (custom domain, now Workers), §5 (smoke test) and the pre-launch font licence reminder carry over largely intact.
 
-- [ ] **Step 2: Add `wrangler deploy --dry-run` to CI**
+- [x] **Step 2: Add `wrangler deploy --dry-run` to CI**
 
 Now that it is meaningful, add it as a build-validation step after `npm run build`. This is the standing guard that the Workers config stays valid — and it is the gate Increment 5 depends on.
 
-- [ ] **Step 3: Changelog and commit**
+- [x] **Step 3: Changelog and commit**
 
 Keep a Changelog entry under Changed. Then:
 
@@ -159,4 +159,35 @@ Only after the domain has served correctly for an agreed soak period. Delete the
 
 ## Migration Completion Record
 
-Record the Worker name and its first production deployment ID, whether `nodejs_als` proved necessary, whether any route needed `run_worker_first`, the domain cutover timestamp and observed downtime, the OAuth smoke result for both providers, the CI dry-run gate commit, and the disposition of the Pages project. Do not record secret values, the D1 database ID beyond what `wrangler.toml` already carries, or OAuth client secrets.
+**Completed 2026-07-27.** All four tasks done except Task 2 Step 1's Git connection and Task 4 Step 4's Pages retirement, both recorded below as deliberately outstanding.
+
+| Item | Result |
+|---|---|
+| Worker name | `guild-book` |
+| First production deployment | version `0b3499f4-b76e-4606-a172-0cb6bd25fce0` (workers.dev only, no domain) |
+| Domain cutover deployment | version `a4709814-2b5e-4a30-a993-63e335222a94` |
+| `nodejs_als` required? | **No.** `nodejs_compat` was already present and is mandatory for `node:crypto`; at `compatibility_date = 2026-07-01` it also supplies AsyncLocalStorage, making `nodejs_als` redundant. The plan's Task 1 Step 1 TOML snippet omitted `compatibility_flags` entirely — that would have re-broken `node:crypto` (the failure fixed by `7410901`), so the flag was kept. |
+| Any route needing `run_worker_first`? | **No.** Static assets (favicon, content-pack JSON, fonts) return 200 while SSR routes were still 500ing pre-secrets, confirming assets-first serving works without shadowing dynamic routes. `/campaigns` continued to 404 via the server-side feature gate throughout. |
+| Cutover timestamp | 2026-07-27, ~23:40 UTC |
+| Observed downtime | Not precisely measured. Bounded by the interval between removing the domain from Pages and the Worker deploy completing — a single operator-paced step, under ~2 minutes. No "already in use" retry was needed. |
+| OAuth smoke, both providers | **Passed.** Google and Discord sign-in, adventurer read and save (D1 round-trip), PDF export, and share link in a private window all confirmed by the owner on the live domain. |
+| CI dry-run gate | Added for both production and `--env staging`. Verified to exit 0 with **no** Cloudflare credentials, so it needs no CI secrets. |
+| Pages project disposition | **Retained, not deleted.** Left Git-connected but its builds now fail on the missing `pages_build_output_dir`; its last successful deployment remains servable, so the rollback (re-attach the domain to Pages) stays viable. Retire only after an agreed soak. |
+
+### Findings worth carrying forward
+
+1. **The rate-limit binding does not enforce — the capability D4 migrated for.** `limit()` returns `success: true` regardless of volume. Ruled out: configuration (both `[[ratelimits]]` and legacy `[[unsafe.bindings]]` forms), account plan (reproduced after upgrading to Workers Paid), application code (reproduced on a bare throwaway Worker: a 3-per-10s limiter on a fixed key allowed 9 consecutive requests), and Wrangler version (4.114.0 as well as 4.106.0). Open with Cloudflare support. **Increment 5 cannot pass Gate E until this is resolved**; the owner chose to cut over regardless, since campaigns remain gated off and nothing else is affected.
+
+2. **`routes` IS inherited by named environments.** Wrangler warns that deploying `--env staging` would reassign `guildbook.arrowed.games` away from the production Worker onto staging — which has an empty database and no OAuth providers, i.e. a production outage from a routine staging deploy. `[env.staging]` now sets `routes = []` explicitly. Bindings (`[assets]`, `[[d1_databases]]`, `[[ratelimits]]`) are *not* inherited and must be redeclared per environment; `main`, `compatibility_date` and `compatibility_flags` are.
+
+3. **Declaring `routes` silently disables `workers_dev` and `preview_urls`** unless each is set explicitly. Here that was desirable — it closed a public `workers.dev` front door onto the production database — but per-branch previews will need `preview_urls = true` when Workers Builds is connected.
+
+4. **`[vars]` is replaced wholesale on every deploy; secrets are not.** Anything set in the dashboard but absent from `wrangler.toml` disappears on the next deploy. `ADMIN_EMAILS` and `FEEDBACK_URL` are therefore stored as secrets despite not being sensitive.
+
+5. **Cloudflare secrets are write-only**, so the pre-migration `AUTH_SECRET` could not be copied from Pages to the Worker. Rotation was forced, which `auth-policy.ts:65` recommends at rollout anyway. Blast radius verified as 3 production users and zero DB session rows (strategy is `jwt`); share links resolve a stored `shareId`, not a signed token, so they survived.
+
+### Outstanding
+
+- **Workers Builds Git connection** (Task 2 Step 1) — dashboard-only GitHub OAuth flow, not wired. Deploys are manual `wrangler deploy`; pushing `main` ships nothing. `DEPLOY.md` says so at the top.
+- **Pages project retirement** (Task 4 Step 4) — deliberately deferred while it is the rollback.
+- `secrets.production.env` exists locally, gitignored, holding live OAuth credentials. Delete once no longer needed.

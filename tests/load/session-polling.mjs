@@ -73,7 +73,10 @@ function parseArgs(argv) {
 		commandIntervalMs: 5000,
 		baseUrl: null,
 		port: 4174,
-		bootTimeoutMs: 90_000
+		bootTimeoutMs: 90_000,
+		// Committed in docs/operations/campaign-capacity.md before the gate run.
+		pollP95BudgetMs: 1200,
+		commandP95BudgetMs: 2000
 	};
 	for (let i = 0; i < argv.length; i += 1) {
 		const arg = argv[i];
@@ -306,7 +309,85 @@ async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 	return { ok: res.ok, status: res.status, latencyMs, json, error: null };
 }
 
+// ---------------------------------------------------------------------------
+// Staging mode (Increment 5 Task 4 Step 1)
+//
+// Against a local preview server this harness authenticates through the dev
+// Credentials provider. Staging has no dev login — deliberately, so a public
+// URL never carries an impersonation bypass — so in staging mode it seeds
+// fixture users straight into staging D1 and signs its own Auth.js session
+// JWTs, exactly as `scripts/campaigns/staging-d1-smoke.mjs` does.
+//
+// Users are seeded in ONE batched statement rather than one call per user:
+// 27 separate `wrangler d1 execute` round trips would add ~40s to setup and
+// would itself distort the very latency numbers this harness exists to measure.
+// ---------------------------------------------------------------------------
+
+const AUTH_SESSION_VERSION = 2; // must match src/lib/server/auth-policy.ts
+const STAGING_COOKIE_NAME = '__Secure-authjs.session-token';
+
+const stagingMode = (process.env.CAMPAIGN_LOAD_TARGET ?? '').toLowerCase() === 'staging';
+const stagingAuthSecret = process.env.CAMPAIGN_STAGING_AUTH_SECRET ?? '';
+const stagingD1Name = process.env.CAMPAIGN_STAGING_D1_NAME ?? 'guild-book-staging-db';
+const stagingWranglerEnv = process.env.CAMPAIGN_STAGING_WRANGLER_ENV ?? 'staging';
+const stagingUserPool = [];
+
+// When set, the harness reuses an already-seeded pool of fixture users instead
+// of creating new ones. This is what lets CI run without any Cloudflare
+// credentials: seeding needs D1 write access, but minting a session cookie for
+// an existing user needs only AUTH_SECRET. Seed the pool once with
+// `scripts/campaigns/seed-load-fixtures.mjs`.
+const stagingUserPrefix = process.env.CAMPAIGN_STAGING_USER_PREFIX ?? '';
+
+async function seedStagingUsers(count) {
+	if (stagingUserPrefix) {
+		const ids = Array.from({ length: count }, (_, i) => `${stagingUserPrefix}-${i}`);
+		stagingUserPool.push(...ids);
+		console.log(`[load] reusing ${ids.length} pre-seeded fixture users (${stagingUserPrefix}-0..${count - 1})`);
+		return;
+	}
+
+	const ids = Array.from({ length: count }, (_, i) => `load-${RUN_ID}-${i}`);
+	const values = ids.map((id) => `('${id}','${id}')`).join(',');
+	const { execFile } = await import('node:child_process');
+	const { promisify } = await import('node:util');
+	await promisify(execFile)(
+		'npx',
+		[
+			'wrangler',
+			'd1',
+			'execute',
+			stagingD1Name,
+			'--remote',
+			'--env',
+			stagingWranglerEnv,
+			'--command',
+			`INSERT INTO users (id, name) VALUES ${values}`
+		],
+		{ maxBuffer: 1024 * 1024 * 32 }
+	);
+	stagingUserPool.push(...ids);
+	console.log(`[load] seeded ${ids.length} staging fixture users in one batch`);
+}
+
+async function mintStagingCookie(userId) {
+	const { encode } = await import('@auth/core/jwt');
+	return encode({
+		token: { sub: userId, sessionVersion: AUTH_SESSION_VERSION },
+		secret: stagingAuthSecret,
+		salt: STAGING_COOKIE_NAME,
+		maxAge: 60 * 60 * 6
+	});
+}
+
 async function login(baseUrl, jar, email, name) {
+	if (stagingMode) {
+		const userId = stagingUserPool.shift();
+		if (!userId) throw new Error('staging fixture user pool exhausted — seedStagingUsers undercounted');
+		jar.set(STAGING_COOKIE_NAME, await mintStagingCookie(userId));
+		return;
+	}
+
 	const res = await fetch(`${baseUrl}/auth/callback/credentials`, {
 		method: 'POST',
 		headers: {
@@ -423,11 +504,57 @@ class Stats {
 		}
 	}
 
-	recordCommand(res) {
+	// (sessionId, resultingVersion) pairs already claimed by an accepted
+	// command. Two accepted commands reporting the same resulting version means
+	// the version claim is not exclusive — a lost write, not a slow one.
+	claimedVersions = new Set();
+	duplicateResultingVersions = 0;
+	// Accepted commands whose change no client ever observed. Keyed to the
+	// acceptance timestamp so the tail of the run can be excluded — see
+	// `countLostCommands`.
+	acceptedCommandKeys = new Map();
+	observedCommandKeys = new Set();
+	windowEndedAt = null;
+
+	/**
+	 * A command is only "lost" if the run gave every other client a fair chance
+	 * to see it and none did. Commands accepted in the final moments of the load
+	 * window are unobserved because the window closed, not because anything was
+	 * dropped — counting those would make this gate fail every run.
+	 *
+	 * The grace period is one full poll cycle plus the WORST propagation this
+	 * run actually demonstrated: if a change had longer than the slowest
+	 * observed propagation and still reached nobody, it is genuinely lost.
+	 *
+	 * An earlier version used a fixed 2000ms (the budget) instead of the
+	 * observed maximum. That is unsound whenever a run's tail exceeds the
+	 * budget — the 2026-07-28 gate run peaked at 6853ms, so a command accepted
+	 * ~4s before the window closed could still be propagating normally and be
+	 * miscounted as lost. This is a fix to the measurement, NOT a relaxation of
+	 * the gate: the threshold is still zero lost commands.
+	 */
+	countLostCommands(graceMs) {
+		const cutoff = (this.windowEndedAt ?? Date.now()) - graceMs;
+		let lost = 0;
+		for (const [key, acceptedAt] of this.acceptedCommandKeys) {
+			if (acceptedAt <= cutoff && !this.observedCommandKeys.has(key)) lost += 1;
+		}
+		return lost;
+	}
+
+	recordCommand(res, sessionId) {
 		this.commandTotal += 1;
 		this.commandLatencies.push(res.latencyMs);
-		if (res.ok && res.status === 200 && res.json?.outcome?.ok) this.commandAccepted += 1;
-		else this.commandErrors += 1;
+		if (res.ok && res.status === 200 && res.json?.outcome?.ok) {
+			this.commandAccepted += 1;
+			const version = res.json.outcome.resultingVersion;
+			if (sessionId !== undefined && version !== undefined) {
+				const key = `${sessionId}#${version}`;
+				if (this.claimedVersions.has(key)) this.duplicateResultingVersions += 1;
+				else this.claimedVersions.add(key);
+				this.acceptedCommandKeys.set(key, Date.now());
+			}
+		} else this.commandErrors += 1;
 	}
 
 	recordVisibility(ms, meta) {
@@ -496,6 +623,7 @@ function resolveVisibility(campaign, client, stats) {
 	for (const event of campaign.pendingEvents) {
 		if (client.cursor >= event.targetCursor && event.remaining.has(client)) {
 			event.remaining.delete(client);
+			if (event.commandKey) stats.observedCommandKeys.add(event.commandKey);
 			stats.recordVisibility(now - event.acceptedAt, { campaignIndex: campaign.index, role: client.role });
 		}
 	}
@@ -562,7 +690,7 @@ async function commandLoop(baseUrl, campaign, stats, endTime, opts) {
 				}
 			}
 		);
-		stats.recordCommand(res);
+		stats.recordCommand(res, campaign.sessionId);
 
 		if (res.ok && res.status === 200 && res.json?.outcome?.ok) {
 			const acceptedAt = Date.now();
@@ -570,6 +698,10 @@ async function commandLoop(baseUrl, campaign, stats, endTime, opts) {
 			gm.version = projectionEnvelope.sessionVersion;
 			gm.cursor = projectionEnvelope.campaignCursor;
 			campaign.pendingEvents.push({
+				// Carried so a visibility observation can mark THIS accepted
+				// command as seen — that is what distinguishes a slow change
+				// from a lost one.
+				commandKey: `${campaign.sessionId}#${res.json.outcome.resultingVersion}`,
 				targetCursor: projectionEnvelope.campaignCursor,
 				acceptedAt,
 				// Only the OTHER two clients count for cross-client visibility —
@@ -607,7 +739,15 @@ async function main() {
 	// partially setting up state, the finally block below still runs — belt
 	// and braces alongside `bootServer`'s own internal kill-on-failure path.
 	try {
-		if (!baseUrl) {
+		if (stagingMode) {
+			if (!baseUrl) throw new Error('CAMPAIGN_LOAD_TARGET=staging requires --base-url');
+			if (!stagingAuthSecret) throw new Error('CAMPAIGN_LOAD_TARGET=staging requires CAMPAIGN_STAGING_AUTH_SECRET');
+			if (/guildbook\.arrowed\.games/.test(baseUrl)) {
+				throw new Error('refusing to load-test the production hostname');
+			}
+			console.log(`[load] STAGING mode against ${baseUrl}`);
+			await seedStagingUsers(opts.campaigns * opts.clientsPerCampaign);
+		} else if (!baseUrl) {
 			serverHandle = await bootServer(opts.port, opts.bootTimeoutMs);
 			baseUrl = serverHandle.baseUrl;
 		} else {
@@ -635,6 +775,7 @@ async function main() {
 		}
 
 		await Promise.all(tasks);
+		stats.windowEndedAt = Date.now();
 		console.log('[load] load window complete');
 
 		exitCode = report(stats, opts);
@@ -690,6 +831,22 @@ function report(stats, opts) {
 	const measuredAnything = stats.commandAccepted > 0 && visibility.count > 0;
 	const visibilityOk = measuredAnything && maxVisibilityMs <= 2000;
 	const errorRateOk = errorRate <= 0.001;
+
+	// Increment 5 Task 4 Step 2 — the p95 budgets committed in
+	// docs/operations/campaign-capacity.md BEFORE the gate run. Deliberately
+	// NOT exposed as CLI flags: a threshold that can be raised from the command
+	// line when a run goes red is not a gate. Changing these means editing the
+	// defaults here AND recording a dated amendment in that document.
+	const pollP95Ok = pollLatency.p95 === null || pollLatency.p95 <= opts.pollP95BudgetMs;
+	const commandP95Ok = commandLatency.p95 === null || commandLatency.p95 <= opts.commandP95BudgetMs;
+	// A "no lost or duplicated accepted command" check: every accepted command
+	// must claim a distinct resulting version, and none may vanish.
+	// One poll cycle plus the worst propagation this run demonstrated — never
+	// less than the 2000ms budget, so a fast run cannot shrink the window.
+	const lostGraceMs =
+		opts.pollIntervalMs + opts.jitterMs + Math.max(2000, visibility.max ?? 0);
+	const lostCommands = stats.countLostCommands(lostGraceMs);
+	const commandIntegrityOk = stats.duplicateResultingVersions === 0 && lostCommands === 0;
 
 	console.log('');
 	console.log('=== Load gate summary ===');
@@ -749,9 +906,20 @@ function report(stats, opts) {
 		console.log(`Gate: max visible-change latency <= 2000ms? ${visibilityOk ? 'PASS' : 'FAIL'} (max observed ${fmt(maxVisibilityMs)}ms)`);
 	}
 	console.log(`Gate: error rate <= 0.1%? ${errorRateOk ? 'PASS' : 'FAIL'} (observed ${(errorRate * 100).toFixed(4)}%)`);
+	console.log(
+		`Gate: poll p95 <= ${opts.pollP95BudgetMs}ms? ${pollP95Ok ? 'PASS' : 'FAIL'} (observed ${fmt(pollLatency.p95)}ms)`
+	);
+	console.log(
+		`Gate: command p95 <= ${opts.commandP95BudgetMs}ms? ${commandP95Ok ? 'PASS' : 'FAIL'} (observed ${fmt(commandLatency.p95)}ms)`
+	);
+	console.log(
+		`Gate: no lost or duplicated accepted command? ${commandIntegrityOk ? 'PASS' : 'FAIL'} ` +
+			`(${stats.duplicateResultingVersions} duplicate resulting versions, ${lostCommands} lost; ` +
+			`commands accepted within ${lostGraceMs}ms of the window close are excluded — the run ended, nothing was dropped)`
+	);
 	console.log('');
 
-	if (!visibilityOk || !errorRateOk) {
+	if (!visibilityOk || !errorRateOk || !pollP95Ok || !commandP95Ok || !commandIntegrityOk) {
 		console.error('[load] FAILED — see gate results above');
 		return 1;
 	}

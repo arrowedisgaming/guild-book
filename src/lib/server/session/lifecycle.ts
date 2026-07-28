@@ -30,6 +30,7 @@ import type { AppDb } from '$lib/server/db';
 import { runAtomic, isUniqueConstraintError, type AppDbContext } from '$lib/server/db/atomic';
 import { campaignEvents, playSessions } from '$lib/server/db/schema';
 import { canonicalDigest, canonicalJsonStringify } from '$lib/server/content/canonical-json';
+import { recordSessionFrozen, recordSessionRecovered } from '$lib/server/observability/campaign-metrics';
 import { compileSessionRuntimeContent, toSessionEngineRuntime } from '$lib/server/content/session-runtime';
 import { getContentPack, getTarotProcedures } from '$lib/server/content/loader';
 import { buildMajorDeck, buildPlayerDeck, shuffleDeck } from '$lib/engine/tarot-deck';
@@ -246,6 +247,11 @@ export async function freezeSessionForFailure(dbContext: AppDbContext, input: Fr
 		// Fix round 1: close the same-isolate false-204 window at the source —
 		// see `recordFreshCursorHintAfterCommit`'s doc comment.
 		await recordFreshCursorHintAfterCommit(db, input.campaignId);
+		// Only after the freeze actually commits — a lost race is not a freeze,
+		// and counting it would inflate the frozen-session signal the release
+		// window is monitored against. `reason` is already required to be a
+		// short redacted label; the sink sanitizes it against a known set too.
+		recordSessionFrozen({ reason: input.reason });
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;
 		// Lost the race — see doc comment above.
@@ -360,6 +366,10 @@ export async function freezeSession(options: FreezeSessionOptions): Promise<Free
 		// Fix round 1: close the same-isolate false-204 window at the source —
 		// see `recordFreshCursorHintAfterCommit`'s doc comment.
 		await recordFreshCursorHintAfterCommit(db, options.campaignId);
+		// A deliberate GM freeze counts too — the health endpoint reports how
+		// many sessions are frozen, not how they got there — but it carries its
+		// own reason so an operator can tell a chosen pause from a fault.
+		recordSessionFrozen({ reason: 'gm-requested' });
 		return { ok: true };
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;
@@ -467,6 +477,7 @@ export async function recoverSession(options: RecoverSessionOptions): Promise<Re
 		// Fix round 1: close the same-isolate false-204 window at the source —
 		// see `recordFreshCursorHintAfterCommit`'s doc comment.
 		await recordFreshCursorHintAfterCommit(db, options.campaignId);
+		recordSessionRecovered();
 		return { ok: true };
 	} catch (cause) {
 		if (!isUniqueConstraintError(cause)) throw cause;

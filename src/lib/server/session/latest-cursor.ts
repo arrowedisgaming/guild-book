@@ -39,6 +39,8 @@
  * 2000ms budget. 600ms leaves real margin.
  */
 
+import { recordCampaignMetric } from '$lib/server/observability/campaign-metrics';
+
 /** Cap on distinct campaigns tracked at once, so a long-lived isolate
  * serving many campaigns can't grow this map without bound. */
 const MAX_HINTS = 256;
@@ -66,7 +68,14 @@ export function hasFreshMatchingCursorHint(campaignId: string, callerCursor: num
 	const hint = hints.get(campaignId);
 	if (!hint) return false;
 	if (now - hint.observedAt > HINT_FRESH_MS) return false;
-	return hint.cursor === callerCursor;
+	if (hint.cursor !== callerCursor) return false;
+
+	// Increment 5 Task 2: a hint hit is a no-change poll answered without any
+	// D1 read at all — the cheapest outcome, and the one whose share of total
+	// polls tells an operator how much read budget this cache is saving. The
+	// campaign id is deliberately NOT a tag.
+	recordCampaignMetric({ name: 'poll_no_change', value: 1, tags: { outcome: 'hint' } });
+	return true;
 }
 
 /**

@@ -152,8 +152,17 @@ export function instrumentD1(database: D1Database, options: InstrumentD1Options 
 						wrapStatement((target.bind as (...v: unknown[]) => D1PreparedStatement)(...values));
 				}
 				if (typeof prop === 'string' && STATEMENT_ROUND_TRIPS.has(prop)) {
-					return (...args: unknown[]) =>
-						timed(1, () => (Reflect.get(target, prop, target) as (...a: unknown[]) => Promise<unknown>)(...args));
+					const method = Reflect.get(target, prop, target) as (...a: unknown[]) => Promise<unknown>;
+					// `.call(target, …)`, never a bare call. `Reflect.get` hands back an
+					// UNBOUND method, and workerd's D1PreparedStatement is a real class
+					// whose methods dereference `this` — invoking one without a receiver
+					// throws "Illegal invocation" and breaks every query in the
+					// application. Miniflare's implementation keeps its state in
+					// closures and does not care, so the integration suite cannot catch
+					// this; `method binding (workerd shape)` in the unit suite does.
+					// Regression: this exact bug shipped to staging on 2026-07-28 and
+					// turned every D1 read into a 500.
+					return (...args: unknown[]) => timed(1, () => method.call(target, ...args));
 				}
 				return passThrough(target, prop);
 			}

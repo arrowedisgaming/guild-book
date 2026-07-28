@@ -265,6 +265,103 @@ describe('instrumented D1 binding', () => {
 	});
 });
 
+/**
+ * Regression, 2026-07-28: the first deploy of this module broke every D1 query
+ * on staging (`/s/<id>` went 404 → 500) while both the unit suite above and the
+ * Miniflare integration suite stayed green.
+ *
+ * Cause: the round-trip branch did `Reflect.get(target, prop, target)(...args)`,
+ * which returns an UNBOUND method and then calls it as a bare function, so
+ * `this` was `undefined`. Miniflare's `D1PreparedStatement` holds its state in
+ * closures, so it did not care. workerd's is a real class whose methods need
+ * `this`, so it threw "Illegal invocation" on the first `.all()`.
+ *
+ * The fakes above cannot catch that — they are object literals. This one is a
+ * class with prototype methods that dereference `this`, which is the shape the
+ * real runtime has. Miniflare is not a substitute for workerd here.
+ */
+describe('method binding (workerd shape)', () => {
+	class BindingSensitiveStatement {
+		constructor(
+			private readonly owner: { ticks: number },
+			readonly sql: string,
+			readonly bound: readonly unknown[] = []
+		) {}
+
+		bind(...values: unknown[]) {
+			return new BindingSensitiveStatement(this.owner, this.sql, values);
+		}
+
+		async all() {
+			// Throws a TypeError if `this` is undefined, exactly as a workerd host
+			// object throws "Illegal invocation".
+			this.owner.ticks += 1;
+			return { results: [{ sql: this.sql }], success: true };
+		}
+
+		async first() {
+			this.owner.ticks += 1;
+			return { sql: this.sql };
+		}
+
+		async run() {
+			this.owner.ticks += 1;
+			return { success: true };
+		}
+
+		async raw() {
+			this.owner.ticks += 1;
+			return [[this.sql]];
+		}
+	}
+
+	class BindingSensitiveDatabase {
+		ticks = 0;
+
+		prepare(sql: string) {
+			return new BindingSensitiveStatement(this, sql);
+		}
+
+		async batch(statements: BindingSensitiveStatement[]) {
+			this.ticks += 1;
+			return statements.map(() => ({ success: true }));
+		}
+
+		async exec(sql: string) {
+			this.ticks += 1;
+			return { count: 1, duration: 0, sql };
+		}
+	}
+
+	it('calls statement methods with their own receiver', async () => {
+		const real = new BindingSensitiveDatabase();
+		const db = instrumentD1(real as unknown as D1Database);
+
+		const timing = await runWithRequestTiming(async () => {
+			await db.prepare('SELECT 1').bind(1).all();
+			await db.prepare('SELECT 2').first();
+			await db.prepare('SELECT 3').run();
+			await db.prepare('SELECT 4').raw();
+			return currentRequestTiming();
+		});
+
+		expect(real.ticks).toBe(4);
+		expect(timing?.d1Calls).toBe(4);
+	});
+
+	it('calls database methods with their own receiver', async () => {
+		const real = new BindingSensitiveDatabase();
+		const db = instrumentD1(real as unknown as D1Database);
+
+		await runWithRequestTiming(async () => {
+			await db.exec('PRAGMA foreign_keys = ON');
+			await db.batch([db.prepare('a') as never, db.prepare('b') as never]);
+		});
+
+		expect(real.ticks).toBe(2);
+	});
+});
+
 describe('Server-Timing formatting', () => {
 	it('emits the server total, the D1 total and the round-trip count', () => {
 		const header = formatServerTiming({

@@ -304,7 +304,23 @@ async function readIndependently<T extends readonly Promise<unknown>[]>(
  * item 4; the runtime content is immutable once pinned, so it's excluded
  * from that version-equality check and instead digest-verified).
  */
-export async function loadSessionForReduce(db: AppDb, sessionId: string): Promise<LoadedSession> {
+export async function loadSessionForReduce(
+	db: AppDb,
+	sessionId: string,
+	/**
+	 * When supplied, a session belonging to any other campaign is reported as
+	 * `SessionNotFoundError` — decided before a single fragment is parsed.
+	 *
+	 * This exists so callers who need that ownership check no longer have to read
+	 * `play_sessions` themselves via `loadSessionSummary` first, which was a
+	 * second read of the row this function already fetches. The ORDER is the
+	 * point, not just the saving: an out-of-campaign caller must get a flat
+	 * "not found" and never an "unloadable", which would confirm the session id
+	 * exists somewhere. Checking here, ahead of parsing, preserves that exactly —
+	 * a session that is both out-of-campaign and corrupt still reports not-found.
+	 */
+	expectedCampaignId?: string
+): Promise<LoadedSession> {
 	// Four of this function's five reads are keyed only by `sessionId` and so do
 	// not depend on one another. Issuing them as one D1 batch makes them a single
 	// network round trip instead of four sequential ones — worth ~240ms per call
@@ -328,6 +344,12 @@ export async function loadSessionForReduce(db: AppDb, sessionId: string): Promis
 
 	const session = sessionRows[0];
 	if (!session) throw new SessionNotFoundError(sessionId);
+	// Ahead of every parse below, so "belongs to another campaign" and "does not
+	// exist" are indistinguishable to the caller even when the session is also
+	// unloadable. See the parameter's doc comment.
+	if (expectedCampaignId !== undefined && session.campaignId !== expectedCampaignId) {
+		throw new SessionNotFoundError(sessionId);
+	}
 
 	const gmRow = await db
 		.select({ ownerUserId: campaigns.ownerUserId })

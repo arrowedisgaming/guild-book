@@ -125,20 +125,18 @@ describe('D1 round-trip budgets', () => {
 			loadTableProjectionsForActor(db, 'session-a', 'campaign-a', { kind: 'gm', userId: GM })
 		);
 
-		// Was 10, now 7: -3 from the batched session load.
+		// 10 originally, then 7 after the session load was batched, now 4:
 		//
-		// Two further reductions are measured and deliberately NOT taken here,
-		// because they were not in the change this budget was written for:
+		//   -1  `loadSessionSummary` read `play_sessions` and `loadSessionForReduce`
+		//       then read the same row again. The ownership check that summary
+		//       existed for now happens inside the load itself.
+		//   -2  the guided-test, Camp and finite slices each called
+		//       `loadSessionActorFacts(db, campaignId)` — literally the same
+		//       function, same argument, three times.
 		//
-		//   - `loadSessionSummary` reads `play_sessions` and then
-		//     `loadSessionForReduce` reads the same row again (-1).
-		//   - three separate loaders (`resolveEquipmentCapsFor`,
-		//     `loadGuidedTestMaterials`, `loadCampMaterials`) each issue the same
-		//     tenure/characters join for the same campaign (-2).
-		//
-		// Both are recorded in docs/operations/campaign-capacity.md. Taking them
-		// would put this at 4.
-		expect(trips).toBe(7);
+		// What remains: the batched fragment load, the campaign-owner read it
+		// depends on, the campaign cursor, and one actor-facts read.
+		expect(trips).toBe(4);
 	});
 
 	it('reuses the caller-supplied cursor instead of re-reading it', async () => {
@@ -148,7 +146,21 @@ describe('D1 round-trip budgets', () => {
 
 		// One fewer than the read-it-yourself path above: this is what `/sync`
 		// takes on a changed poll, since it always already holds the cursor.
-		expect(trips).toBe(6);
+		expect(trips).toBe(3);
+	});
+
+	it('still hides an out-of-campaign session behind not-found', async () => {
+		// The dropped `loadSessionSummary` existed to make this ordering explicit:
+		// decide ownership BEFORE parsing fragments, so a caller outside the
+		// campaign gets a flat `not-found` and never an `unloadable` that would
+		// confirm the session id exists somewhere. Removing the read must not
+		// remove the property.
+		const result = await loadTableProjectionsForActor(db, 'session-a', 'other-campaign', {
+			kind: 'gm',
+			userId: GM
+		});
+
+		expect(result.loadFailure).toBe('not-found');
 	});
 
 	it('accepts a command within its round-trip budget', async () => {

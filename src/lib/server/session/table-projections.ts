@@ -38,11 +38,11 @@ import {
 import { legalCampCommands, projectCampForActor, type CampControl, type CampProjection } from '$lib/engine/session/procedures/camp-projection';
 import { buildCampConfig } from '$lib/engine/session/procedures/camp';
 import { legalFiniteCommands, projectFiniteForActor, type FiniteControl, type FiniteProjection } from '$lib/engine/session/procedures/finite-projection';
-import { loadCampMaterials, loadGuidedTestMaterials } from './guided-test-materials';
+import { loadSessionActorFacts } from './guided-test-materials';
+import type { GuidedTestMaterials } from '$lib/engine/session/procedures/test-of-fate';
 import {
 	campaignCursor,
 	loadSessionForReduce,
-	loadSessionSummary,
 	SessionLoadIntegrityError,
 	SessionNotFoundError,
 	type LoadedSession
@@ -137,16 +137,15 @@ export async function loadTableProjectionsForActor(
 	 */
 	knownCampaignCursor?: number
 ): Promise<TableProjections> {
-	// Ownership decided from the cheap summary read FIRST, ahead of the full load
-	// (which parses every fragment and so can fail for reasons of its own): an
+	// Ownership is still decided ahead of any fragment parsing — an
 	// out-of-campaign caller always gets a flat 'not-found', never an
-	// 'unloadable' that would confirm the session id exists somewhere.
-	const summary = await loadSessionSummary(db, sessionId);
-	if (!summary || summary.campaignId !== campaignId) return { ...EMPTY, loadFailure: 'not-found' };
-
+	// 'unloadable' that would confirm the session id exists somewhere — but it is
+	// now decided INSIDE the load, from the `play_sessions` row that load already
+	// reads. It used to cost a separate `loadSessionSummary` round trip for the
+	// same row (docs/operations/campaign-capacity.md).
 	let loaded: LoadedSession;
 	try {
-		loaded = await loadSessionForReduce(db, sessionId);
+		loaded = await loadSessionForReduce(db, sessionId, campaignId);
 	} catch (cause) {
 		if (cause instanceof SessionNotFoundError) return { ...EMPTY, loadFailure: 'not-found' };
 		// Integrity failures are the one class of failure an operator most needs
@@ -194,10 +193,31 @@ export async function loadTableProjectionsForActor(
 		challengeLegalCommands = [];
 	}
 
+	// The guided-test, Camp and finite slices below all consume the SAME campaign
+	// actor facts — `loadGuidedTestMaterials` and `loadCampMaterials` are both
+	// aliases of `loadSessionActorFacts`, called with the same `campaignId`. They
+	// used to issue that identical tenure/characters join three times per
+	// request; this reads it once.
+	//
+	// The failure is captured rather than thrown here so each slice keeps its own
+	// try/catch and degrades independently: a bad actor-facts read must not turn
+	// three separate "this slice is unavailable" outcomes into one dead response.
+	let actorFacts: GuidedTestMaterials | null = null;
+	let actorFactsFailure: unknown = null;
+	try {
+		actorFacts = await loadSessionActorFacts(db, campaignId);
+	} catch (cause) {
+		actorFactsFailure = cause;
+	}
+	const requireActorFacts = (): GuidedTestMaterials => {
+		if (actorFacts) return actorFacts;
+		throw actorFactsFailure ?? new Error(`session actor facts unavailable for campaign ${campaignId}`);
+	};
+
 	let guidedTestProjection: GuidedTestProjection | null = null;
 	let guidedTestLegalCommands: GuidedTestControl[] = [];
 	try {
-		const materials = await loadGuidedTestMaterials(db, campaignId);
+		const materials = requireActorFacts();
 		guidedTestProjection = projectGuidedTestForActor(loaded.engineState, actor, runtime.catalog, materials);
 		guidedTestLegalCommands = legalGuidedTestCommands(loaded.engineState, actor, materials);
 	} catch (cause) {
@@ -212,7 +232,7 @@ export async function loadTableProjectionsForActor(
 	let campProjection: CampProjection | null = null;
 	let campLegalCommands: CampControl[] = [];
 	try {
-		const materials = await loadCampMaterials(db, campaignId);
+		const materials = requireActorFacts();
 		const config = buildCampConfig(loaded.runtimeContent.procedures, loaded.runtimeContent.formulas, loaded.runtimeContent.modifiers);
 		campProjection = projectCampForActor(loaded.engineState, actor, runtime.catalog, materials, config);
 		campLegalCommands = legalCampCommands(loaded.engineState, actor, materials, config);
@@ -225,7 +245,7 @@ export async function loadTableProjectionsForActor(
 	let finiteProjection: FiniteProjection | null = null;
 	let finiteLegalCommands: FiniteControl[] = [];
 	try {
-		const materials = await loadCampMaterials(db, campaignId);
+		const materials = requireActorFacts();
 		finiteProjection = projectFiniteForActor(loaded.engineState, actor, runtime.catalog, materials, loaded.runtimeContent.procedures);
 		finiteLegalCommands = legalFiniteCommands(loaded.engineState, actor, materials, loaded.runtimeContent.procedures);
 	} catch (cause) {

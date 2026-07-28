@@ -52,7 +52,7 @@
 - Test: `tests/unit/campaign-rate-limit.test.ts`
 - Test: `tests/integration/campaign-rate-limit.test.ts`
 
-- [ ] **Step 1: Write failing policy tests**
+- [x] **Step 1: Write failing policy tests**
 
 Test independent buckets for command mutations, lifecycle mutations, join attempts, and polling; key by authenticated user plus campaign where available, fall back to client address for invalid/unauthenticated join attempts. Verify unrelated campaigns/users do not share a bucket and `Retry-After` is returned without leaking resource existence.
 
@@ -70,27 +70,27 @@ export interface SharedRateLimiter {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npm test -- tests/unit/campaign-rate-limit.test.ts tests/integration/campaign-rate-limit.test.ts`
 
 Expected: FAIL because the shared port does not exist.
 
-- [ ] **Step 3: Implement provider-neutral policy selection**
+- [x] **Step 3: Implement provider-neutral policy selection**
 
 `campaign.ts` derives a hashed bucket key from actor/campaign/IP facts and calls the injected port. Raw IDs and addresses do not go into provider analytics. The memory implementation is deterministic/injectable-clock and used only for local/test. Campaign endpoints call the service after authentication when possible but before expensive state reconstruction.
 
-- [ ] **Step 4: Implement the Cloudflare binding adapter**
+- [x] **Step 4: Implement the Cloudflare binding adapter**
 
 Add a dedicated rate-limit binding to `wrangler.toml` following the currently installed Wrangler schema, generate platform types with `npx wrangler types`, and expose the exact generated binding type in `App.Platform.env`. The adapter calls the binding's limit method, maps success/failure to `RateLimitDecision`, and fails closed for mutations but permits one degraded read/poll with a warning counter if the provider is temporarily unavailable.
 
 Do not guess the binding API: the generated type file and `wrangler deploy --dry-run` are the acceptance source. Keep generated environment types committed only if that is already the repository convention; otherwise copy the minimal generated interface into `app.d.ts` with a source comment.
 
-- [ ] **Step 5: Restrict the old hook limiter**
+- [x] **Step 5: Restrict the old hook limiter**
 
 Keep the `Map` limiter only when no production binding is present. In production with campaigns enabled, startup/first request must fail closed for campaign mutations if the shared binding is missing. Existing noncampaign API behavior may retain its current local limiter.
 
-- [ ] **Step 6: Run and commit**
+- [x] **Step 6: Run and commit**
 
 Run:
 
@@ -118,11 +118,11 @@ git commit -m "feat(campaigns): enforce shared production rate limits"
 - Test: `tests/unit/campaign-metrics.test.ts`
 - Test: `tests/integration/campaign-health.test.ts`
 
-- [ ] **Step 1: Write failing redaction tests**
+- [x] **Step 1: Write failing redaction tests**
 
 Feed metrics/error helpers objects containing invite/card/character canaries and assert serialized sink calls include only names, counts, durations, status/rejection codes, retries, and coarse role/procedure labels.
 
-- [ ] **Step 2: Define a fixed metric allowlist**
+- [x] **Step 2: Define a fixed metric allowlist**
 
 ```ts
 export interface CampaignMetricPoint {
@@ -146,11 +146,11 @@ export interface CampaignMetricPoint {
 
 No generic `Record<string, unknown>` logging interface is permitted. Sanitize command type against a known enum; never pass IDs or request/response bodies.
 
-- [ ] **Step 3: Add an authenticated internal health endpoint**
+- [x] **Step 3: Add an authenticated internal health endpoint**
 
 Use a dedicated deployment secret and constant-time comparison. Report feature flag, D1 reachability, current content/runtime digest, migration presence, rate-limit binding presence, counts of active/frozen sessions, and oldest frozen age. Return aggregate data only. Disable entirely when the internal secret is absent.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `npm test -- tests/unit/campaign-metrics.test.ts tests/integration/campaign-health.test.ts`
 
@@ -167,7 +167,7 @@ git commit -m "feat(campaigns): add privacy-safe operations signals"
 - Create: `scripts/campaigns/staging-d1-smoke.mjs`
 - Create: `docs/operations/campaign-staging.md`
 
-- [ ] **Step 1: Create a non-destructive staging smoke harness**
+- [x] **Step 1: Create a non-destructive staging smoke harness**
 
 The script requires explicit `CAMPAIGN_STAGING_BASE_URL` and fixture credentials. It creates uniquely prefixed test users/campaigns through supported APIs, then verifies:
 
@@ -183,24 +183,28 @@ The script requires explicit `CAMPAIGN_STAGING_BASE_URL` and fixture credentials
 
 It archives its fixture campaign at the end only after ending its session; it never deletes arbitrary rows.
 
-- [ ] **Step 2: Apply migrations to a dedicated staging database**
+- [x] **Step 2: Apply migrations to a dedicated staging database**
 
 Run:
 
+**Corrected 2026-07-27 — the commands below replace the plan's original ones.** The original named `npm run db:migrate:d1:remote` (which points at *production* `guild-book-db` and takes no environment flag) and `wrangler pages deploy`, which no longer applies now that D4's Workers migration has landed.
+
 ```bash
-npm run db:migrate:d1:remote
+npm run db:migrate:d1:staging            # guild-book-staging-db, --env staging
 ADAPTER=cloudflare npm run build
-npx wrangler pages deploy .svelte-kit/cloudflare --project-name guild-book-staging
+npx wrangler deploy --env staging
+CAMPAIGN_STAGING_BASE_URL=https://guild-book-staging.esoneill.workers.dev \
+CAMPAIGN_STAGING_AUTH_SECRET=<staging AUTH_SECRET> \
 node scripts/campaigns/staging-d1-smoke.mjs
 ```
 
-Expected: migrations apply once, deployment succeeds, smoke script exits 0. Confirm the Wrangler environment points to staging—not production—before the migration command; document the actual environment-qualified command in the runbook.
+Expected: migrations apply once, deployment succeeds, smoke script exits 0. Confirm the Wrangler environment points to staging—not production—before the migration command; `npx wrangler deploy --dry-run --env staging` prints the resolved `env.DB` and is the cheapest way to check. The environment-qualified commands are documented in `docs/operations/campaign-staging.md`.
 
-- [ ] **Step 3: Record constraint evidence**
+- [x] **Step 3: Record constraint evidence**
 
 The runbook includes migration IDs, staging database ID, deployment commit, smoke fixture prefix, each contention result, and cleanup/archive outcome. Do not include invite URLs/tokens, session secrets, user auth tokens, or card identities.
 
-- [ ] **Step 4: Commit staging tools**
+- [x] **Step 4: Commit staging tools**
 
 ```bash
 git add scripts/campaigns/staging-d1-smoke.mjs docs/operations/campaign-staging.md
@@ -285,7 +289,7 @@ Test corrupt fragment/version mismatch detection, automatic freeze, GM recovery 
 
 The runbook states who can flip flags, expected propagation time measured in rehearsal, how to identify/freeze affected sessions using aggregate IDs in secure operator tooling, privacy-safe evidence collection, and escalation. It explicitly forbids dropping tables or deleting journals/secrets as rollback.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `npx playwright test tests/e2e/campaign-recovery.spec.ts`
 

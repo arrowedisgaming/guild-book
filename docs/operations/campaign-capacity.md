@@ -474,6 +474,58 @@ lever available in application code; moving the data closer to the reader (D1
 read replication / the Sessions API) is a different decision with its own
 consistency implications, and is out of scope for this document.
 
+### Round-trip reduction applied — 2026-07-28, 60s smoke at pilot concurrency
+
+Reductions A, B, C and E from the table above were implemented. D was
+deliberately left out: it is the only one that touches authorization.
+
+Measured against a real D1 binding by
+`tests/integration/round-trip-budget-d1.test.ts`, which asserts exact counts:
+
+| Path | Before | After |
+| --- | --- | --- |
+| `ensureUser` | 1 | **0** |
+| `loadSessionForReduce` | 5 | **2** |
+| `loadTableProjectionsForActor` | 10 | **7** (6 with a caller-supplied cursor) |
+| `executeCommand`, accepted | 16 | **7** |
+
+Observed end to end, 60s at 9 campaigns:
+
+| | 17:49 gate (`IAD`) | after (`SJC`) |
+| --- | --- | --- |
+| Command D1 round trips | 20.00 | **10.00** |
+| Poll D1 round trips (mean / p95) | 8.68 / 18 | **6.35 / 13** |
+| Command p95 | 2090.9 ms **FAIL** | **1586.8 ms PASS** |
+| Poll p95 | 1556.4 ms FAIL | 1786.7 ms FAIL |
+| ms per round trip | 78–80 | **122–129** |
+
+#### The colo lottery is now the dominant confound
+
+This run was served by `SJC`; the 17:49 run by `IAD`. Both talk to the same
+`MIA` primary, and the per-round-trip cost rose 54–65% purely from that. The
+round-trip reduction is real and exactly as budgeted, but the wall-clock
+comparison between these two runs is **not** like-for-like.
+
+Normalising to the earlier run's 78.4 ms/round trip, a command's D1 time would
+be `10 × 78.4 ≈ 784 ms`, against 1568 ms before — a 50% reduction. At `SJC`'s
+129.3 ms it is 1293 ms, which is why the observed improvement is only 18%.
+
+**A GitHub runner's colo is not selectable and varies between runs.** Any future
+comparison must quote round-trip counts, which are stable, alongside wall-clock,
+which is not. This makes the open question below more pressing, not less.
+
+The "1 lost command" is the grace-window artifact already described for the
+00:26 run — 81/81 accepted, 0 duplicates, and a 60s window leaves little room
+for the tail. It is not evidence of data loss.
+
+#### Still open
+
+Poll p95 remains outside budget. The two reductions recorded above and not
+taken — the duplicated `play_sessions` read, and the three loaders each issuing
+the same tenure/characters join — are both on the poll path and would take a
+changed poll from 7 round trips to 4. Reduction D remains the only one that
+touches the no-op poll path, which is ~77% of all traffic.
+
 ### Open question: which location the thresholds describe
 
 This run measured `IAD`→`MIA`. That is *a* real-player geometry, not *the* one:

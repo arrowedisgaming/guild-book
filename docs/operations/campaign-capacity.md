@@ -343,6 +343,146 @@ The decision rule for the next run, written down before it is run:
   The lever is the number of dependent statements per request, which is an
   architecture decision to be recorded, not a quiet optimisation.
 
+### 30-minute instrumented gate run — 2026-07-28, 17:49–18:19 UTC: **FAILED**
+
+The first run with server-side timing. Nine campaigns, 27 clients, 1800s, from
+GitHub Actions (colo `IAD`) against `guild-book-staging` (D1 primary `MIA`).
+30 642 requests, zero errors, zero lost or duplicated commands.
+
+| Gate | Threshold | Observed | Result |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms, 100% | **8260 ms** | **FAIL** |
+| Poll p95 | ≤ 1200 ms | **1556.4 ms** | **FAIL** |
+| Command p95 | ≤ 2000 ms | **2090.9 ms** | **FAIL** |
+| Error rate | < 0.1% | 0.0000% | PASS |
+| Lost / duplicated command | zero | 0 / 0 | PASS |
+
+#### Where the time goes
+
+```
+poll     mean 648.2ms  =  37.9ms wire  +   610.2ms D1  +  0.2ms worker
+         8.68 round trips  —  79.6ms each  —  1.13x average concurrency
+
+command  mean 1625.7ms =  57.1ms wire  +  1568.4ms D1  +  0.2ms worker
+         20.00 round trips carrying 26 statements  —  78.4ms each  —  1.00x concurrency
+```
+
+**It was never the network.** The wire is 5.8% of a poll and 3.5% of a command.
+D1 round trips are 94% and 96.5%. Worker CPU is nil — as expected, since the
+Workers clock advances on I/O rather than CPU.
+
+**Commands achieve no parallelism at all.** 1.00× concurrency means all twenty
+round trips are on the critical path in sequence. There is no overlap left to
+exploit; the only lever on command latency is a smaller number of dependent
+round trips.
+
+#### Both original candidates were real, and are now separable
+
+| Measurement | ms per D1 round trip |
+| --- | --- |
+| Workstation → `MIA` colo, co-located with the primary (single-query route) | 10–26 |
+| GH runner (`IAD`) → `MIA` primary, 2 campaigns | 47.2 |
+| GH runner (`IAD`) → `MIA` primary, 9 campaigns | **79.6** |
+
+There is a **distance floor of roughly 45–50 ms** per round trip on this path,
+plus a **load-dependent component of about +30 ms** at pilot concurrency. So D1
+contention is real — it is simply not the dominant term, and it could never
+have been seen until the distance term was subtracted out. Neither earlier run
+could have distinguished these.
+
+Steady state was **163 D1 round trips per second** against a single database for
+nine campaigns and 27 players (293 634 measured round trips over 1800 s).
+
+#### Verdict against the pre-registered decision rule
+
+The rule recorded before the run named three outcomes. This run is
+unambiguously the third: **`d1` large with a large `n` — round-trip-bound.**
+Per that rule and the increment's Global Constraints, the response is a
+recorded architecture decision, not a quiet optimisation.
+
+### Where the round trips actually go
+
+Counts below are traced from the code and reconciled against the measured
+distribution (poll p50 = 6, poll p95/max = 18, command = 20 exactly). They are
+**not** per-call-site instrumented; adding a call-site tag to `RequestTiming`
+would confirm them directly and is the honest next measurement if any of these
+numbers are to be relied on individually.
+
+**Every authenticated campaign request pays three round trips before any route
+logic runs:**
+
+| # | Where | Query |
+| --- | --- | --- |
+| 1 | Auth.js `jwt` callback (`auth-policy.ts`) | `SELECT … FROM users WHERE id = ?` |
+| 2 | `ensureUser` (`auth.ts:141`) | `SELECT id FROM users WHERE id = ?` |
+| 3 | `resolveCampaignAccess` (`campaign/access.ts`) | `campaigns` ⨝ `campaign_members` |
+
+Rows 1 and 2 read **the same `users` row twice** in the same request.
+
+The activity *write* in `recordActivity` is not a per-request cost —
+`activityPatch` caps it at one write per user per day. Only the read is
+per-request.
+
+**That fixed cost is paid by the 76.8% of polls that return `204`.** The
+isolate-local cursor hint in `latest-cursor.ts` short-circuits the route's own
+queries, but it is consulted *after* authorization, so a hint-answered no-op
+still costs three round trips — about 240 ms at the rate this run measured.
+
+| Request | Round trips | Composition |
+| --- | --- | --- |
+| Poll, hint-answered `204` | 3 | auth only |
+| Poll, authoritative `204` | ~5 | auth + `campaignCursor` ∥ `findOpenSessionForCampaign` |
+| Poll, `200` with events | ~18 | + events + secrets + `loadTableProjectionsForActor` |
+| Command | 20 | auth + `executeCommand` chain, twice through `loadSessionForReduce` |
+
+Two structural repetitions account for most of the rest:
+
+1. **`loadSessionForReduce` is five sequential queries** (`playSessions`,
+   campaign owner, runtime content, `sessionServerStates`,
+   `sessionPrivateStates`) and it runs **twice per command** — once to reduce
+   the command, then again inside `loadProjectionForActor` to build the
+   response.
+2. **`campaignCursor` is queried twice per changed poll** — once in
+   `sync/+server.ts` and again inside `loadTableProjectionsForActor`.
+
+### What reducing this would require
+
+Not a decision this document makes. Recorded so the decision can be made with
+numbers rather than instinct. Estimated savings use this run's 79.6 ms per
+round trip, which is specific to `IAD`→`MIA` at pilot load.
+
+| # | Change | Saves | Risk |
+| --- | --- | --- | --- |
+| A | Reuse the `users` row the `jwt` callback already read instead of re-reading it in `ensureUser` | 1 round trip on **every** request (~80 ms) | Low. Same row, same request. |
+| B | Reuse the session already loaded for the reduce when building the command's response projection | 5 round trips per command (~400 ms) | Medium. Must not return pre-commit state. |
+| C | `batch()` the independent reads inside `loadSessionForReduce` — server state and private states do not depend on each other | ~3 round trips wherever it is called | Medium. One batch is one round trip; the dependent reads must stay ordered. |
+| D | Cache the authorization result per (user, campaign) in the isolate with a short TTL, as `latest-cursor.ts` already does for cursors | up to 3 round trips on ~77% of polls | **High. This is authorization.** A stale grant is a security failure, not a slow response. Needs its own design and review. |
+| E | Drop the second `campaignCursor` on a changed poll | 1 round trip per `200` | Low. |
+
+A + B + C + E together would take a command from 20 round trips to roughly 11,
+and a changed poll from ~18 to ~11 — on this path, command mean ~1600 ms →
+~870 ms. That is inside the 2000 ms command budget with margin, and none of
+those four changes weakens a security boundary.
+
+D is the only one that touches the no-op poll path, which is 76.8% of all
+traffic, and it is also the only one that touches authorization. It should be
+considered separately and last.
+
+**What none of this changes:** the distance floor. Every remaining round trip
+still costs ~45–50 ms from `IAD` to a `MIA` primary. Reducing the count is the
+lever available in application code; moving the data closer to the reader (D1
+read replication / the Sessions API) is a different decision with its own
+consistency implications, and is out of scope for this document.
+
+### Open question: which location the thresholds describe
+
+This run measured `IAD`→`MIA`. That is *a* real-player geometry, not *the* one:
+a player near Miami gets the co-located case at 10–26 ms per round trip, and a
+player in Seattle gets something worse than `IAD`. The gate now measures
+honestly, but **the location the thresholds are defined against is a product
+decision that has not been made.** Until it is, a pass or fail here describes
+one point on a distribution, not the pilot's experience.
+
 ### Monthly consumption projection and headroom
 
 **Not yet computed.** Requires the 30-minute run's steady-state request rate.

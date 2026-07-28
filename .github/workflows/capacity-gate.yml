@@ -1,0 +1,102 @@
+name: Campaign capacity gate (staging)
+
+# Manual only. This drives real traffic at the staging Worker and staging D1 for
+# half an hour; it must never fire on a push.
+#
+# Why it exists: the 2026-07-28 gate run from a developer workstation missed the
+# 2-second visibility bound with a thin tail of outliers that arrived in bursts
+# correlated across campaigns. That shape is equally consistent with a
+# residential network hiccup and with D1 contention, and the two cannot be told
+# apart from a home connection. Running the identical harness from a datacenter
+# removes the home network from the measurement. See
+# docs/operations/campaign-capacity.md.
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: Load-window length in seconds (1800 = the real 30-minute gate)
+        required: true
+        default: '1800'
+      campaigns:
+        description: Simultaneous campaigns (9 = the pilot scenario the gate is defined against)
+        required: true
+        default: '9'
+      base_url:
+        description: Staging base URL. Must NOT be the production hostname.
+        required: true
+        default: 'https://guild-book-staging.esoneill.workers.dev'
+
+jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    # 1800s of load, plus setup and reporting headroom. Without this the job
+    # would inherit the 360-minute default and a hung run would burn minutes.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fail fast and loudly rather than pointing load at production. The
+      # harness refuses too, but a typo should not get as far as starting.
+      - name: Refuse to load-test production
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          case "$BASE_URL" in
+            *guildbook.arrowed.games*)
+              echo "::error::Refusing to load-test the production hostname."
+              exit 1
+              ;;
+          esac
+          echo "target accepted: $BASE_URL"
+
+      - name: Run the capacity gate
+        env:
+          # Reuses the fixture users seeded by
+          # scripts/campaigns/seed-load-fixtures.mjs, so this job needs NO
+          # Cloudflare credentials — only the staging signing secret.
+          CAMPAIGN_LOAD_TARGET: staging
+          CAMPAIGN_STAGING_USER_PREFIX: loadfix
+          CAMPAIGN_STAGING_AUTH_SECRET: ${{ secrets.STAGING_AUTH_SECRET }}
+          BASE_URL: ${{ inputs.base_url }}
+          DURATION: ${{ inputs.duration }}
+          CAMPAIGNS: ${{ inputs.campaigns }}
+        run: |
+          set -o pipefail
+          node tests/load/session-polling.mjs \
+            --base-url "$BASE_URL" \
+            --duration "$DURATION" \
+            --campaigns "$CAMPAIGNS" 2>&1 | tee capacity-gate.log
+
+      # `always()` so a FAILED gate still uploads its evidence — a failing run is
+      # exactly the one whose outlier and event-loop-lag detail matters.
+      - name: Upload the full run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacity-gate-log
+          path: capacity-gate.log
+          retention-days: 30
+
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo "## Capacity gate result"
+            echo
+            echo '```'
+            if grep -q '=== Load gate summary ===' capacity-gate.log; then
+              sed -n '/=== Load gate summary ===/,$p' capacity-gate.log
+            else
+              echo "No summary produced — the run failed before the load window completed."
+              echo "Last 30 lines:"
+              tail -30 capacity-gate.log
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

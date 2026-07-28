@@ -332,7 +332,21 @@ const stagingD1Name = process.env.CAMPAIGN_STAGING_D1_NAME ?? 'guild-book-stagin
 const stagingWranglerEnv = process.env.CAMPAIGN_STAGING_WRANGLER_ENV ?? 'staging';
 const stagingUserPool = [];
 
+// When set, the harness reuses an already-seeded pool of fixture users instead
+// of creating new ones. This is what lets CI run without any Cloudflare
+// credentials: seeding needs D1 write access, but minting a session cookie for
+// an existing user needs only AUTH_SECRET. Seed the pool once with
+// `scripts/campaigns/seed-load-fixtures.mjs`.
+const stagingUserPrefix = process.env.CAMPAIGN_STAGING_USER_PREFIX ?? '';
+
 async function seedStagingUsers(count) {
+	if (stagingUserPrefix) {
+		const ids = Array.from({ length: count }, (_, i) => `${stagingUserPrefix}-${i}`);
+		stagingUserPool.push(...ids);
+		console.log(`[load] reusing ${ids.length} pre-seeded fixture users (${stagingUserPrefix}-0..${count - 1})`);
+		return;
+	}
+
 	const ids = Array.from({ length: count }, (_, i) => `load-${RUN_ID}-${i}`);
 	const values = ids.map((id) => `('${id}','${id}')`).join(',');
 	const { execFile } = await import('node:child_process');

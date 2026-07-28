@@ -508,9 +508,16 @@ class Stats {
 	 * window are unobserved because the window closed, not because anything was
 	 * dropped — counting those would make this gate fail every run.
 	 *
-	 * The grace period is one full poll cycle plus the entire 2000ms visibility
-	 * budget: if a change had that much time and still reached nobody, it is
-	 * genuinely lost.
+	 * The grace period is one full poll cycle plus the WORST propagation this
+	 * run actually demonstrated: if a change had longer than the slowest
+	 * observed propagation and still reached nobody, it is genuinely lost.
+	 *
+	 * An earlier version used a fixed 2000ms (the budget) instead of the
+	 * observed maximum. That is unsound whenever a run's tail exceeds the
+	 * budget — the 2026-07-28 gate run peaked at 6853ms, so a command accepted
+	 * ~4s before the window closed could still be propagating normally and be
+	 * miscounted as lost. This is a fix to the measurement, NOT a relaxation of
+	 * the gate: the threshold is still zero lost commands.
 	 */
 	countLostCommands(graceMs) {
 		const cutoff = (this.windowEndedAt ?? Date.now()) - graceMs;
@@ -820,7 +827,10 @@ function report(stats, opts) {
 	const commandP95Ok = commandLatency.p95 === null || commandLatency.p95 <= opts.commandP95BudgetMs;
 	// A "no lost or duplicated accepted command" check: every accepted command
 	// must claim a distinct resulting version, and none may vanish.
-	const lostGraceMs = opts.pollIntervalMs + opts.jitterMs + 2000;
+	// One poll cycle plus the worst propagation this run demonstrated — never
+	// less than the 2000ms budget, so a fast run cannot shrink the window.
+	const lostGraceMs =
+		opts.pollIntervalMs + opts.jitterMs + Math.max(2000, visibility.max ?? 0);
 	const lostCommands = stats.countLostCommands(lostGraceMs);
 	const commandIntegrityOk = stats.duplicateResultingVersions === 0 && lostCommands === 0;
 

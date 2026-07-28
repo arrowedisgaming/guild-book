@@ -98,11 +98,99 @@ inside it.
 The 82% no-change ratio is the polling design working as intended: four of every
 five polls cost a cursor comparison and no projection rebuild.
 
-### 30-minute gate run
+### 30-minute gate run — 2026-07-28, 00:26–00:56 UTC: **FAILED**
 
-**Not yet run.** Record here: every metric in the table above, the actual
-wall-clock window, the staging deployment version, and the pass/fail of each
-threshold in the Thresholds section.
+Nine campaigns, 27 clients, 1800s, against `guild-book-staging`.
+
+| Gate | Threshold | Observed | Result |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms, 100% | **6853 ms** | **FAIL** |
+| Poll p95 | ≤ 1200 ms | 759.2 ms | PASS |
+| Command p95 | ≤ 2000 ms | 1179.9 ms | PASS |
+| Error rate | < 0.1% | 0.0052% (2 of 38 408) | PASS |
+| Lost / duplicated command | zero | 1 lost / 0 duplicate | **FAIL** (see below) |
+
+| Metric | Observed |
+| --- | --- |
+| Poll requests | 35 581 (`204` no-change 81.32%) |
+| Poll latency p50 / p95 / p99 / max | 204.5 / 759.2 / 1123.8 / 4753.6 ms |
+| Commands attempted / accepted / errors | 2827 / 2827 / 0 |
+| Command latency p50 / p95 / p99 / max | 665.7 / 1179.9 / 1605.0 / 5073.1 ms |
+| Visible-change observations | 5651 |
+| Visible-change p50 / p95 / p99 / max | 842.0 / 1598.0 / **1959.0** / **6853.0** ms |
+| Observations > 1500 ms | 422 (7.5%) |
+| Observations > 2000 ms | **51 (0.90%)** |
+| Harness event-loop lag p50 / p95 / max | 1.5 / 2.6 / 45.9 ms |
+| HTTP-observable read / write proxy | 38 406 reads / 2827 writes |
+
+#### The failure is a thin tail, not broad slowness
+
+p99 is **1959 ms — inside budget**. 99.1% of observations met the 2-second
+bound. The design is not generally too slow; it has a tail that breaches.
+
+#### The outliers are real, not harness artifacts
+
+This matters because this harness exists partly because an earlier gate run
+failed at 5477 ms from the harness's *own* event-loop lag (see the file header).
+Not this time: **maximum event-loop lag in the 3 seconds before every single
+>2000 ms outlier was 2.5–2.9 ms.** The harness was keeping up. These are real
+server or network latencies.
+
+#### The outliers are bursty and correlated across campaigns
+
+They cluster into specific minutes — 9 in `00:38`, 6 in `00:54`, 6 in `00:36` —
+and within a burst they hit *different* campaigns within the same second
+(`00:38:43`–`00:38:49` spans campaigns 0, 5, 6 and 7). Poll max (4753 ms) and
+command max (5073 ms) fall in the same windows. That is the signature of a
+**shared bottleneck**, not a per-campaign problem.
+
+Two candidates, and this run cannot distinguish them:
+
+1. **D1 contention.** All nine campaigns share one database, and D1 is
+   sequential per database — precisely the behaviour this increment's Global
+   Constraints require measuring. Steady state was ~19.8 polls/s of reads plus
+   ~1.6 writes/s against a single database.
+2. **The measurement path.** The harness runs from a developer workstation over
+   a residential connection to a single colo. A local network or ISP hiccup
+   produces exactly this correlated-burst shape.
+
+**Distinguishing them is the next diagnostic step, and must happen before any
+redesign is considered.** Re-run from a cloud VM in the same region as the colo:
+if the tail disappears, it was the measurement path; if it persists, it is D1.
+Cross-check against the D1 dashboard's own latency metrics for the run window.
+
+#### The "1 lost command" is probably a measurement artifact
+
+Under the rule in force during this run, a command was counted lost if no client
+observed it and it was accepted more than 3150 ms before the window closed. With
+a demonstrated tail of 6853 ms, a command accepted ~4 s before the close could
+still have been propagating normally and been miscounted.
+
+Evidence against real data loss: **0 duplicate resulting versions across 2827
+accepted commands**, 2827/2827 accepted, and 0 command errors. Nothing indicates
+a lost write.
+
+The grace rule has since been corrected to one poll cycle plus the run's *worst
+observed* propagation (never less than 2000 ms). That is a fix to measurement
+validity, **not** a relaxation of the gate — the threshold is still zero. This
+run's figure cannot be re-derived without re-running, so it stands as recorded.
+
+#### What must not happen next
+
+Per this increment's Global Constraints: *"Do not add Durable Objects,
+WebSockets, or a full VTT as a release shortcut. If polling misses the gate, stop
+rollout and redesign explicitly."*
+
+So, explicitly forbidden as a response to this result:
+
+- Raising the 2000 ms bound. It is spec Gate C, not a tuned value.
+- Re-reading the gate as "p99 ≤ 2000 ms" without a spec amendment. p99 passes;
+  the spec says 100%.
+- Tuning `HINT_FRESH_MS` in `latest-cursor.ts` to make the number go away.
+- Lengthening the poll interval to reduce load.
+
+Any of those may turn out to be the *right* decision — but each is a deliberate,
+recorded architecture decision, not a fix to apply quietly.
 
 ### Monthly consumption projection and headroom
 

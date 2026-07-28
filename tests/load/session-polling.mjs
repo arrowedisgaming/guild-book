@@ -350,14 +350,21 @@ function parseServerTiming(header) {
 	if (!srv) return null;
 
 	const d1 = /(?:^|,)\s*d1;dur=([0-9.]+)/.exec(header);
-	const counts = /d1;dur=[0-9.]+;desc="n=(\d+) stmts=(\d+)"/.exec(header);
+	const counts = /d1;dur=[0-9.]+;desc="n=(\d+) stmts=(\d+) sum=([0-9.]+)"/.exec(header);
 	return {
 		serverMs: Number(srv[1]),
 		// A request answered from the isolate-local cursor hint touches no
 		// database at all, and the server omits the `d1` metric entirely rather
 		// than claiming `dur=0`. Zero is the right value for the arithmetic here;
 		// what matters is that it came from a real absence, not a parse failure.
-		d1Ms: d1 ? Number(d1[1]) : 0,
+		//
+		// `dur` is the UNION of the call intervals — the only D1 figure that may
+		// be subtracted from server time. `sum` is the total of the individual
+		// call durations, which double-counts a route's concurrent queries and is
+		// therefore the right numerator for average per-round-trip latency but
+		// the wrong one for a decomposition. See request-timing.ts.
+		d1WallMs: d1 ? Number(d1[1]) : 0,
+		d1SumMs: counts ? Number(counts[3]) : 0,
 		d1Calls: counts ? Number(counts[1]) : 0,
 		d1Statements: counts ? Number(counts[2]) : 0
 	};
@@ -549,20 +556,23 @@ class TimingSplit {
 			this.missingHeader += 1;
 			return;
 		}
-		const { serverMs, d1Ms, d1Calls, d1Statements } = res.timing;
+		const { serverMs, d1WallMs, d1SumMs, d1Calls, d1Statements } = res.timing;
 		this.records.push({
 			latencyMs: res.latencyMs,
 			serverMs,
-			d1Ms,
+			d1WallMs,
+			d1SumMs,
 			// Clamped, not signed. The two sides use different clocks, and the
 			// Workers runtime advances `Date.now()` only on I/O, so a very fast
 			// response can report a server time a millisecond or two above the
 			// client's total. A negative "wire time" would be an artifact of that
 			// skew, not a measurement.
 			wireMs: Math.max(0, res.latencyMs - serverMs),
-			// Same reasoning: `srv` cannot be less than the D1 time it contains,
-			// except by clock granularity.
-			workerOtherMs: Math.max(0, serverMs - d1Ms),
+			// Against the UNION, not the sum. Subtracting the sum here is what made
+			// the 2026-07-28 smoke run report a poll D1 p50 above its server p50 —
+			// impossible for any one request, and the tell that overlap was being
+			// counted twice.
+			workerOtherMs: Math.max(0, serverMs - d1WallMs),
 			d1Calls,
 			d1Statements
 		});
@@ -587,7 +597,8 @@ class TimingSplit {
 			latencyMs: sum('latencyMs') / n,
 			wireMs: sum('wireMs') / n,
 			serverMs: sum('serverMs') / n,
-			d1Ms: sum('d1Ms') / n,
+			d1WallMs: sum('d1WallMs') / n,
+			d1SumMs: sum('d1SumMs') / n,
 			workerOtherMs: sum('workerOtherMs') / n,
 			d1Calls: sum('d1Calls') / n,
 			d1Statements: sum('d1Statements') / n
@@ -1140,16 +1151,16 @@ function printTimingSplit(label, split) {
 
 	const server = summarizeLatencies(split.column('serverMs'));
 	const wire = summarizeLatencies(split.column('wireMs'));
-	const d1 = summarizeLatencies(split.column('d1Ms'));
+	const d1Wall = summarizeLatencies(split.column('d1WallMs'));
 	const calls = summarizeLatencies(split.column('d1Calls'));
 	console.log(
-		`  ${label} server ms — p50: ${fmt(server.p50)}, p95: ${fmt(server.p95)}, p99: ${fmt(server.p99)}, max: ${fmt(server.max)}`
+		`  ${label} server ms  — p50: ${fmt(server.p50)}, p95: ${fmt(server.p95)}, p99: ${fmt(server.p99)}, max: ${fmt(server.max)}`
 	);
 	console.log(
-		`  ${label} wire ms   — p50: ${fmt(wire.p50)}, p95: ${fmt(wire.p95)}, p99: ${fmt(wire.p99)}, max: ${fmt(wire.max)}`
+		`  ${label} wire ms    — p50: ${fmt(wire.p50)}, p95: ${fmt(wire.p95)}, p99: ${fmt(wire.p99)}, max: ${fmt(wire.max)}`
 	);
 	console.log(
-		`  ${label} D1 ms     — p50: ${fmt(d1.p50)}, p95: ${fmt(d1.p95)}, p99: ${fmt(d1.p99)}, max: ${fmt(d1.max)}`
+		`  ${label} D1 wall ms — p50: ${fmt(d1Wall.p50)}, p95: ${fmt(d1Wall.p95)}, p99: ${fmt(d1Wall.p99)}, max: ${fmt(d1Wall.max)}`
 	);
 	console.log(
 		`  ${label} D1 round trips — p50: ${fmt(calls.p50)}, p95: ${fmt(calls.p95)}, max: ${fmt(calls.max)}`
@@ -1157,15 +1168,28 @@ function printTimingSplit(label, split) {
 
 	const means = split.means();
 	// Means, not percentiles, because only means decompose additively — see
-	// TimingSplit.means(). These three terms sum to the mean request.
+	// TimingSplit.means(). These three terms sum to the mean request, and the D1
+	// term is the union of the call intervals, so overlap is not counted twice.
 	console.log(
-		`  ${label} mean ${fmt(means.latencyMs)}ms = ${fmt(means.wireMs)}ms wire + ${fmt(means.d1Ms)}ms D1 + ${fmt(means.workerOtherMs)}ms worker/other`
+		`  ${label} mean ${fmt(means.latencyMs)}ms = ${fmt(means.wireMs)}ms wire + ${fmt(means.d1WallMs)}ms D1 + ${fmt(means.workerOtherMs)}ms worker/other`
 	);
-	const perTrip = means.d1Calls > 0 ? means.d1Ms / means.d1Calls : null;
+	// Per-round-trip uses the SUM, which is the total time actually spent in
+	// calls. This is the figure that exposes Worker-to-primary distance, and it
+	// is unaffected by whether the route ran its queries in parallel.
+	const perTrip = means.d1Calls > 0 ? means.d1SumMs / means.d1Calls : null;
 	console.log(
 		`  ${label} mean ${means.d1Calls.toFixed(2)} D1 round trips carrying ${means.d1Statements.toFixed(2)} statements` +
 			(perTrip === null ? ' (no D1 traffic)' : ` — ${perTrip.toFixed(1)}ms per round trip`)
 	);
+	if (means.d1WallMs > 0) {
+		// How much of the D1 work the route actually overlapped. 1.0 = fully
+		// sequential, so every round trip is on the critical path; 2.0 = on
+		// average two calls in flight at once. This is the direct read on whether
+		// the round-trip count can be hidden by parallelism or has to be reduced.
+		console.log(
+			`  ${label} D1 call-time sum ${fmt(means.d1SumMs)}ms vs ${fmt(means.d1WallMs)}ms wall — ${(means.d1SumMs / means.d1WallMs).toFixed(2)}x average concurrency`
+		);
+	}
 }
 
 function fmt(value) {

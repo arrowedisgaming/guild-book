@@ -59,11 +59,44 @@ export interface RequestTiming {
 	d1Calls: number;
 	/** Statements issued across those round trips. */
 	d1Statements: number;
-	/** Cumulative wall time inside D1 calls, milliseconds. */
+	/**
+	 * Sum of every call's own duration. **Double-counts concurrency** — the sync
+	 * route issues `campaignCursor` and `findOpenSessionForCampaign` inside one
+	 * `Promise.all`, so two 50 ms calls that overlap completely contribute 100 ms
+	 * here while only 50 ms of wall time passes.
+	 *
+	 * This is the right numerator for *average per-round-trip latency*
+	 * (`d1DurationMs / d1Calls`), which is what exposes Worker-to-primary
+	 * distance. It is the wrong number to subtract from `srv`.
+	 */
 	d1DurationMs: number;
+	/**
+	 * Wall time during which at least one D1 call was in flight — the union of
+	 * the call intervals, not their sum. This is the term that decomposes:
+	 * `srv - d1WallMs` is genuinely Worker CPU plus non-D1 awaits.
+	 *
+	 * Added after the 2026-07-28 smoke run reported a poll D1 p50 of 252 ms
+	 * against a server p50 of 209 ms — impossible for any single request, and so
+	 * proof that the summed figure was counting overlap twice.
+	 */
+	d1WallMs: number;
 }
 
 const storage = new AsyncLocalStorage<RequestTiming>();
+
+/**
+ * Union bookkeeping, kept beside the accumulator rather than inside it so the
+ * public shape stays "counts and durations only" and nothing internal leaks
+ * into the header or a test's `toEqual`.
+ *
+ * `active` is a simple in-flight counter: the union grows only while it is
+ * above zero, so overlapping calls contribute their covered span once.
+ */
+interface D1Bookkeeping {
+	active: number;
+	wallStartedAtMs: number;
+}
+const bookkeeping = new WeakMap<RequestTiming, D1Bookkeeping>();
 
 /**
  * Runs `fn` inside a fresh timing scope. Everything `fn` awaits — including
@@ -71,7 +104,7 @@ const storage = new AsyncLocalStorage<RequestTiming>();
  * the accumulator handed to it.
  */
 export function runWithRequestTiming<T>(fn: (timing: RequestTiming) => Promise<T>): Promise<T> {
-	const timing: RequestTiming = { d1Calls: 0, d1Statements: 0, d1DurationMs: 0 };
+	const timing: RequestTiming = { d1Calls: 0, d1Statements: 0, d1DurationMs: 0, d1WallMs: 0 };
 	return storage.run(timing, () => fn(timing));
 }
 
@@ -81,16 +114,44 @@ export function currentRequestTiming(): RequestTiming | null {
 }
 
 /**
- * Records one completed D1 round trip against the current request, if any.
- * Called outside a request scope it is a no-op — background work and the unit
- * suite must not have to care.
+ * Opens a D1 call against the current request, if any. Returns the accumulator
+ * and start time to hand back to `endD1Call`. Outside a request scope both
+ * halves are no-ops — background work and the unit suite must not have to care.
  */
-export function recordD1Call(durationMs: number, statements = 1): void {
-	const timing = storage.getStore();
+function beginD1Call(now: () => number): { timing: RequestTiming | null; startedAt: number } {
+	const timing = storage.getStore() ?? null;
+	const startedAt = now();
+	if (timing) {
+		const book = bookkeeping.get(timing) ?? { active: 0, wallStartedAtMs: startedAt };
+		// Only the OUTERMOST concurrent call opens the union window; the inner
+		// ones just raise the count. That is what stops overlap being counted
+		// twice.
+		if (book.active === 0) book.wallStartedAtMs = startedAt;
+		book.active += 1;
+		bookkeeping.set(timing, book);
+	}
+	return { timing, startedAt };
+}
+
+/** Closes a D1 call. Records it whether it resolved or threw — see `timed`. */
+function endD1Call(
+	timing: RequestTiming | null,
+	startedAt: number,
+	endedAt: number,
+	statements: number
+): void {
 	if (!timing) return;
 	timing.d1Calls += 1;
 	timing.d1Statements += statements;
-	timing.d1DurationMs += durationMs;
+	timing.d1DurationMs += Math.max(0, endedAt - startedAt);
+
+	const book = bookkeeping.get(timing);
+	if (!book) return;
+	book.active -= 1;
+	if (book.active <= 0) {
+		book.active = 0;
+		timing.d1WallMs += Math.max(0, endedAt - book.wallStartedAtMs);
+	}
 }
 
 export interface InstrumentD1Options {
@@ -123,7 +184,7 @@ export function instrumentD1(database: D1Database, options: InstrumentD1Options 
 	const now = options.now ?? Date.now;
 
 	async function timed<T>(statements: number, run: () => Promise<T>): Promise<T> {
-		const startedAt = now();
+		const { timing, startedAt } = beginD1Call(now);
 		try {
 			return await run();
 		} finally {
@@ -131,8 +192,9 @@ export function instrumentD1(database: D1Database, options: InstrumentD1Options 
 			// violation as an ordinary lost-race outcome and retries, so a failed
 			// round trip costs exactly as much wall time as a successful one and
 			// must be counted. Omitting it would understate precisely the retrying
-			// requests we most need to understand.
-			recordD1Call(now() - startedAt, statements);
+			// requests we most need to understand — and would also leave the union
+			// window open forever, since `active` would never come back down.
+			endD1Call(timing, startedAt, now(), statements);
 		}
 	}
 
@@ -207,9 +269,15 @@ export interface ServerTimingInput {
  * Renders a `Server-Timing` header value.
  *
  * Standard header rather than a bespoke one so it also shows up in browser
- * devtools without any tooling. `desc` carries the two counts because the
- * grammar gives a metric exactly one numeric `dur`, and emitting a count in a
- * field named "duration" would be a lie in the wire format.
+ * devtools without any tooling. `desc` carries the counts because the grammar
+ * gives a metric exactly one numeric `dur`, and emitting a count in a field
+ * named "duration" would be a lie in the wire format.
+ *
+ * `dur` is the **union** (`d1WallMs`), because that is the term that subtracts
+ * from `srv` to leave Worker CPU. The **sum** rides along in `desc` as `sum=`,
+ * because that is the right numerator for average per-round-trip latency. They
+ * differ exactly as much as the route overlaps its queries, so `sum/dur` is
+ * also a free read on how much parallelism a route actually achieves.
  *
  * The D1 metric is omitted entirely when a request touched no database — a
  * cursor-hint `204` is the common case in the gate, and reporting `dur=0`
@@ -218,9 +286,11 @@ export interface ServerTimingInput {
 export function formatServerTiming({ serverMs, timing }: ServerTimingInput): string {
 	const parts = [`srv;dur=${round(serverMs)}`];
 	if (timing && timing.d1Calls > 0) {
-		// Both interpolations are integers from this module's own counters, so
-		// no value here can introduce a quote and break the grammar.
-		parts.push(`d1;dur=${round(timing.d1DurationMs)};desc="n=${timing.d1Calls} stmts=${timing.d1Statements}"`);
+		// Every interpolation is a number from this module's own counters, so no
+		// value here can introduce a quote and break the grammar.
+		parts.push(
+			`d1;dur=${round(timing.d1WallMs)};desc="n=${timing.d1Calls} stmts=${timing.d1Statements} sum=${round(timing.d1DurationMs)}"`
+		);
 	}
 	return parts.join(', ');
 }

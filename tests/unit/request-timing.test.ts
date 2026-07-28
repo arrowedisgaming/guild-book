@@ -120,7 +120,7 @@ describe('request timing scope', () => {
 
 	it('starts a request with a zeroed accumulator', async () => {
 		const seen = await runWithRequestTiming(async () => currentRequestTiming());
-		expect(seen).toEqual({ d1Calls: 0, d1Statements: 0, d1DurationMs: 0 });
+		expect(seen).toEqual({ d1Calls: 0, d1Statements: 0, d1DurationMs: 0, d1WallMs: 0 });
 	});
 
 	it('hands the same accumulator to the callback and to currentRequestTiming', async () => {
@@ -145,7 +145,7 @@ describe('instrumented D1 binding', () => {
 			return currentRequestTiming();
 		});
 
-		expect(timing).toEqual({ d1Calls: 1, d1Statements: 1, d1DurationMs: 12 });
+		expect(timing).toEqual({ d1Calls: 1, d1Statements: 1, d1DurationMs: 12, d1WallMs: 12 });
 	});
 
 	it('accumulates every statement kind', async () => {
@@ -180,7 +180,7 @@ describe('instrumented D1 binding', () => {
 		// One network round trip, three statements inside it. Conflating the two
 		// would make the round-trip-count hypothesis untestable, which is the
 		// only reason this module exists.
-		expect(timing).toEqual({ d1Calls: 1, d1Statements: 3, d1DurationMs: 30 });
+		expect(timing).toEqual({ d1Calls: 1, d1Statements: 3, d1DurationMs: 30, d1WallMs: 30 });
 	});
 
 	it('unwraps proxied statements before handing them to the real batch', async () => {
@@ -280,6 +280,127 @@ describe('instrumented D1 binding', () => {
  * class with prototype methods that dereference `this`, which is the shape the
  * real runtime has. Miniflare is not a substitute for workerd here.
  */
+/**
+ * Regression, 2026-07-28 smoke run: the reported poll D1 p50 (252 ms) exceeded
+ * the poll server p50 (209 ms). No single request can spend more time inside D1
+ * than inside the handler that contains it, so the summed figure was counting
+ * overlap twice — `sync/+server.ts` issues `campaignCursor` and
+ * `findOpenSessionForCampaign` in one `Promise.all`.
+ *
+ * Both numbers are now kept: the SUM (right numerator for average per-round-trip
+ * latency, which is what exposes Worker-to-primary distance) and the UNION
+ * (the only one that may be subtracted from `srv`).
+ *
+ * The fakes above cannot express this — their clock only moves when a call
+ * completes, so nothing ever genuinely overlaps. This one hands out unresolved
+ * promises so two calls can be in flight across the same advancing clock.
+ */
+describe('concurrent D1 calls', () => {
+	function createControllableD1() {
+		let clock = 0;
+		const pending: Array<() => void> = [];
+
+		const database = {
+			prepare: (sql: string) => {
+				const statement: Record<string, unknown> = {
+					sql,
+					bind: () => statement,
+					all: () =>
+						new Promise((resolve) => {
+							pending.push(() => resolve({ results: [], success: true }));
+						})
+				};
+				return statement;
+			}
+		};
+
+		return {
+			database,
+			now: () => clock,
+			advance: (ms: number) => {
+				clock += ms;
+			},
+			settleAll: () => {
+				const waiting = [...pending];
+				pending.length = 0;
+				for (const resolve of waiting) resolve();
+			}
+		};
+	}
+
+	it('sums overlapping calls but counts their wall time once', async () => {
+		const fake = createControllableD1();
+		const db = instrumentD1(fake.database as unknown as D1Database, {
+			now: fake.now
+		}) as unknown as { prepare: (sql: string) => { all: () => Promise<unknown> } };
+
+		const timing = await runWithRequestTiming(async (scope) => {
+			// Both in flight before either resolves — the Promise.all shape.
+			const both = Promise.all([db.prepare('a').all(), db.prepare('b').all()]);
+			fake.advance(50);
+			fake.settleAll();
+			await both;
+			return scope;
+		});
+
+		expect(timing.d1Calls).toBe(2);
+		// Two calls, each genuinely 50ms long...
+		expect(timing.d1DurationMs).toBe(100);
+		// ...but only 50ms of wall time in which the request was waiting on D1.
+		expect(timing.d1WallMs).toBe(50);
+	});
+
+	it('leaves sum and wall equal when calls do not overlap', async () => {
+		const fake = createControllableD1();
+		const db = instrumentD1(fake.database as unknown as D1Database, {
+			now: fake.now
+		}) as unknown as { prepare: (sql: string) => { all: () => Promise<unknown> } };
+
+		const timing = await runWithRequestTiming(async (scope) => {
+			const first = db.prepare('a').all();
+			fake.advance(30);
+			fake.settleAll();
+			await first;
+
+			const second = db.prepare('b').all();
+			fake.advance(20);
+			fake.settleAll();
+			await second;
+
+			return scope;
+		});
+
+		expect(timing.d1DurationMs).toBe(50);
+		expect(timing.d1WallMs).toBe(50);
+	});
+
+	it('never leaves the union window open when a call rejects', async () => {
+		const failing = {
+			prepare: () => ({
+				bind: () => failing.prepare(),
+				all: async () => {
+					throw new Error('D1_ERROR: boom');
+				}
+			})
+		};
+		let ticks = 0;
+		const db = instrumentD1(failing as unknown as D1Database, {
+			now: () => (ticks += 5)
+		}) as unknown as { prepare: () => { all: () => Promise<unknown> } };
+
+		const timing = await runWithRequestTiming(async (scope) => {
+			await expect(db.prepare().all()).rejects.toThrow('boom');
+			await expect(db.prepare().all()).rejects.toThrow('boom');
+			return scope;
+		});
+
+		// A leaked `active` counter would stop the union ever closing again and
+		// silently zero d1WallMs for the rest of the request.
+		expect(timing.d1Calls).toBe(2);
+		expect(timing.d1WallMs).toBeGreaterThan(0);
+	});
+});
+
 describe('method binding (workerd shape)', () => {
 	class BindingSensitiveStatement {
 		constructor(
@@ -366,16 +487,17 @@ describe('Server-Timing formatting', () => {
 	it('emits the server total, the D1 total and the round-trip count', () => {
 		const header = formatServerTiming({
 			serverMs: 42.5,
-			timing: { d1Calls: 6, d1Statements: 9, d1DurationMs: 31 }
+			timing: { d1Calls: 6, d1Statements: 9, d1DurationMs: 31, d1WallMs: 20 }
 		});
 
-		expect(header).toBe('srv;dur=42.5, d1;dur=31;desc="n=6 stmts=9"');
+		// `dur` is the union (subtractable from srv); the sum rides in `desc`.
+		expect(header).toBe('srv;dur=42.5, d1;dur=20;desc="n=6 stmts=9 sum=31"');
 	});
 
 	it('omits the D1 metric entirely when the request touched no database', () => {
 		const header = formatServerTiming({
 			serverMs: 3,
-			timing: { d1Calls: 0, d1Statements: 0, d1DurationMs: 0 }
+			timing: { d1Calls: 0, d1Statements: 0, d1DurationMs: 0, d1WallMs: 0 }
 		});
 
 		expect(header).toBe('srv;dur=3');
@@ -388,7 +510,7 @@ describe('Server-Timing formatting', () => {
 	it('never emits a quote that would break the header grammar', () => {
 		const header = formatServerTiming({
 			serverMs: 1,
-			timing: { d1Calls: 1, d1Statements: 1, d1DurationMs: 1 }
+			timing: { d1Calls: 1, d1Statements: 1, d1DurationMs: 1, d1WallMs: 1 }
 		});
 		expect(header.match(/"/g)).toHaveLength(2);
 	});

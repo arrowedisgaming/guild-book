@@ -414,12 +414,29 @@ async function executeCommandInstrumented(
 				// `session-command-service.test.ts` pins the equivalence against an
 				// authoritative reload; if the fragment round trip is ever made lossy
 				// that test fails rather than this silently drifting.
-				projection: projectCommittedState({
-					state: nextState,
-					runtimeContent: loaded.runtimeContent,
-					actor,
-					campaignCursor: committedCursor ?? (await campaignCursor(db, campaignId))
-				})
+				//
+				// Review round 2: there is deliberately NO fallback read here when
+				// `committedCursor` is null. Nothing after a successful `runAtomic`
+				// may throw, because the `catch` below is written entirely for a
+				// FAILED commit — a throw here would re-evaluate the Resolve spend
+				// against state this command has already decremented and could report
+				// "insufficient Resolve" for a command that committed, or rethrow as
+				// a 500 for the same. A fallback would also just retry the very query
+				// whose failure produced the null.
+				//
+				// A null cursor therefore yields a null projection, which is exactly
+				// what `loadProjectionForActor` returns when it cannot build one. The
+				// commit stands, the outcome is still `ok`, and the client picks the
+				// change up on its next poll ~1s later.
+				projection:
+					committedCursor === null
+						? null
+						: projectCommittedState({
+								state: nextState,
+								runtimeContent: loaded.runtimeContent,
+								actor,
+								campaignCursor: committedCursor
+							})
 			};
 		} catch (cause) {
 			// A lost Resolve claim fails the batch through its FK receipt, not a

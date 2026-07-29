@@ -100,7 +100,14 @@ describe('D1 round-trip budgets', () => {
 
 		// Was 1, and that read duplicated one the Auth.js `jwt` callback had
 		// already done for the same row in the same request. Paid by EVERY
-		// authenticated request, including the ~77% of polls that answer `204`.
+		// authenticated request, including the ~80% of polls that answer `204`.
+		//
+		// `locals.auth` is stubbed here, so this measures `ensureUser`'s OWN cost
+		// in isolation. In a real request `getUserId` still triggers one `users`
+		// read inside the `jwt` callback, because `@auth/sveltekit` does not
+		// memoise `locals.auth()` — so the per-request saving is one duplicate
+		// read, not the whole auth cost. See "Remaining opportunity: memoise the
+		// session per request" in docs/operations/campaign-capacity.md.
 		//
 		// Safe to drop only because the `jwt` callback rejects a token whose
 		// durable user is gone before `locals.auth()` ever returns an id — pinned

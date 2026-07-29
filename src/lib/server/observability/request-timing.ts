@@ -252,7 +252,13 @@ export function instrumentD1(database: D1Database, options: InstrumentD1Options 
 				};
 			}
 			if (prop === 'exec') {
-				return (query: string) => timed(1, () => target.exec(query));
+				// `exec()` runs EVERY newline-separated statement in the string, so
+				// counting it as one would under-report `stmts=` the first time
+				// anything uses it — and a trustworthy statement count is the only
+				// reason this module exists. Nothing calls `exec` on a request path
+				// today; this is here so that stays true if something does.
+				return (query: string) =>
+					timed(countExecStatements(query), () => target.exec(query));
 			}
 			return passThrough(target, prop);
 		}
@@ -293,6 +299,18 @@ export function formatServerTiming({ serverMs, timing }: ServerTimingInput): str
 		);
 	}
 	return parts.join(', ');
+}
+
+/**
+ * How many statements a `D1Database.exec` call carries. D1 splits on newlines
+ * and requires one complete statement per line, so this matches its own
+ * semantics rather than trying to parse SQL. Always at least one, so a call is
+ * never recorded as carrying zero statements.
+ */
+function countExecStatements(query: string): number {
+	if (typeof query !== 'string') return 1;
+	const lines = query.split('\n').filter((line) => line.trim().length > 0);
+	return Math.max(1, lines.length);
 }
 
 function round(value: number): number {

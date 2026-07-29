@@ -16,6 +16,7 @@
  */
 
 import { and, asc, desc, eq, gt, inArray, isNull, max } from 'drizzle-orm';
+import type { BatchItem } from 'drizzle-orm/batch';
 import { z } from 'zod';
 import type { AppDb } from '$lib/server/db';
 import type { AtomicStatement } from '$lib/server/db/atomic';
@@ -279,8 +280,16 @@ export interface LoadedSession {
  * **Only pass queries that do not depend on each other.** D1 runs a batch as one
  * transaction in order, but every statement is dispatched together, so a query
  * whose input comes from an earlier query's result cannot be in the same batch.
+ *
+ * **Pass un-awaited Drizzle query builders, never arbitrary promises.** The D1
+ * branch hands the array to Drizzle's `batch()`, which calls `_prepare()` on
+ * each item. A Drizzle builder satisfies `Promise<unknown>` structurally, so a
+ * signature typed on promises would let `readIndependently(db, [loadFoo(db)])`
+ * compile and then fail at runtime with `query._prepare is not a function` — on
+ * D1 only, and therefore invisible to every better-sqlite3 test. `BatchItem` is
+ * Drizzle's own constraint for exactly this, so that mistake is a type error.
  */
-async function readIndependently<T extends readonly Promise<unknown>[]>(
+async function readIndependently<T extends readonly BatchItem<'sqlite'>[]>(
 	db: AppDb,
 	queries: [...T]
 ): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }> {

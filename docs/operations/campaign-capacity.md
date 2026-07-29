@@ -35,12 +35,27 @@ moved both p95 gates from fail to pass.
    around it, then re-run. Cheap, and it settles the question.
 
 2. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
-   unmet, and the spec calls it non-negotiable. The two remaining levers are
-   reduction **D** (the only one touching the ~80% of polls answered from the
-   cursor hint, and the only one touching authorization — needs its own design
-   and review) and moving the data closer to the reader (D1 read replication,
-   a separate decision with consistency trade-offs). Neither should be started
-   before item 1.
+   unmet, and the spec calls it non-negotiable. Three levers remain, cheapest
+   and safest first:
+
+   **a. Memoise `locals.auth()` per request.** `@auth/sveltekit` assigns a bare
+   function, not a memoised promise, so every call re-runs the `jwt` callback
+   and its `users` read. The campaign path calls it twice — once in the rate
+   limiter, once in `ensureUser` — so one D1 round trip per request is spent
+   re-deriving a value that cannot change within a request. This is **not**
+   reduction D: it is request-scoped memoisation of an already-computed result,
+   not an authorization cache with a TTL, so it carries none of D's staleness
+   risk. It applies to 100% of campaign requests including every no-op poll, and
+   is the single cheapest remaining win. Found by code review 2026-07-29.
+
+   **b. Reduction D** — the only lever on the ~80% of polls answered from the
+   cursor hint, and the only one touching authorization. Needs its own design
+   and review.
+
+   **c. Move the data closer** (D1 read replication / Sessions API) — a separate
+   decision with consistency trade-offs, out of scope for this document.
+
+   None should be started before item 1.
 
 **Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
 selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
@@ -459,16 +474,29 @@ distribution (poll p50 = 6, poll p95/max = 18, command = 20 exactly). They are
 would confirm them directly and is the honest next measurement if any of these
 numbers are to be relied on individually.
 
-**Every authenticated campaign request pays three round trips before any route
+**Every authenticated campaign request pays four round trips before any route
 logic runs:**
 
 | # | Where | Query |
 | --- | --- | --- |
-| 1 | Auth.js `jwt` callback (`auth-policy.ts`) | `SELECT … FROM users WHERE id = ?` |
-| 2 | `ensureUser` (`auth.ts:141`) | `SELECT id FROM users WHERE id = ?` |
-| 3 | `resolveCampaignAccess` (`campaign/access.ts`) | `campaigns` ⨝ `campaign_members` |
+| 1 | `safeUserId` in the rate-limit handle (`rate-limit/campaign.ts:212`) → `locals.auth()` → `jwt` callback | `SELECT … FROM users WHERE id = ?` |
+| 2 | `ensureUser` → `getUserId` → `locals.auth()` again → `jwt` callback **a second time** | the same `SELECT` |
+| 3 | `ensureUser` itself (`auth.ts`) | `SELECT id FROM users WHERE id = ?` |
+| 4 | `resolveCampaignAccess` (`campaign/access.ts`) | `campaigns` ⨝ `campaign_members` |
 
-Rows 1 and 2 read **the same `users` row twice** in the same request.
+That is **the same `users` row read three times** in one request.
+
+> **Corrected 2026-07-29 after code review.** This table previously said three
+> round trips and attributed only one to the `jwt` callback. `@auth/sveltekit`
+> assigns `event.locals.auth ??= () => auth(event, _config)` — a bare function,
+> **not a memoised promise** (`@auth/sveltekit/dist/index.js:337`), so every
+> `locals.auth()` call re-decodes the token and re-runs the `jwt` callback,
+> including its `users` read. The campaign path calls it twice: once in the rate
+> limiter, once in `ensureUser`.
+>
+> The *measurements* were never wrong — a poll's p50 of 6 round trips is
+> 4 auth + 2 route, and 5 after this work removed row 3. Only the attribution
+> was. See "Remaining opportunity: memoise the session per request".
 
 The activity *write* in `recordActivity` is not a per-request cost —
 `activityPatch` caps it at one write per user per day. Only the read is

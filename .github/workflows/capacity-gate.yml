@@ -68,7 +68,14 @@ jobs:
         env:
           BASE_URL: ${{ inputs.base_url }}
         run: |
-          headers="$(curl -sS -D - -o /dev/null "$BASE_URL/api/internal/campaign-health" || true)"
+          # `curl_status` is captured separately so an unreachable target is not
+          # reported as a stale deploy. Both fail the step, but they need
+          # different fixes and the operator should be told which one.
+          headers="$(curl -sS -D - -o /dev/null "$BASE_URL/api/internal/campaign-health")" || curl_status=$?
+          if [ -n "${curl_status:-}" ]; then
+            echo "::error::Could not reach $BASE_URL (curl exit $curl_status). The target is down, misnamed or unresolvable — this is not a stale deploy."
+            exit 1
+          fi
           if printf '%s' "$headers" | grep -qi '^server-timing:'; then
             echo "server-side timing present:"
             printf '%s' "$headers" | grep -i '^server-timing:\|^x-guildbook-colo:'

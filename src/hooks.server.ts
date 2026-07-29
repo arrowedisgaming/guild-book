@@ -2,6 +2,7 @@ import { json, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getDb, getDbContext } from '$lib/server/db';
 import { handle as authHandle, getEnv, getUserId } from '$lib/server/auth';
+import { memoiseAuthHandle } from '$lib/server/auth-memo';
 import {
 	classifyCampaignRequest,
 	createCampaignRateLimitHandle
@@ -81,9 +82,15 @@ const appHandle: Handle = async ({ event, resolve }) => {
  */
 const campaignRateLimitHandle = createCampaignRateLimitHandle({ getUserId, getEnv });
 
+/**
+ * Sequenced immediately AFTER `authHandle` and BEFORE every consumer, which is
+ * the only position that works: `authHandle` installs `locals.auth`, and
+ * `campaignRateLimitHandle` is the first thing to call it. Memoising there
+ * saves one D1 round trip on every campaign request — see `auth-memo.ts`.
+ */
 export const handle = devAutoLoginHandle
-	? sequence(appHandle, devAutoLoginHandle, authHandle, campaignRateLimitHandle)
-	: sequence(appHandle, authHandle, campaignRateLimitHandle);
+	? sequence(appHandle, devAutoLoginHandle, authHandle, memoiseAuthHandle, campaignRateLimitHandle)
+	: sequence(appHandle, authHandle, memoiseAuthHandle, campaignRateLimitHandle);
 
 /**
  * `Server-Timing` is opt-in, and off unless `CAMPAIGN_TIMING_HEADER` is

@@ -23,6 +23,11 @@ run at 1.00× concurrency, so every round trip is on the critical path. Round
 trips were cut from 20 → 10 per command and 8.68 → 5.88 per poll, which is what
 moved both p95 gates from fail to pass.
 
+**Since the 23:41 run, and not yet measured by a gate:** `locals.auth()` is now
+memoised per request (2026-07-29), removing one further round trip from 100% of
+campaign requests. Expected 10 → 9 per command and 5.88 → 4.88 per poll. The
+next gate run measures it.
+
 **The 2 lost observations are resolved — no data was lost.** Diagnosed
 2026-07-29 from the retained GitHub Actions log for the 23:41 run, so the
 planned re-run was not needed. Both "losses" were the final command of campaigns
@@ -40,15 +45,27 @@ untestable**.
    unmet, and the spec calls it non-negotiable. Three levers remain, cheapest
    and safest first:
 
-   **a. Memoise `locals.auth()` per request.** `@auth/sveltekit` assigns a bare
-   function, not a memoised promise, so every call re-runs the `jwt` callback
-   and its `users` read. The campaign path calls it twice — once in the rate
-   limiter, once in `ensureUser` — so one D1 round trip per request is spent
-   re-deriving a value that cannot change within a request. This is **not**
-   reduction D: it is request-scoped memoisation of an already-computed result,
-   not an authorization cache with a TTL, so it carries none of D's staleness
-   risk. It applies to 100% of campaign requests including every no-op poll, and
-   is the single cheapest remaining win. Found by code review 2026-07-29.
+   **a. Memoise `locals.auth()` per request — DONE 2026-07-29.**
+   `@auth/sveltekit` assigns a bare function, not a memoised promise, so every
+   call re-ran the `jwt` callback and its `users` read. The campaign path calls
+   it twice — once in the rate limiter, once in `ensureUser` — so one D1 round
+   trip per request was spent re-deriving a value that cannot change within a
+   request. `memoiseAuthHandle` (`src/lib/server/auth-memo.ts`) is now sequenced
+   directly after the Auth.js handle. Measured against instrumented D1 in
+   `tests/integration/round-trip-budget-d1.test.ts`: two callers cost **2 round
+   trips before, 1 after**.
+
+   This is **not** reduction D: it is request-scoped reuse of an
+   already-computed result, not an authorization cache with a TTL, so it carries
+   none of D's staleness risk. It cannot serve a stale session either — the
+   Auth.js handle answers its own action routes (sign-in, sign-out, callback)
+   without ever calling `resolve`, so no request that reaches the memo can
+   mutate the session mid-flight.
+
+   Expected effect: **−1 round trip on 100% of campaign requests**, including
+   every no-op poll. On the 23:41 geometry (114–124 ms/round trip) that is
+   roughly −120 ms on a poll and −120 ms on a command; on the 17:49 geometry
+   (78–80 ms) roughly −80 ms. Not yet confirmed by a gate run — see below.
 
    **b. Reduction D** — the only lever on the ~80% of polls answered from the
    cursor hint, and the only one touching authorization. Needs its own design
@@ -57,8 +74,11 @@ untestable**.
    **c. Move the data closer** (D1 read replication / Sessions API) — a separate
    decision with consistency trade-offs, out of scope for this document.
 
-   Start with (a): it is the cheapest, carries no staleness risk, and the
-   correctness question that previously blocked it is now closed.
+   (a) is done. **The next action is a gate run** to measure what it bought:
+   deploy to staging and run Actions → *Campaign capacity gate (staging)*. That
+   run also re-scores the corrected lost-command accounting on live data rather
+   than on replay. If Gate C is still unmet after it, (b) is the next lever and
+   needs its own design and review.
 
 **Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
 selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
@@ -499,7 +519,14 @@ That is **the same `users` row read three times** in one request.
 >
 > The *measurements* were never wrong — a poll's p50 of 6 round trips is
 > 4 auth + 2 route, and 5 after this work removed row 3. Only the attribution
-> was. See "Remaining opportunity: memoise the session per request".
+> was.
+>
+> **Row 2 was removed 2026-07-29** by `memoiseAuthHandle`
+> (`src/lib/server/auth-memo.ts`), which caches the `locals.auth()` promise for
+> the lifetime of one request. The authenticated fixed cost is now **2 round
+> trips, not 3**: one `jwt` callback read and one `resolveCampaignAccess`. The
+> table above describes the 23:41 run; a gate run has not yet confirmed the new
+> figure.
 
 The activity *write* in `recordActivity` is not a per-request cost —
 `activityPatch` caps it at one write per user per day. Only the read is

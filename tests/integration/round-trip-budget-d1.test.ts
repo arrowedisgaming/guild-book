@@ -12,6 +12,7 @@ import {
 	runWithRequestTiming
 } from '$lib/server/observability/request-timing';
 import { ensureUser } from '$lib/server/auth';
+import { memoiseAuthHandle } from '$lib/server/auth-memo';
 import { loadSessionForReduce } from '$lib/server/session/repository';
 import { loadTableProjectionsForActor } from '$lib/server/session/table-projections';
 import { executeCommand } from '$lib/server/session/command-service';
@@ -104,10 +105,9 @@ describe('D1 round-trip budgets', () => {
 		//
 		// `locals.auth` is stubbed here, so this measures `ensureUser`'s OWN cost
 		// in isolation. In a real request `getUserId` still triggers one `users`
-		// read inside the `jwt` callback, because `@auth/sveltekit` does not
-		// memoise `locals.auth()` — so the per-request saving is one duplicate
-		// read, not the whole auth cost. See "Remaining opportunity: memoise the
-		// session per request" in docs/operations/campaign-capacity.md.
+		// read inside the `jwt` callback — but now exactly one per request rather
+		// than one per caller, since `memoiseAuthHandle` landed. The next test
+		// measures that directly.
 		//
 		// Safe to drop only because the `jwt` callback rejects a token whose
 		// durable user is gone before `locals.auth()` ever returns an id — pinned
@@ -115,6 +115,52 @@ describe('D1 round-trip budgets', () => {
 		// tests/unit/auth-lifecycle.test.ts. That test and this one are a pair; if
 		// that check is ever removed from the callback, this saving is unsafe.
 		expect(trips).toBe(0);
+	});
+
+	it('resolves the session once per request no matter how many callers ask', async () => {
+		// The campaign path calls `locals.auth()` at least twice — once in
+		// `campaignRateLimitHandle`, once in `ensureUser`. `@auth/sveltekit`
+		// installs it as a bare function, so without `memoiseAuthHandle` each call
+		// re-runs the `jwt` callback and its `users` read: two round trips to
+		// derive a value that cannot change within one request.
+		//
+		// The stub below stands in for that callback, doing the same single
+		// `users` read against real (instrumented) D1, so this measures round
+		// trips rather than trusting a mock call count.
+		// Must go through the INSTRUMENTED handle, or the read is invisible to the
+		// round-trip counter and this test would pass for the wrong reason.
+		const makeEvent = () => {
+			const locals: Record<string, unknown> = {
+				auth: async () => {
+					await instrumented.prepare('SELECT id FROM users WHERE id = ?').bind(GM).first();
+					return { user: { id: GM } };
+				}
+			};
+			return { locals, platform: { env: { DB: instrumented } } };
+		};
+
+		// Unwrapped: two callers, two reads. A fresh event each time, because the
+		// handle replaces `locals.auth` in place.
+		const plain = makeEvent();
+		const unmemoised = await roundTrips(async () => {
+			await ensureUser(plain as unknown as Parameters<typeof ensureUser>[0]);
+			await ensureUser(plain as unknown as Parameters<typeof ensureUser>[0]);
+		});
+		expect(unmemoised).toBe(2);
+
+		// Through the handle: two callers, one read.
+		const wrapped = makeEvent();
+		const memoised = await roundTrips(async () =>
+			memoiseAuthHandle({
+				event: wrapped as never,
+				resolve: async () => {
+					await ensureUser(wrapped as unknown as Parameters<typeof ensureUser>[0]);
+					await ensureUser(wrapped as unknown as Parameters<typeof ensureUser>[0]);
+					return new Response('ok');
+				}
+			} as never)
+		);
+		expect(memoised).toBe(1);
 	});
 
 	it('loads a session for reduce within its round-trip budget', async () => {

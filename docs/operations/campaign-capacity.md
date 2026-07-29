@@ -34,6 +34,12 @@ mean, across three runs with 100% `Server-Timing` coverage. Predicted 9 and 4.88
 "What actually drives Gate C" below — this corrects an earlier assumption in this
 document.
 
+**Smart Placement was tried and reverted (2026-07-29).** It moved the Worker for
+84.1% of requests and left the per-round-trip D1 cost unchanged (63.0/69.5 ms
+against 62.5/67.9 ms with it off) while roughly tripling wire time. A measured
+regression, reverted the same day; full numbers and the reason it cannot work on
+a D1 binding are below. **The next lever is D1 read replication / Sessions API.**
+
 **The 2 lost observations are resolved — no data was lost.** Diagnosed
 2026-07-29 from the retained GitHub Actions log for the 23:41 run, so the
 planned re-run was not needed. Both "losses" were the final command of campaigns
@@ -95,29 +101,75 @@ The two terms that do matter:
    worst-cases at 1150 ms. Even with an instant database, Gate C's max cannot go
    below ~1150 ms without changing the cadence.
 
-### Recommended next step: Smart Placement before anything structural
+### Smart Placement — TRIED AND REVERTED 2026-07-29
 
-`placement = { mode = "smart" }` in `wrangler.toml` — one line, no application
-change. Smart Placement runs the Worker near the database instead of near the
-user, which is exactly the shape this application has: **9 sequential database
-round trips against 1 client round trip.**
+**Result: a measured regression. Reverted the same day. Do not re-enable without
+new evidence.**
 
-If per-round-trip cost fell to ~5 ms, a changed poll would cost ~45 ms instead of
-611 ms and Gate C's worst case would be ~1200 ms — passing with ~800 ms of
-margin. That is a config-only experiment worth running before any structural or
-vendor change.
+The theory was that 9 sequential D1 round trips against 1 client round trip is
+exactly the shape Smart Placement exists for, so running the Worker near the
+database should collapse the per-round-trip cost for one line of config. Enabled
+on staging (`[env.staging.placement] mode = "smart"`), measured over a full
+30-minute gate run, and it did the opposite.
 
-Then, in order:
+**It was genuinely active and genuinely moved the Worker** — this is not "the
+setting never took effect". The harness now records Cloudflare's own
+`cf-placement` verdict per request, and the run reported `remote-` on
+**30 882 of 36 740 requests (84.1%)**.
 
-- **D1 read replication / Sessions API** — 81% of traffic is read-only polls, so
-  replicas near the Worker attack the same distance term. Has consistency
-  trade-offs and needs its own decision.
-- **Cut the changed-poll path below 9 round trips** — the direct structural
-  attack on term 1.
-- **Reduction D** — still worth doing for D1 consumption and poll p95, but
-  explicitly *not* for Gate C.
-- **Lengthening or shortening the poll cadence** — a product decision, and note
-  the gate's own threshold assumes the current 1 s cadence.
+| | 22:25, placement OFF | 23:20, placement ON |
+| --- | --- | --- |
+| Colo | `ORD`/`DFW` | `SEA` |
+| Worker moved (`cf-placement: remote-*`) | n/a | **84.1%** |
+| **D1 ms per round trip** | 62.5 / 67.9 | **63.0 / 69.5 — unchanged** |
+| **Wire ms (mean)** | 28.8 / 40.5 | **105.3 / 115.2 — ~3× worse** |
+| Poll p95 | 631.6 PASS | 788.1 |
+| Command p95 | 867.0 PASS | 1109.5 |
+| Visible p95 / p99 | 1556 / 1772 | 1655 / **2013** |
+| Visible max | 2129 | **31 462** |
+| Observations > 2000 ms | 12 (0.21%) | 61 (1.08%) |
+| Round trips (command / poll mean) | 9.00 / 4.77 | 9.00 / 4.91 |
+| Lost / duplicated | 0 / 0 PASS | 0 / 0 PASS |
+
+**The decisive number is the per-round-trip cost: 63.0 / 69.5 ms against 62.5 /
+67.9 ms with placement off.** Cloudflare moved the Worker for 84% of requests and
+the distance to D1 did not shrink at all. Wherever it moved it to, that place was
+not nearer the `MIA` primary. Meanwhile wire time roughly tripled — the extra
+client → entry-colo → execution-colo hop — so the run paid a new cost on every
+request and received nothing back.
+
+**Why it cannot work here.** Smart Placement decides from the Worker's observed
+outbound subrequests. D1 is reached through a runtime binding, not a `fetch()` to
+a distant origin, so Cloudflare has no signal telling it where the data actually
+is and therefore nothing to move the Worker *toward*. It relocated the Worker on
+some other basis, which was free to be worse.
+
+**What this does and does not rule out.** It rules out Smart Placement as a route
+to database locality on this stack. It does **not** weaken the underlying
+diagnosis — that the cost is distance paid nine times. If anything it sharpens it:
+the Worker was moved and the 63 ms per round trip did not budge, which is direct
+evidence that the distance is Worker→D1 and that only something which actually
+moves the *data* closer (or the compute genuinely next to it) will help.
+
+The harness change that made this readable is worth keeping: without
+`cf-placement`, the colo distribution alone could not distinguish "placement is
+off" from "placement is on and chose not to move", and the 300-second smoke that
+preceded this run showed exactly the latter (`local-LAX`, 100%).
+
+### Next lever: D1 read replication / Sessions API
+
+D1's own documented mechanism for read locality, and the natural fit here since
+**80% of this workload is read-only polls**. Unlike Smart Placement it moves the
+*data* rather than guessing at the compute, so it acts directly on the term the
+measurements identify.
+
+It is a code change rather than config — reads opt into a session for
+read-your-writes consistency — and it carries a real consistency decision, so it
+needs its own design and review. That is the next piece of work on Gate C.
+
+After that, in order: cut the changed-poll path below 9 round trips (the direct
+structural attack); reduction D (for D1 consumption and poll p95, explicitly
+*not* for Gate C); and the poll cadence, which is a product decision.
 
 ### On changing database vendor (asked 2026-07-29)
 
@@ -871,6 +923,32 @@ duplicate resulting versions, and a rejection is the concurrency control working
 It did not recur in the 22:25 run (2851/2851 accepted). Plausibly downstream of
 the same stall, with the GM's tracked structural version drifting behind. Worth
 watching rather than acting on.
+
+### 30-minute gate with Smart Placement — 2026-07-29, 23:20: **FAILED (regression)**
+
+Recorded in full under "Smart Placement — TRIED AND REVERTED" above, which is
+where the comparison and the reasoning live. Summary for the run log:
+
+Nine campaigns, 27 clients, 1800 s, entry colo `SEA`, 36 740 requests, **zero
+errors**. `cf-placement` reported `remote-` on 30 882 requests (84.1%),
+`local-` on 5516 and `local-SEA` on 342.
+
+| Gate | Result |
+| --- | --- |
+| Max visible-change ≤ 2000 ms | **FAIL at 31 462 ms** |
+| Poll p95 ≤ 1200 ms | PASS at 788.1 ms (was 631.6 without placement) |
+| Command p95 ≤ 2000 ms | PASS at 1109.5 ms (was 867.0) |
+| Error rate < 0.1% | PASS at 0.0000% |
+| Lost / duplicated command | **PASS** — 0 / 0, 2763/2817 judged, 54 excluded |
+
+Round trips held at 9.00 per command and 4.91 mean per poll, confirming the
+memoisation is stable and that placement changed geography rather than structure.
+The 35 574 ms worst poll was real server time — harness event-loop lag maxed at
+8.3 ms — and is the kind of tail a relocated Worker exposed.
+
+Staging was redeployed without placement immediately afterwards
+(version `37d51b15`), and the absence of `cf-placement` on a probe confirms it is
+off. **The 22:25 run remains the reference result.**
 
 ### Open question: which location the thresholds describe
 

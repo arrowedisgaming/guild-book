@@ -544,18 +544,78 @@ per round trip against the same `MIA` primary. This run drew the second-worst of
 them, so the round-trip counts are the durable result and the wall-clock figures
 are not.
 
+### 30-minute gate after the reductions — 2026-07-28, 23:41–00:11 UTC: **FAILED (3 of 5 pass)**
+
+Nine campaigns, 27 clients, 1800s, colo `SJC`, D1 primary `MIA`. 31 713
+requests, zero errors.
+
+| Gate | Threshold | 17:49 (`IAD`) | This run (`SJC`) |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms | 8260 **FAIL** | 2829 **FAIL** |
+| Poll p95 | ≤ 1200 ms | 1556.4 **FAIL** | **1186.9 PASS** |
+| Command p95 | ≤ 2000 ms | 2090.9 **FAIL** | **1535.1 PASS** |
+| Error rate | < 0.1% | 0.0000% PASS | 0.0000% PASS |
+| Lost / duplicated command | zero | 0 / 0 PASS | **2 lost / 0 dup FAIL** |
+
+| Metric | 17:49 (`IAD`) | This run (`SJC`) |
+| --- | --- | --- |
+| Command D1 round trips | 20.00 | **10.00** |
+| Poll D1 round trips (mean / p95) | 8.68 / 18 | **5.88 / 10** |
+| Poll latency p50 | 605.1 → 428.7 | **462.8** |
+| Command latency p50 | 1591.3 | **1246.1** |
+| Visible-change p50 / p95 / p99 / max | 1225 / 1983 / 2312 / 8260 | 1332 / 2054 / 2294 / **2829** |
+| Observations > 2000 ms | 226 (4.6%) | 373 (7.2%) |
+| Polls / commands completed | 28 200 / 2442 | **29 135 / 2578** |
+| ms per round trip | 78–80 | **114–124** |
+
+#### The result is better than it looks, because the geography is worse
+
+This run drew `SJC` at 114–124 ms per round trip; the 17:49 baseline drew `IAD`
+at 78–80 ms. Despite paying ~50% more per round trip, this run completed **more**
+work (29 135 polls vs 28 200, 2578 commands vs 2442) and passed two gates the
+baseline failed. Normalised to `IAD`'s rate, a command's D1 time would be
+`10 × 78.4 ≈ 784 ms` against 1568 ms at the baseline.
+
+The tail collapsed: **max visible-change went 8260 ms → 2829 ms**, a 3× tightening,
+and p99 went 2312 → 2294 despite the worse path. The slight rise in the >2000 ms
+count (4.6% → 7.2%) is the median shifting up with the per-round-trip cost, not
+the tail worsening.
+
+**Poll p95 passed by 13 ms.** Better than the 60-second run's 0.3 ms, still not a
+margin to rely on, and it would not survive a colo draw as slow as `SJC` was in
+the earlier smoke (129 ms/round trip).
+
+#### The 2 lost commands are NOT explained by the tail this time
+
+The 00:26 run's single lost command was explained: its grace window was 3150 ms
+against a demonstrated 6853 ms tail, so a still-propagating change was
+miscounted. **That explanation does not apply here.** This run's grace was
+3979 ms and its worst observed propagation was 2829 ms, so a command accepted
+outside the grace window had comfortably longer than the run's own worst case to
+reach somebody, and two did not.
+
+Evidence against data loss remains strong — 2578/2578 accepted, **0 duplicate
+resulting versions**, 0 errors — so nothing indicates a lost *write*. What is
+unexplained is a lost *observation*, at 0.078% of commands.
+
+**This must not be written off as an artifact.** It is a zero-threshold gate, the
+previous artifact explanation is unavailable, and the harness does not currently
+record enough per-command detail to say which two commands went unseen or what
+their observers were doing. Establishing that is the next diagnostic, and it is
+cheap: log the command id, its acceptance time, and each observer's poll
+timestamps around it.
+
 #### Still open
 
-- **Max visible-change latency still fails** (2477 ms against a hard 2000 ms
-  Gate C). It is the only gate never yet met, and it is the one the spec calls
+- **Gate C remains unmet** (2829 ms against a hard 2000 ms). It is now the
+  closest it has ever been, and it is still the gate the spec calls
   non-negotiable.
-- **A 30-minute run has not been done since any of these reductions.** Every
-  figure in the last two rows is from a 60-second window, which has far less
-  opportunity to produce a tail than the window the gate is actually defined
-  against.
-- **Reduction D is untouched**, and remains the only one that helps the ~77% of
-  polls answered from the cursor hint, which still pay 2 round trips of
-  authentication and authorization each.
+- **Two lost observations, unexplained** — see above.
+- **Reduction D is untouched**, and remains the only lever on the 80.4% of polls
+  answered from the cursor hint, which still pay 2 round trips of authentication
+  and authorization each and nothing else.
+- **Poll p95 passes by 13 ms**, which is inside the run-to-run colo variance
+  already observed. Treat it as met-on-this-path, not met.
 
 ### Open question: which location the thresholds describe
 

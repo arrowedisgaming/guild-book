@@ -321,6 +321,13 @@ async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 	updateJar(jar, res);
 	const timing = parseServerTiming(res.headers.get('server-timing'));
 	const colo = res.headers.get('x-guildbook-colo');
+	// Cloudflare's own Smart Placement verdict, present ONLY when Smart Placement
+	// is enabled: `local-<COLO>` means it ran the Worker at the request's entry
+	// colo, `remote-<COLO>` means it moved the Worker nearer the backend. Recorded
+	// because the 2026-07-29 placement experiment could otherwise only be inferred
+	// from the colo distribution, which cannot distinguish "placement is off" from
+	// "placement is on and chose not to move".
+	const placement = res.headers.get('cf-placement');
 	let json = null;
 	if (res.status !== 204) {
 		try {
@@ -329,7 +336,7 @@ async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 			// non-JSON body; leave json null
 		}
 	}
-	return { ok: res.ok, status: res.status, latencyMs, json, error: null, timing, colo };
+	return { ok: res.ok, status: res.status, latencyMs, json, error: null, timing, colo, placement };
 }
 
 /**
@@ -637,15 +644,24 @@ class Stats {
 	// on a geography question neither could answer from the client side; this
 	// records the answer instead of inferring it from where the harness ran.
 	colos = new Map();
+	// cf-placement verdict -> count. Empty means the header never arrived, which
+	// means Smart Placement is not enabled on the target.
+	placements = new Map();
 
 	noteColo(colo) {
 		if (!colo) return;
 		this.colos.set(colo, (this.colos.get(colo) ?? 0) + 1);
 	}
 
+	notePlacement(placement) {
+		if (!placement) return;
+		this.placements.set(placement, (this.placements.get(placement) ?? 0) + 1);
+	}
+
 	recordPoll(res) {
 		this.pollTotal += 1;
 		this.noteColo(res.colo);
+		this.notePlacement(res.placement);
 		if (res.status === 200) {
 			this.poll200 += 1;
 			this.pollLatencies.push(res.latencyMs);
@@ -671,6 +687,7 @@ class Stats {
 		this.commandLatencies.push(res.latencyMs);
 		this.commandTiming.record(res);
 		this.noteColo(res.colo);
+		this.notePlacement(res.placement);
 		if (res.ok && res.status === 200 && res.json?.outcome?.ok) {
 			this.commandAccepted += 1;
 			const version = res.json.outcome.resultingVersion;
@@ -1058,6 +1075,27 @@ function report(stats, opts) {
 			.map(([colo, count]) => `${colo}=${count}`)
 			.join(', ');
 		console.log(`  Cloudflare colo(s) serving this run: ${served}`);
+		// Reported next to the colo because the two together are what make a
+		// placement experiment readable: the colo says WHERE the Worker ran, the
+		// placement verdict says whether Cloudflare chose that or merely defaulted
+		// to it. Absent header = Smart Placement not enabled on the target.
+		if (stats.placements.size > 0) {
+			const decided = [...stats.placements.entries()]
+				.sort((a, b) => b[1] - a[1])
+				.map(([verdict, count]) => `${verdict}=${count}`)
+				.join(', ');
+			console.log(`  Smart Placement verdict(s) (cf-placement): ${decided}`);
+			const moved = [...stats.placements.entries()]
+				.filter(([verdict]) => verdict.startsWith('remote'))
+				.reduce((sum, [, count]) => sum + count, 0);
+			const total = [...stats.placements.values()].reduce((sum, count) => sum + count, 0);
+			console.log(
+				`  Smart Placement moved the Worker for ${moved}/${total} requests ` +
+					`(${((moved / total) * 100).toFixed(1)}%) — "local-*" means it ran at the entry colo`
+			);
+		} else {
+			console.log('  Smart Placement: no cf-placement header — not enabled on this target');
+		}
 	} else {
 		console.log('  Cloudflare colo: not reported (off-edge target, or CAMPAIGN_TIMING_HEADER unset)');
 	}

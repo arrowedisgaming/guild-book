@@ -72,6 +72,8 @@ import { spawn } from 'node:child_process';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { rm } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import { CommandLedger } from './lib/command-ledger.mjs';
 
 // ---------------------------------------------------------------------------
 // CLI args
@@ -657,43 +659,12 @@ class Stats {
 		}
 	}
 
-	// (sessionId, resultingVersion) pairs already claimed by an accepted
-	// command. Two accepted commands reporting the same resulting version means
-	// the version claim is not exclusive — a lost write, not a slow one.
-	claimedVersions = new Set();
-	duplicateResultingVersions = 0;
-	// Accepted commands whose change no client ever observed. Keyed to the
-	// acceptance timestamp so the tail of the run can be excluded — see
-	// `countLostCommands`.
-	acceptedCommandKeys = new Map();
-	observedCommandKeys = new Set();
-	windowEndedAt = null;
-
-	/**
-	 * A command is only "lost" if the run gave every other client a fair chance
-	 * to see it and none did. Commands accepted in the final moments of the load
-	 * window are unobserved because the window closed, not because anything was
-	 * dropped — counting those would make this gate fail every run.
-	 *
-	 * The grace period is one full poll cycle plus the WORST propagation this
-	 * run actually demonstrated: if a change had longer than the slowest
-	 * observed propagation and still reached nobody, it is genuinely lost.
-	 *
-	 * An earlier version used a fixed 2000ms (the budget) instead of the
-	 * observed maximum. That is unsound whenever a run's tail exceeds the
-	 * budget — the 2026-07-28 gate run peaked at 6853ms, so a command accepted
-	 * ~4s before the window closed could still be propagating normally and be
-	 * miscounted as lost. This is a fix to the measurement, NOT a relaxation of
-	 * the gate: the threshold is still zero lost commands.
-	 */
-	countLostCommands(graceMs) {
-		const cutoff = (this.windowEndedAt ?? Date.now()) - graceMs;
-		let lost = 0;
-		for (const [key, acceptedAt] of this.acceptedCommandKeys) {
-			if (acceptedAt <= cutoff && !this.observedCommandKeys.has(key)) lost += 1;
-		}
-		return lost;
-	}
+	// Accepted-command integrity: which changes were claimed, which were seen,
+	// and which the run is entitled to judge. Extracted to its own typed and
+	// unit-tested module because a miscount here reads exactly like real data
+	// loss — it already cost two investigations. See
+	// tests/load/lib/command-ledger.mjs.
+	ledger = new CommandLedger();
 
 	recordCommand(res, sessionId) {
 		this.commandTotal += 1;
@@ -704,10 +675,7 @@ class Stats {
 			this.commandAccepted += 1;
 			const version = res.json.outcome.resultingVersion;
 			if (sessionId !== undefined && version !== undefined) {
-				const key = `${sessionId}#${version}`;
-				if (this.claimedVersions.has(key)) this.duplicateResultingVersions += 1;
-				else this.claimedVersions.add(key);
-				this.acceptedCommandKeys.set(key, Date.now());
+				this.ledger.recordAccepted(`${sessionId}#${version}`, Date.now());
 			}
 		} else this.commandErrors += 1;
 	}
@@ -778,7 +746,7 @@ function resolveVisibility(campaign, client, stats) {
 	for (const event of campaign.pendingEvents) {
 		if (client.cursor >= event.targetCursor && event.remaining.has(client)) {
 			event.remaining.delete(client);
-			if (event.commandKey) stats.observedCommandKeys.add(event.commandKey);
+			if (event.commandKey) stats.ledger.recordObserved(event.commandKey);
 			stats.recordVisibility(now - event.acceptedAt, { campaignIndex: campaign.index, role: client.role });
 		}
 	}
@@ -929,9 +897,18 @@ async function main() {
 			tasks.push(commandLoop(baseUrl, campaign, stats, endTime, opts));
 		}
 
+		// Stamped BEFORE awaiting the tasks: this is the instant the poll loops
+		// stop issuing polls, and so the last instant any accepted change could
+		// still be observed. `windowEndedAt` below can trail it by nearly a full
+		// `commandIntervalMs` because a command loop only re-checks the clock
+		// after its sleep — see `CommandLedger.commandJudgementCutoff`.
+		stats.ledger.observationEndedAt = endTime;
 		await Promise.all(tasks);
-		stats.windowEndedAt = Date.now();
-		console.log('[load] load window complete');
+		stats.ledger.windowEndedAt = Date.now();
+		console.log(
+			`[load] load window complete (observation ended ${new Date(endTime).toISOString()}, ` +
+				`last task settled ${stats.ledger.windowEndedAt - endTime}ms later)`
+		);
 
 		exitCode = report(stats, opts);
 	} finally {
@@ -1000,8 +977,10 @@ function report(stats, opts) {
 	// less than the 2000ms budget, so a fast run cannot shrink the window.
 	const lostGraceMs =
 		opts.pollIntervalMs + opts.jitterMs + Math.max(2000, visibility.max ?? 0);
-	const lostCommands = stats.countLostCommands(lostGraceMs);
-	const commandIntegrityOk = stats.duplicateResultingVersions === 0 && lostCommands === 0;
+	const lostCommands = stats.ledger.countLostCommands(lostGraceMs);
+	const judgedCommands = stats.ledger.countJudgedCommands(lostGraceMs);
+	const untestableCommands = stats.ledger.countUntestableCommands(lostGraceMs);
+	const commandIntegrityOk = stats.ledger.duplicateResultingVersions === 0 && lostCommands === 0;
 
 	console.log('');
 	console.log('=== Load gate summary ===');
@@ -1114,8 +1093,10 @@ function report(stats, opts) {
 	);
 	console.log(
 		`Gate: no lost or duplicated accepted command? ${commandIntegrityOk ? 'PASS' : 'FAIL'} ` +
-			`(${stats.duplicateResultingVersions} duplicate resulting versions, ${lostCommands} lost; ` +
-			`commands accepted within ${lostGraceMs}ms of the window close are excluded — the run ended, nothing was dropped)`
+			`(${stats.ledger.duplicateResultingVersions} duplicate resulting versions, ${lostCommands} lost; ` +
+			`${judgedCommands}/${stats.ledger.acceptedCommandKeys.size} accepted commands judged, ` +
+			`${untestableCommands} excluded as accepted within ${lostGraceMs}ms of observation ending — ` +
+			`no client was still polling, so their unobserved-ness carries no information)`
 	);
 	console.log('');
 
@@ -1196,7 +1177,15 @@ function fmt(value) {
 	return value === null || value === undefined ? 'n/a' : value.toFixed(1);
 }
 
-main().catch((err) => {
-	console.error('[load] fatal error:', err);
-	process.exitCode = 1;
-});
+// Only run the load window when this file is executed directly, so that
+// importing anything from here (or from ./lib) never boots a server. The
+// lost-command accounting is unit-tested without standing up a 30-minute run —
+// see tests/unit/load-harness-accounting.test.ts, which exists because a
+// miscount in that accounting failed a zero-threshold gate twice before anyone
+// could tell it apart from real data loss.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	main().catch((err) => {
+		console.error('[load] fatal error:', err);
+		process.exitCode = 1;
+	});
+}

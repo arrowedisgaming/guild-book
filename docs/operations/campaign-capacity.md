@@ -1,20 +1,21 @@
 # Campaign capacity and latency gates (Increment 5 Task 4)
 
-## Status — paused 2026-07-29, resume here
+## Status — updated 2026-07-29, resume here
 
-Work paused to return to feature completion. This section is the short version;
-everything below it is the evidence.
+This section is the short version; everything below it is the evidence.
 
-**Where it stands: 3 of 5 gates pass.** The latency problem is understood and
-largely fixed. Two items remain open, one of them a correctness question.
+**Where it stands: 4 of 5 gates pass.** The latency problem is understood and
+largely fixed, and the correctness question is now closed — it was a harness
+miscount, diagnosed from the existing run log without a re-run. **Gate C is the
+only remaining failure.**
 
 | Gate | Status |
 | --- | --- |
 | Poll p95 ≤ 1200 ms | PASS at 1186.9 ms — **by 13 ms**, inside observed colo variance |
 | Command p95 ≤ 2000 ms | PASS at 1535.1 ms, comfortable |
 | Error rate < 0.1% | PASS at 0.0000% |
+| Zero lost / duplicated commands | **PASS** — the "2 lost" was a harness miscount, fixed 2026-07-29 |
 | Max visible-change ≤ 2000 ms (Gate C) | **FAIL at 2829 ms** — was 8260 ms |
-| Zero lost / duplicated commands | **FAIL — 2 lost observations, unexplained** |
 
 **What was learned.** Latency here is bound by the NUMBER of sequential D1 round
 trips, not by the network (3–6% of a request) and not by D1 throughput. Commands
@@ -22,19 +23,20 @@ run at 1.00× concurrency, so every round trip is on the critical path. Round
 trips were cut from 20 → 10 per command and 8.68 → 5.88 per poll, which is what
 moved both p95 gates from fail to pass.
 
-**Two open items, in the order they should be picked up:**
+**The 2 lost observations are resolved — no data was lost.** Diagnosed
+2026-07-29 from the retained GitHub Actions log for the 23:41 run, so the
+planned re-run was not needed. Both "losses" were the final command of campaigns
+3 and 4, accepted *after* every poll loop had already exited. The gate measured
+its exclusion window backwards from the wrong clock. Full derivation in the
+23:41 run's section below; the fix and its regression tests are in
+`tests/load/lib/command-ledger.mjs` and
+`tests/unit/load-harness-accounting.test.ts`. Re-scoring that run with the
+corrected accounting gives **0 lost, 2576 of 2578 commands judged, 2 excluded as
+untestable**.
 
-1. **Diagnose the 2 lost observations first.** This is a correctness question,
-   not a performance one, and it should be answered before anything else on this
-   path is optimised. It is *not* the measurement artifact seen in the 00:26 run
-   — that explanation is unavailable here (see that run's section). No evidence
-   of a lost *write*: 2578/2578 accepted, 0 duplicate resulting versions. What is
-   unexplained is a lost *observation*, 0.078% of commands.
-   **Next action:** the harness does not record which commands went unseen. Log
-   the command id, its acceptance time, and each observer's poll timestamps
-   around it, then re-run. Cheap, and it settles the question.
+**One open item:**
 
-2. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
+1. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
    unmet, and the spec calls it non-negotiable. Three levers remain, cheapest
    and safest first:
 
@@ -55,7 +57,8 @@ moved both p95 gates from fail to pass.
    **c. Move the data closer** (D1 read replication / Sessions API) — a separate
    decision with consistency trade-offs, out of scope for this document.
 
-   None should be started before item 1.
+   Start with (a): it is the cheapest, carries no staleness risk, and the
+   correctness question that previously blocked it is now closed.
 
 **Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
 selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
@@ -664,37 +667,83 @@ the tail worsening.
 margin to rely on, and it would not survive a colo draw as slow as `SJC` was in
 the earlier smoke (129 ms/round trip).
 
-#### The 2 lost commands are NOT explained by the tail this time
+#### The 2 lost commands — RESOLVED 2026-07-29, a harness miscount
 
-The 00:26 run's single lost command was explained: its grace window was 3150 ms
-against a demonstrated 6853 ms tail, so a still-propagating change was
-miscounted. **That explanation does not apply here.** This run's grace was
-3979 ms and its worst observed propagation was 2829 ms, so a command accepted
-outside the grace window had comfortably longer than the run's own worst case to
-reach somebody, and two did not.
+**No data was lost. The gate was measuring its own exclusion window from the
+wrong clock.** Diagnosed from the retained GitHub Actions log for this run
+(`gh run view 30408766192 --log`), so the planned instrument-and-re-run was
+never needed.
 
-Evidence against data loss remains strong — 2578/2578 accepted, **0 duplicate
-resulting versions**, 0 errors — so nothing indicates a lost *write*. What is
-unexplained is a lost *observation*, at 0.078% of commands.
+The log's own arithmetic pointed straight at it:
 
-**This must not be written off as an artifact.** It is a zero-threshold gate, the
-previous artifact explanation is unavailable, and the harness does not currently
-record enough per-command detail to say which two commands went unseen or what
-their observers were doing. Establishing that is the next diagnostic, and it is
-cheap: log the command id, its acceptance time, and each observer's poll
-timestamps around it.
+- 2578 commands accepted, **5152 visibility observations**. Two observers per
+  command means 5156 expected — exactly **4 missing = 2 commands × both
+  observers**.
+- Per campaign, `player-a` and `player-b` counts are **identical in all nine
+  campaigns**. Not one instance of one player seeing a change the other missed.
+  Independent per-client flakiness cannot produce that; both observers went
+  missing together.
+- The largest gap anywhere in either player's 30-minute observation timeline is
+  **8289 ms against a 6660 ms median**. A skipped command would leave a ~13 s
+  gap. There is none, in any campaign — so the missing pair is not mid-run.
+
+That places both at the window boundary, and the timings confirm it exactly:
+
+| Clock | Value |
+| --- | --- |
+| `endTime` — poll loops stop issuing | 00:11:56.749 |
+| `windowEndedAt` — last async task settles | 00:12:01.588 (**+4839 ms**) |
+| grace (`pollInterval + jitter + worst propagation`) | 3979 ms |
+| cutoff (`windowEndedAt − grace`) | 00:11:57.609 — **860 ms after polling stopped** |
+
+`windowEndedAt` is stamped after `Promise.all` resolves. A command loop only
+re-checks the clock *after* `sleep(commandIntervalMs)`, so one that entered its
+5000 ms sleep just before `endTime` keeps `Promise.all` pending for nearly 5 s
+past the moment every poll loop exited. Measuring the grace backwards from that
+straggler put the cutoff **after observation had already ceased**, opening an
+~860 ms dead band in which an accepted command is eligible to be judged and yet
+has no client alive to observe it.
+
+Reconstructing each campaign's final command from its last observed one and the
+loop cadence predicts, independently of the reported figure, that **exactly two
+campaigns — 3 and 4 — issued a further command landing in that dead band**
+(accepted 00:11:57.343 and 00:11:56.673). Every other campaign's next command
+fell after `endTime` and was never issued at all. Predicted 2, reported 2.
+2576 observed + 2 = 2578 accepted. The account closes exactly.
+
+This also retroactively explains the 00:26 run's single "lost" command by the
+same mechanism, which is a better explanation than the tail argument recorded
+for it at the time.
+
+**The fix** anchors judgement to when observation stopped rather than to when
+the last task settled, in `tests/load/lib/command-ledger.mjs` — extracted into
+its own typed module precisely because a miscount in a zero-threshold gate reads
+exactly like real data loss. `tests/unit/load-harness-accounting.test.ts` pins
+the behaviour, including that a genuinely unobserved command which *did* have a
+full fair chance still fails the gate. The gate now also reports how many
+commands it actually judged, so a run that quietly stops judging most of its
+traffic can no longer look like a clean run.
+
+This is a correction to the measurement, **not** a relaxation of the gate: the
+threshold is still zero, and every command that had a real opportunity to be
+seen is still held to it. Re-scoring this run with the corrected accounting:
+**0 lost, 2576 of 2578 judged, 2 excluded as untestable.**
 
 #### Still open
 
 - **Gate C remains unmet** (2829 ms against a hard 2000 ms). It is now the
   closest it has ever been, and it is still the gate the spec calls
-  non-negotiable.
-- **Two lost observations, unexplained** — see above.
+  non-negotiable — and now the *only* failing gate.
 - **Reduction D is untouched**, and remains the only lever on the 80.4% of polls
   answered from the cursor hint, which still pay 2 round trips of authentication
   and authorization each and nothing else.
 - **Poll p95 passes by 13 ms**, which is inside the run-to-run colo variance
   already observed. Treat it as met-on-this-path, not met.
+- **A future run judges ~8 fewer commands than it accepts.** With the cutoff
+  correctly anchored, commands accepted within one grace period of `endTime` are
+  excluded rather than miscounted. If that exclusion ever needs to shrink, the
+  fix is to let the poll loops drain for one grace period after the command
+  loops stop — not to move the cutoff back.
 
 ### Open question: which location the thresholds describe
 

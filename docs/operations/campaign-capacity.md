@@ -9,24 +9,30 @@ largely fixed, and the correctness question is now closed — it was a harness
 miscount, diagnosed from the existing run log without a re-run. **Gate C is the
 only remaining failure.**
 
+Figures below are from the **22:25 run (`ORD`/`DFW`)**, the most recent and
+cleanest 30-minute gate.
+
 | Gate | Status |
 | --- | --- |
-| Poll p95 ≤ 1200 ms | PASS at 1186.9 ms — **by 13 ms**, inside observed colo variance |
-| Command p95 ≤ 2000 ms | PASS at 1535.1 ms, comfortable |
-| Error rate < 0.1% | PASS at 0.0000% |
+| Poll p95 ≤ 1200 ms | PASS at 631.6 ms, comfortable |
+| Command p95 ≤ 2000 ms | PASS at 867.0 ms, comfortable |
+| Error rate < 0.1% | PASS at 0.0000% — zero errors of any kind |
 | Zero lost / duplicated commands | **PASS** — the "2 lost" was a harness miscount, fixed 2026-07-29 |
-| Max visible-change ≤ 2000 ms (Gate C) | **FAIL at 2829 ms** — was 8260 ms |
+| Max visible-change ≤ 2000 ms (Gate C) | **FAIL at 2129 ms — by 129 ms** (was 2829, 8260) |
 
 **What was learned.** Latency here is bound by the NUMBER of sequential D1 round
 trips, not by the network (3–6% of a request) and not by D1 throughput. Commands
 run at 1.00× concurrency, so every round trip is on the critical path. Round
-trips were cut from 20 → 10 per command and 8.68 → 5.88 per poll, which is what
-moved both p95 gates from fail to pass.
+trips were cut from 20 → 10 → **9** per command and 8.68 → 5.88 → **4.77 mean**
+per poll, which moved the two p95 gates from fail to comfortable pass.
 
-**Since the 23:41 run, and not yet measured by a gate:** `locals.auth()` is now
-memoised per request (2026-07-29), removing one further round trip from 100% of
-campaign requests. Expected 10 → 9 per command and 5.88 → 4.88 per poll. The
-next gate run measures it.
+**The `locals.auth()` memoisation is confirmed by measurement**, not prediction:
+commands now cost exactly 9.00 round trips (p50/p95/max all 9) and polls 4.77
+mean, across three runs with 100% `Server-Timing` coverage. Predicted 9 and 4.88.
+
+**Gate C is now 129 ms short, and the lever it needs is NOT reduction D.** See
+"What actually drives Gate C" below — this corrects an earlier assumption in this
+document.
 
 **The 2 lost observations are resolved — no data was lost.** Diagnosed
 2026-07-29 from the retained GitHub Actions log for the 23:41 run, so the
@@ -37,57 +43,98 @@ its exclusion window backwards from the wrong clock. Full derivation in the
 `tests/load/lib/command-ledger.mjs` and
 `tests/unit/load-harness-accounting.test.ts`. Re-scoring that run with the
 corrected accounting gives **0 lost, 2576 of 2578 commands judged, 2 excluded as
-untestable**.
-
-**One open item:**
-
-1. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
-   unmet, and the spec calls it non-negotiable. Three levers remain, cheapest
-   and safest first:
-
-   **a. Memoise `locals.auth()` per request — DONE 2026-07-29.**
-   `@auth/sveltekit` assigns a bare function, not a memoised promise, so every
-   call re-ran the `jwt` callback and its `users` read. The campaign path calls
-   it twice — once in the rate limiter, once in `ensureUser` — so one D1 round
-   trip per request was spent re-deriving a value that cannot change within a
-   request. `memoiseAuthHandle` (`src/lib/server/auth-memo.ts`) is now sequenced
-   directly after the Auth.js handle. Measured against instrumented D1 in
-   `tests/integration/round-trip-budget-d1.test.ts`: two callers cost **2 round
-   trips before, 1 after**.
-
-   This is **not** reduction D: it is request-scoped reuse of an
-   already-computed result, not an authorization cache with a TTL, so it carries
-   none of D's staleness risk. It cannot serve a stale session either — the
-   Auth.js handle answers its own action routes (sign-in, sign-out, callback)
-   without ever calling `resolve`, so no request that reaches the memo can
-   mutate the session mid-flight.
-
-   Expected effect: **−1 round trip on 100% of campaign requests**, including
-   every no-op poll. On the 23:41 geometry (114–124 ms/round trip) that is
-   roughly −120 ms on a poll and −120 ms on a command; on the 17:49 geometry
-   (78–80 ms) roughly −80 ms. Not yet confirmed by a gate run — see below.
-
-   **b. Reduction D** — the only lever on the ~80% of polls answered from the
-   cursor hint, and the only one touching authorization. Needs its own design
-   and review.
-
-   **c. Move the data closer** (D1 read replication / Sessions API) — a separate
-   decision with consistency trade-offs, out of scope for this document.
-
-   (a) is done. **The next action is a gate run** to measure what it bought:
-   deploy to staging and run Actions → *Campaign capacity gate (staging)*. That
-   run also re-scores the corrected lost-command accounting on live data rather
-   than on replay. If Gate C is still unmet after it, (b) is the next lever and
-   needs its own design and review.
+untestable**. It has since reported **0 lost on three consecutive live runs**
+(300 s smoke, 19:21, 22:25), each with an explicit judged/excluded count.
 
 **Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
-selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
-trip against the same `MIA` primary. Round-trip counts are stable and are the
-comparable figure; wall-clock is not.
+selectable and has now varied across `IAD`, `SJC`, `SEA`, `LAX`, `ORD` and `DFW`
+— 55 to 129 ms per round trip against the same `MIA` primary, a 2.3× spread.
+Round-trip counts are stable and are the comparable figure; wall clock is not.
 
 **Rollout is still blocked independently of all of this** by the inert rate
 limiter — see "Blocking issue at time of writing" at the end of this document.
 A green capacity run would not clear campaigns for release on its own.
+
+## What actually drives Gate C — corrected 2026-07-29
+
+Gate C measures **accepted command → another client sees it**. That interval is:
+
+```
+visible = (wait for the observer's next poll to fire) + (that poll's own latency)
+```
+
+The observing poll is by definition a **`200` changed** poll, and a changed poll
+costs **9 round trips** (`poll D1 round trips — p50: 4.0, p95: 9.0, max: 9.0`;
+the 4.77 mean is the mix of 81% cheap `204`s with 19% expensive `200`s).
+
+At the 22:25 geometry the arithmetic closes:
+
+| Term | Value |
+| --- | --- |
+| Worst wait for the next poll | 1000 ms interval + 150 ms jitter = **1150 ms** |
+| A changed poll, 9 round trips × 67.9 ms | **~611 ms** |
+| Predicted worst case | **~1761 ms** |
+| Measured max | **2129 ms** |
+| Measured p99 | 1772 ms |
+
+**This means reduction D cannot fix Gate C.** Reduction D targets the ~81% of
+polls answered from the cursor hint — the ones that return `204`. A `204` poll
+never observes anything, so it is not on this critical path at all. Cutting its
+cost would improve D1 consumption and the poll p95, and do **nothing** to the
+visible-change max. Earlier revisions of this document listed reduction D as the
+lever for Gate C; that was wrong.
+
+The two terms that do matter:
+
+1. **Per-round-trip cost (~62–68 ms), paid 9 times on the observing poll.** This
+   is distance: the Worker runs near the player, the D1 primary is `MIA`. 93% of
+   a command and 88% of a changed poll is time inside D1 calls, and it is
+   distance rather than throughput — commands run at 1.00× concurrency, so every
+   trip is sequential and on the critical path.
+2. **The 1000 ms + 150 ms poll cadence**, which alone averages ~575 ms and
+   worst-cases at 1150 ms. Even with an instant database, Gate C's max cannot go
+   below ~1150 ms without changing the cadence.
+
+### Recommended next step: Smart Placement before anything structural
+
+`placement = { mode = "smart" }` in `wrangler.toml` — one line, no application
+change. Smart Placement runs the Worker near the database instead of near the
+user, which is exactly the shape this application has: **9 sequential database
+round trips against 1 client round trip.**
+
+If per-round-trip cost fell to ~5 ms, a changed poll would cost ~45 ms instead of
+611 ms and Gate C's worst case would be ~1200 ms — passing with ~800 ms of
+margin. That is a config-only experiment worth running before any structural or
+vendor change.
+
+Then, in order:
+
+- **D1 read replication / Sessions API** — 81% of traffic is read-only polls, so
+  replicas near the Worker attack the same distance term. Has consistency
+  trade-offs and needs its own decision.
+- **Cut the changed-poll path below 9 round trips** — the direct structural
+  attack on term 1.
+- **Reduction D** — still worth doing for D1 consumption and poll p95, but
+  explicitly *not* for Gate C.
+- **Lengthening or shortening the poll cadence** — a product decision, and note
+  the gate's own threshold assumes the current 1 s cadence.
+
+### On changing database vendor (asked 2026-07-29)
+
+Considered and **not recommended as the first move**. The measured cause is not
+D1's speed; it is that compute and data are in different regions and the request
+pays that distance nine times. Co-locating compute with the database (a
+long-running process next to Postgres, e.g. Railway/Fly) would address that
+directly and would also fix the inert rate-limit binding and the
+isolate-churned cursor hint. Supabase behind a Worker would **not** help on its
+own — it swaps a fast-but-distant database for a distant one, unless compute
+moves too; its Realtime feature would remove polling entirely, which this
+increment's constraints explicitly forbid as a release shortcut.
+
+Either migration means porting SQLite→Postgres schema and migrations, the Auth.js
+adapter, the rate-limit layer, and CI/deploy — weeks of work, days after the
+Pages→Workers migration landed. Smart Placement tests the same hypothesis for one
+line. Revisit only if Smart Placement and read replication both fail.
 
 ## Thresholds — selected 2026-07-28, BEFORE the gate run
 
@@ -763,7 +810,10 @@ seen is still held to it. Re-scoring this run with the corrected accounting:
   non-negotiable — and now the *only* failing gate.
 - **Reduction D is untouched**, and remains the only lever on the 80.4% of polls
   answered from the cursor hint, which still pay 2 round trips of authentication
-  and authorization each and nothing else.
+  and authorization each and nothing else. *(Superseded 2026-07-29: those are
+  `204` polls, which never observe a change, so reduction D is not a Gate C
+  lever at all — see "What actually drives Gate C". It remains worth doing for
+  D1 consumption and poll p95.)*
 - **Poll p95 passes by 13 ms**, which is inside the run-to-run colo variance
   already observed. Treat it as met-on-this-path, not met.
 - **A future run judges ~8 fewer commands than it accepts.** With the cutoff
@@ -771,6 +821,56 @@ seen is still held to it. Re-scoring this run with the corrected accounting:
   excluded rather than miscounted. If that exclusion ever needs to shrink, the
   fix is to let the poll loops drain for one grace period after the command
   loops stop — not to move the cutoff back.
+
+### 30-minute gate after the auth memoisation — 2026-07-29, two runs
+
+Both runs carry the `locals.auth()` memoisation (`0370957`) and the corrected
+lost-command accounting (`777cf76`). A 300 s smoke at pilot concurrency preceded
+them and confirmed the round-trip reduction before the long runs were spent.
+
+| | 23:41 (`SJC`) | 19:21 (`IAD`) | **22:25 (`ORD`/`DFW`)** |
+| --- | --- | --- | --- |
+| ms per round trip | 114–124 | 55–60 | 62–68 |
+| Command round trips | 10.00 | **9.00** | **9.00** |
+| Poll round trips (mean) | 5.88 | **4.68** | **4.77** |
+| Poll p50 / p95 | 462.8 / 1186.9 | 176.6 / 537.4 | 221.7 / **631.6 PASS** |
+| Command p50 / p95 | 1246.1 / 1535.1 | 542.8 / 800.6 | 650.2 / **867.0 PASS** |
+| Visible p50 / p95 / p99 | 1332 / 2054 / 2294 | 905 / 1506 / 1747 | 958 / 1556 / **1772** |
+| Visible **max** (Gate C) | 2829 FAIL | 7506 FAIL | **2129 FAIL — by 129 ms** |
+| Observations > 2000 ms | 373 (7.2%) | 17 (0.29%) | **12 (0.21%)** |
+| Error rate | 0.0000% | 0.0025% | **0.0000%** |
+| Lost / duplicated | 0 / 0 PASS | 0 / 0 PASS | **0 / 0 PASS** |
+
+**The memoisation delivered exactly what was predicted.** Commands cost 9.00
+round trips on the nose — p50, p95 and max all 9 — and polls 4.68–4.77 mean
+against a predicted 4.88. `Server-Timing` coverage was 100% on all 38 434
+requests, so this is measured, not inferred.
+
+**Gate C is 129 ms short.** Progression: 8260 → 2829 → 2129 ms. p99 is 1772 ms,
+comfortably inside the bound; it is the extreme tail alone that fails now.
+
+#### The 19:21 run's 7506 ms max was a transient, and did not reproduce
+
+That run recorded a single poll of **16 817 ms**, with server-side timing
+attributing all 16 800 ms of it to one D1 call. The harness was not at fault —
+its own event-loop lag maxed at 8.3 ms. It was not warm-up either: 7 of its 17
+outliers fell in the first three minutes but 10 came later, including a 6175 ms
+one 26 minutes in.
+
+The 22:25 re-run under the same code shows **max poll 1902.5 ms, max command
+2177.2 ms and zero errors**, so the stall is a transient D1/infrastructure event
+rather than a property of this design. It is recorded rather than discarded: a
+zero-tolerance *max* gate is by construction sensitive to exactly this, which is
+part of why Gate C is hard to hold (see "What actually drives Gate C").
+
+#### One `409 stale-structure` rejection in the 19:21 run
+
+1 of 2900 commands (campaign 2) was rejected `stale-structure`, the first seen in
+any run. Not data loss — that run's integrity gate passed with 0 lost and 0
+duplicate resulting versions, and a rejection is the concurrency control working.
+It did not recur in the 22:25 run (2851/2851 accepted). Plausibly downstream of
+the same stall, with the GM's tracked structural version drifting behind. Worth
+watching rather than acting on.
 
 ### Open question: which location the thresholds describe
 

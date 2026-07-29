@@ -113,6 +113,31 @@ name = "guild-book-staging"
 # silences the warning by actually fixing it. Never delete this line.
 routes = []
 
+# Smart Placement experiment (Increment 5 Task 4, 2026-07-29). STAGING ONLY —
+# deliberately not set at the top level, so production placement is unchanged
+# until this is measured.
+#
+# Why: the 22:25 gate run left Gate C 129 ms short (2129 ms against a hard
+# 2000 ms), and the capacity analysis attributes the remaining cost to DISTANCE
+# rather than throughput — 9 sequential D1 round trips at 62–68 ms each, because
+# the Worker runs near the player while the D1 primary is `MIA`. Smart Placement
+# runs the Worker near the database instead of near the user, which is the exact
+# shape this application has: 9 database round trips against 1 client round trip.
+# One extra client-to-colo hop is paid once; nine database hops get much shorter.
+#
+# Verification is empirical, not assumed: `X-Guildbook-Colo` (enabled by
+# CAMPAIGN_TIMING_HEADER below) reports which colo served each response. If
+# placement takes effect, that should move from the runner's nearest colo
+# (`ORD`/`DFW`/`LAX`/`IAD` observed) toward `MIA`, and `ms per round trip` in the
+# harness output should fall sharply.
+#
+# Caveat: placement is not instant. Cloudflare analyses traffic before deciding,
+# and a Worker with too little traffic, or one where it sees no benefit, keeps
+# the default. A run immediately after deploy may show partial or no effect —
+# read the colo distribution before concluding anything about the latency.
+[env.staging.placement]
+mode = "smart"
+
 [env.staging.vars]
 CAMPAIGNS_ENABLED = "true"
 # Publishes `Server-Timing: srv;dur=…, d1;dur=…;desc="n=… stmts=…"` and

@@ -1,5 +1,56 @@
 # Campaign capacity and latency gates (Increment 5 Task 4)
 
+## Status — paused 2026-07-29, resume here
+
+Work paused to return to feature completion. This section is the short version;
+everything below it is the evidence.
+
+**Where it stands: 3 of 5 gates pass.** The latency problem is understood and
+largely fixed. Two items remain open, one of them a correctness question.
+
+| Gate | Status |
+| --- | --- |
+| Poll p95 ≤ 1200 ms | PASS at 1186.9 ms — **by 13 ms**, inside observed colo variance |
+| Command p95 ≤ 2000 ms | PASS at 1535.1 ms, comfortable |
+| Error rate < 0.1% | PASS at 0.0000% |
+| Max visible-change ≤ 2000 ms (Gate C) | **FAIL at 2829 ms** — was 8260 ms |
+| Zero lost / duplicated commands | **FAIL — 2 lost observations, unexplained** |
+
+**What was learned.** Latency here is bound by the NUMBER of sequential D1 round
+trips, not by the network (3–6% of a request) and not by D1 throughput. Commands
+run at 1.00× concurrency, so every round trip is on the critical path. Round
+trips were cut from 20 → 10 per command and 8.68 → 5.88 per poll, which is what
+moved both p95 gates from fail to pass.
+
+**Two open items, in the order they should be picked up:**
+
+1. **Diagnose the 2 lost observations first.** This is a correctness question,
+   not a performance one, and it should be answered before anything else on this
+   path is optimised. It is *not* the measurement artifact seen in the 00:26 run
+   — that explanation is unavailable here (see that run's section). No evidence
+   of a lost *write*: 2578/2578 accepted, 0 duplicate resulting versions. What is
+   unexplained is a lost *observation*, 0.078% of commands.
+   **Next action:** the harness does not record which commands went unseen. Log
+   the command id, its acceptance time, and each observer's poll timestamps
+   around it, then re-run. Cheap, and it settles the question.
+
+2. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
+   unmet, and the spec calls it non-negotiable. The two remaining levers are
+   reduction **D** (the only one touching the ~80% of polls answered from the
+   cursor hint, and the only one touching authorization — needs its own design
+   and review) and moving the data closer to the reader (D1 read replication,
+   a separate decision with consistency trade-offs). Neither should be started
+   before item 1.
+
+**Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
+selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
+trip against the same `MIA` primary. Round-trip counts are stable and are the
+comparable figure; wall-clock is not.
+
+**Rollout is still blocked independently of all of this** by the inert rate
+limiter — see "Blocking issue at time of writing" at the end of this document.
+A green capacity run would not clear campaigns for release on its own.
+
 ## Thresholds — selected 2026-07-28, BEFORE the gate run
 
 Task 4 Step 2 requires the p95 threshold and its rationale to be written down

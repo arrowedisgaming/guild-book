@@ -24,6 +24,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `src/lib/server/auth-policy.ts` recommends. Share links are unaffected: they
   resolve a stored `shareId` rather than a signed token.
 
+### Changed
+
+- **Campaign polling and command latency roughly halved**, by cutting the number
+  of sequential D1 round trips each request makes. Instrumentation established
+  that latency here is bound by round-trip *count* — the network is 3–6% of a
+  request and Worker CPU is nil — and that commands run fully sequentially, so
+  every round trip sits on the critical path. Commands went from 20 round trips
+  to 10 and polls from 8.68 to 5.88: `ensureUser` no longer re-reads the `users`
+  row the Auth.js `jwt` callback already read and existence-checked in the same
+  request; an accepted command projects the state it just committed instead of
+  re-loading the whole session to build its response (also tighter — a reload
+  could observe a later command and report a projection ahead of its own
+  `resultingVersion`); the four session fragments that depend only on
+  `sessionId` load as one batch; and the campaign cursor, the `play_sessions`
+  row and the campaign actor-facts join are each read once per request rather
+  than two or three times. Round-trip budgets are now asserted as exact counts
+  against a real D1 binding, since nothing else in the suite can see a round
+  trip. Two of five capacity gates remain unmet — see
+  `docs/operations/campaign-capacity.md`.
+
 ### Added
 
 - **Server-side request timing**, so the campaign capacity gate can separate

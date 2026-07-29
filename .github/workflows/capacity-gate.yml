@@ -56,6 +56,35 @@ jobs:
           esac
           echo "target accepted: $BASE_URL"
 
+      # A 30-minute run that produces no server/wire split is a wasted 30
+      # minutes — and that is exactly what the 2026-07-28 03:00 run was, because
+      # the deployed Worker had no self-measurement at all. `Server-Timing` is
+      # emitted only when `CAMPAIGN_TIMING_HEADER` is set, which staging carries
+      # in `[env.staging.vars]`, so its absence here means the staging deploy
+      # predates the instrumentation. Fail in seconds rather than in half an
+      # hour. Any HTTP status is fine: the header is attached by `appHandle`
+      # regardless of what the route decided.
+      - name: Require server-side timing on the target
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          # `curl_status` is captured separately so an unreachable target is not
+          # reported as a stale deploy. Both fail the step, but they need
+          # different fixes and the operator should be told which one.
+          headers="$(curl -sS -D - -o /dev/null "$BASE_URL/api/internal/campaign-health")" || curl_status=$?
+          if [ -n "${curl_status:-}" ]; then
+            echo "::error::Could not reach $BASE_URL (curl exit $curl_status). The target is down, misnamed or unresolvable — this is not a stale deploy."
+            exit 1
+          fi
+          if printf '%s' "$headers" | grep -qi '^server-timing:'; then
+            echo "server-side timing present:"
+            printf '%s' "$headers" | grep -i '^server-timing:\|^x-guildbook-colo:'
+          else
+            echo "::error::No Server-Timing header from $BASE_URL — redeploy staging before running the gate."
+            echo "::error::Without it the run cannot separate wire time from D1 time, which is the whole point of this run."
+            exit 1
+          fi
+
       - name: Run the capacity gate
         env:
           # Reuses the fixture users seeded by

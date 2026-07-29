@@ -110,7 +110,16 @@ export const GET: RequestHandler = async (event) => {
 			campLegalCommands,
 			finiteProjection,
 			finiteLegalCommands
-		} = await loadTableProjectionsForActor(db, openSession.sessionId, campaignId, { kind: role.kind, userId: role.userId });
+		} = await loadTableProjectionsForActor(
+			db,
+			openSession.sessionId,
+			campaignId,
+			{ kind: role.kind, userId: role.userId },
+			// `currentCursor` was read above, in this same request, to decide
+			// whether anything changed at all. Handing it over stops the projection
+			// loader re-reading the identical `max(id)`.
+			currentCursor
+		);
 		if (projectionEnvelope) {
 			session = {
 				sessionId: openSession.sessionId,

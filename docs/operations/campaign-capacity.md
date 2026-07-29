@@ -1,5 +1,71 @@
 # Campaign capacity and latency gates (Increment 5 Task 4)
 
+## Status — paused 2026-07-29, resume here
+
+Work paused to return to feature completion. This section is the short version;
+everything below it is the evidence.
+
+**Where it stands: 3 of 5 gates pass.** The latency problem is understood and
+largely fixed. Two items remain open, one of them a correctness question.
+
+| Gate | Status |
+| --- | --- |
+| Poll p95 ≤ 1200 ms | PASS at 1186.9 ms — **by 13 ms**, inside observed colo variance |
+| Command p95 ≤ 2000 ms | PASS at 1535.1 ms, comfortable |
+| Error rate < 0.1% | PASS at 0.0000% |
+| Max visible-change ≤ 2000 ms (Gate C) | **FAIL at 2829 ms** — was 8260 ms |
+| Zero lost / duplicated commands | **FAIL — 2 lost observations, unexplained** |
+
+**What was learned.** Latency here is bound by the NUMBER of sequential D1 round
+trips, not by the network (3–6% of a request) and not by D1 throughput. Commands
+run at 1.00× concurrency, so every round trip is on the critical path. Round
+trips were cut from 20 → 10 per command and 8.68 → 5.88 per poll, which is what
+moved both p95 gates from fail to pass.
+
+**Two open items, in the order they should be picked up:**
+
+1. **Diagnose the 2 lost observations first.** This is a correctness question,
+   not a performance one, and it should be answered before anything else on this
+   path is optimised. It is *not* the measurement artifact seen in the 00:26 run
+   — that explanation is unavailable here (see that run's section). No evidence
+   of a lost *write*: 2578/2578 accepted, 0 duplicate resulting versions. What is
+   unexplained is a lost *observation*, 0.078% of commands.
+   **Next action:** the harness does not record which commands went unseen. Log
+   the command id, its acceptance time, and each observer's poll timestamps
+   around it, then re-run. Cheap, and it settles the question.
+
+2. **Gate C, at 2829 ms against a hard 2000 ms.** Closest it has ever been, still
+   unmet, and the spec calls it non-negotiable. Three levers remain, cheapest
+   and safest first:
+
+   **a. Memoise `locals.auth()` per request.** `@auth/sveltekit` assigns a bare
+   function, not a memoised promise, so every call re-runs the `jwt` callback
+   and its `users` read. The campaign path calls it twice — once in the rate
+   limiter, once in `ensureUser` — so one D1 round trip per request is spent
+   re-deriving a value that cannot change within a request. This is **not**
+   reduction D: it is request-scoped memoisation of an already-computed result,
+   not an authorization cache with a TTL, so it carries none of D's staleness
+   risk. It applies to 100% of campaign requests including every no-op poll, and
+   is the single cheapest remaining win. Found by code review 2026-07-29.
+
+   **b. Reduction D** — the only lever on the ~80% of polls answered from the
+   cursor hint, and the only one touching authorization. Needs its own design
+   and review.
+
+   **c. Move the data closer** (D1 read replication / Sessions API) — a separate
+   decision with consistency trade-offs, out of scope for this document.
+
+   None should be started before item 1.
+
+**Do not re-derive from wall-clock alone.** A GitHub runner's colo is not
+selectable and has varied across `IAD`, `SJC` and `SEA` — 78 to 129 ms per round
+trip against the same `MIA` primary. Round-trip counts are stable and are the
+comparable figure; wall-clock is not.
+
+**Rollout is still blocked independently of all of this** by the inert rate
+limiter — see "Blocking issue at time of writing" at the end of this document.
+A green capacity run would not clear campaigns for release on its own.
+
 ## Thresholds — selected 2026-07-28, BEFORE the gate run
 
 Task 4 Step 2 requires the p95 threshold and its rationale to be written down
@@ -41,6 +107,19 @@ developer workstation over the public internet to a single Cloudflare colo
 Every latency figure here is therefore *inflated* relative to production, making
 these gates harder to pass than reality — conservative, not flattering. Do not
 "correct" for this by loosening the thresholds.
+
+> **Amendment, 2026-07-28 (Arrowed) — the paragraph above is probably wrong, and
+> in the unsafe direction.** It reasons about the client→colo hop only. It omits
+> the colo→D1-primary hop, which for a request path made of sequential dependent
+> D1 statements is the term that dominates. A developer sitting near the same
+> region as the staging D1 primary is close to the *best* case for that term, not
+> the worst: their Worker executes beside the database. A player in Seattle gets a
+> nearby colo but the same distant primary. The 03:00 UTC datacenter run below is
+> the first evidence for this and is consistent with it, but does not prove it —
+> nothing here yet separates wire time from server time. **The thresholds are
+> unchanged.** What changes is that a workstation run must no longer be described
+> as conservative; until the instrumentation described in "What the next run must
+> measure" lands, treat its absolute numbers as un-calibrated.
 
 ## Scenario
 
@@ -191,6 +270,440 @@ So, explicitly forbidden as a response to this result:
 
 Any of those may turn out to be the *right* decision — but each is a deliberate,
 recorded architecture decision, not a fix to apply quietly.
+
+### 30-minute datacenter re-run — 2026-07-28, 03:00–03:30 UTC: **FAILED**
+
+The diagnostic the previous section called for: the identical harness, identical
+scenario, run from GitHub Actions (`.github/workflows/capacity-gate.yml`) instead
+of a developer workstation, to test whether the tail was the residential network.
+
+| Gate | Threshold | Observed | Result |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms, 100% | **9898 ms** | **FAIL** |
+| Poll p95 | ≤ 1200 ms | **2109.3 ms** | **FAIL** |
+| Command p95 | ≤ 2000 ms | **2707.8 ms** | **FAIL** |
+| Error rate | < 0.1% | 0.0000% (0 of 26 404) | PASS |
+| Lost / duplicated command | zero | 0 lost / 0 duplicate | PASS |
+
+| Metric | Observed |
+| --- | --- |
+| Poll requests | 24 182 (`204` no-change 74.29%) |
+| Poll latency p50 / p95 / p99 / max | 605.1 / 2109.3 / 2384.9 / 2847.8 ms |
+| Commands attempted / accepted / errors | 2222 / 2222 / 0 |
+| Command latency p50 / p95 / p99 / max | 2247.6 / 2707.8 / 2964.1 / 3882.5 ms |
+| Visible-change observations | 4441 |
+| Visible-change p50 / p95 / p99 / max | 1415.0 / 2288.0 / 2574.0 / **9898.0** ms |
+| Observations > 1500 ms | 1987 (44.7%) |
+| Observations > 2000 ms | **682 (15.4%)** |
+| Harness event-loop lag p50 / p95 / max | 0.2 / 1.1 / 3.4 ms |
+| HTTP-observable read / write proxy | 26 404 reads / 2222 writes |
+
+#### It is a different failure from the 00:26 run, not a worse one
+
+| | 00:26 workstation | 03:00 GitHub Actions | Ratio |
+| --- | --- | --- | --- |
+| Poll p50 | 204.5 ms | 605.1 ms | 2.96× |
+| Poll p95 | 759.2 ms | 2109.3 ms | 2.78× |
+| Command p50 | 665.7 ms | 2247.6 ms | 3.38× |
+| Command p95 | 1179.9 ms | 2707.8 ms | 2.30× |
+| Visible p50 | 842.0 ms | 1415.0 ms | 1.68× |
+| Observations > 2000 ms | 0.90% | 15.4% | — |
+
+The 00:26 run was fast with a thin breaching tail: p99 was 1959 ms, inside
+budget, and only 0.90% of observations breached. This run's whole distribution
+moved up. Its p99 (2574 ms) is outside budget on its own. Nothing here is a tail
+phenomenon; the poll p95 and command p95 gates failed for the first time.
+
+#### The run went ~3× slower while offering ~32% less traffic
+
+The harness is closed-loop: each client awaits its response before sleeping, so
+slower responses mechanically reduce the request rate.
+
+| | 00:26 workstation | 03:00 GitHub Actions |
+| --- | --- | --- |
+| Polls in the 1800 s window | 35 581 (19.8/s) | 24 182 (13.4/s) |
+| Commands in the window | 2827 (1.57/s) | 2222 (1.23/s) |
+
+Both loops match their own latency exactly: the command loop sleeps 5000 ms and
+saw a 2247 ms p50, giving a ~7.25 s cycle, which over nine campaigns predicts
+2234 commands against 2222 observed.
+
+**This is the load-bearing observation.** Contention degrades as offered load
+rises. This run offered 32% fewer reads and 21% fewer writes to the same single
+database and was three times slower. That is the signature of added *fixed cost
+per request*, not of queueing at D1 — which makes the "D1 contention" candidate
+from the 00:26 post-mortem the weaker of the two, not the stronger.
+
+Corroborating: the 00:26 outliers clustered into specific minutes (`:36`, `:38`,
+`:54`) and hit different campaigns within the same second — the burst shape that
+suggested a shared bottleneck. In this run they are spread evenly across all
+thirty minutes. The burst signature is gone.
+
+#### The harness is again exonerated
+
+Event-loop lag maxed at **3.4 ms** across 35 981 samples, and the maximum lag in
+the 3 s preceding each of the 682 breaching observations never exceeded 3.4 ms.
+Zero errors in 26 404 requests, zero lost commands, zero duplicate resulting
+versions across 2222 accepted. The latency is the server's or the network's.
+
+#### The experiment did not answer its question, and could not have
+
+The 00:26 post-mortem asked for "a cloud VM in the same region as the colo."
+`ubuntu-latest` is not that: it is an Azure runner whose region is not
+selectable. So this run did not remove the network variable, it substituted a
+different and worse-performing unknown path for it. It cannot distinguish the
+two candidates any more than the first run could.
+
+The reason it could not is structural, and applies to every future run too:
+
+```
+src/lib/server/observability/campaign-metrics.ts   setCampaignMetricSink()
+```
+
+was never called outside tests, so `recordPoll()` and `recordCommandOutcome()`
+were **no-ops in the deployed Worker**. Every number in both post-mortems is
+client-observed wall clock with no way to subtract the network. Two runs have now
+ended at "we cannot tell whether it is the network or D1." A third, framed the
+same way, ends there as well.
+
+#### Leading hypothesis, explicitly unconfirmed
+
+Latency on the command path is bound by *round-trip count × Worker-to-D1-primary
+distance*, not by D1 throughput. `session/command-service.ts` runs a chain of
+dependent awaits — `findSessionCommand` → `loadSessionForReduce` → reduce →
+commit → `loadProjectionForActor` — each helper itself several statements, none
+of which can be batched away because each depends on the last. A Worker
+co-located with the D1 primary pays almost nothing per hop; a distant one pays a
+full cross-region RTT per statement.
+
+This predicts exactly the observed asymmetry: commands (many dependent hops)
+inflated 3.38× while polls (few hops, and 74% answered from the isolate-local
+cursor hint with no D1 read at all) inflated 2.96×.
+
+**It is a hypothesis. It has not been measured, and must not be acted on until it
+is.** In particular it is not a licence to start batching queries — that would be
+optimising against an unverified model.
+
+#### What the next run must measure
+
+Server-side timing, so the split is read off directly rather than argued about:
+
+- `srv` — wall time inside the Worker, from `hooks.server.ts` around `resolve()`
+- `d1` — cumulative wall time inside D1 calls, and `n`, the number of round trips
+- the serving Cloudflare colo, so the geography is recorded and not inferred
+
+Delivered as a `Server-Timing` response header (staging-gated behind
+`CAMPAIGN_TIMING_HEADER`), recorded per request by the load harness, and reported
+alongside the existing latency percentiles. `total − srv` is then the wire, and
+`srv − d1` is Worker CPU plus non-D1 awaits.
+
+The decision rule for the next run, written down before it is run:
+
+- **`d1` small and `total − srv` large** → the path, not the database. The
+  Global Constraints' redesign clause is not triggered; the gate needs a
+  measurement location that represents real players, and the thresholds need
+  re-deriving against it.
+- **`d1` large with a small `n`** → D1 execution or contention. Redesign
+  discussion is live.
+- **`d1` large with a large `n`** → round-trip-bound, as hypothesised above.
+  The lever is the number of dependent statements per request, which is an
+  architecture decision to be recorded, not a quiet optimisation.
+
+### 30-minute instrumented gate run — 2026-07-28, 17:49–18:19 UTC: **FAILED**
+
+The first run with server-side timing. Nine campaigns, 27 clients, 1800s, from
+GitHub Actions (colo `IAD`) against `guild-book-staging` (D1 primary `MIA`).
+30 642 requests, zero errors, zero lost or duplicated commands.
+
+| Gate | Threshold | Observed | Result |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms, 100% | **8260 ms** | **FAIL** |
+| Poll p95 | ≤ 1200 ms | **1556.4 ms** | **FAIL** |
+| Command p95 | ≤ 2000 ms | **2090.9 ms** | **FAIL** |
+| Error rate | < 0.1% | 0.0000% | PASS |
+| Lost / duplicated command | zero | 0 / 0 | PASS |
+
+#### Where the time goes
+
+```
+poll     mean 648.2ms  =  37.9ms wire  +   610.2ms D1  +  0.2ms worker
+         8.68 round trips  —  79.6ms each  —  1.13x average concurrency
+
+command  mean 1625.7ms =  57.1ms wire  +  1568.4ms D1  +  0.2ms worker
+         20.00 round trips carrying 26 statements  —  78.4ms each  —  1.00x concurrency
+```
+
+**It was never the network.** The wire is 5.8% of a poll and 3.5% of a command.
+D1 round trips are 94% and 96.5%. Worker CPU is nil — as expected, since the
+Workers clock advances on I/O rather than CPU.
+
+**Commands achieve no parallelism at all.** 1.00× concurrency means all twenty
+round trips are on the critical path in sequence. There is no overlap left to
+exploit; the only lever on command latency is a smaller number of dependent
+round trips.
+
+#### Both original candidates were real, and are now separable
+
+| Measurement | ms per D1 round trip |
+| --- | --- |
+| Workstation → `MIA` colo, co-located with the primary (single-query route) | 10–26 |
+| GH runner (`IAD`) → `MIA` primary, 2 campaigns | 47.2 |
+| GH runner (`IAD`) → `MIA` primary, 9 campaigns | **79.6** |
+
+There is a **distance floor of roughly 45–50 ms** per round trip on this path,
+plus a **load-dependent component of about +30 ms** at pilot concurrency. So D1
+contention is real — it is simply not the dominant term, and it could never
+have been seen until the distance term was subtracted out. Neither earlier run
+could have distinguished these.
+
+Steady state was **163 D1 round trips per second** against a single database for
+nine campaigns and 27 players (293 634 measured round trips over 1800 s).
+
+#### Verdict against the pre-registered decision rule
+
+The rule recorded before the run named three outcomes. This run is
+unambiguously the third: **`d1` large with a large `n` — round-trip-bound.**
+Per that rule and the increment's Global Constraints, the response is a
+recorded architecture decision, not a quiet optimisation.
+
+### Where the round trips actually go
+
+Counts below are traced from the code and reconciled against the measured
+distribution (poll p50 = 6, poll p95/max = 18, command = 20 exactly). They are
+**not** per-call-site instrumented; adding a call-site tag to `RequestTiming`
+would confirm them directly and is the honest next measurement if any of these
+numbers are to be relied on individually.
+
+**Every authenticated campaign request pays four round trips before any route
+logic runs:**
+
+| # | Where | Query |
+| --- | --- | --- |
+| 1 | `safeUserId` in the rate-limit handle (`rate-limit/campaign.ts:212`) → `locals.auth()` → `jwt` callback | `SELECT … FROM users WHERE id = ?` |
+| 2 | `ensureUser` → `getUserId` → `locals.auth()` again → `jwt` callback **a second time** | the same `SELECT` |
+| 3 | `ensureUser` itself (`auth.ts`) | `SELECT id FROM users WHERE id = ?` |
+| 4 | `resolveCampaignAccess` (`campaign/access.ts`) | `campaigns` ⨝ `campaign_members` |
+
+That is **the same `users` row read three times** in one request.
+
+> **Corrected 2026-07-29 after code review.** This table previously said three
+> round trips and attributed only one to the `jwt` callback. `@auth/sveltekit`
+> assigns `event.locals.auth ??= () => auth(event, _config)` — a bare function,
+> **not a memoised promise** (`@auth/sveltekit/dist/index.js:337`), so every
+> `locals.auth()` call re-decodes the token and re-runs the `jwt` callback,
+> including its `users` read. The campaign path calls it twice: once in the rate
+> limiter, once in `ensureUser`.
+>
+> The *measurements* were never wrong — a poll's p50 of 6 round trips is
+> 4 auth + 2 route, and 5 after this work removed row 3. Only the attribution
+> was. See "Remaining opportunity: memoise the session per request".
+
+The activity *write* in `recordActivity` is not a per-request cost —
+`activityPatch` caps it at one write per user per day. Only the read is
+per-request.
+
+**That fixed cost is paid by the 76.8% of polls that return `204`.** The
+isolate-local cursor hint in `latest-cursor.ts` short-circuits the route's own
+queries, but it is consulted *after* authorization, so a hint-answered no-op
+still costs three round trips — about 240 ms at the rate this run measured.
+
+| Request | Round trips | Composition |
+| --- | --- | --- |
+| Poll, hint-answered `204` | 3 | auth only |
+| Poll, authoritative `204` | ~5 | auth + `campaignCursor` ∥ `findOpenSessionForCampaign` |
+| Poll, `200` with events | ~18 | + events + secrets + `loadTableProjectionsForActor` |
+| Command | 20 | auth + `executeCommand` chain, twice through `loadSessionForReduce` |
+
+Two structural repetitions account for most of the rest:
+
+1. **`loadSessionForReduce` is five sequential queries** (`playSessions`,
+   campaign owner, runtime content, `sessionServerStates`,
+   `sessionPrivateStates`) and it runs **twice per command** — once to reduce
+   the command, then again inside `loadProjectionForActor` to build the
+   response.
+2. **`campaignCursor` is queried twice per changed poll** — once in
+   `sync/+server.ts` and again inside `loadTableProjectionsForActor`.
+
+### What reducing this would require
+
+Not a decision this document makes. Recorded so the decision can be made with
+numbers rather than instinct. Estimated savings use this run's 79.6 ms per
+round trip, which is specific to `IAD`→`MIA` at pilot load.
+
+| # | Change | Saves | Risk |
+| --- | --- | --- | --- |
+| A | Reuse the `users` row the `jwt` callback already read instead of re-reading it in `ensureUser` | 1 round trip on **every** request (~80 ms) | Low. Same row, same request. |
+| B | Reuse the session already loaded for the reduce when building the command's response projection | 5 round trips per command (~400 ms) | Medium. Must not return pre-commit state. |
+| C | `batch()` the independent reads inside `loadSessionForReduce` — server state and private states do not depend on each other | ~3 round trips wherever it is called | Medium. One batch is one round trip; the dependent reads must stay ordered. |
+| D | Cache the authorization result per (user, campaign) in the isolate with a short TTL, as `latest-cursor.ts` already does for cursors | up to 3 round trips on ~77% of polls | **High. This is authorization.** A stale grant is a security failure, not a slow response. Needs its own design and review. |
+| E | Drop the second `campaignCursor` on a changed poll | 1 round trip per `200` | Low. |
+
+A + B + C + E together would take a command from 20 round trips to roughly 11,
+and a changed poll from ~18 to ~11 — on this path, command mean ~1600 ms →
+~870 ms. That is inside the 2000 ms command budget with margin, and none of
+those four changes weakens a security boundary.
+
+D is the only one that touches the no-op poll path, which is 76.8% of all
+traffic, and it is also the only one that touches authorization. It should be
+considered separately and last.
+
+**What none of this changes:** the distance floor. Every remaining round trip
+still costs ~45–50 ms from `IAD` to a `MIA` primary. Reducing the count is the
+lever available in application code; moving the data closer to the reader (D1
+read replication / the Sessions API) is a different decision with its own
+consistency implications, and is out of scope for this document.
+
+### Round-trip reduction applied — 2026-07-28, 60s smoke at pilot concurrency
+
+Reductions A, B, C and E from the table above were implemented. D was
+deliberately left out: it is the only one that touches authorization.
+
+Measured against a real D1 binding by
+`tests/integration/round-trip-budget-d1.test.ts`, which asserts exact counts:
+
+| Path | Before | After |
+| --- | --- | --- |
+| `ensureUser` | 1 | **0** |
+| `loadSessionForReduce` | 5 | **2** |
+| `loadTableProjectionsForActor` | 10 | **7** (6 with a caller-supplied cursor) |
+| `executeCommand`, accepted | 16 | **7** |
+
+Observed end to end, 60s at 9 campaigns:
+
+| | 17:49 gate (`IAD`) | after (`SJC`) |
+| --- | --- | --- |
+| Command D1 round trips | 20.00 | **10.00** |
+| Poll D1 round trips (mean / p95) | 8.68 / 18 | **6.35 / 13** |
+| Command p95 | 2090.9 ms **FAIL** | **1586.8 ms PASS** |
+| Poll p95 | 1556.4 ms FAIL | 1786.7 ms FAIL |
+| ms per round trip | 78–80 | **122–129** |
+
+#### The colo lottery is now the dominant confound
+
+This run was served by `SJC`; the 17:49 run by `IAD`. Both talk to the same
+`MIA` primary, and the per-round-trip cost rose 54–65% purely from that. The
+round-trip reduction is real and exactly as budgeted, but the wall-clock
+comparison between these two runs is **not** like-for-like.
+
+Normalising to the earlier run's 78.4 ms/round trip, a command's D1 time would
+be `10 × 78.4 ≈ 784 ms`, against 1568 ms before — a 50% reduction. At `SJC`'s
+129.3 ms it is 1293 ms, which is why the observed improvement is only 18%.
+
+**A GitHub runner's colo is not selectable and varies between runs.** Any future
+comparison must quote round-trip counts, which are stable, alongside wall-clock,
+which is not. This makes the open question below more pressing, not less.
+
+The "1 lost command" is the grace-window artifact already described for the
+00:26 run — 81/81 accepted, 0 duplicates, and a 60s window leaves little room
+for the tail. It is not evidence of data loss.
+
+#### Both remaining poll-path duplicates taken — 60s smoke, `SEA`
+
+The two reductions held back above were then applied: the duplicated
+`play_sessions` read, and the three slices each issuing the same
+tenure/characters join. `loadTableProjectionsForActor` went **7 → 4** round
+trips, or **3** when `/sync` hands over the cursor it already holds — down from
+10 before any of this work.
+
+| | 17:49 gate (`IAD`) | A/B/C/E (`SJC`) | + both dedupes (`SEA`) |
+| --- | --- | --- | --- |
+| Command round trips | 20.00 | 10.00 | **10.00** |
+| Poll round trips (mean / p95) | 8.68 / 18 | 6.35 / 13 | **5.84 / 10** |
+| Command p95 | 2090.9 **FAIL** | 1586.8 PASS | **1499.8 PASS** |
+| Poll p95 | 1556.4 **FAIL** | 1786.7 **FAIL** | **1199.7 PASS** |
+| Max visible-change | 8260 **FAIL** | 3112 **FAIL** | **2477 FAIL** |
+| ms per round trip | 78–80 | 122–129 | 108–120 |
+
+**Poll p95 passed by 0.3 ms.** That is not a margin, it is a coin flip: the same
+code on the same path would fail a rerun that landed a few milliseconds slower.
+Treat the poll gate as unproven, not met.
+
+Three colos have now served three runs — `IAD`, `SJC`, `SEA` — spanning 78–129 ms
+per round trip against the same `MIA` primary. This run drew the second-worst of
+them, so the round-trip counts are the durable result and the wall-clock figures
+are not.
+
+### 30-minute gate after the reductions — 2026-07-28, 23:41–00:11 UTC: **FAILED (3 of 5 pass)**
+
+Nine campaigns, 27 clients, 1800s, colo `SJC`, D1 primary `MIA`. 31 713
+requests, zero errors.
+
+| Gate | Threshold | 17:49 (`IAD`) | This run (`SJC`) |
+| --- | --- | --- | --- |
+| Max visible-change latency | ≤ 2000 ms | 8260 **FAIL** | 2829 **FAIL** |
+| Poll p95 | ≤ 1200 ms | 1556.4 **FAIL** | **1186.9 PASS** |
+| Command p95 | ≤ 2000 ms | 2090.9 **FAIL** | **1535.1 PASS** |
+| Error rate | < 0.1% | 0.0000% PASS | 0.0000% PASS |
+| Lost / duplicated command | zero | 0 / 0 PASS | **2 lost / 0 dup FAIL** |
+
+| Metric | 17:49 (`IAD`) | This run (`SJC`) |
+| --- | --- | --- |
+| Command D1 round trips | 20.00 | **10.00** |
+| Poll D1 round trips (mean / p95) | 8.68 / 18 | **5.88 / 10** |
+| Poll latency p50 | 605.1 → 428.7 | **462.8** |
+| Command latency p50 | 1591.3 | **1246.1** |
+| Visible-change p50 / p95 / p99 / max | 1225 / 1983 / 2312 / 8260 | 1332 / 2054 / 2294 / **2829** |
+| Observations > 2000 ms | 226 (4.6%) | 373 (7.2%) |
+| Polls / commands completed | 28 200 / 2442 | **29 135 / 2578** |
+| ms per round trip | 78–80 | **114–124** |
+
+#### The result is better than it looks, because the geography is worse
+
+This run drew `SJC` at 114–124 ms per round trip; the 17:49 baseline drew `IAD`
+at 78–80 ms. Despite paying ~50% more per round trip, this run completed **more**
+work (29 135 polls vs 28 200, 2578 commands vs 2442) and passed two gates the
+baseline failed. Normalised to `IAD`'s rate, a command's D1 time would be
+`10 × 78.4 ≈ 784 ms` against 1568 ms at the baseline.
+
+The tail collapsed: **max visible-change went 8260 ms → 2829 ms**, a 3× tightening,
+and p99 went 2312 → 2294 despite the worse path. The slight rise in the >2000 ms
+count (4.6% → 7.2%) is the median shifting up with the per-round-trip cost, not
+the tail worsening.
+
+**Poll p95 passed by 13 ms.** Better than the 60-second run's 0.3 ms, still not a
+margin to rely on, and it would not survive a colo draw as slow as `SJC` was in
+the earlier smoke (129 ms/round trip).
+
+#### The 2 lost commands are NOT explained by the tail this time
+
+The 00:26 run's single lost command was explained: its grace window was 3150 ms
+against a demonstrated 6853 ms tail, so a still-propagating change was
+miscounted. **That explanation does not apply here.** This run's grace was
+3979 ms and its worst observed propagation was 2829 ms, so a command accepted
+outside the grace window had comfortably longer than the run's own worst case to
+reach somebody, and two did not.
+
+Evidence against data loss remains strong — 2578/2578 accepted, **0 duplicate
+resulting versions**, 0 errors — so nothing indicates a lost *write*. What is
+unexplained is a lost *observation*, at 0.078% of commands.
+
+**This must not be written off as an artifact.** It is a zero-threshold gate, the
+previous artifact explanation is unavailable, and the harness does not currently
+record enough per-command detail to say which two commands went unseen or what
+their observers were doing. Establishing that is the next diagnostic, and it is
+cheap: log the command id, its acceptance time, and each observer's poll
+timestamps around it.
+
+#### Still open
+
+- **Gate C remains unmet** (2829 ms against a hard 2000 ms). It is now the
+  closest it has ever been, and it is still the gate the spec calls
+  non-negotiable.
+- **Two lost observations, unexplained** — see above.
+- **Reduction D is untouched**, and remains the only lever on the 80.4% of polls
+  answered from the cursor hint, which still pay 2 round trips of authentication
+  and authorization each and nothing else.
+- **Poll p95 passes by 13 ms**, which is inside the run-to-run colo variance
+  already observed. Treat it as met-on-this-path, not met.
+
+### Open question: which location the thresholds describe
+
+This run measured `IAD`→`MIA`. That is *a* real-player geometry, not *the* one:
+a player near Miami gets the co-located case at 10–26 ms per round trip, and a
+player in Seattle gets something worse than `IAD`. The gate now measures
+honestly, but **the location the thresholds are defined against is a product
+decision that has not been made.** Until it is, a pass or fail here describes
+one point on a distribution, not the pilot's experience.
 
 ### Monthly consumption projection and headroom
 

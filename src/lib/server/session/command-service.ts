@@ -80,7 +80,8 @@ import type {
 	SessionCommandType,
 	SessionEngineStateV1,
 	SessionProjectionEnvelope,
-	SessionRejection
+	SessionRejection,
+	SessionRuntimeContentV1
 } from '$lib/types/session';
 
 /** Structural intents (spec §10.2 / the frozen envelope comment): the only
@@ -395,10 +396,47 @@ async function executeCommandInstrumented(
 			await runAtomic(dbContext, statements);
 			// Fix round 1: close the same-isolate false-204 window at the
 			// source — see `recordFreshCursorHintAfterCommit`'s doc comment.
-			await recordFreshCursorHintAfterCommit(db, campaignId);
+			const committedCursor = await recordFreshCursorHintAfterCommit(db, campaignId);
 			return {
 				outcome: { ok: true, resultingVersion: loaded.currentVersion + 1 },
-				projection: await loadProjectionForActor(db, sessionId, campaignId, actor)
+				// Projected from the state this request just committed, rather than
+				// re-read from the database (2026-07-28 round-trip reduction). The
+				// reload cost five round trips — after batching, two — plus a second
+				// read of the cursor the line above already fetched, purely to
+				// reconstruct something already in memory.
+				//
+				// This is not merely cheaper, it is tighter: a reload can observe a
+				// LATER command that committed in between, returning a projection
+				// whose version runs ahead of the `resultingVersion` reported beside
+				// it. `nextState` is by construction exactly what was written for
+				// this command, so the two always agree.
+				//
+				// `session-command-service.test.ts` pins the equivalence against an
+				// authoritative reload; if the fragment round trip is ever made lossy
+				// that test fails rather than this silently drifting.
+				//
+				// Review round 2: there is deliberately NO fallback read here when
+				// `committedCursor` is null. Nothing after a successful `runAtomic`
+				// may throw, because the `catch` below is written entirely for a
+				// FAILED commit — a throw here would re-evaluate the Resolve spend
+				// against state this command has already decremented and could report
+				// "insufficient Resolve" for a command that committed, or rethrow as
+				// a 500 for the same. A fallback would also just retry the very query
+				// whose failure produced the null.
+				//
+				// A null cursor therefore yields a null projection, which is exactly
+				// what `loadProjectionForActor` returns when it cannot build one. The
+				// commit stands, the outcome is still `ok`, and the client picks the
+				// change up on its next poll ~1s later.
+				projection:
+					committedCursor === null
+						? null
+						: projectCommittedState({
+								state: nextState,
+								runtimeContent: loaded.runtimeContent,
+								actor,
+								campaignCursor: committedCursor
+							})
 			};
 		} catch (cause) {
 			// A lost Resolve claim fails the batch through its FK receipt, not a
@@ -676,6 +714,40 @@ function deriveAttemptSeed(shuffleSeedHex: string, sessionVersion: number, attem
  * implementation, so a route can never accidentally build (and thus
  * potentially leak) its own divergent projection.
  */
+/**
+ * Builds an actor projection from state this request has ALREADY committed,
+ * with no database read at all.
+ *
+ * Only ever call this with the exact state that was just persisted — never with
+ * a pre-commit state, and never on a path that did not commit. Every other
+ * caller must use `loadProjectionForActor`, which reads authoritatively.
+ *
+ * The pinned runtime content is safe to carry over: it is immutable once a
+ * session starts (`loadSessionForReduce` digest-verifies it rather than
+ * re-deriving it), so the copy loaded before the commit is the same one a
+ * reload would return.
+ */
+function projectCommittedState(input: {
+	state: SessionEngineStateV1;
+	runtimeContent: SessionRuntimeContentV1;
+	actor: SessionActor;
+	campaignCursor: number;
+}): SessionProjectionEnvelope<SessionProjection> | null {
+	try {
+		const runtime = toSessionEngineRuntime(input.runtimeContent);
+		return {
+			campaignCursor: input.campaignCursor,
+			sessionVersion: input.state.version,
+			projection: projectForActor(input.state, input.actor, runtime.catalog)
+		};
+	} catch (cause) {
+		// Matches `loadProjectionForActor`'s contract: a projection that cannot be
+		// built is `null`, never an error that would mask a successful commit.
+		console.error('[session] unexpected error projecting committed state', cause);
+		return null;
+	}
+}
+
 export async function loadProjectionForActor(
 	db: AppDb,
 	sessionId: string,

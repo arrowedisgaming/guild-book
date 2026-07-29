@@ -115,6 +115,13 @@ routes = []
 
 [env.staging.vars]
 CAMPAIGNS_ENABLED = "true"
+# Publishes `Server-Timing: srv;dur=…, d1;dur=…;desc="n=… stmts=…"` and
+# `X-Guildbook-Colo` on every response (Increment 5 Task 4 follow-up). Staging
+# only — this is how the capacity gate separates server time from wire time,
+# and production has no reason to hand its internal I/O timings to every
+# client. Deliberately absent from the production `[vars]` block above; adding
+# it there is a decision, not a default.
+CAMPAIGN_TIMING_HEADER = "true"
 
 [env.staging.assets]
 binding = "ASSETS"

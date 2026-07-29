@@ -16,6 +16,7 @@
  */
 
 import { and, asc, desc, eq, gt, inArray, isNull, max } from 'drizzle-orm';
+import type { BatchItem } from 'drizzle-orm/batch';
 import { z } from 'zod';
 import type { AppDb } from '$lib/server/db';
 import type { AtomicStatement } from '$lib/server/db/atomic';
@@ -262,6 +263,46 @@ export interface LoadedSession {
 }
 
 /**
+ * Runs a list of MUTUALLY INDEPENDENT read queries in as few network round
+ * trips as the driver allows.
+ *
+ * On D1, `batch()` sends the whole list as one round trip — the entire point,
+ * since latency here is bound by round-trip count rather than by query cost
+ * (docs/operations/campaign-capacity.md). On better-sqlite3 there is no batch
+ * and no network, so the queries simply resolve in place; `Promise.all` over a
+ * synchronous driver costs nothing and keeps one code path.
+ *
+ * Capability-detected rather than switched on `AppDbContext.kind`, because the
+ * callers here hold only the common query surface (`AppDb`) and threading the
+ * richer context through every one of them would be a much larger change for no
+ * behavioural gain.
+ *
+ * **Only pass queries that do not depend on each other.** D1 runs a batch as one
+ * transaction in order, but every statement is dispatched together, so a query
+ * whose input comes from an earlier query's result cannot be in the same batch.
+ *
+ * **Pass un-awaited Drizzle query builders, never arbitrary promises.** The D1
+ * branch hands the array to Drizzle's `batch()`, which calls `_prepare()` on
+ * each item. A Drizzle builder satisfies `Promise<unknown>` structurally, so a
+ * signature typed on promises would let `readIndependently(db, [loadFoo(db)])`
+ * compile and then fail at runtime with `query._prepare is not a function` — on
+ * D1 only, and therefore invisible to every better-sqlite3 test. `BatchItem` is
+ * Drizzle's own constraint for exactly this, so that mistake is a type error.
+ */
+async function readIndependently<T extends readonly BatchItem<'sqlite'>[]>(
+	db: AppDb,
+	queries: [...T]
+): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }> {
+	const batchable = db as unknown as {
+		batch?: (queries: readonly unknown[]) => Promise<unknown[]>;
+	};
+	if (typeof batchable.batch === 'function' && queries.length > 0) {
+		return (await batchable.batch(queries)) as { -readonly [K in keyof T]: Awaited<T[K]> };
+	}
+	return (await Promise.all(queries)) as { -readonly [K in keyof T]: Awaited<T[K]> };
+}
+
+/**
  * Loads every fragment for `sessionId` — pinned runtime, public, server, and
  * every recipient's private fragment — validates each, and reassembles the
  * full `SessionEngineStateV1` the pure reducer needs. Throws
@@ -272,9 +313,52 @@ export interface LoadedSession {
  * item 4; the runtime content is immutable once pinned, so it's excluded
  * from that version-equality check and instead digest-verified).
  */
-export async function loadSessionForReduce(db: AppDb, sessionId: string): Promise<LoadedSession> {
-	const session = await db.select().from(playSessions).where(eq(playSessions.id, sessionId)).get();
+export async function loadSessionForReduce(
+	db: AppDb,
+	sessionId: string,
+	/**
+	 * When supplied, a session belonging to any other campaign is reported as
+	 * `SessionNotFoundError` — decided before a single fragment is parsed.
+	 *
+	 * This exists so callers who need that ownership check no longer have to read
+	 * `play_sessions` themselves via `loadSessionSummary` first, which was a
+	 * second read of the row this function already fetches. The ORDER is the
+	 * point, not just the saving: an out-of-campaign caller must get a flat
+	 * "not found" and never an "unloadable", which would confirm the session id
+	 * exists somewhere. Checking here, ahead of parsing, preserves that exactly —
+	 * a session that is both out-of-campaign and corrupt still reports not-found.
+	 */
+	expectedCampaignId?: string
+): Promise<LoadedSession> {
+	// Four of this function's five reads are keyed only by `sessionId` and so do
+	// not depend on one another. Issuing them as one D1 batch makes them a single
+	// network round trip instead of four sequential ones — worth ~240ms per call
+	// at the 80ms/round-trip this application measured from a non-co-located
+	// Worker (docs/operations/campaign-capacity.md, 17:49 UTC gate run), and this
+	// function is on both the poll and the command path.
+	//
+	// Only the campaign-owner read below genuinely depends on an earlier result
+	// (it needs the session's `campaignId`), so it keeps its own round trip.
+	//
+	// The order of the integrity checks is unchanged. Reading a fragment earlier
+	// than before is not the same as *checking* it earlier: a request for a
+	// session that does not exist still fails with `SessionNotFoundError` and
+	// never reports a missing fragment.
+	const [sessionRows, runtimeRows, serverRows, privateRows] = await readIndependently(db, [
+		db.select().from(playSessions).where(eq(playSessions.id, sessionId)),
+		db.select().from(sessionRuntimeContents).where(eq(sessionRuntimeContents.sessionId, sessionId)),
+		db.select().from(sessionServerStates).where(eq(sessionServerStates.sessionId, sessionId)),
+		db.select().from(sessionPrivateStates).where(eq(sessionPrivateStates.sessionId, sessionId))
+	]);
+
+	const session = sessionRows[0];
 	if (!session) throw new SessionNotFoundError(sessionId);
+	// Ahead of every parse below, so "belongs to another campaign" and "does not
+	// exist" are indistinguishable to the caller even when the session is also
+	// unloadable. See the parameter's doc comment.
+	if (expectedCampaignId !== undefined && session.campaignId !== expectedCampaignId) {
+		throw new SessionNotFoundError(sessionId);
+	}
 
 	const gmRow = await db
 		.select({ ownerUserId: campaigns.ownerUserId })
@@ -283,11 +367,7 @@ export async function loadSessionForReduce(db: AppDb, sessionId: string): Promis
 		.get();
 	if (!gmRow) throw new SessionLoadIntegrityError(`campaign not found for session ${sessionId}`);
 
-	const runtimeRow = await db
-		.select()
-		.from(sessionRuntimeContents)
-		.where(eq(sessionRuntimeContents.sessionId, sessionId))
-		.get();
+	const runtimeRow = runtimeRows[0];
 	if (!runtimeRow) throw new SessionLoadIntegrityError(`missing pinned runtime content for session ${sessionId}`);
 
 	let runtimeContent: SessionRuntimeContentV1;
@@ -300,14 +380,13 @@ export async function loadSessionForReduce(db: AppDb, sessionId: string): Promis
 		throw new SessionLoadIntegrityError(`pinned runtime content digest mismatch for session ${sessionId}`);
 	}
 
-	const serverRow = await db.select().from(sessionServerStates).where(eq(sessionServerStates.sessionId, sessionId)).get();
+	const serverRow = serverRows[0];
 	if (!serverRow) throw new SessionLoadIntegrityError(`missing server state fragment for session ${sessionId}`);
 	if (serverRow.sessionVersion !== session.version) {
 		throw new SessionLoadIntegrityError(`server state fragment is at a different version than session ${sessionId}`);
 	}
 	const serverFragment = parseFragment(sessionServerFragmentSchema, serverRow.serverStateJson, 'server state', sessionId);
 
-	const privateRows = await db.select().from(sessionPrivateStates).where(eq(sessionPrivateStates.sessionId, sessionId));
 	const privateFragmentsByRecipient = new Map<UserId, SessionPrivateFragmentV1>();
 	for (const row of privateRows) {
 		if (row.sessionVersion !== session.version) {
@@ -544,13 +623,21 @@ export async function campaignCursor(db: AppDb, campaignId: string): Promise<num
  * anyway, not a correctness gap. Failures are swallowed with a debug-level
  * note at most, never rethrown or escalated.
  */
-export async function recordFreshCursorHintAfterCommit(db: AppDb, campaignId: string): Promise<void> {
+export async function recordFreshCursorHintAfterCommit(
+	db: AppDb,
+	campaignId: string
+): Promise<number | null> {
 	try {
 		const cursor = await campaignCursor(db, campaignId);
 		recordCursorHint(campaignId, cursor);
+		// Returned so the caller can reuse it instead of reading the identical
+		// `max(id)` again to stamp its response projection. `null` on failure
+		// means "no cursor was obtained", never "the cursor is zero".
+		return cursor;
 	} catch (cause) {
 		// eslint-disable-next-line no-console -- advisory-only; see doc comment.
 		console.debug('[session] cursor-hint refresh after commit failed (advisory, non-fatal)', cause);
+		return null;
 	}
 }
 

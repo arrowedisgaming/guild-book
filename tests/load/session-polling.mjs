@@ -24,15 +24,29 @@
  * `docs/operations/campaign-pilot.md` for why this differs from the
  * allowlist path production actually gates on.
  *
- * D1 read/write counts: this harness talks HTTP to a Node/better-sqlite3
- * preview server, not a live D1 binding, so it cannot instrument literal D1
- * read/write counts. The "reads"/"writes" reported below are an
+ * D1 read/write counts: the "reads"/"writes" reported below are an
  * HTTP-observable proxy — every 200/204 sync response is one read, and every
  * command *attempt* (accepted or rejected) is also counted as one read,
  * since `executeCommand` always loads current session state to evaluate a
  * command before it can decide to accept or reject it; every *accepted*
  * command additionally counts as one write — documented as such in the
- * completion record, never presented as measured D1 metrics.
+ * completion record, never presented as measured D1 metrics. They are kept
+ * because the consumption projection in `docs/operations/campaign-capacity.md`
+ * is defined against them and redefining them mid-stream would make runs
+ * incomparable.
+ *
+ * Server-side timing (added 2026-07-28, after BOTH 30-minute gate runs failed):
+ * the two failing runs measured only client-observed wall clock and so could
+ * not say whether the latency was the network or D1 — the deployed Worker had
+ * no self-measurement at all. The application now emits `Server-Timing:
+ * srv;dur=…, d1;dur=…;desc="n=… stmts=…"` whenever `CAMPAIGN_TIMING_HEADER` is
+ * set (staging sets it; production deliberately does not), and this harness
+ * records it per request. That makes `latencyMs - srv` the wire and `srv - d1`
+ * the Worker's own work, so the question is answered by subtraction. Coverage
+ * is reported explicitly: a run whose header never arrived must look different
+ * from a run whose server genuinely took no time. See
+ * `src/lib/server/observability/request-timing.ts`, including why `Date.now()`
+ * inside a Worker measures I/O wall time and not CPU.
  *
  * Self-measurement (diagnostic instrumentation added after the first gate
  * run failed at max=5477ms with uniformly low poll latency — see
@@ -152,6 +166,11 @@ async function bootServer(port, bootTimeoutMs) {
 		ORIGIN: `http://127.0.0.1:${port}`,
 		CAMPAIGNS_ENABLED: 'true',
 		CAMPAIGN_INVITE_SECRET: process.env.CAMPAIGN_INVITE_SECRET ?? 'guild-book-load-invite-secret',
+		// Staging sets this in `[env.staging.vars]`; a local preview run has to
+		// set it explicitly or the server/wire split below reports 0% coverage
+		// and the local run cannot exercise the instrumentation it is meant to
+		// rehearse. See src/lib/server/observability/request-timing.ts.
+		CAMPAIGN_TIMING_HEADER: 'true',
 		DATABASE_URL: databaseUrl
 	};
 
@@ -298,6 +317,8 @@ async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 	}
 	const latencyMs = performance.now() - start;
 	updateJar(jar, res);
+	const timing = parseServerTiming(res.headers.get('server-timing'));
+	const colo = res.headers.get('x-guildbook-colo');
 	let json = null;
 	if (res.status !== 204) {
 		try {
@@ -306,7 +327,47 @@ async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 			// non-JSON body; leave json null
 		}
 	}
-	return { ok: res.ok, status: res.status, latencyMs, json, error: null };
+	return { ok: res.ok, status: res.status, latencyMs, json, error: null, timing, colo };
+}
+
+/**
+ * Parses the `Server-Timing` header the application emits when
+ * `CAMPAIGN_TIMING_HEADER` is set — `srv;dur=42.5, d1;dur=31;desc="n=6 stmts=9"`
+ * (see src/lib/server/observability/request-timing.ts).
+ *
+ * This is the whole point of the 2026-07-28 follow-up: with `serverMs` in hand,
+ * `latencyMs - serverMs` is the wire, and both 30-minute gate runs' unanswerable
+ * question ("network or D1?") becomes a subtraction instead of an argument.
+ *
+ * Returns `null` when the header is absent or unparseable, and the caller
+ * reports that as missing coverage — never as a zero. A silent zero would read
+ * as "the server took no time", which is the single most misleading thing this
+ * harness could say.
+ */
+function parseServerTiming(header) {
+	if (!header) return null;
+	const srv = /(?:^|,)\s*srv;dur=([0-9.]+)/.exec(header);
+	if (!srv) return null;
+
+	const d1 = /(?:^|,)\s*d1;dur=([0-9.]+)/.exec(header);
+	const counts = /d1;dur=[0-9.]+;desc="n=(\d+) stmts=(\d+) sum=([0-9.]+)"/.exec(header);
+	return {
+		serverMs: Number(srv[1]),
+		// A request answered from the isolate-local cursor hint touches no
+		// database at all, and the server omits the `d1` metric entirely rather
+		// than claiming `dur=0`. Zero is the right value for the arithmetic here;
+		// what matters is that it came from a real absence, not a parse failure.
+		//
+		// `dur` is the UNION of the call intervals — the only D1 figure that may
+		// be subtracted from server time. `sum` is the total of the individual
+		// call durations, which double-counts a route's concurrent queries and is
+		// therefore the right numerator for average per-round-trip latency but
+		// the wrong one for a decomposition. See request-timing.ts.
+		d1WallMs: d1 ? Number(d1[1]) : 0,
+		d1SumMs: counts ? Number(counts[3]) : 0,
+		d1Calls: counts ? Number(counts[1]) : 0,
+		d1Statements: counts ? Number(counts[2]) : 0
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -469,6 +530,82 @@ async function setupCampaign(baseUrl, index) {
 // Stats
 // ---------------------------------------------------------------------------
 
+/**
+ * Accumulates the server/wire decomposition for one request class.
+ *
+ * Added after both 2026-07-28 gate runs failed with no way to attribute the
+ * latency. The client already measures `latencyMs` end to end; the server now
+ * reports how much of that it spent, and how much of ITS time went to D1 round
+ * trips. Subtracting gives three terms that add up:
+ *
+ *     latencyMs  =  wireMs  +  serverMs
+ *     serverMs   =  d1Ms    +  (worker CPU and non-D1 awaits)
+ *
+ * `missingHeader` is tracked separately and reported, because a run where the
+ * header never arrived must look obviously different from a run where the
+ * server genuinely took no time.
+ */
+class TimingSplit {
+	records = [];
+	total = 0;
+	missingHeader = 0;
+
+	record(res) {
+		this.total += 1;
+		if (!res.timing) {
+			this.missingHeader += 1;
+			return;
+		}
+		const { serverMs, d1WallMs, d1SumMs, d1Calls, d1Statements } = res.timing;
+		this.records.push({
+			latencyMs: res.latencyMs,
+			serverMs,
+			d1WallMs,
+			d1SumMs,
+			// Clamped, not signed. The two sides use different clocks, and the
+			// Workers runtime advances `Date.now()` only on I/O, so a very fast
+			// response can report a server time a millisecond or two above the
+			// client's total. A negative "wire time" would be an artifact of that
+			// skew, not a measurement.
+			wireMs: Math.max(0, res.latencyMs - serverMs),
+			// Against the UNION, not the sum. Subtracting the sum here is what made
+			// the 2026-07-28 smoke run report a poll D1 p50 above its server p50 —
+			// impossible for any one request, and the tell that overlap was being
+			// counted twice.
+			workerOtherMs: Math.max(0, serverMs - d1WallMs),
+			d1Calls,
+			d1Statements
+		});
+	}
+
+	get covered() {
+		return this.records.length;
+	}
+
+	column(key) {
+		return this.records.map((r) => r[key]);
+	}
+
+	/** Means, because only means decompose additively — the p50 of the wire and
+	 * the p50 of the server time belong to different requests and do not sum to
+	 * the p50 of the total. Percentiles are reported separately, per column. */
+	means() {
+		if (this.records.length === 0) return null;
+		const sum = (key) => this.records.reduce((acc, r) => acc + r[key], 0);
+		const n = this.records.length;
+		return {
+			latencyMs: sum('latencyMs') / n,
+			wireMs: sum('wireMs') / n,
+			serverMs: sum('serverMs') / n,
+			d1WallMs: sum('d1WallMs') / n,
+			d1SumMs: sum('d1SumMs') / n,
+			workerOtherMs: sum('workerOtherMs') / n,
+			d1Calls: sum('d1Calls') / n,
+			d1Statements: sum('d1Statements') / n
+		};
+	}
+}
+
 class Stats {
 	pollTotal = 0;
 	poll200 = 0;
@@ -491,14 +628,30 @@ class Stats {
 	// startEventLoopLagSampler.
 	loopLagSamples = [];
 
+	// Server/wire decomposition, per request class. See TimingSplit above.
+	pollTiming = new TimingSplit();
+	commandTiming = new TimingSplit();
+	// Which Cloudflare colo served each request. The 00:26 and 03:00 runs turned
+	// on a geography question neither could answer from the client side; this
+	// records the answer instead of inferring it from where the harness ran.
+	colos = new Map();
+
+	noteColo(colo) {
+		if (!colo) return;
+		this.colos.set(colo, (this.colos.get(colo) ?? 0) + 1);
+	}
+
 	recordPoll(res) {
 		this.pollTotal += 1;
+		this.noteColo(res.colo);
 		if (res.status === 200) {
 			this.poll200 += 1;
 			this.pollLatencies.push(res.latencyMs);
+			this.pollTiming.record(res);
 		} else if (res.status === 204) {
 			this.poll204 += 1;
 			this.pollLatencies.push(res.latencyMs);
+			this.pollTiming.record(res);
 		} else {
 			this.pollErrors += 1;
 		}
@@ -545,6 +698,8 @@ class Stats {
 	recordCommand(res, sessionId) {
 		this.commandTotal += 1;
 		this.commandLatencies.push(res.latencyMs);
+		this.commandTiming.record(res);
+		this.noteColo(res.colo);
 		if (res.ok && res.status === 200 && res.json?.outcome?.ok) {
 			this.commandAccepted += 1;
 			const version = res.json.outcome.resultingVersion;
@@ -892,9 +1047,54 @@ function report(stats, opts) {
 		}
 	}
 	console.log('');
+	console.log('-- Server-side vs wire split (Server-Timing; see docs/operations/campaign-capacity.md) --');
+	const measuredTrips =
+		stats.pollTiming.records.reduce((acc, r) => acc + r.d1Calls, 0) +
+		stats.commandTiming.records.reduce((acc, r) => acc + r.d1Calls, 0);
+	printTimingSplit('poll   ', stats.pollTiming);
+	printTimingSplit('command', stats.commandTiming);
+	// A local preview run is backed by better-sqlite3, which is deliberately NOT
+	// instrumented: its queries are synchronous in-process calls, not network
+	// round trips, and counting them here would invite a local run's numbers to
+	// be compared against a staging run's as though they measured the same
+	// thing. Say so out loud rather than leave a row of zeroes to be misread.
+	const anyCoverage = stats.pollTiming.covered + stats.commandTiming.covered > 0;
+	if (anyCoverage && measuredTrips === 0) {
+		console.log(
+			'  NOTE: zero D1 round trips observed. This target is not backed by a D1 binding'
+		);
+		console.log(
+			'        (a local better-sqlite3 preview is not instrumented — only D1 is), so the'
+		);
+		console.log(
+			'        D1 rows above are structurally zero and the worker/other column absorbs all'
+		);
+		console.log(
+			'        database time. Only a staging run answers the question this split exists for.'
+		);
+	}
+	if (stats.colos.size > 0) {
+		const served = [...stats.colos.entries()]
+			.sort((a, b) => b[1] - a[1])
+			.map(([colo, count]) => `${colo}=${count}`)
+			.join(', ');
+		console.log(`  Cloudflare colo(s) serving this run: ${served}`);
+	} else {
+		console.log('  Cloudflare colo: not reported (off-edge target, or CAMPAIGN_TIMING_HEADER unset)');
+	}
+
+	console.log('');
 	console.log('-- HTTP-observable D1 read/write proxy (not literal D1 instrumentation) --');
 	console.log(`  estimated reads:  ${estimatedReads}`);
 	console.log(`  estimated writes: ${estimatedWrites}`);
+	// Superseded, but kept: this proxy is what the consumption projection in
+	// campaign-capacity.md was to be derived from, and changing its definition
+	// mid-stream would make runs incomparable. The split above now reports the
+	// real per-request round-trip count, which is the better source — say which
+	// one any published figure came from.
+	if (measuredTrips > 0) {
+		console.log(`  (measured D1 round trips across covered requests: ${measuredTrips})`);
+	}
 	console.log('');
 	console.log(`overall requests: ${totalRequests}, overall errors: ${totalErrors}, error rate: ${(errorRate * 100).toFixed(4)}%`);
 	console.log('');
@@ -925,6 +1125,71 @@ function report(stats, opts) {
 	}
 	console.log('[load] PASSED');
 	return 0;
+}
+
+/**
+ * Prints one request class's server/wire decomposition.
+ *
+ * The line that matters most is the last one: milliseconds per D1 round trip.
+ * A Worker co-located with the D1 primary pays single-digit milliseconds a hop;
+ * one a continent away pays tens. Together with the round-trip count that is
+ * the direct test of the hypothesis recorded in campaign-capacity.md, and it
+ * replaces two runs' worth of arguing from correlated bursts.
+ */
+function printTimingSplit(label, split) {
+	const coverage = split.total > 0 ? split.covered / split.total : 0;
+	console.log(
+		`  ${label} responses carrying timing: ${split.covered}/${split.total} (${(coverage * 100).toFixed(1)}%)`
+	);
+	if (split.covered === 0) {
+		console.log(`  ${label} no Server-Timing observed — the split cannot be computed for this class.`);
+		console.log(
+			`  ${label} (staging sets CAMPAIGN_TIMING_HEADER in [env.staging.vars]; if this run targeted staging, the deploy is stale)`
+		);
+		return;
+	}
+
+	const server = summarizeLatencies(split.column('serverMs'));
+	const wire = summarizeLatencies(split.column('wireMs'));
+	const d1Wall = summarizeLatencies(split.column('d1WallMs'));
+	const calls = summarizeLatencies(split.column('d1Calls'));
+	console.log(
+		`  ${label} server ms  — p50: ${fmt(server.p50)}, p95: ${fmt(server.p95)}, p99: ${fmt(server.p99)}, max: ${fmt(server.max)}`
+	);
+	console.log(
+		`  ${label} wire ms    — p50: ${fmt(wire.p50)}, p95: ${fmt(wire.p95)}, p99: ${fmt(wire.p99)}, max: ${fmt(wire.max)}`
+	);
+	console.log(
+		`  ${label} D1 wall ms — p50: ${fmt(d1Wall.p50)}, p95: ${fmt(d1Wall.p95)}, p99: ${fmt(d1Wall.p99)}, max: ${fmt(d1Wall.max)}`
+	);
+	console.log(
+		`  ${label} D1 round trips — p50: ${fmt(calls.p50)}, p95: ${fmt(calls.p95)}, max: ${fmt(calls.max)}`
+	);
+
+	const means = split.means();
+	// Means, not percentiles, because only means decompose additively — see
+	// TimingSplit.means(). These three terms sum to the mean request, and the D1
+	// term is the union of the call intervals, so overlap is not counted twice.
+	console.log(
+		`  ${label} mean ${fmt(means.latencyMs)}ms = ${fmt(means.wireMs)}ms wire + ${fmt(means.d1WallMs)}ms D1 + ${fmt(means.workerOtherMs)}ms worker/other`
+	);
+	// Per-round-trip uses the SUM, which is the total time actually spent in
+	// calls. This is the figure that exposes Worker-to-primary distance, and it
+	// is unaffected by whether the route ran its queries in parallel.
+	const perTrip = means.d1Calls > 0 ? means.d1SumMs / means.d1Calls : null;
+	console.log(
+		`  ${label} mean ${means.d1Calls.toFixed(2)} D1 round trips carrying ${means.d1Statements.toFixed(2)} statements` +
+			(perTrip === null ? ' (no D1 traffic)' : ` — ${perTrip.toFixed(1)}ms per round trip`)
+	);
+	if (means.d1WallMs > 0) {
+		// How much of the D1 work the route actually overlapped. 1.0 = fully
+		// sequential, so every round trip is on the critical path; 2.0 = on
+		// average two calls in flight at once. This is the direct read on whether
+		// the round-trip count can be hidden by parallelism or has to be reduced.
+		console.log(
+			`  ${label} D1 call-time sum ${fmt(means.d1SumMs)}ms vs ${fmt(means.d1WallMs)}ms wall — ${(means.d1SumMs / means.d1WallMs).toFixed(2)}x average concurrency`
+		);
+	}
 }
 
 function fmt(value) {

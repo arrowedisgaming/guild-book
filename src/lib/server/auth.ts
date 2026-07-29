@@ -131,16 +131,32 @@ export async function getUserId(event: RequestEvent): Promise<string | null> {
 	return session?.user?.id ?? null;
 }
 
+/**
+ * The authenticated user id, or a 401.
+ *
+ * This deliberately does NOT re-read `users` to confirm the row still exists.
+ * The Auth.js `jwt` callback in `auth-policy.ts` already reads that exact row on
+ * every authenticated request and returns `null` — invalidating the token — when
+ * it is gone, so `locals.auth()` cannot hand back an id for a user who no longer
+ * exists. The read here was a second query for the same row in the same request.
+ *
+ * That mattered: it was one D1 round trip on EVERY authenticated request,
+ * including the ~77% of campaign polls that answer `204` with no other database
+ * work at all, at ~80ms per round trip from a Worker not co-located with the D1
+ * primary (docs/operations/campaign-capacity.md, 17:49 UTC gate run).
+ *
+ * **The invariant this depends on lives in `createAuthCallbacks`.** It is pinned
+ * by "clears a current JWT after its durable user is deleted" in
+ * `tests/unit/auth-lifecycle.test.ts`, and by the zero-round-trip budget in
+ * `tests/integration/round-trip-budget-d1.test.ts`. If that existence check is
+ * ever removed from the callback, this function must go back to reading.
+ */
 export async function ensureUser(event: RequestEvent): Promise<string> {
 	const userId = await getUserId(event);
 	if (!userId) {
 		throw error(401, 'Sign in required');
 	}
-
-	const db = await getDb(event);
-	const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).get();
-	if (!existing) throw error(401, 'Session is no longer valid');
-	return existing.id;
+	return userId;
 }
 
 type FindOrCreateInput = {

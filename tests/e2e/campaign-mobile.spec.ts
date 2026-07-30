@@ -105,6 +105,12 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	});
 	// Poll instead of a fixed 300 ms sleep: the reflow after the zoom change is
 	// what the read depends on, so retry the read until layout settles.
+	// NOTE (review of #16): "no overflow" is also the state BEFORE the zoom
+	// takes effect, so a poll could in principle pass early on the pre-zoom
+	// layout. It cannot here: reading `scrollWidth` forces a synchronous
+	// layout, so the first read already sees the zoomed geometry. If this
+	// read ever stops forcing layout (e.g. moves to a rAF or async observer),
+	// this check needs a "zoom has applied" precondition first.
 	await expect
 		.poll(() =>
 			playerAPage.evaluate(() => {

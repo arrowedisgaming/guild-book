@@ -75,6 +75,12 @@ import { rm } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { CommandLedger } from './lib/command-ledger.mjs';
 
+// Several helpers below are exported for `session-contention.mjs`, which needs
+// the SAME staging authentication and campaign/session setup. Duplicating that
+// there would let the two harnesses drift on how a fixture campaign is built,
+// and then disagree about what they measured. Nothing runs on import — see the
+// entry-point guard at the bottom of this file.
+
 // ---------------------------------------------------------------------------
 // CLI args
 // ---------------------------------------------------------------------------
@@ -156,7 +162,7 @@ function printHelp() {
 
 const RUN_ID = `${Date.now()}-${randomBytes(3).toString('hex')}`;
 
-async function bootServer(port, bootTimeoutMs) {
+export async function bootServer(port, bootTimeoutMs) {
 	const databaseUrl = `.tmp/guild-book-load-${RUN_ID}.db`;
 	const env = {
 		...process.env,
@@ -303,7 +309,7 @@ function updateJar(jar, res) {
 /** One authenticated + timed HTTP call. Never throws — network failures and
  * non-2xx statuses are both reported through the returned envelope so
  * callers can record them as measurement data, not crash the harness. */
-async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
+export async function apiCall(baseUrl, path, { method = 'GET', jar, body } = {}) {
 	const headers = { Origin: baseUrl, Cookie: cookieHeader(jar) };
 	if (body !== undefined) headers['Content-Type'] = 'application/json';
 	const start = performance.now();
@@ -409,7 +415,7 @@ const stagingUserPool = [];
 // `scripts/campaigns/seed-load-fixtures.mjs`.
 const stagingUserPrefix = process.env.CAMPAIGN_STAGING_USER_PREFIX ?? '';
 
-async function seedStagingUsers(count) {
+export async function seedStagingUsers(count) {
 	if (stagingUserPrefix) {
 		const ids = Array.from({ length: count }, (_, i) => `${stagingUserPrefix}-${i}`);
 		stagingUserPool.push(...ids);
@@ -484,7 +490,7 @@ function uniqueEmail(role) {
 // Campaign fixture setup
 // ---------------------------------------------------------------------------
 
-async function setupCampaign(baseUrl, index) {
+export async function setupCampaign(baseUrl, index) {
 	const gmJar = newJar();
 	const playerAJar = newJar();
 	const playerBJar = newJar();
@@ -736,13 +742,13 @@ function startEventLoopLagSampler(stats, intervalMs = 50) {
 	return () => clearInterval(timer);
 }
 
-function percentile(sortedValues, p) {
+export function percentile(sortedValues, p) {
 	if (sortedValues.length === 0) return null;
 	const idx = Math.min(sortedValues.length - 1, Math.max(0, Math.ceil((p / 100) * sortedValues.length) - 1));
 	return sortedValues[idx];
 }
 
-function summarizeLatencies(values) {
+export function summarizeLatencies(values) {
 	if (values.length === 0) return { count: 0, p50: null, p95: null, p99: null, max: null };
 	const sorted = [...values].sort((a, b) => a - b);
 	return {

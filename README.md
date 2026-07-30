@@ -18,7 +18,7 @@ built for the tarot-driven dungeon crawler by Joshua McCrowell.
 ## Stack
 
 SvelteKit 2 · Svelte 5 (runes) · TypeScript · Tailwind v4 · Drizzle ORM · Auth.js ·
-Cloudflare Pages + D1 (production) with a local SQLite fallback for development.
+Cloudflare Workers + D1 (production) with a local SQLite fallback for development.
 
 ## Development
 

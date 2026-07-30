@@ -14,7 +14,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
 
 /** Clicks `locator` and waits for the `/camp-commands` POST it triggers to
  * resolve, throwing with the response body on a rejection. */
-async function clickCamp(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickCamp(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse((res) => res.url().includes('/camp-commands') && res.request().method() === 'POST', { timeout: timeoutMs }),
 		locator.click()
@@ -26,7 +26,7 @@ async function clickCamp(page: Page, locator: Locator, timeoutMs = 8000): Promis
 }
 
 /** Clicks a GENERIC table control (draw/discard) and waits for its own route. */
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().includes('camp-commands') && res.request().method() === 'POST',

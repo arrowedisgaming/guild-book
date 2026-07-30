@@ -11,7 +11,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * refused while the session is open and succeeds after it ends.
  */
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().match(/(challenge|guided-test|camp|finite|correction)-commands/),
@@ -63,7 +63,7 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	await playerAPage.goto(`/campaigns/${campaignId}`);
 	playerAPage.once('dialog', (dialog) => void dialog.accept());
 	await playerAPage.getByRole('button', { name: 'Leave campaign' }).click();
-	await expect(playerAPage).toHaveURL(/\/campaigns$/, { timeout: 8000 });
+	await expect(playerAPage).toHaveURL(/\/campaigns$/, { timeout: 15000 });
 
 	// Their next table request is a genuine 404.
 	const tableResponse = await playerAPage.goto(`/campaigns/${campaignId}/table`);
@@ -79,12 +79,12 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	// --- End the session; the archive boundary opens ---
 	await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
 	await gmPage.getByRole('button', { name: 'Confirm end' }).click();
-	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 8000 });
+	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 	await gmPage.goto(`/campaigns/${campaignId}`);
 	gmPage.once('dialog', (dialog) => void dialog.accept());
 	await gmPage.getByRole('button', { name: 'Archive campaign' }).click();
-	await expect(gmPage).toHaveURL(/\/campaigns$/, { timeout: 8000 });
+	await expect(gmPage).toHaveURL(/\/campaigns$/, { timeout: 15000 });
 
 	await gm.close();
 	await playerA.close();

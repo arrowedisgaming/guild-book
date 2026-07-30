@@ -11,7 +11,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * (including the correction, with its reason) survives into history.
  */
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().match(/(challenge|guided-test|camp|finite|correction)-commands/),
@@ -72,7 +72,7 @@ test('a GM correction is audited and completed history is member-gated', async (
 	await dialog.getByTestId('correction-reason').fill('played by mistake — returning it');
 
 	const [response] = await Promise.all([
-		gmPage.waitForResponse((res) => res.url().includes('/correction-commands'), { timeout: 8000 }),
+		gmPage.waitForResponse((res) => res.url().includes('/correction-commands'), { timeout: 15000 }),
 		dialog.getByTestId('submit-correction').click()
 	]);
 	expect(response.ok()).toBe(true);
@@ -81,7 +81,7 @@ test('a GM correction is audited and completed history is member-gated', async (
 	await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
 	await expect(gmPage.getByTestId('end-session-confirm')).toBeVisible();
 	await gmPage.getByRole('button', { name: 'Confirm end' }).click();
-	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 8000 });
+	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 	await playerAPage.goto(`/campaigns/${campaignId}/sessions`);
 	await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 4000 });

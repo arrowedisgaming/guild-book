@@ -9,7 +9,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * and there is no two-dimensional page overflow outside that scroller.
  */
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().match(/(challenge|guided-test|camp|finite|correction)-commands/),

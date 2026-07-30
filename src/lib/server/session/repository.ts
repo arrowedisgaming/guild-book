@@ -993,6 +993,28 @@ function sessionCommandClaimStatement(input: {
 	expectedVersion: number;
 	now: Date;
 }): AtomicStatement {
+	// Issue #14's invariant, enforced where every accepted claim is built: a
+	// structural claim may only apply to the exact version its actor declared.
+	// The precondition checks in `command-service.ts` and
+	// `procedure-command-loop.ts` guarantee this by control flow today; this
+	// guard exists so that a future code path that computes the claim from a
+	// different read than the one it validated — the shape that produced the
+	// bug — throws before anything is written, instead of committing an
+	// accepted row whose `structural_precondition_version` and
+	// `expected_version` disagree. It is deliberately NOT a schema CHECK: the
+	// staging database's historical rows include the bug's evidence, and a
+	// table rebuild to add the constraint would refuse them. Rejected rows are
+	// exempt by placement — `buildRejectedCommandStatements` never calls this,
+	// and a `stale-structure` rejection row records the mismatch by design.
+	if (
+		input.structuralPreconditionVersion !== null &&
+		input.structuralPreconditionVersion !== input.expectedVersion
+	) {
+		throw new Error(
+			`refusing to claim version ${input.expectedVersion + 1}: structural precondition ` +
+				`${input.structuralPreconditionVersion} does not match expected version ${input.expectedVersion}`
+		);
+	}
 	return statement(
 		`INSERT INTO session_commands
 			(id, session_id, command_id, actor_user_id, request_hash, command_type,

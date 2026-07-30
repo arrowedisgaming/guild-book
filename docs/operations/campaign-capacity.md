@@ -1004,7 +1004,14 @@ the Durable Object option reachable at all.
 
 ## Blocking issue at time of writing
 
-`rateLimit.enforcement` reports **`not-enforcing`** on staging and production.
+**RESOLVED 2026-07-30 — this blocker was a measurement bug of ours.** The
+binding enforces; the self-test overshot its limit by one call, which is inside
+Cloudflare's documented permissiveness, so it never observed a denial. Widening
+the overshoot flipped staging to `enforcing` on 10 of 11 probes. See `DEPLOY.md`.
+Production still needs the same check. The section below is what this document
+said before that, and the two consequences it draws were real while it stood.
+
+`rateLimit.enforcement` reported **`not-enforcing`** on staging and production.
 The binding deploys and resolves but does not count — see `DEPLOY.md` and
 `docs/operations/campaign-staging.md`.
 

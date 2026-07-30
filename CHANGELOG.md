@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-30
+
+### Fixed
+
+- **The admin dashboard's "Next" link now appears only when rows actually
+  remain**: it was inferred from the current page being full, so with an exact
+  multiple of 50 rows the last page still offered "Next" and led to an empty
+  page. The decision now lives in the server load function, computed from the
+  real row totals — which the tables provably match, since
+  `characters.user_id` is `NOT NULL` behind an enforced foreign key (issue
+  #11, PR #15 by @blockbeard).
+- **The 320px campaign-table test no longer flakes under machine load**: its
+  DOM-order check read two elements it had never waited for, and lost that
+  race when cores were saturated. The check now waits for both elements to
+  attach before reading them, and the zoom-overflow check polls the read it
+  depends on instead of sleeping a fixed 300 ms. Reproduced failing first (8
+  of 20 runs under artificial full-core load), then 0 DOM-order failures
+  across 40 runs under the same load; a separate rare timeout those runs
+  surfaced is tracked as issue #17 (issue #12, PR #16 by @blockbeard).
+
+## [0.7.0] - 2026-07-30
+
 ### Changed
 
 - **Deployment target moved from Cloudflare Pages to Cloudflare Workers**
@@ -23,15 +45,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rotated `AUTH_SECRET` during the cutover, signing out existing sessions as
   `src/lib/server/auth-policy.ts` recommends. Share links are unaffected: they
   resolve a stored `shareId` rather than a signed token.
-
-### Changed
+- **Cloudflare Smart Placement was enabled on staging and reverted the same
+  day**, as a measured regression rather than an untested idea. It genuinely
+  moved the Worker — Cloudflare's own `cf-placement` header reported `remote-`
+  on 84.1% of 36 740 requests — but the per-round-trip D1 cost did not improve
+  (63.0/69.5 ms against 62.5/67.9 ms with it off) while wire time roughly
+  tripled, so every request paid a new cost and got nothing back. Smart
+  Placement decides from a Worker's observed outbound subrequests, and D1 is
+  reached through a runtime binding rather than a `fetch()`, so Cloudflare has
+  no signal for where the data actually is. `wrangler.toml` retains the full
+  reasoning so it is not retried blind.
 
 - **Campaign polling and command latency roughly halved**, by cutting the number
   of sequential D1 round trips each request makes. Instrumentation established
   that latency here is bound by round-trip *count* — the network is 3–6% of a
   request and Worker CPU is nil — and that commands run fully sequentially, so
   every round trip sits on the critical path. Commands went from 20 round trips
-  to 10 and polls from 8.68 to 5.88: `ensureUser` no longer re-reads the `users`
+  to **9.00** and polls from 8.68 to **4.77 mean**, the last step coming from
+  memoising `locals.auth()` per request; the figures are measured, with 100%
+  `Server-Timing` coverage across three 30-minute runs, not predicted.
+  `ensureUser` no longer re-reads the `users`
   row the Auth.js `jwt` callback already read and existence-checked in the same
   request; an accepted command projects the state it just committed instead of
   re-loading the whole session to build its response (also tighter — a reload
@@ -41,7 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row and the campaign actor-facts join are each read once per request rather
   than two or three times. Round-trip budgets are now asserted as exact counts
   against a real D1 binding, since nothing else in the suite can see a round
-  trip. Two of five capacity gates remain unmet — see
+  trip. Four of five capacity gates now pass; the fifth, the 2-second bound on
+  how long an accepted change takes to become visible to the rest of the table,
+  is 129 ms short and parked as issue #13 — see
   `docs/operations/campaign-capacity.md`.
 
 ### Added
@@ -78,14 +113,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   indistinguishable from "under the limit" to every other signal. The health
   check now calls a dedicated binding past its own limit and reports
   `rateLimit.enforcement`; anything but `"enforcing"` blocks making campaigns
-  public. This is currently `"not-enforcing"` on Cloudflare and is open with
-  their support.
+  public. **This self-test was itself wrong, and finding that out was the
+  point of it.** Its first version overshot the limit by one — two calls
+  against a 1-per-10s binding — and Cloudflare documents these counters as
+  permissive and eventually consistent rather than exact, so a healthy binding
+  is allowed to let two through. Zero denials was read as "never counts", and
+  a working limiter was reported broken for three days and raised with
+  Cloudflare support. Widening the overshoot to `limit + 5` flipped staging to
+  `enforcing` on 10 of 11 consecutive probes. Production is not yet verified,
+  and the 2026-07-27 throwaway-Worker result (13 allowed against a limit of 5)
+  is still unexplained by this.
 - **Privacy-safe campaign operations metrics** with a closed metric-name union
   and a fixed tag shape — no `Record<string, unknown>` sink and no free-text
   field, so command bodies, card identities, invite tokens, character payloads
   and ids have nowhere to leak. Command types and procedure phases are
   sanitised against known enums; unrecognised values collapse to a coarse
-  label.
+  label. Points are emitted as one structured JSON line each into the Workers
+  log pipeline. **That sink was missing until the 0.7.0 pre-release review**:
+  the layer was built, unit-tested and documented, but nothing outside the test
+  suite ever installed a sink, so `recordCampaignMetric` returned early and
+  every point was dropped in every deployed environment. The tests passed
+  because each installed its own. It is now installed once per isolate and
+  covered by a test that fails if it ever stops being.
 - **An internal health endpoint** at `/api/internal/campaign-health`, guarded
   by a dedicated secret compared in constant time, reporting aggregate data
   only: feature flag, allowlist size, D1 reachability, applied migration count,
@@ -99,6 +148,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `wrangler deploy --dry-run` now runs in CI for both environments, validating
   bindings, routes and config against the installed Wrangler's schema on every
   push.
+- **A session contention harness** that fires every actor in a campaign
+  simultaneously against the same observed session version, in rounds, across
+  nine campaigns at once, and asserts invariants rather than timings. The
+  capacity harness measures the *steady* state — one writer per campaign at a
+  relaxed cadence — so its commands never race, and the requirement to measure
+  D1 contention was unmet by construction. On its first staging run this found a
+  real defect: `expectedStructuralVersion` is advisory rather than enforced,
+  because the precondition is checked against one read while the version claim
+  uses a later one, so a concurrent structural command committing between them
+  leaves the precondition stale without the guard or the unique index noticing.
+  It reproduces on 3–5% of contended rounds against D1 and not at all locally,
+  where the window is too small. Filed as issue #14 with the mechanism and the
+  evidence; deliberately not fixed here, because the right fix needs a decision
+  and a review.
+- **Freeze, recovery and sanitized-end coverage across three real browser
+  clients** — a GM freeze reaching every player unprompted, archiving refused
+  while a session is frozen, recovery restoring play for everyone, and a GM
+  ending a frozen session so private hands are destroyed while the public
+  history survives with its checksum.
+- **A rehearsed, forward-only rollback runbook**, and the harness that produced
+  it, which drives a real disable → operator-only → re-enable cycle against
+  staging and measures how long each step takes to take effect. The measurement
+  is the finding: a rollback is **partial for roughly half a minute**. On the
+  disable, `/sync` was already refusing at 332 ms while `/api/campaigns` still
+  admitted and the health endpoint still reported the feature enabled, and
+  campaigns stayed reachable through some route for 30 s after a deploy that
+  exited cleanly; a stale isolate was observed surviving two consecutive
+  deploys. The runbook's verification step is therefore "check from the
+  perspective of a user who must now be refused, check several signals together,
+  and require them to agree for ~15 s" rather than "read the health endpoint",
+  and it tells operators to make one flag change at a time rather than chaining
+  them.
+- **A contributor guide.**
 
 ## [0.6.0] - 2026-07-27
 

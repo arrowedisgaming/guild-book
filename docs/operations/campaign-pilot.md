@@ -6,10 +6,17 @@ Operational reference for running the allowlisted shared-tarot-table pilot
 increment plans under `docs/superpowers/plans/` for the "why". This page is
 the "what do I actually do" reference for whoever operates the pilot.
 
-**Status at the end of Increment 2:** `CAMPAIGNS_ENABLED` remains `false` in
-every deployed environment. Nothing in this document authorizes turning the
-feature on for the general public — it describes how to run it for a small,
-named allowlist once someone with deploy access decides to.
+**Status, updated 2026-07-29:** `CAMPAIGNS_ENABLED` is **absent from
+production** (`wrangler.toml`'s top-level `[vars]` deliberately omits it, and
+absent reads as off) and **`"true"` on staging** (`[env.staging.vars]`), which is
+what lets the capacity gate and the smoke harnesses exercise the real thing.
+Nothing in this document authorizes turning the feature on for the general
+public — it describes how to run it for a small, named allowlist once someone
+with deploy access decides to. Public enablement is Increment 5 Task 6 Step 5.
+
+**For an incident,** go to `campaign-rollback.md` — the forward-only rollback
+runbook, with the propagation times measured in rehearsal. This document covers
+running the pilot; that one covers taking it away.
 
 ---
 
@@ -75,11 +82,20 @@ invalidation needed, since access is re-checked on every request via
 ## 3. Session lifecycle: start / freeze / recover / end
 
 All four transitions are GM-only and go through
-`src/lib/server/session/lifecycle.ts`. The table UI's "Start session" button
-covers start; the other three currently have no dedicated UI control (Task 7
-scope) and are reached directly through the API. This section is the
-reference for an operator (or a GM the operator is walking through it)
-driving them by hand.
+`src/lib/server/session/lifecycle.ts`. **All four now have GM-only UI controls**
+on `/campaigns/[id]/table` — **Start session**, **Freeze table**, **Resume
+table**, and **End session** (which reveals a confirm row before it acts), in
+`src/lib/components/campaign/table/PhaseRail.svelte`. A player sees none of
+them. `tests/e2e/campaign-recovery.spec.ts` drives all four through a real
+browser across three clients.
+
+*Corrected 2026-07-29: this section previously said freeze/recover/end had no UI
+control and were "reached directly through the API". That was true when it was
+written and is no longer.*
+
+The curl equivalents below remain the reference for an operator acting on a
+table they are not a member of, scripting a response, or working when the UI
+itself is the thing that is broken.
 
 ### Start
 
@@ -229,6 +245,12 @@ same lever at two different scopes:
 There is no data-destructive step in either rollback. Campaigns, sessions,
 and their event history are ordinary D1 rows; disabling the feature flag
 only removes HTTP reachability, per `requireCampaignFeature`.
+
+**This section is the summary. `docs/operations/campaign-rollback.md` is the
+runbook** — who may flip the flags, how long the flip actually takes (measured,
+not estimated), how to find and freeze affected sessions, what evidence is safe
+to collect, when to escalate, and the destructive things that are never a
+rollback. Read it before an incident, not during one.
 
 ---
 

@@ -2,6 +2,11 @@
 
 ## Status — updated 2026-07-29, resume here
 
+**Gate C is parked and tracked as issue #13**, deliberately rather than
+abandoned: 4 of 5 gates pass, and the remaining Increment 5 code is being built
+out first. That issue carries the summary, everything tried, and what is ruled
+out; this document remains the full evidence. Update both when it is picked up.
+
 This section is the short version; everything below it is the evidence.
 
 **Where it stands: 4 of 5 gates pass.** The latency problem is understood and

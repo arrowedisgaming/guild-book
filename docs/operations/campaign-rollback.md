@@ -376,17 +376,23 @@ What the rehearsal established, beyond the timings in §3:
   verified by `Server-Timing` still being emitted, which only happens when
   `CAMPAIGN_TIMING_HEADER` survives.
 
-Two honest caveats about this run:
+Two honest caveats about this run, **both closed by the 2026-07-30 re-run**
+(48/48 checks passed; same procedure, same script):
 
 1. **The public-share check did not execute.** The harness creates its fixture
    adventurer as a draft, and drafts cannot be shared by design
    (`share.ts:37` → `409`), so the check reported itself skipped rather than
-   faking a pass. The harness now finalizes the adventurer first, but that fix
-   landed *after* this run and is therefore unverified. Other public routes
-   (`/`, `/rules`, `/licensing`) were checked and did keep serving.
+   faking a pass. The harness now finalizes the adventurer first; in the
+   re-run a real share link was minted before the flip and **resolved with
+   `200` while campaigns were off** — the check has now genuinely executed.
 2. **The rate-limit binding reported `not-enforcing`** at the time of this
-   rehearsal (§8). Nothing in the rehearsal depended on it, and that verdict has
-   since been traced to a bug in the self-test rather than the provider.
+   rehearsal (§8). That verdict was traced to a bug in the self-test rather
+   than the provider; the re-run's preflight reported `enforcing`.
+
+The re-run also reconfirmed the propagation spread that makes §3 a procedure
+rather than a number: settled times of 17.1 s, 68.3 s and 83.7 s across its
+three flips, with first-agreement as low as 1.8 s — the same 10×-plus
+variance, in one run.
 
 Earlier runs the same day failed and are worth knowing about, because both
 failures were in the *measurement*, not the product: a first-observation
@@ -395,8 +401,6 @@ during the mixed window, and a probe watching only the operator could not
 distinguish "the allowlist landed" from "campaigns never went off". The second
 of those briefly showed a player with access that no then-current configuration
 permitted — the two-deploys-stale case in §3.
-
-Re-run it with:
 
 Re-run it with:
 

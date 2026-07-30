@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-30
+
+### Fixed
+
+- **The admin dashboard's "Next" link now appears only when rows actually
+  remain**: it was inferred from the current page being full, so with an exact
+  multiple of 50 rows the last page still offered "Next" and led to an empty
+  page. The decision now lives in the server load function, computed from the
+  real row totals — which the tables provably match, since
+  `characters.user_id` is `NOT NULL` behind an enforced foreign key (issue
+  #11, PR #15 by @blockbeard).
+- **The 320px campaign-table test no longer flakes under machine load**: its
+  DOM-order check read two elements it had never waited for, and lost that
+  race when cores were saturated. The check now waits for both elements to
+  attach before reading them, and the zoom-overflow check polls the read it
+  depends on instead of sleeping a fixed 300 ms. Reproduced failing first (8
+  of 20 runs under artificial full-core load), then 0 DOM-order failures
+  across 40 runs under the same load; a separate rare timeout those runs
+  surfaced is tracked as issue #17 (issue #12, PR #16 by @blockbeard).
+
 ## [0.7.0] - 2026-07-30
 
 ### Changed

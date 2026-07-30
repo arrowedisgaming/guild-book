@@ -20,7 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import sharp from 'sharp';
-import { COLLECTION, FACE_SOURCE_MAP, BACK_SOURCE_MAP } from './source-map.mjs';
+import { BACK_COMPOSITIONS, BACK_LOGO_FILE, COLLECTION, FACE_SOURCE_MAP, KNOWN_UNUSED_SOURCES } from './source-map.mjs';
 
 const TIERS = Object.freeze([240, 480, 960]);
 const FORMATS = Object.freeze(/** @type {const} */ (['avif', 'webp']));
@@ -41,7 +41,7 @@ function sha256(data) {
  * @param {string} sourceDir
  */
 async function validateInventory(sourceDir) {
-	const expected = [...Object.values(FACE_SOURCE_MAP), ...Object.values(BACK_SOURCE_MAP)].sort();
+	const expected = [...Object.values(FACE_SOURCE_MAP), ...KNOWN_UNUSED_SOURCES].sort();
 	const actual = (await readdir(sourceDir)).filter((name) => name.toLowerCase().endsWith('.png')).sort();
 	const missing = expected.filter((name) => !actual.includes(name));
 	const unexpected = actual.filter((name) => !expected.includes(name));
@@ -53,21 +53,60 @@ async function validateInventory(sourceDir) {
 	}
 }
 
+/** Card dimensions every asset conforms to — the RWSa scans' exact 3:5. */
+const CARD_WIDTH = 1086;
+const CARD_HEIGHT = 1810;
+
 /**
- * Builds one source image's six variants under `outputRoot` and returns its
- * manifest entry. Fails loudly if the source is not portrait, is animated/
+ * Composes one themed Adherent back: the committed logo centered on a flat
+ * field at the card ratio. With `ink` set, the logo's linework is recolored
+ * through its alpha channel (the source linework is black). Deterministic
+ * for a given Sharp build, like every other emission in this script.
+ * @param {Buffer} logo
+ * @param {{ field: { r: number; g: number; b: number }; ink: { r: number; g: number; b: number } | null }} composition
+ * @returns {Promise<Buffer>}
+ */
+async function composeBack(logo, composition) {
+	const LOGO_WIDTH = 830;
+	const resized = await sharp(logo, { failOn: 'error' }).resize({ width: LOGO_WIDTH }).png().toBuffer();
+	const meta = await sharp(resized).metadata();
+	let mark = resized;
+	if (composition.ink) {
+		const alpha = await sharp(resized).ensureAlpha().extractChannel(3).toBuffer();
+		mark = await sharp({
+			create: { width: meta.width ?? LOGO_WIDTH, height: meta.height ?? LOGO_WIDTH, channels: 3, background: composition.ink }
+		})
+			.joinChannel(alpha)
+			.png()
+			.toBuffer();
+	}
+	return sharp({ create: { width: CARD_WIDTH, height: CARD_HEIGHT, channels: 3, background: composition.field } })
+		.composite([
+			{
+				input: mark,
+				top: Math.round((CARD_HEIGHT - (meta.height ?? 0)) / 2),
+				left: Math.round((CARD_WIDTH - LOGO_WIDTH) / 2)
+			}
+		])
+		.png()
+		.toBuffer();
+}
+
+/**
+ * Builds one input image's six variants under `outputRoot` and returns its
+ * manifest entry. Fails loudly if the input is not portrait, is animated/
  * multi-page, or cannot fill the largest tier at full measured width — a
  * `960w` srcset entry must never lie.
- * @param {string} sourceDir
+ * @param {Buffer} input image bytes (a face scan, or a composed back)
  * @param {string} outputRoot
  * @param {string} kind faces | backs
  * @param {string} id stable card/back id
- * @param {string} filename source basename
+ * @param {string} source provenance label recorded in the manifest
+ * @param {string} sourceSha256 hash of the named source file
  * @returns {Promise<Asset>}
  */
-async function buildAsset(sourceDir, outputRoot, kind, id, filename) {
-	const inputPath = path.join(sourceDir, filename);
-	const input = await readFile(inputPath);
+async function buildAsset(input, outputRoot, kind, id, source, sourceSha256) {
+	const filename = source;
 	const metadata = await sharp(input, { failOn: 'error' }).metadata();
 	if ((metadata.pages ?? 1) > 1) throw new Error(`${filename}: animated/multi-page input rejected`);
 	const width = metadata.width ?? 0;
@@ -107,7 +146,7 @@ async function buildAsset(sourceDir, outputRoot, kind, id, filename) {
 		}
 	}
 	variants.sort((a, b) => (a.format === b.format ? a.width - b.width : a.format.localeCompare(b.format)));
-	return { source: filename, sourceSha256: sha256(input), width, height, variants };
+	return { source: filename, sourceSha256, width, height, variants };
 }
 
 /** @param {Record<string, unknown>} object */
@@ -124,10 +163,29 @@ export async function buildCollection({ outputRoot = COLLECTION.outputDir, concu
 	const sourceDir = COLLECTION.sourceDir;
 	await validateInventory(sourceDir);
 
-	/** @type {Array<{ kind: string; id: string; filename: string }>} */
+	const logoPath = path.join(path.dirname(fileURLToPath(import.meta.url)), BACK_LOGO_FILE);
+	const logo = await readFile(logoPath);
+	const logoSha = sha256(logo);
+
+	/** @type {Array<{ kind: string; id: string; input: () => Promise<{ input: Buffer; source: string; sourceSha256: string }> }>} */
 	const jobs = [
-		...Object.entries(FACE_SOURCE_MAP).map(([id, filename]) => ({ kind: 'faces', id, filename })),
-		...Object.entries(BACK_SOURCE_MAP).map(([id, filename]) => ({ kind: 'backs', id, filename }))
+		...Object.entries(FACE_SOURCE_MAP).map(([id, filename]) => ({
+			kind: 'faces',
+			id,
+			input: async () => {
+				const input = await readFile(path.join(sourceDir, filename));
+				return { input, source: filename, sourceSha256: sha256(input) };
+			}
+		})),
+		...Object.entries(BACK_COMPOSITIONS).map(([id, composition]) => ({
+			kind: 'backs',
+			id,
+			input: async () => ({
+				input: await composeBack(logo, composition),
+				source: BACK_LOGO_FILE,
+				sourceSha256: logoSha
+			})
+		}))
 	];
 
 	/** @type {Record<string, Asset>} */
@@ -138,7 +196,8 @@ export async function buildCollection({ outputRoot = COLLECTION.outputDir, concu
 	async function worker() {
 		while (next < jobs.length) {
 			const job = jobs[next++];
-			const asset = await buildAsset(sourceDir, outputRoot, job.kind, job.id, job.filename);
+			const { input, source, sourceSha256 } = await job.input();
+			const asset = await buildAsset(input, outputRoot, job.kind, job.id, source, sourceSha256);
 			if (job.kind === 'faces') faces[job.id] = asset;
 			else backs[job.id] = asset;
 		}
@@ -151,8 +210,8 @@ export async function buildCollection({ outputRoot = COLLECTION.outputDir, concu
 		title: COLLECTION.title,
 		sourceSet: 'Locally supplied authorized 80-image set',
 		permissionBasis: 'Project owner confirmed permission for this set',
-		backMappingBasis:
-			'ornate=RWSa-X-RL.png / plain=RWSa-X-BA.png per the project owner’s visual confirmation recorded in issue #10; not derivable from filenames',
+		backProvenance:
+			'Both backs composed at build time from the committed Adherent of the Worm third-party logo (per the maintainer decision on issue #10 replacing the scanned backs); the template’s terms state the logo is "allowed and encouraged" for third-party works',
 		processing: 'Uncropped responsive AVIF/WebP derivatives',
 		generator: {
 			platform: `${process.platform}-${process.arch}`,

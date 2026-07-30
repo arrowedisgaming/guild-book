@@ -35,7 +35,7 @@ export const tarotArtManifestSchema = z
 		title: z.string().min(1),
 		sourceSet: z.string().min(1),
 		permissionBasis: z.string().min(1),
-		backMappingBasis: z.string().min(1),
+		backProvenance: z.string().min(1),
 		processing: z.string().min(1),
 		generator: z.object({ platform: z.string(), sharp: z.string(), libvips: z.string() }).strict(),
 		faces: z.record(z.string(), tarotArtAssetSchema),

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FACE_SOURCE_MAP, BACK_SOURCE_MAP, COLLECTION } from '../../scripts/tarot-art/source-map.mjs';
+import { FACE_SOURCE_MAP, BACK_COMPOSITIONS, COLLECTION } from '../../scripts/tarot-art/source-map.mjs';
 
 /**
  * Task 2's committed-output contract: these tests read the COMMITTED manifest
@@ -41,7 +41,7 @@ describe('tarot artwork manifest', () => {
 		expect(manifest.schemaVersion).toBe(1);
 		expect(manifest.collectionId).toBe('rwsa');
 		expect(Object.keys(manifest.faces).sort()).toEqual(Object.keys(FACE_SOURCE_MAP).sort());
-		expect(Object.keys(manifest.backs).sort()).toEqual(Object.keys(BACK_SOURCE_MAP).sort());
+		expect(Object.keys(manifest.backs).sort()).toEqual(Object.keys(BACK_COMPOSITIONS).sort());
 	});
 
 	it('records portrait sources with hashes and emits exactly six non-PNG variants each', () => {

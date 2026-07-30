@@ -4,7 +4,7 @@
 	"title": "Rider–Waite–Smith tarot",
 	"sourceSet": "Locally supplied authorized 80-image set",
 	"permissionBasis": "Project owner confirmed permission for this set",
-	"backMappingBasis": "ornate=RWSa-X-RL.png / plain=RWSa-X-BA.png per the project owner’s visual confirmation recorded in issue #10; not derivable from filenames",
+	"backProvenance": "Both backs composed at build time from the committed Adherent of the Worm third-party logo (per the maintainer decision on issue #10 replacing the scanned backs); the template’s terms state the logo is \"allowed and encouraged\" for third-party works",
 	"processing": "Uncropped responsive AVIF/WebP derivatives",
 	"generator": {
 		"platform": "darwin-arm64",
@@ -4382,9 +4382,9 @@
 		}
 	},
 	"backs": {
-		"ornate": {
-			"source": "RWSa-X-RL.png",
-			"sourceSha256": "e33e6e10a7e2aad63923c7a74abf1327443fd051da8ab40c2eb588a8ebb466ff",
+		"adherent-dark": {
+			"source": "adherent-logo.png",
+			"sourceSha256": "363eefaeaf020ef6d2d71f990f8e39924d68ad682f88f4954d94a9412d7cb977",
 			"width": 1086,
 			"height": 1810,
 			"variants": [
@@ -4392,55 +4392,55 @@
 					"format": "avif",
 					"width": 240,
 					"height": 400,
-					"bytes": 30533,
-					"sha256": "84bc8b2b6c5c8901659f06bb63dabd7d52e2547e7a2d07627b4a12fc27cd819b",
-					"path": "/tarot/rwsa/backs/ornate-240.avif"
+					"bytes": 5713,
+					"sha256": "ab06204fb06064d1fb583dbd7e04457581b7ece9c999d1ef65fa8b463fb8e57c",
+					"path": "/tarot/rwsa/backs/adherent-dark-240.avif"
 				},
 				{
 					"format": "avif",
 					"width": 480,
 					"height": 800,
-					"bytes": 92846,
-					"sha256": "438835a0ca020efab6ae7094b77300c3b3f58fa9e1e727ca3d41ea69bfb9a19b",
-					"path": "/tarot/rwsa/backs/ornate-480.avif"
+					"bytes": 13071,
+					"sha256": "c50ac0cc0552097258d81f51847cb64c257aac5222a494b0160d709a93cb62b5",
+					"path": "/tarot/rwsa/backs/adherent-dark-480.avif"
 				},
 				{
 					"format": "avif",
 					"width": 960,
 					"height": 1600,
-					"bytes": 224501,
-					"sha256": "e9ead350ea66f698d20a6b3a16d2acd29ccf348b4293892fd230ae2b021df134",
-					"path": "/tarot/rwsa/backs/ornate-960.avif"
+					"bytes": 26103,
+					"sha256": "8ef09715c721095b9b2a9443c60f7d31c0587a8b03865c959a28807a58d7edea",
+					"path": "/tarot/rwsa/backs/adherent-dark-960.avif"
 				},
 				{
 					"format": "webp",
 					"width": 240,
 					"height": 400,
-					"bytes": 43738,
-					"sha256": "d8ec5c5c04d3f78978111c187da9dc72621b964df4d7b95ee9e66f21a7557000",
-					"path": "/tarot/rwsa/backs/ornate-240.webp"
+					"bytes": 6660,
+					"sha256": "f399094f2834d9f5718ad215de69aa92fdc3f639697c838c954ca22c6a16bf44",
+					"path": "/tarot/rwsa/backs/adherent-dark-240.webp"
 				},
 				{
 					"format": "webp",
 					"width": 480,
 					"height": 800,
-					"bytes": 128838,
-					"sha256": "4b4d978fe21e1ac33b0f5137ea660133a63ceb1a15b080a1983c27bd8be86146",
-					"path": "/tarot/rwsa/backs/ornate-480.webp"
+					"bytes": 16342,
+					"sha256": "e23506c58e619ed94bbdd2c6c73113e9ede2d6e7411dd60c76c83dd2d4223ab7",
+					"path": "/tarot/rwsa/backs/adherent-dark-480.webp"
 				},
 				{
 					"format": "webp",
 					"width": 960,
 					"height": 1600,
-					"bytes": 307238,
-					"sha256": "46f53fd3f1787c71978a5dbdcd65744775b852539b5af0498aed30ee9be10b64",
-					"path": "/tarot/rwsa/backs/ornate-960.webp"
+					"bytes": 35972,
+					"sha256": "263436a5df5f682a3f0aca4e6444315fed0cdf2502b0c4a7a323536965584e97",
+					"path": "/tarot/rwsa/backs/adherent-dark-960.webp"
 				}
 			]
 		},
-		"plain": {
-			"source": "RWSa-X-BA.png",
-			"sourceSha256": "f3bdffbcdbb60cbbb613321fe8fd8eee99f621c5007d692ddb0ce09d779d8e49",
+		"adherent-parchment": {
+			"source": "adherent-logo.png",
+			"sourceSha256": "363eefaeaf020ef6d2d71f990f8e39924d68ad682f88f4954d94a9412d7cb977",
 			"width": 1086,
 			"height": 1810,
 			"variants": [
@@ -4448,49 +4448,49 @@
 					"format": "avif",
 					"width": 240,
 					"height": 400,
-					"bytes": 30941,
-					"sha256": "6af37c64e75d8ae9cadc4294c616a79652eb02fd184d3a38234dcf91a3e6a5df",
-					"path": "/tarot/rwsa/backs/plain-240.avif"
+					"bytes": 5938,
+					"sha256": "c714b14fb32ba878a5357a87e2f4f35077a5ce185fce7a9162d5743876456e47",
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.avif"
 				},
 				{
 					"format": "avif",
 					"width": 480,
 					"height": 800,
-					"bytes": 94038,
-					"sha256": "cb072fafe483e04658604f30cc1205ed98a10fec28ee3c0c15d848c051cff985",
-					"path": "/tarot/rwsa/backs/plain-480.avif"
+					"bytes": 13614,
+					"sha256": "085481ad817bd2053a811977bb90eb684a66bda0092f750c2aa7152b427c65cc",
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.avif"
 				},
 				{
 					"format": "avif",
 					"width": 960,
 					"height": 1600,
-					"bytes": 222136,
-					"sha256": "79d32ba00fbd438b16e3cc1f3395111efe8df62b76157ba79a94028d8cc9a6dd",
-					"path": "/tarot/rwsa/backs/plain-960.avif"
+					"bytes": 27583,
+					"sha256": "194e0fae6867202dee355a2b9f5f870fbc3aeefcf4c6c3cdd8b01cdbce387d3e",
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.avif"
 				},
 				{
 					"format": "webp",
 					"width": 240,
 					"height": 400,
-					"bytes": 50246,
-					"sha256": "1e2d52c35a5071230baceeeffdfb004f63d3584767bc8087670e681a5904772a",
-					"path": "/tarot/rwsa/backs/plain-240.webp"
+					"bytes": 7126,
+					"sha256": "22ac3ade8c2cc09459afe9f803cdca6921052352335d4cda4fae850ad41623df",
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.webp"
 				},
 				{
 					"format": "webp",
 					"width": 480,
 					"height": 800,
-					"bytes": 152750,
-					"sha256": "3bc033fe5b199f79dc1c211a24578251071b3914a7b5ee74870e53c3b69f1aef",
-					"path": "/tarot/rwsa/backs/plain-480.webp"
+					"bytes": 17666,
+					"sha256": "8380129fda3d4ece25ce6d1a144f93541ae473673a788007ed021396a10c2f9c",
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.webp"
 				},
 				{
 					"format": "webp",
 					"width": 960,
 					"height": 1600,
-					"bytes": 359936,
-					"sha256": "12ebd14e2f5004426fbb669f25d125650b551767cb85d299ffd72458f90e0e1e",
-					"path": "/tarot/rwsa/backs/plain-960.webp"
+					"bytes": 39338,
+					"sha256": "bc8445e9431fa71fd562fbfd0f94942de6daabdb1b348e135e4b974b97c6fddd",
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.webp"
 				}
 			]
 		}

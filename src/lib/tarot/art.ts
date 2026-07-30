@@ -63,9 +63,9 @@ export function getTarotFaceSources(cardId: string): TarotImageSources {
 	return toSources(asset);
 }
 
-/** The ornate back is the one the shared table renders for every face-down
- * card, so it is the default. */
-export function getTarotBackSources(backId: TarotBackId = 'ornate'): TarotImageSources {
+/** No default: with theme-selected backs there is no single right answer,
+ * so callers name the treatment they are rendering. */
+export function getTarotBackSources(backId: TarotBackId): TarotImageSources {
 	const asset = manifest?.backs[backId];
 	if (!asset) throw new Error(`unknown tarot art id: ${backId}`);
 	return toSources(asset);

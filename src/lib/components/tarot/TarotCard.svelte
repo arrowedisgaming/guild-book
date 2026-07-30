@@ -30,8 +30,13 @@
      render in any environment without built artwork (`hasTarotArt`). -->
 {#if faceDown || !card}
 	{#if hasTarotArt}
+		<!-- Both themed Adherent backs render; CSS shows the one matching the
+		     active data-theme. The hidden one is lazy, so it is not fetched
+		     until a theme switch reveals it. Backs carry no card identity, so
+		     rendering both discloses nothing. -->
 		<div class="card back art {size}" role="img" aria-label="Face-down card">
-			<TarotCardImage sources={getTarotBackSources()} sizes={imageSizes} />
+			<span class="back-variant back-light"><TarotCardImage sources={getTarotBackSources('adherent-parchment')} sizes={imageSizes} /></span>
+			<span class="back-variant back-dark"><TarotCardImage sources={getTarotBackSources('adherent-dark')} sizes={imageSizes} /></span>
 		</div>
 	{:else}
 		<div class="card back {size}" role="img" aria-label="Face-down card">
@@ -148,6 +153,24 @@
 	 * the Archival Frame's mat is neutral. */
 	.card.back.art {
 		background: var(--parchment);
+	}
+	/* Theme-selected Adherent back, paired for CONTRAST: the dark treatment
+	 * on the light theme, the parchment treatment on worm-dark — a hidden
+	 * card's whole job is to read as "face down" at a glance, so the back
+	 * must pop against the page, not match it. Pure CSS on the same
+	 * data-theme attribute the rest of the app uses. */
+	.back-variant {
+		display: block;
+		width: 100%;
+	}
+	.back-light {
+		display: none;
+	}
+	:global([data-theme='worm-dark']) .back-dark {
+		display: none;
+	}
+	:global([data-theme='worm-dark']) .back-light {
+		display: block;
 	}
 	.back {
 		background: repeating-linear-gradient(

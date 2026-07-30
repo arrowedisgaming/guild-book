@@ -78,18 +78,39 @@ export const SUIT_SOURCE_PREFIX = Object.freeze({
 });
 
 /**
- * Which physical scan is which named back CANNOT be derived from the
- * filenames, and no test can catch a swap (both are valid portrait scans).
- * This mapping rests on the project owner's visual confirmation recorded in
- * issue #10 — `RWSa-X-RL.png` is the ornate back, the one the table renders
- * for every face-down card. The plan's Task 1 Step 3 snippet shows the
- * opposite assignment; the issue postdates it and explicitly overrides. Do
- * not "correct" this from the filenames.
+ * The card backs are NOT the RWSa scans: per the maintainer's decision on
+ * issue #10, both scanned backs are scrapped and the deck uses the
+ * "Adherent of His Majesty the Worm" third-party logo, composed onto a flat
+ * field at build time — one treatment per app theme. The logo is committed
+ * (`adherent-logo.png`, from the official third-party template, whose terms
+ * state: "You are allowed and encouraged (but not required) to use the
+ * 'Adherent of the Worm' logo"); the composition below is the entire
+ * recipe, so the backs are reproducible code, not hand-made binaries.
+ *
+ * `ink: null` means the logo's own black linework is used as-is; an rgb ink
+ * recolors the linework via its alpha channel.
  */
-export const BACK_SOURCE_MAP = Object.freeze({
-	ornate: file('X-RL'),
-	plain: file('X-BA')
+export const BACK_LOGO_FILE = 'adherent-logo.png';
+export const BACK_COMPOSITIONS = Object.freeze({
+	/** Rendered by the parchment-light theme. */
+	'adherent-parchment': Object.freeze({
+		field: Object.freeze({ r: 236, g: 225, b: 203 }),
+		ink: null
+	}),
+	/** Rendered by the worm-dark theme. */
+	'adherent-dark': Object.freeze({
+		field: Object.freeze({ r: 33, g: 29, b: 24 }),
+		ink: Object.freeze({ r: 240, g: 232, b: 214 })
+	})
 });
+
+/**
+ * Downloaded by `fetch-rwsa-tarot.sh` but deliberately unmapped: the two
+ * RWSa scanned backs the issue #10 decision replaced. Listed so the strict
+ * inventory can stay exact — the source directory must contain the 78
+ * mapped faces plus exactly these, and nothing else.
+ */
+export const KNOWN_UNUSED_SOURCES = Object.freeze([file('X-BA'), file('X-RL')]);
 
 function buildMinorSourceMap() {
 	/** @type {Record<string, string>} */

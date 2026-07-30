@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getTarotFaceSources, getTarotBackSources, hasTarotArt } from '$lib/tarot/art';
-import { FACE_SOURCE_MAP, BACK_SOURCE_MAP } from '../../scripts/tarot-art/source-map.mjs';
+import type { TarotBackId } from '$lib/types/tarot-art';
+import { FACE_SOURCE_MAP, BACK_COMPOSITIONS } from '../../scripts/tarot-art/source-map.mjs';
 
 describe('tarot art resolver', () => {
 	it('reports art as present when the manifest is committed', () => {
@@ -22,13 +23,9 @@ describe('tarot art resolver', () => {
 			expect(sources.fallbackWebp).toMatch(/\.webp$/);
 			expect(sources.height).toBeGreaterThan(sources.width);
 		}
-		for (const backId of Object.keys(BACK_SOURCE_MAP) as Array<'ornate' | 'plain'>) {
+		for (const backId of Object.keys(BACK_COMPOSITIONS) as TarotBackId[]) {
 			expect(getTarotBackSources(backId).avifSrcset).toContain(`/tarot/rwsa/backs/${backId}-240.avif`);
 		}
-	});
-
-	it('defaults the back to ornate — the back the table renders face-down', () => {
-		expect(getTarotBackSources().avifSrcset).toContain('/tarot/rwsa/backs/ornate-240.avif');
 	});
 
 	it('throws on an unknown id rather than resolving a guess', () => {

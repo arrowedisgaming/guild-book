@@ -11,4 +11,6 @@ export interface TarotImageSources {
 	height: number;
 }
 
-export type TarotBackId = 'ornate' | 'plain';
+/** The two themed treatments of the Adherent back (issue #10 decision):
+ * `TarotCard` renders both and the active app theme selects one via CSS. */
+export type TarotBackId = 'adherent-parchment' | 'adherent-dark';

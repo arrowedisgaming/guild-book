@@ -45,6 +45,11 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
 
 	// --- Table-first: the public table precedes the drawers in the real DOM ---
+	// The "Draw a card" button being visible does not imply these two elements
+	// have mounted — under machine load the gap is wide enough to lose. Wait for
+	// the elements the order check actually reads before reading them.
+	await expect(playerAPage.locator('[data-testid="public-table"]')).toBeAttached();
+	await expect(playerAPage.locator('[data-testid="mobile-drawers"]')).toBeAttached();
 	const order = await playerAPage.evaluate(() => {
 		const table = document.querySelector('[data-testid="public-table"]');
 		const drawers = document.querySelector('[data-testid="mobile-drawers"]');
@@ -98,12 +103,16 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	await playerAPage.evaluate(() => {
 		(document.body.style as unknown as { zoom: string }).zoom = '2';
 	});
-	await playerAPage.waitForTimeout(300);
-	const zoomOverflow = await playerAPage.evaluate(() => {
-		const root = document.scrollingElement!;
-		return root.scrollWidth - root.clientWidth;
-	});
-	expect(zoomOverflow).toBeLessThanOrEqual(1);
+	// Poll instead of a fixed 300 ms sleep: the reflow after the zoom change is
+	// what the read depends on, so retry the read until layout settles.
+	await expect
+		.poll(() =>
+			playerAPage.evaluate(() => {
+				const root = document.scrollingElement!;
+				return root.scrollWidth - root.clientWidth;
+			})
+		)
+		.toBeLessThanOrEqual(1);
 
 	await gm.close();
 	await playerA.close();

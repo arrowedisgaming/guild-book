@@ -105,14 +105,32 @@ shipping. Expect:
 | `CAMPAIGN_POLL_LIMITER` | Rate Limit, 30/10s |
 | `CAMPAIGN_LIMITER_SELFTEST` | Rate Limit, 1/10s — never limits a real request |
 
-> **Known issue (2026-07-27): the rate-limit bindings do not enforce.** They
-> deploy, type-check, and appear above as Rate Limit resources, but
-> `limit()` returns `success: true` regardless of volume. Reproduced on Workers
-> Paid with a bare throwaway Worker and both config syntaxes, so it is not a
-> configuration or application fault. `/api/internal/campaign-health` reports
-> `rateLimit.enforcement`; anything other than `"enforcing"` is a **release
-> blocker for making campaigns public**, and is currently `"not-enforcing"`.
-> Open with Cloudflare support. This does not affect the rest of the site.
+> **RESOLVED 2026-07-30 — the bindings do enforce; our probe was wrong.**
+>
+> From 2026-07-27 this section reported that the rate-limit bindings never
+> counted, and that was treated as a release blocker for making campaigns
+> public. The 0.7.0 pre-release review found the fault was in the self-test,
+> not the provider: it called the limiter `limit + 1` times — **two** calls
+> against a 1-per-10s binding — and Cloudflare documents these counters as
+> permissive and eventually consistent rather than exact, so a working binding
+> is allowed to let two through. Zero denials was read as "never counts".
+>
+> Widening the overshoot to `limit + 5` (`SELF_TEST_OVERSHOOT` in
+> `src/lib/server/rate-limit/cloudflare.ts`) flipped staging to `"enforcing"`
+> on **10 of 11 consecutive probes**, the single exception being the first
+> probe against a freshly-created namespace whose counter had not yet
+> materialised.
+>
+> `/api/internal/campaign-health` reports `rateLimit.enforcement`; anything
+> other than `"enforcing"` is still a release blocker for making campaigns
+> public. **Verify production separately** — the result above is staging, and
+> production has its own namespaces and its own health secret.
+>
+> **One thing this does not explain.** The 2026-07-27 investigation recorded a
+> bare throwaway Worker allowing 13 consecutive requests against a 5-per-60s
+> limiter. That overshoot is far too wide for documented permissiveness, so it
+> is not accounted for by the probe bug. Update the Cloudflare ticket with this
+> finding rather than simply closing it.
 
 ## 3. One-time: OAuth apps
 

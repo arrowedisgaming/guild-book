@@ -239,17 +239,28 @@ Collect the aggregate freely. Treat everything else as needing a reason.
 - the full `/api/internal/campaign-health` response;
 - counts, durations, status codes, rejection codes, retry counts;
 - the metric names in `src/lib/server/observability/campaign-metrics.ts` and
-  their values — that allowlist exists precisely so operational signal can be
-  shared without review;
-- `wrangler tail` output. The session layer has exactly two log call sites and
-  neither logs card identities or payloads (`campaign-pilot.md` §4);
+  their values, including the `{"metric":…}` lines the sink emits — that
+  allowlist exists precisely so operational signal can be shared without
+  review, and it is enforced: the name is checked against a closed set, and
+  tags are matched against known enums with no free-text field;
 - deployment version ids, migration counts, the content digest.
 
 **Operator-only — your terminal, an encrypted note, an incident ticket with
 restricted visibility:**
 
 - campaign, session, user and membership ids;
-- rows from `play_sessions`, `session_commands`, `campaign_members`.
+- rows from `play_sessions`, `session_commands`, `campaign_members`;
+- **raw `wrangler tail` output.** An earlier draft of this runbook listed it as
+  safe to share and said the session layer had "exactly two log call sites".
+  Both claims were wrong, and the 0.7.0 pre-release review caught them. There
+  are ten sites under `src/lib/server/session/`;
+  `table-projections.ts:156` logs a **session id** in plain text — which this
+  very list classifies as operator-only — and most of the rest log the caught
+  exception object, whose message comes from the database driver and can carry
+  statement fragments. What remains true is the narrower claim the privacy
+  canary suite actually enforces: no card identity and no private payload is
+  ever logged. Read the tail yourself, quote the line you need, and do not
+  paste the stream.
 
 **Never collect, never paste, never screenshot:**
 
@@ -308,20 +319,22 @@ rest of the site on the current build.
 | A card identity or private zone reached the wrong role | Freeze immediately, **do not end** (ending sanitizes the evidence), then `campaign-pilot.md` §5 — this is a correctness failure in the guarantee the feature is built on and gets a written incident record. |
 | Two or more unrelated tables report the same fault | Flip the feature off, keep your own id allowlisted, investigate with real sessions still intact. |
 | D1 unreachable, or error rate above the 0.1% gate | Flip off. This is capacity or infrastructure, not a table problem, and leaving it up produces more damaged sessions. |
-| Suspected abuse or a runaway client | Check `rateLimit.enforcement` in health first. **While it reports `not-enforcing` there is no edge limiter**, so the only lever is the allowlist or the flag — see §8. |
+| Suspected abuse or a runaway client | Check `rateLimit.enforcement` in health first. `enforcing` means the edge limiter is doing its job and the flag is a second lever, not the only one. Anything else means no edge limiting, and the allowlist or the flag is all you have — see §8. |
 | Anything you cannot explain within ~15 minutes | Flip off. The feature is not load-bearing for the rest of the site and a stopped table loses nothing. |
 
 ---
 
 ## 8. Known gaps this runbook cannot paper over
 
-1. **The rate-limit binding does not enforce.** `rateLimit.enforcement` reports
-   `not-enforcing` on staging and production: the bindings deploy and resolve,
-   but `limit()` returns success regardless of volume. Reproduced against a bare
-   throwaway Worker, so it is Cloudflare's, not ours; open with their support.
-   Until it clears, **there is no edge rate limiting**, and the response to
-   abuse is the allowlist or the flag. This is a release blocker for making
-   campaigns public (`DEPLOY.md`, `docs/operations/campaign-capacity.md`).
+1. **The rate-limit binding enforces — but verify production before relying on
+   it.** From 2026-07-27 this was recorded as a hard blocker: the bindings
+   deployed and resolved but appeared never to count. The 0.7.0 pre-release
+   review found the fault was in our own self-test, which overshot the limit by
+   a single call and so sat inside Cloudflare's documented permissiveness.
+   Widening the margin flipped staging to `enforcing` on 10 of 11 probes.
+   **Staging is verified; production is not** — it has its own namespaces and
+   its own health secret, so run the same check there before treating edge
+   limiting as available during an incident. See `DEPLOY.md`.
 2. **Rate limits are per Cloudflare location even when they do work.** A client
    distributed across N colos gets roughly N× the nominal limit. The Durable
    Object upgrade trigger is written down in `campaign-capacity.md`.
@@ -371,8 +384,9 @@ Two honest caveats about this run:
    faking a pass. The harness now finalizes the adventurer first, but that fix
    landed *after* this run and is therefore unverified. Other public routes
    (`/`, `/rules`, `/licensing`) were checked and did keep serving.
-2. **The rate-limit binding still reports `not-enforcing`** (§8). Nothing in
-   this rehearsal depended on it.
+2. **The rate-limit binding reported `not-enforcing`** at the time of this
+   rehearsal (§8). Nothing in the rehearsal depended on it, and that verdict has
+   since been traced to a bug in the self-test rather than the provider.
 
 Earlier runs the same day failed and are worth knowing about, because both
 failures were in the *measurement*, not the product: a first-observation

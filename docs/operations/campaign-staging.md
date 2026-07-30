@@ -139,7 +139,11 @@ Review before deleting anything. Staging fixtures are cheap; an accidental
 
 ## Known gap at time of run
 
-`rateLimit.enforcement` reports **`not-enforcing`** on staging and production
+*(Superseded 2026-07-30: the binding does enforce — the self-test's margin was
+too thin. See `DEPLOY.md`. The paragraph below is left as written at the time of
+the run.)*
+
+`rateLimit.enforcement` reported **`not-enforcing`** on staging and production
 alike. The Cloudflare rate-limit binding deploys and resolves but does not
 count; see `DEPLOY.md` and the migration plan's completion record. This does not
 affect any constraint in the table above — every one of them is enforced by D1

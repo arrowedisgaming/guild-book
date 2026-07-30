@@ -8,6 +8,7 @@ import {
 	createCampaignRateLimitHandle
 } from '$lib/server/rate-limit/campaign';
 import { formatServerTiming, runWithRequestTiming } from '$lib/server/observability/request-timing';
+import { installCampaignMetricSink } from '$lib/server/observability/metric-sink';
 
 // Optional dev-only auto-login bypass. The implementation file is gitignored
 // (see src/lib/server/dev-auto-login.example.ts). When absent — production,
@@ -25,6 +26,10 @@ if (devAutoLoginLoader) {
 		console.warn('[dev-auto-login] failed to load:', (err as Error)?.message ?? err);
 	}
 }
+
+// Once per isolate. Without this every campaign metric is computed and then
+// dropped — see `metric-sink.ts` for why that went unnoticed until 0.7.0.
+installCampaignMetricSink();
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -77,8 +82,22 @@ const appHandle: Handle = async ({ event, resolve }) => {
 /**
  * Sequenced AFTER `authHandle` on purpose (Increment 5 Task 1): the campaign
  * limiter keys its buckets on the authenticated actor, which only exists once
- * auth has installed `locals.auth()`. It still runs before every route
- * handler, so a limited request is refused before it can spend a D1 read.
+ * auth has installed `locals.auth()`. It runs before every route handler, so a
+ * limited request never reaches the session state reconstruction it was trying
+ * to spend.
+ *
+ * It does NOT make a denial free. Resolving the actor calls `locals.auth()`,
+ * whose `jwt` callback reads the `users` row, so a denied request from a
+ * SIGNED-IN caller has already paid one D1 round trip by the time it is
+ * refused — an authenticated flood keeps costing database capacity after it
+ * starts receiving 429s. (An anonymous flood does not: with no session cookie
+ * there is no row to read.) This comment previously claimed the opposite; the
+ * 0.7.0 pre-release review caught it.
+ *
+ * Keying on the signed JWT subject instead would let a denial land before any
+ * database work, but it means a second cookie/secret/session-version decode
+ * path parallel to Auth.js's, which is a change that wants its own review
+ * rather than a release-day patch. Tracked rather than done here.
  */
 const campaignRateLimitHandle = createCampaignRateLimitHandle({ getUserId, getEnv });
 

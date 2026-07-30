@@ -167,8 +167,21 @@ the console across the whole scenario" canary, which drives a full
 draw/reveal/sync/end flow with a spied `console.*` and asserts nothing
 secret-shaped was ever passed to it.
 
-The session layer has exactly two log call sites, both diagnostic-only and
-both safe for an operator to read without special handling:
+**Corrected 2026-07-30:** this section previously said the session layer had
+"exactly two log call sites, both safe for an operator to read without special
+handling", and `campaign-rollback.md` inherited that claim and went further,
+listing raw `wrangler tail` output as safe to share in a group channel. Both
+were wrong. There are **ten** sites under `src/lib/server/session/`.
+`table-projections.ts:156` logs a **session id** in plain text, and the
+projection and command-service sites log the caught exception object, whose
+message originates in the database driver and can contain statement fragments.
+Treat tail output as operator-only: read it, quote the line you need, do not
+paste the stream.
+
+What remains true — and is enforced by the privacy canary suite rather than
+asserted here — is that **no card identity and no private payload is ever
+logged**. The two sites below are the originally-documented pair and are still
+the only two that log by design rather than on an unexpected error:
 
 - `src/lib/server/session/repository.ts` — `recordFreshCursorHintAfterCommit`
   logs via `console.debug` if its own advisory post-commit cursor-hint

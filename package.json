@@ -49,7 +49,9 @@
 		"content:procedures": "node scripts/content-import/md-procedures.mjs",
 		"db:auth:preflight:d1:local": "npx wrangler d1 execute guild-book-db --local --file=scripts/auth-account-preflight.sql",
 		"db:auth:preflight:d1:remote": "npx wrangler d1 execute guild-book-db --remote --file=scripts/auth-account-preflight.sql",
-		"db:migrate:d1:staging": "npx wrangler d1 migrations apply guild-book-staging-db --remote --env staging"
+		"db:migrate:d1:staging": "npx wrangler d1 migrations apply guild-book-staging-db --remote --env staging",
+		"tarot-art:build": "node scripts/tarot-art/build.mjs",
+		"tarot-art:verify": "node scripts/tarot-art/verify.mjs"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.59.1",
@@ -60,6 +62,7 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"@vitest/coverage-v8": "^4.1.10",
 		"miniflare": "^4.20260630.0",
+		"sharp": "0.35.3",
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
 		"typescript": "^6.0.2",

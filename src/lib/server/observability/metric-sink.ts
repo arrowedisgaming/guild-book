@@ -25,15 +25,22 @@ import { setCampaignMetricSink, type CampaignMetricPoint } from './campaign-metr
  * property that makes emitting these to a shared log pipeline defensible,
  * unlike the surrounding session logs (see `campaign-rollback.md` §5).
  *
- * VOLUME, BEFORE CAMPAIGNS GO PUBLIC: `poll_duration_ms` and `poll_no_change`
- * fire on every `/sync`, which is roughly one per second per open client. Nine
- * campaigns of three clients is ~27 lines/second. That is fine today, because
- * campaigns are server-gated off in production and the volume is zero, but it
- * is the number to look at before Task 6 Step 5 flips the flag — sample the two
- * poll metrics here rather than turning the whole sink off, since the command,
- * rejection, freeze and recovery points are low-volume and are the ones an
- * incident actually needs.
+ * VOLUME: `poll_duration_ms` and `poll_no_change` fire on every `/sync`,
+ * roughly one per second per open client — ~27 lines/second at pilot scale and
+ * growing linearly with public users. So those two, and only those two, are
+ * sampled 1-in-10 below rather than the whole sink being turned off: the
+ * command, rejection, freeze and recovery points are low-volume and are the
+ * ones an incident actually needs, and they stay unsampled. Each poll metric
+ * keeps its own counter so interleaving cannot skew the no-change ratio, and
+ * every emitted sampled line carries `sample: 10` so a reader multiplies
+ * counts back up instead of misreading a tenth of the traffic as all of it.
+ * The counters are per-isolate, so across isolate churn the rate is
+ * approximately 1-in-10 — fine for distribution stats, which is all these two
+ * feed.
  */
+
+const POLL_SAMPLE_RATE = 10;
+const sampleCounters = new Map<string, number>();
 
 let installed = false;
 
@@ -46,17 +53,25 @@ export function installCampaignMetricSink(): void {
 /** Exposed for tests; returns the sink to its uninstalled state. */
 export function resetCampaignMetricSinkForTest(): void {
 	installed = false;
+	sampleCounters.clear();
 	setCampaignMetricSink(null);
 }
 
 function emitStructuredLine(point: CampaignMetricPoint): void {
+	const sampled = point.name === 'poll_duration_ms' || point.name === 'poll_no_change';
+	if (sampled) {
+		const seen = sampleCounters.get(point.name) ?? 0;
+		sampleCounters.set(point.name, seen + 1);
+		if (seen % POLL_SAMPLE_RATE !== 0) return;
+	}
 	// A single line, parseable without a log-shipper. `metric` rather than
 	// `name` so it does not collide with the platform's own log fields.
 	console.log(
 		JSON.stringify({
 			metric: point.name,
 			value: point.value,
-			...point.tags
+			...point.tags,
+			...(sampled ? { sample: POLL_SAMPLE_RATE } : {})
 		})
 	);
 }

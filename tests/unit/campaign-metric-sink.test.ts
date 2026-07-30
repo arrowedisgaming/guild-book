@@ -88,6 +88,47 @@ describe('the campaign metric sink', () => {
 		expect(line).not.toContain('abc123xyz');
 	});
 
+	it('emits every tenth poll point, starting with the first, stamped with the rate', () => {
+		installCampaignMetricSink();
+
+		for (let i = 0; i < 20; i++) {
+			recordCampaignMetric({ name: 'poll_duration_ms', value: i, tags: {} });
+		}
+
+		// Points 1 and 11 of 20 at a 1-in-10 rate.
+		expect(logged).toHaveLength(2);
+		expect(JSON.parse(logged[0])).toEqual({ metric: 'poll_duration_ms', value: 0, sample: 10 });
+		expect(JSON.parse(logged[1])).toEqual({ metric: 'poll_duration_ms', value: 10, sample: 10 });
+	});
+
+	it('samples the two poll metrics independently, so interleaving cannot skew the ratio', () => {
+		installCampaignMetricSink();
+
+		for (let i = 0; i < 10; i++) {
+			recordCampaignMetric({ name: 'poll_duration_ms', value: i, tags: {} });
+			recordCampaignMetric({ name: 'poll_no_change', value: 1, tags: {} });
+		}
+
+		// One line each: a shared counter would emit two of one and none of the other.
+		const metrics = logged.map((line) => JSON.parse(line).metric);
+		expect(metrics).toEqual(['poll_duration_ms', 'poll_no_change']);
+	});
+
+	it('never samples command, rejection, freeze, or recovery points', () => {
+		installCampaignMetricSink();
+
+		for (let i = 0; i < 20; i++) {
+			recordCampaignMetric({ name: 'command_duration_ms', value: i, tags: {} });
+		}
+		recordCampaignMetric({ name: 'command_rejection', value: 1, tags: {} });
+		recordCampaignMetric({ name: 'session_frozen', value: 1, tags: {} });
+
+		expect(logged).toHaveLength(22);
+		for (const line of logged) {
+			expect(JSON.parse(line)).not.toHaveProperty('sample');
+		}
+	});
+
 	it('drops a point whose name is not on the allowlist', () => {
 		installCampaignMetricSink();
 

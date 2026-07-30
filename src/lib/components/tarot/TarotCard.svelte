@@ -136,6 +136,19 @@
 	.art-frame:focus-within .enlarge {
 		opacity: 1;
 	}
+	/* No hover on touch devices: an opacity-0 button would still be a live,
+	 * invisible tap target — keep it faintly visible instead. */
+	@media (hover: none) {
+		.enlarge {
+			opacity: 0.55;
+		}
+	}
+	/* The art back keeps the glyph back's `.back` class for test/selector
+	 * compatibility, but its striped gradient must not bleed into the mat —
+	 * the Archival Frame's mat is neutral. */
+	.card.back.art {
+		background: var(--parchment);
+	}
 	.back {
 		background: repeating-linear-gradient(
 			45deg,

@@ -17,6 +17,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { cpus } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import sharp from 'sharp';
 import { COLLECTION, FACE_SOURCE_MAP, BACK_SOURCE_MAP } from './source-map.mjs';
@@ -166,7 +167,10 @@ export async function buildCollection({ outputRoot = COLLECTION.outputDir, concu
 	return manifest;
 }
 
-const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname);
+// `fileURLToPath`, not `new URL(...).pathname`: the pathname is
+// percent-encoded, so a space anywhere in the checkout path would make this
+// comparison fail and turn the CLI into a silent exit-0 no-op.
+const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
 	buildCollection()
 		.then((manifest) => {

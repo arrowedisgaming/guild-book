@@ -195,6 +195,62 @@ describe('admin page access', () => {
 		expect(data.users).toHaveLength(0);
 	});
 
+	it('offers no Next link on a full last page (exact multiple of PAGE_SIZE)', async () => {
+		// Seed up to exactly one full page of each: 50 users and 50 characters.
+		// A full page must not be read as evidence of a next page.
+		const insertUser = sqlite.prepare(
+			'INSERT INTO users (id, name, email, login_count) VALUES (?, ?, ?, ?)'
+		);
+		for (let i = 0; i < 48; i++) {
+			insertUser.run(`filler-user-${i}`, `Filler ${i}`, `filler-${i}@example.test`, 0);
+		}
+		const insertCharacter = sqlite.prepare(
+			'INSERT INTO characters (id, user_id, name, kith, path, data, is_draft, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+		);
+		for (let i = 0; i < 46; i++) {
+			insertCharacter.run(`filler-char-${i}`, 'plain-user', `Filler ${i}`, '', '', '{}', 0, 0, STALE_SECONDS, STALE_SECONDS);
+		}
+
+		mocks.getUserId.mockResolvedValue('admin-user');
+		const data = (await load(adminEvent() as never)) as {
+			users: unknown[];
+			characters: unknown[];
+			usersHasNext: boolean;
+			charactersHasNext: boolean;
+		};
+
+		expect(data.users).toHaveLength(50);
+		expect(data.characters).toHaveLength(50);
+		expect(data.usersHasNext).toBe(false);
+		expect(data.charactersHasNext).toBe(false);
+	});
+
+	it('offers a Next link only while rows remain beyond the current page', async () => {
+		// 51 users: page 1 is full and has a next page; page 2 has one row and
+		// does not.
+		const insertUser = sqlite.prepare(
+			'INSERT INTO users (id, name, email, login_count) VALUES (?, ?, ?, ?)'
+		);
+		for (let i = 0; i < 49; i++) {
+			insertUser.run(`filler-user-${i}`, `Filler ${i}`, `filler-${i}@example.test`, 0);
+		}
+
+		mocks.getUserId.mockResolvedValue('admin-user');
+		const pageOne = (await load(adminEvent() as never)) as {
+			users: unknown[];
+			usersHasNext: boolean;
+		};
+		expect(pageOne.users).toHaveLength(50);
+		expect(pageOne.usersHasNext).toBe(true);
+
+		const pageTwo = (await load(adminEvent({ usersPage: '2' }) as never)) as {
+			users: unknown[];
+			usersHasNext: boolean;
+		};
+		expect(pageTwo.users).toHaveLength(1);
+		expect(pageTwo.usersHasNext).toBe(false);
+	});
+
 	it('returns an empty page past the last page instead of erroring', async () => {
 		mocks.getUserId.mockResolvedValue('admin-user');
 		const data = (await load(

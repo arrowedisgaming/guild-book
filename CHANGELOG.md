@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `/sync` now echoes the authenticated recipient in an `X-Guildbook-Recipient`
+  response header, and the table store scrubs the previous user's projection
+  when a 204 carries a foreign value — closing the last account-switch surface
+  where a still-current cursor let a bodyless 204 keep the prior user's private
+  card faces rendered (#25, residual of #22).
+
 ## [0.9.0] - 2026-07-31
 
 ### Added

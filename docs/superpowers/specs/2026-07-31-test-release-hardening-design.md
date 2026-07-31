@@ -37,11 +37,13 @@ The existing DOM poison-card test remains a required privacy canary. CI may run
 one diagnostic retry to capture a trace, but a pass on retry must not convert
 the failing run into success.
 
-Every table bootstrap and `/sync` response will carry the authenticated
-recipient user ID alongside the cursor, events, and projection. The browser
-store will be constructed with the user ID from server-rendered page data and
-will reject the complete response if its recipient differs. Rejection preserves
-the last known-good snapshot and surfaces only the existing generic sync error.
+Every table bootstrap, changed `/sync` response, and command or lifecycle
+response capable of replacing a projection will carry the authenticated
+recipient user ID. The browser store will be constructed with the user ID from
+server-rendered page data and will reject the complete response if its recipient
+differs. It also rejects an initial snapshot whose recipient differs from the
+store binding. Rejection preserves the last known-good snapshot and surfaces
+only the existing generic sync or command error.
 This is defense in depth for request/authentication cross-contamination: it does
 not replace server-side actor-scoped projection or secret filtering.
 
@@ -53,8 +55,8 @@ card faces, private payloads, cookies, or authorization headers.
 A server integration test will execute two concurrent sync requests with
 independent request-scoped identities and poisoned secrets/projections. It must
 prove that each response identifies the correct recipient and contains only
-that recipient's private material. Store tests will prove that a mismatched
-recipient response is discarded even when it has a newer version.
+that recipient's private material. Store tests will prove that mismatched poll
+and command responses are discarded even when they carry newer versions.
 
 The intermittent CI evidence does not currently identify whether the original
 bad state arose in auth, server projection, or browser application. The change
@@ -95,11 +97,12 @@ by the deterministic Playwright profile.
 
 1. Verifies that the tag exactly equals `v` plus `package.json`'s version and
    that the same version has a changelog heading.
-2. Calls the reusable CI workflow against the tagged commit.
-3. Checks out that exact tag in a deployment job which depends on verification.
-4. Enters the protected GitHub `production` environment, where a human approval
+2. Verifies that the tagged commit is reachable from `origin/main`.
+3. Calls the reusable CI workflow against the tagged commit.
+4. Checks out that exact tag in a deployment job which depends on verification.
+5. Enters the protected GitHub `production` environment, where a human approval
    rule may pause the job.
-5. Rebuilds the Cloudflare bundle and runs `wrangler deploy` using only
+6. Rebuilds the Cloudflare bundle and runs `wrangler deploy` using only
    `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` environment secrets.
 
 Remote D1 migrations remain an explicit pre-deployment operator action because
@@ -110,8 +113,10 @@ release procedure. Direct local `wrangler deploy` remains possible for emergency
 rollback, but the documented normal release path is exclusively the gated tag
 workflow.
 
-A local `npm run release:verify` command mirrors all credential-free release
-checks. It does not deploy or touch remote D1.
+A local `npm run release:verify` command validates the current
+package/changelog metadata, compares content changes with `origin/main`, and
+mirrors all remaining credential-free release checks. It does not deploy or
+touch remote D1.
 
 ## Campaign Session Store Coverage
 
@@ -158,7 +163,8 @@ behavior changes only where a failing regression test identifies a real defect.
 
 - The original privacy assertions are unchanged or strengthened.
 - Concurrent server tests prove request-scoped recipient isolation.
-- Store tests prove mismatched-recipient responses cannot replace safe state.
+- Store tests prove mismatched-recipient sync, command, lifecycle, and initial
+  responses cannot replace safe state.
 - `npm run test`, `npm run check`, and the deterministic `npm run test:e2e`
   succeed.
 - A deliberately flaky Playwright test would make CI fail even after retry.

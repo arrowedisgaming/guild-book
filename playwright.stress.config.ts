@@ -11,7 +11,6 @@ export default defineConfig(baseConfig, {
 	workers: 8,
 	retries: 0,
 	repeatEach: 3,
-	failOnFlakyTests: true,
 	reporter: [['list']],
 	use: {
 		trace: 'retain-on-failure',

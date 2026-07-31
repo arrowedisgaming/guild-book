@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { validateReleaseTag } from '../../scripts/release/validate-tag.mjs';
 
 const changelog = `# Changelog
@@ -11,6 +13,21 @@ const changelog = `# Changelog
 `;
 
 describe('validateReleaseTag', () => {
+	it('validates the current package version when the local CLI receives no tag', () => {
+		const packageVersion = String(
+			(JSON.parse(readFileSync('package.json', 'utf8')) as { version?: unknown }).version ?? ''
+		);
+		const { GITHUB_REF_NAME: _ignored, ...env } = process.env;
+		const result = spawnSync(process.execPath, ['scripts/release/validate-tag.mjs'], {
+			cwd: process.cwd(),
+			encoding: 'utf8',
+			env
+		});
+
+		expect(result.status, result.stderr).toBe(0);
+		expect(result.stdout).toContain(`release validation passed for v${packageVersion}`);
+	});
+
 	it('accepts an exact stable version tag with a dated changelog release', () => {
 		expect(validateReleaseTag('v0.8.0', '0.8.0', changelog)).toEqual([]);
 	});

@@ -9,12 +9,14 @@ const STORAGE_KEY = 'guildbook-wizard-state';
 
 class MemoryStorage {
 	readonly values = new Map<string, string>();
+	writeCount = 0;
 
 	getItem(key: string): string | null {
 		return this.values.get(key) ?? null;
 	}
 
 	setItem(key: string, value: string): void {
+		this.writeCount += 1;
 		this.values.set(key, value);
 	}
 
@@ -89,7 +91,7 @@ describe('wizard store persistence', () => {
 
 	it('loads a valid persisted draft and exposes its summary and access boundary', () => {
 		const storage = new MemoryStorage();
-		storage.setItem(
+		storage.values.set(
 			STORAGE_KEY,
 			JSON.stringify(
 				storedState({
@@ -105,6 +107,40 @@ describe('wizard store persistence', () => {
 		expect(store.draftSummary()).toEqual({ name: 'Mara', currentStep: 3 });
 		expect(store.isStepAccessible(3)).toBe(true);
 		expect(store.isStepAccessible(4)).toBe(false);
+		expect(storage.writeCount).toBe(0);
+	});
+
+	it('writes a migrated valid blob back once without waiting for a user mutation', () => {
+		const storage = new MemoryStorage();
+		storage.values.set(
+			STORAGE_KEY,
+			JSON.stringify(storedState({ completedSteps: [0, 0, 99] }))
+		);
+
+		createStore(storage);
+
+		expect(storage.writeCount).toBe(1);
+		expect(JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}').completedSteps).toEqual([0]);
+	});
+
+	it('does not rewrite a current blob solely because its object keys have a different order', () => {
+		const storage = new MemoryStorage();
+		const current = storedState({ character: { ...createBlankCharacter(), name: 'Mara' } });
+		storage.values.set(
+			STORAGE_KEY,
+			JSON.stringify({
+				character: current.character,
+				nonce: current.nonce,
+				completedSteps: current.completedSteps,
+				currentStep: current.currentStep,
+				active: current.active,
+				version: current.version
+			})
+		);
+
+		createStore(storage);
+
+		expect(storage.writeCount).toBe(0);
 	});
 
 	it.each(['{not json', JSON.stringify({ currentStep: 0 })])(

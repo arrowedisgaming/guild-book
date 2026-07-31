@@ -174,8 +174,13 @@ describe('session HTTP contracts', () => {
 				fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'end' } }) as never
 			);
 			expect(response.status).toBe(200);
-			const body = (await response.json()) as { success: boolean; action: string; publicHistoryChecksum: string };
-			expect(body).toMatchObject({ success: true, action: 'end' });
+			const body = (await response.json()) as {
+				recipientUserId: string;
+				success: boolean;
+				action: string;
+				publicHistoryChecksum: string;
+			};
+			expect(body).toMatchObject({ recipientUserId: gmUserId, success: true, action: 'end' });
 			expect(body.publicHistoryChecksum).toMatch(/^[a-f0-9]{64}$/);
 		});
 
@@ -300,7 +305,11 @@ describe('session HTTP contracts', () => {
 				}) as never
 			);
 			expect(response.status).toBe(200);
-			const body = (await response.json()) as { outcome: { ok: boolean; resultingVersion: number } };
+			const body = (await response.json()) as {
+				recipientUserId: string;
+				outcome: { ok: boolean; resultingVersion: number };
+			};
+			expect(body.recipientUserId).toBe(playerAUserId);
 			expect(body.outcome).toEqual({ ok: true, resultingVersion: 2 });
 		});
 

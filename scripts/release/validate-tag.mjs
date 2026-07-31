@@ -30,10 +30,11 @@ export function validateReleaseTag(tag, packageVersion, changelog) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-	const tag = process.argv[2] ?? process.env.GITHUB_REF_NAME ?? '';
 	const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+	const packageVersion = String(packageJson.version ?? '');
+	const tag = process.argv[2] || process.env.GITHUB_REF_NAME || `v${packageVersion}`;
 	const changelog = readFileSync('CHANGELOG.md', 'utf8');
-	const errors = validateReleaseTag(tag, String(packageJson.version ?? ''), changelog);
+	const errors = validateReleaseTag(tag, packageVersion, changelog);
 	if (errors.length > 0) {
 		for (const error of errors) console.error(`release validation: ${error}`);
 		process.exitCode = 1;

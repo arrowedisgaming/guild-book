@@ -8,6 +8,8 @@ export default defineConfig({
 			'node scripts/e2e/setup-db.mjs && npm run build && npm run preview -- --host 127.0.0.1 --port 4173',
 		port: 4173,
 		reuseExistingServer: false,
+		stdout: 'pipe',
+		stderr: 'pipe',
 		env: {
 			...process.env,
 			NODE_ENV: 'development',

@@ -14,6 +14,9 @@ describe('Playwright release configuration', () => {
 		expect(config.workers).toBe(2);
 		expect(config.retries).toBe(1);
 		expect(config.failOnFlakyTests).toBe(true);
+		const webServer = config.webServer as { stdout?: string; stderr?: string };
+		expect(webServer.stdout).toBe('pipe');
+		expect(webServer.stderr).toBe('pipe');
 		expect(config.use).toMatchObject({
 			trace: 'on-first-retry',
 			screenshot: 'only-on-failure',

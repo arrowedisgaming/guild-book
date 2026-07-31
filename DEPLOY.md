@@ -51,8 +51,13 @@ ordinary `main` builds, metadata validation, and browser tests cannot read them.
 2. Run the complete credential-free release gate locally:
 
    ```bash
+   git fetch origin main
    npm run release:verify
    ```
+
+   This validates the current package/changelog metadata and compares content
+   changes against the freshly fetched `origin/main` before running the rest of
+   the credential-free gate.
 
 3. Merge that exact commit to `main`. Apply any required production D1
    migrations and preflights before approving deployment; the workflow never

@@ -26,6 +26,7 @@ export const POST: RequestHandler = async (event) => {
 	const status = result.outcome.ok ? 200 : rejectionStatus(result.outcome.code);
 	return json(
 		{
+			recipientUserId: role.userId,
 			outcome: result.outcome,
 			projection: result.projection,
 			finiteProjection: result.finiteProjection,

@@ -28,7 +28,7 @@ Actions, Cloudflare Workers, Wrangler.
 
 ---
 
-### Task 1: Bind sync payloads to their authenticated recipient
+### Task 1: Bind projection payloads to their authenticated recipient
 
 **Files:**
 
@@ -37,6 +37,8 @@ Actions, Cloudflare Workers, Wrangler.
 - Modify: `tests/integration/session-privacy.test.ts`
 - Modify: `src/lib/stores/campaign-session.svelte.ts`
 - Modify: `src/routes/api/campaigns/[id]/sync/+server.ts`
+- Modify: command and lifecycle routes under
+  `src/routes/api/campaigns/[id]/sessions/[sessionId]/`
 - Modify: `src/routes/campaigns/[id]/table/+page.server.ts`
 - Modify: `src/routes/campaigns/[id]/table/+page.svelte`
 - Modify: `src/routes/campaigns/[id]/+page.server.ts`
@@ -46,7 +48,8 @@ Actions, Cloudflare Workers, Wrangler.
 `CampaignSessionStoreOptions` gains required `recipientUserId: string` at every
 browser call site. A successful `/sync` JSON body is
 `{ recipientUserId, cursor, events, session }`; every response carries
-`X-Request-Id`.
+`X-Request-Id`. Command and successful lifecycle response bodies that can
+replace a projection also carry `recipientUserId`.
 
 - [ ] Add a store test whose response has a different recipient, newer cursor,
   newer session version, and poisoned event. Assert that `poll()` rejects with
@@ -61,6 +64,8 @@ browser call site. A successful `/sync` JSON body is
 - [ ] Pass the server-rendered user ID into both table and campaign-dashboard
   stores.
 - [ ] Reject a mismatched recipient before applying cursor, events, or session.
+- [ ] Reject mismatched initial, command, and lifecycle recipients before
+  applying any projection.
 - [ ] Run the focused store and integration tests and confirm they pass.
 
 ### Task 2: Prove concurrent request-scoped privacy and retain safe evidence
@@ -160,7 +165,8 @@ single source of truth.
   workers, one diagnostic retry, `failOnFlakyTests`, and failure artifacts.
 - [ ] Confirm the assertion fails against the current configuration.
 - [ ] Configure CI workers/retries/flaky handling, list+HTML+JUnit reporters,
-  trace-on-retry, failure screenshots, and failure video.
+  trace-on-retry, failure screenshots, failure video, and piped web-server
+  stdout/stderr.
 - [ ] Add the stress config targeting campaign sync/privacy specs with explicit
   workers and repetition; do not run it in the required PR path.
 - [ ] Add a small Node runner that tees Playwright stdout/stderr to a file and
@@ -200,9 +206,11 @@ single source of truth.
 - [ ] Add a tag-triggered release workflow with metadata, reusable verification,
   and deployment jobs. Make deployment depend on both prior jobs and check out
   the same tag commit.
+- [ ] Require the tagged commit to be reachable from `origin/main`.
 - [ ] Set `environment: production` and pass only
   `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` to `wrangler deploy`.
-- [ ] Add `release:validate` and credential-free `release:verify` scripts.
+- [ ] Add `release:validate` and credential-free `release:verify` scripts;
+  include metadata validation and content comparison against `origin/main`.
 - [ ] Document repository environment creation, required reviewer, least-scope
   Cloudflare token, account ID, migration checkpoint, tag creation, monitoring,
   and rollback.

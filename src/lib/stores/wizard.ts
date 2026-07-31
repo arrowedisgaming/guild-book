@@ -112,29 +112,51 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	};
 }
 
-function loadFromStorage(storage: WizardStorage | null): WizardState {
-	if (!storage) return createInitialState();
+interface LoadedWizardState {
+	state: WizardState;
+	persistMigration: boolean;
+}
+
+function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
+	if (!storage) return { state: createInitialState(), persistMigration: false };
 	try {
 		const raw = storage.getItem(STORAGE_KEY);
-		if (!raw) return createInitialState();
+		if (!raw) return { state: createInitialState(), persistMigration: false };
 
 		let parsed: unknown;
 		try {
 			parsed = JSON.parse(raw);
 		} catch {
 			storage.removeItem(STORAGE_KEY);
-			return createInitialState();
+			return { state: createInitialState(), persistMigration: false };
 		}
 
 		const migrated = migrateWizardState(parsed);
 		if (!migrated) {
 			storage.removeItem(STORAGE_KEY);
-			return createInitialState();
+			return { state: createInitialState(), persistMigration: false };
 		}
-		return migrated;
+		return {
+			state: migrated,
+			persistMigration: canonicalStorageJson(parsed) !== canonicalStorageJson(migrated)
+		};
 	} catch {
-		return createInitialState();
+		return { state: createInitialState(), persistMigration: false };
 	}
+}
+
+function canonicalStorageJson(value: unknown): string {
+	return JSON.stringify(sortJsonKeys(value));
+}
+
+function sortJsonKeys(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(sortJsonKeys);
+	if (!value || typeof value !== 'object') return value;
+	return Object.fromEntries(
+		Object.entries(value)
+			.sort(([left], [right]) => left.localeCompare(right))
+			.map(([key, nested]) => [key, sortJsonKeys(nested)])
+	);
 }
 
 function saveToStorage(storage: WizardStorage | null, state: WizardState): void {
@@ -147,7 +169,9 @@ function defaultWizardStorage(): WizardStorage | null {
 }
 
 export function createWizardStore(storage: WizardStorage | null = defaultWizardStorage()) {
-	const { subscribe, update } = writable<WizardState>(loadFromStorage(storage));
+	const loaded = loadFromStorage(storage);
+	if (loaded.persistMigration) saveToStorage(storage, loaded.state);
+	const { subscribe, update } = writable<WizardState>(loaded.state);
 
 	// A readable subscription fires immediately. Do not rewrite an absent or
 	// invalid blob merely by importing this module; persist only real mutations.

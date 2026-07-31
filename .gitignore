@@ -37,7 +37,7 @@ playwright/.cache/
 
 # Local tool state and instructions
 .[c]laude/
-C[L]AUDE.md
+C[Ll]AUDE.md
 AGENTS.md
 .agents/
 .co[d]ex/

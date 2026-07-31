@@ -24,10 +24,11 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await expect(page).toHaveURL(/\/create\/hmtw\/talents$/);
+	await page.getByRole('radio', { name: 'Ambusher', exact: true }).click();
 	await page.reload();
 	await expect(page).toHaveURL(/\/create\/hmtw\/talents$/);
 	await expect(page.getByRole('heading', { name: 'Talents', exact: true })).toBeVisible();
-	await expect(page.getByRole('radio').first()).toBeChecked();
+	await expect(page.getByRole('radio', { name: 'Ambusher', exact: true })).toBeChecked();
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await page.getByLabel('Quest').fill('Recover the bell beneath the drowned abbey.');
@@ -42,6 +43,7 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await expect(page.getByRole('heading', { name: 'Mara of the Lantern' })).toBeVisible();
 	await expect(page.getByText('A Noble House (Humans)')).toBeVisible();
 	await expect(page.getByText('Path of Pentacles')).toBeVisible();
+	await expect(page.getByRole('listitem').filter({ hasText: 'Ambusher' })).toBeVisible();
 	await expect(page.getByText('Recover the bell beneath the drowned abbey.')).toBeVisible();
 	await expect(page.getByText('Disgraced Soldier')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Save adventurer' })).toBeEnabled();

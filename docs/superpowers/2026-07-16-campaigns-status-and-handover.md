@@ -1,13 +1,13 @@
 # Campaigns & Shared Tarot — Status, Failure Modes, and What's Left
 
 **Date:** 2026-07-16
-**Maintainer:** Arrowed; updated after the Tarot Procedure Correctness v2
-implementation and adversarial review
+**Record:** Updated after the Tarot Procedure Correctness v2 implementation and
+second adversarial review
 **Scope:** everything from `177af5b` (Release v0.1.0) through the v2 correctness
 bundle
 
 This is a handover, not a progress report. It is written to be useful to whoever
-picks this up — including me in a fresh session — so it leads with what went
+picks this up — including in a fresh session — so it leads with what went
 wrong rather than what got built.
 
 ---
@@ -19,12 +19,13 @@ rounds and the Tarot Procedure Correctness v2 bundle. Everything remains **local
 and unpushed**. The engine and content pipeline are real and well-tested.
 
 **But two adversarial reviews found 27 issues between them, and the same root
-cause produced at least four rules errors — including one where I deleted a real
-game rule from the specification after telling the owner the game didn't have
-it.** That deletion was approved by the owner on the strength of my false claim.
+cause produced at least four rules errors — including one where a real game rule
+was deleted from the specification after the owner was incorrectly told the
+game did not contain it.** The owner approved that deletion based on the false
+claim.
 
-The structural fix recommended by this handover is now implemented on
-`tarot-procedure-correctness-v2`: schema v2 separates definition sources
+The structural fix recommended by this handover is now implemented in the Tarot
+Procedure Correctness v2 workstream: schema v2 separates definition sources
 from every material invocation citation, all 31 supported procedures were
 re-audited, the known domain errors were corrected, and the existing Test of
 Fate client now executes the required Fool reshuffle. Work still stops before
@@ -36,7 +37,7 @@ Campaign Foundation.
 
 | | |
 |---|---|
-| Branch | `tarot-procedure-correctness-v2` (isolated worktree; not merged or pushed) |
+| Workstream | Tarot Procedure Correctness v2 (isolated worktree; not merged or pushed) |
 | `main` | 3 increments + 1 fix round merged, **13+ commits ahead of `origin`, nothing pushed** |
 | Tests | 273 passing, 22 files; focused Playwright 8 passing |
 | `npm run check` | 0 errors |
@@ -63,7 +64,7 @@ Campaign Foundation.
 | D3 spec approval | Resolved — approved |
 | D4 Pages vs Workers | **OPEN** — deliberately deferred to Increment 5 |
 | D5 no invented rules | Standing rule — the rulebook overrides the spec |
-| ~~D6 Signs deck~~ | **WITHDRAWN — my premise was false** |
+| ~~D6 Signs deck~~ | **WITHDRAWN — the premise was false** |
 | D7 rules live at the call site | Standing rule — now enforced by schema v2 `invokedFrom` |
 | D8 Fool reshuffle trigger | Resolved — **drawn**, with the lone `played` wording treated as an erratum |
 
@@ -73,25 +74,25 @@ Campaign Foundation.
 
 ### 3.1 The primary failure: reading where a rule is *printed*, not where it is *used*
 
-Four separate errors, one cause. Each time I searched for the section a rule
-lives in, found something that looked complete, and stopped.
+Four separate errors, one cause. Each search stopped after finding the section
+where a rule lives, even when the invocation elsewhere changed its behavior.
 
-| Error | What I did | What the book actually says |
+| Error | What went wrong | What the book actually says |
 |---|---|---|
-| **Signs and Portents** | Told the owner the book was *silent* on what it draws. Asked them to fill the gap. They chose a fresh deck (D6). | Ch9:130 — "the GM **looks at the top card of the minor arcana discard pile** and then consults the Signs and Portents table." Repeated at Ch9:160. **The instruction is at the call site (City Events), not in the Signs section.** |
+| **Signs and Portents** | The owner was told the book was *silent* on what it draws and was asked to fill the gap. A fresh deck was chosen (D6). | Ch9:130 — "the GM **looks at the top card of the minor arcana discard pile** and then consults the Signs and Portents table." Repeated at Ch9:160. **The instruction is at the call site (City Events), not in the Signs section.** |
 | **`gm-twist`** | Modelled as a `draw`. | Ch10:354 — "**Glance at** the top of the minor arcana discard pile." A draw consumes a card and shifts later odds. |
 | **Bracket convention** | Typed only `[value]`/`[odd]`/`[even]`. | Ch9:275 declares the convention in *Carouse*, governing the *Hangover* table: **every** bracket refers to the discard top — including `[Swords]` and `[1–2]`, i.e. most of the rule. |
-| **Guard / shield Initiative** | Declared it fictional. **Deleted it from the approved spec** and from Increment 3's modifier + command. Got owner approval by saying the game lacked it. | Ch7:552 — "If you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded." **`552:### Guard` was in my own grep output and I never opened it.** |
+| **Guard / shield Initiative** | It was declared fictional and **deleted from the approved spec** and Increment 3's modifier + command. Owner approval was based on the incorrect claim that the game lacked it. | Ch7:552 — "If you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded." **`552:### Guard` was present in the captured grep output but was never opened.** |
 
-The Guard case is the worst, and it happened **after** I had already written D7 as
-a standing rule about this exact mistake. I searched Chapter 9's `Shield`
+The Guard case is the worst, and it happened **after** D7 had already recorded a
+standing rule about this exact mistake. The search covered Chapter 9's `Shield`
 equipment entry (Notches) and Chapter 7's attack tie-breaks, concluded the
-mechanic didn't exist, and never checked the *actions* list. I searched the noun
-(`shield`) and not the effect (`Initiative`).
+mechanic did not exist, and never checked the *actions* list. It searched the
+noun (`shield`) and not the effect (`Initiative`).
 
 **The structural cause:** the audit manifest's `source` field points at where a
-table or rule is *printed*. I have been treating it as evidence of how the thing
-is *used*. It is not. See §5.
+table or rule is *printed*. It had been treated as evidence of how the thing is
+*used*. It is not. See §5.
 
 ### 3.2 Tests that confirmed bugs instead of catching them
 
@@ -99,11 +100,11 @@ is *used*. It is not. See §5.
   the parser used — asserting the implementation back at itself. It was
   structurally incapable of catching `[Swords]` going untyped, which is exactly
   what had happened.
-- **My own engine test constructed an illegal state.** The Fool-on-push test
+- **An engine test constructed an illegal state.** The Fool-on-push test
   pushed a total of **17** — an initial *success*. It passed only because
-  `resolveTestOfFate` didn't yet enforce the push precondition. When I added the
-  guard, my own test failed.
-- **My own E2E codified a rule violation.** It checked "Favor" *after* drawing,
+  `resolveTestOfFate` did not yet enforce the push precondition. Adding the
+  guard made that test fail.
+- **An E2E codified a rule violation.** It checked "Favor" *after* drawing,
   a sequence Ch1 forbids (Resolve/favor are pre-draw). It was encoding the
   manipulable UI as correct behaviour.
 
@@ -114,24 +115,26 @@ confirm the test fails, revert.
 
 The `<br>` welding fix went into the *table* extraction path. The identical bug
 sat in the *prose* path the whole time (`normalizeMarkdown`), and shipped
-`face.•` and `down[Pentacles]` into `rules.json`. Two pipelines, one bug class, I
-patched one. Both now share the rule and a test guards both.
+`face.•` and `down[Pentacles]` into `rules.json`. Two pipelines shared one bug
+class, but only one was initially patched. Both now share the rule and a test
+guards both.
 
-### 3.4 A hole in my own integrity guard
+### 3.4 A hole in the integrity guard
 
-`verify-pack-version.mjs` hashed only the *generated collection files*. When I
-added `doomTiers`, `favorModifier` and `groupOutcomes` to `index.json`, **the
+`verify-pack-version.mjs` hashed only the *generated collection files*. When
+`doomTiers`, `favorModifier` and `groupOutcomes` were added to `index.json`, **the
 digest didn't change** — a live game rule could be edited with no version bump.
 `index.json` is not just a manifest; the runtime snapshot compiles from it. Fixed
 and proven by tampering.
 
 ### 3.5 What the reviews cost, and what they were worth
 
-Neither review was optional. gpt-5.5 found 7 issues; gpt-5.6-sol found ~20 more
-*after* those fixes, including the Guard deletion. **My self-review found none of
-these.** Every rules error was found by someone reading the book properly.
+Neither review was optional. The first found 7 issues; the second found roughly
+20 more *after* those fixes, including the Guard deletion. **The preceding
+self-review found none of these.** Every rules error was found by a fresh reading
+of the book.
 
-One correction for the record: **gpt-5.6-sol was wrong about one finding.** It
+One correction for the record: **the second review was wrong about one finding.** It
 claimed `challenge-end-the-round` imported the wrong heading and that Ch7:707 is
 authoritative on the Fool. Ch7:707 doesn't mention the Fool at all. Its
 *underlying* point is real and worse — see §6.1.
@@ -251,6 +254,6 @@ the running application.
   mechanic's *effect*, not its noun.
 - **Mutation-test every new guard.** Reintroduce the bug; confirm failure.
 - **A test that shares the implementation's assumptions proves nothing.** Three
-  of mine actively confirmed bugs.
+  prior tests actively confirmed bugs.
 - **"Gate passing" ≠ "rule correct."** Every rules error above sat behind a fully
   green gate.

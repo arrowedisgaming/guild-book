@@ -77,6 +77,37 @@ describe('createCampaignSessionStore', () => {
 		vi.unstubAllGlobals();
 	});
 
+	it('rejects an initial projection bound to a different recipient', () => {
+		expect(() =>
+			createCampaignSessionStore(
+				'campaign-1',
+				{ ...makeInitialSnapshot(1), recipientUserId: 'player-b' },
+				{ recipientUserId }
+			)
+		).toThrow('Unable to refresh the campaign table');
+	});
+
+	it('discards a command projection bound to a different recipient', async () => {
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+			jsonResponse(200, {
+				recipientUserId: 'player-b',
+				outcome: { ok: true },
+				projection: { campaignCursor: 99, sessionVersion: 99, projection: emptyProjection }
+			})
+		);
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			fetchImpl
+		});
+
+		await expect(store.sendCommand({ type: 'end-round' })).resolves.toEqual({
+			ok: false,
+			message: 'That action could not be completed'
+		});
+		expect(store.snapshot).toEqual(initial);
+	});
+
 	it('registers and removes each browser lifecycle listener exactly once', () => {
 		vi.useFakeTimers();
 		const { documentTarget, windowTarget } = installBrowserHarness();
@@ -209,6 +240,7 @@ describe('createCampaignSessionStore', () => {
 
 		response.resolve(
 			jsonResponse(200, {
+				recipientUserId,
 				outcome: { ok: true },
 				projection: { campaignCursor: 6, sessionVersion: 5, projection: emptyProjection }
 			})
@@ -222,6 +254,7 @@ describe('createCampaignSessionStore', () => {
 			{
 				path: 'challenge-commands',
 				body: {
+					recipientUserId,
 					outcome: { ok: true },
 					projection: { campaignCursor: 6, sessionVersion: 2, projection: emptyProjection },
 					challengeProjection: { stage: 'round-setup' },
@@ -231,6 +264,7 @@ describe('createCampaignSessionStore', () => {
 			{
 				path: 'guided-test-commands',
 				body: {
+					recipientUserId,
 					outcome: { ok: true },
 					projection: { campaignCursor: 7, sessionVersion: 3, projection: emptyProjection },
 					guidedTestProjection: { kind: 'single' },
@@ -240,6 +274,7 @@ describe('createCampaignSessionStore', () => {
 			{
 				path: 'camp-commands',
 				body: {
+					recipientUserId,
 					outcome: { ok: true },
 					projection: { campaignCursor: 8, sessionVersion: 4, projection: emptyProjection },
 					campProjection: { procedureId: 'high-chant' },
@@ -249,6 +284,7 @@ describe('createCampaignSessionStore', () => {
 			{
 				path: 'correction-commands',
 				body: {
+					recipientUserId,
 					outcome: { ok: true },
 					projection: { campaignCursor: 9, sessionVersion: 5, projection: emptyProjection }
 				}
@@ -256,6 +292,7 @@ describe('createCampaignSessionStore', () => {
 			{
 				path: 'finite-commands',
 				body: {
+					recipientUserId,
 					outcome: { ok: true },
 					projection: { campaignCursor: 10, sessionVersion: 6, projection: emptyProjection },
 					finiteProjection: { procedureId: 'crawl' },
@@ -300,12 +337,15 @@ describe('createCampaignSessionStore', () => {
 			.fn<typeof fetch>()
 			.mockResolvedValueOnce(
 				jsonResponse(200, {
+					recipientUserId,
 					success: true,
 					action: 'freeze',
 					session: { campaignCursor: 6, sessionVersion: 2, projection: emptyProjection }
 				})
 			)
-			.mockResolvedValueOnce(jsonResponse(200, { success: true, action: 'end', session: null }));
+			.mockResolvedValueOnce(
+				jsonResponse(200, { recipientUserId, success: true, action: 'end', session: null })
+			);
 		const store = createCampaignSessionStore('campaign-1', makeInitialSnapshot(1), {
 			recipientUserId,
 			fetchImpl
@@ -342,6 +382,7 @@ describe('createCampaignSessionStore', () => {
 		// The command's POST resolves FIRST: the fresher write lands.
 		postDeferred.resolve(
 			jsonResponse(200, {
+				recipientUserId,
 				outcome: { ok: true, resultingVersion: 2 },
 				projection: { campaignCursor: 6, sessionVersion: 2, projection: emptyProjection }
 			})
@@ -445,6 +486,7 @@ describe('createCampaignSessionStore', () => {
 		// only reached version 2 — older than what the poll already applied.
 		postDeferred.resolve(
 			jsonResponse(200, {
+				recipientUserId,
 				outcome: { ok: true, resultingVersion: 2 },
 				projection: { campaignCursor: 6, sessionVersion: 2, projection: emptyProjection }
 			})

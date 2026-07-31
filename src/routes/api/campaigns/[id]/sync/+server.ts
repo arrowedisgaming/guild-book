@@ -13,8 +13,6 @@ import { capEventRows, MAX_EVENTS_PER_RESPONSE, parseNonNegativeIntParam, toWire
 import { hasFreshMatchingCursorHint, recordCursorHint } from '$lib/server/session/latest-cursor';
 import { recordCampaignMetric, recordPoll } from '$lib/server/observability/campaign-metrics';
 
-const NO_CONTENT_HEADERS = campaignHeaders();
-
 /**
  * Polling endpoint (spec §10.1, controller amendment 1):
  * `GET /api/campaigns/[id]/sync?after=<campaign event cursor>&version=<last-seen session version>`.
@@ -27,6 +25,8 @@ const NO_CONTENT_HEADERS = campaignHeaders();
  * same actor-scoped builder every other session route uses.
  */
 export const GET: RequestHandler = async (event) => {
+	const requestId = crypto.randomUUID();
+	const responseHeaders = () => ({ ...campaignHeaders(), 'X-Request-Id': requestId });
 	// Increment 5 Task 2: poll latency and the no-change ratio are the two
 	// numbers the Task 4 capacity gate is argued from, and neither can be
 	// measured anywhere but here — `latest-cursor.ts` sees only the hint hits.
@@ -52,7 +52,7 @@ export const GET: RequestHandler = async (event) => {
 	if (hasFreshMatchingCursorHint(campaignId, after)) {
 		// `hasFreshMatchingCursorHint` already counted the no-change itself.
 		recordCampaignMetric({ name: 'poll_duration_ms', value: Date.now() - startedAt, tags: {} });
-		return new Response(null, { status: 204, headers: NO_CONTENT_HEADERS });
+		return new Response(null, { status: 204, headers: responseHeaders() });
 	}
 
 	const db = await getDb(event);
@@ -65,7 +65,7 @@ export const GET: RequestHandler = async (event) => {
 	if (currentCursor === after && !sessionVersionChanged) {
 		recordCursorHint(campaignId, currentCursor);
 		recordPoll({ durationMs: Date.now() - startedAt, changed: false, outcome: 'authoritative' });
-		return new Response(null, { status: 204, headers: NO_CONTENT_HEADERS });
+		return new Response(null, { status: 204, headers: responseHeaders() });
 	}
 
 	const rows = await listCampaignEventsSince(db, campaignId, after, MAX_EVENTS_PER_RESPONSE + 1);
@@ -145,5 +145,8 @@ export const GET: RequestHandler = async (event) => {
 	if (!truncated) recordCursorHint(campaignId, currentCursor);
 
 	recordPoll({ durationMs: Date.now() - startedAt, changed: true });
-	return json({ cursor: nextCursor, events, session }, { headers: campaignHeaders() });
+	return json(
+		{ recipientUserId: role.userId, cursor: nextCursor, events, session },
+		{ headers: responseHeaders() }
+	);
 };

@@ -78,7 +78,12 @@ export const load: PageServerLoad = async (event) => {
 		}
 	}
 
-	const initial: SessionSyncSnapshot = { cursor, events: [], session };
+	const initial: SessionSyncSnapshot = {
+		recipientUserId: role.userId,
+		cursor,
+		events: [],
+		session
+	};
 
 	// The GM's "Begin Challenge" enemy-fact form needs the real `threat`
 	// values (review round: previously free text, so a typo like `Elite`

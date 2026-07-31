@@ -108,12 +108,16 @@ export interface TableSession {
 }
 
 export interface SessionSyncSnapshot {
+	recipientUserId: string;
 	cursor: number;
 	events: WireSessionEventLike[];
 	session: TableSession | null;
 }
 
 export interface CampaignSessionStoreOptions {
+	/** Authenticated recipient this browser store is bound to. A sync payload
+	 * for any other recipient is discarded in full. */
+	recipientUserId: string;
 	/** Base poll interval while visible, in ms. Defaults to the table's ~1s
 	 * cadence. */
 	intervalMs?: number;
@@ -129,6 +133,7 @@ export interface SendCommandResult {
 }
 
 interface SyncResponseBody {
+	recipientUserId: string;
 	cursor: number;
 	events: WireSessionEventLike[];
 	session: TableSession | null;
@@ -206,7 +211,7 @@ export const COMMAND_ERROR_MESSAGE = 'That action could not be completed';
 export function createCampaignSessionStore(
 	campaignId: string,
 	initial: SessionSyncSnapshot,
-	options: CampaignSessionStoreOptions = {}
+	options: CampaignSessionStoreOptions
 ) {
 	const intervalMs = options.intervalMs ?? 1000;
 	const jitterMs = options.jitterMs ?? 150;
@@ -259,6 +264,9 @@ export function createCampaignSessionStore(
 		if (!response.ok) throw new Error(SYNC_ERROR_MESSAGE);
 
 		const body = (await response.json()) as SyncResponseBody;
+		if (body.recipientUserId !== options.recipientUserId) {
+			throw new Error(SYNC_ERROR_MESSAGE);
+		}
 		// Review round 2 fix: a poll started before a command's POST can
 		// resolve *after* that command's response already replaced `session`
 		// with a newer projection (sendCommand's optimistic update) — the
@@ -269,6 +277,7 @@ export function createCampaignSessionStore(
 		// advances them — see `performSend`), so they always take the poll's
 		// value.
 		snapshot = {
+			recipientUserId: body.recipientUserId,
 			cursor: body.cursor,
 			events: body.events,
 			session: isOlderSessionVersion(snapshot.session?.sessionVersion, body.session?.sessionVersion)

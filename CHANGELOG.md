@@ -8,17 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-31
+
 ### Changed
 
 - **The two per-poll campaign metrics are now sampled 1-in-10 at the sink**
-  (`poll_duration_ms`, `poll_no_change`). Unsampled they cost one log line per
-  second per open client — ~27 lines/second at pilot scale, growing linearly
-  with public users. Each metric keeps its own counter so interleaving cannot
-  skew the no-change ratio, and every emitted line carries `sample: 10` so
+  (`poll_duration_ms`, `poll_no_change`). Unsampled they cost up to two log
+  lines per second per open client — roughly 50 lines/second at pilot scale
+  once no-change polls' second line is counted, growing linearly with public
+  users. One probabilistic decision is rolled per poll and shared by both of
+  that poll's points — hint-answered polls included — so sparse or periodic
+  no-change patterns cannot systematically bias the reported ratio and isolate
+  restarts do not over-sample first polls. Every emitted line carries `sample: 10` so
   counts can be multiplied back up. Command, rejection, freeze, and recovery
   points remain unsampled — they are low-volume and are what an incident needs.
-- **Campaign E2E waits lengthened from 8 s to 15 s** across the five session
-  specs (helper defaults and inline `waitForResponse`/navigation timeouts).
+- **Campaign E2E waits lengthened from 8 s to 15 s** across all session specs
+  and fixtures (helper defaults and inline `waitForResponse`/navigation
+  timeouts).
   Under artificial full-core saturation the dev server genuinely answered
   slower than 8 s in 3 of 40 runs; the longer wait costs nothing on passing
   runs, which resolve as soon as the response arrives (issue #17).

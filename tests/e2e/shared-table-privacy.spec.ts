@@ -35,6 +35,24 @@ function campaignIdFromUrl(url: string): string {
 	return match[1];
 }
 
+/**
+ * Boundary-safe leak matcher. Card labels and ids are not substring-free:
+ * "III of Pentacles" is the tail of "VIII of Pentacles", and card id
+ * "pentacles-vii" is a prefix of "pentacles-viii" — so a bare
+ * `content.includes(label)` false-positives whenever another client
+ * legitimately renders the longer rank of the same suit. A real leak is the
+ * token NOT embedded in a longer roman rank (lookbehind) and NOT continued by
+ * more of a longer id (lookahead).
+ */
+function cardTokenPattern(token: string): RegExp {
+	const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return new RegExp(`(?<![IVXLCDMa-z-])${escaped}(?![a-z])`);
+}
+
+function containsCardToken(content: string, token: string): boolean {
+	return cardTokenPattern(token).test(content);
+}
+
 test.describe('shared table privacy', () => {
 	test.afterEach(async ({}, testInfo) => attachSyncDiagnostics(testInfo));
 
@@ -147,23 +165,23 @@ test.describe('shared table privacy', () => {
 		// not on the GM's page, not on the other player's page, and the GM's
 		// own card never leaks to either player.
 		const gmContent = await gmPage.content();
-		expect(gmContent).not.toContain(labelA as string);
-		expect(gmContent).not.toContain(labelB as string);
+		expect(containsCardToken(gmContent, labelA as string), "GM page leaks A's card").toBe(false);
+		expect(containsCardToken(gmContent, labelB as string), "GM page leaks B's card").toBe(false);
 
 		const playerBContent = await playerBPage.content();
-		expect(playerBContent).not.toContain(labelA as string);
-		expect(playerBContent).not.toContain(labelGm as string);
+		expect(containsCardToken(playerBContent, labelA as string), "B's page leaks A's card").toBe(false);
+		expect(containsCardToken(playerBContent, labelGm as string), "B's page leaks GM's card").toBe(false);
 
 		const playerAContent = await playerAPage.content();
-		expect(playerAContent).not.toContain(labelB as string);
-		expect(playerAContent).not.toContain(labelGm as string);
+		expect(containsCardToken(playerAContent, labelB as string), "A's page leaks B's card").toBe(false);
+		expect(containsCardToken(playerAContent, labelGm as string), "A's page leaks GM's card").toBe(false);
 
 		// Never leaked to the console on any client either.
 		const leaked = consoleTexts.some(
 			(text) =>
-				text.includes(labelA as string) ||
-				text.includes(labelB as string) ||
-				text.includes(labelGm as string)
+				containsCardToken(text, labelA as string) ||
+				containsCardToken(text, labelB as string) ||
+				containsCardToken(text, labelGm as string)
 		);
 		expect(leaked).toBe(false);
 
@@ -255,7 +273,7 @@ test.describe('shared table privacy', () => {
 				timeout: CROSS_CLIENT_BUDGET_MS
 			});
 			const content = await page.content();
-			expect(content).not.toContain(facedownCardId as string);
+			expect(containsCardToken(content, facedownCardId as string), 'face-down card id leaked').toBe(false);
 		}
 
 		// --- Reveal: the one command whose entire purpose is disclosure — the
@@ -266,9 +284,10 @@ test.describe('shared table privacy', () => {
 			.click();
 
 		for (const page of [playerBPage, gmPage]) {
-			await expect(page.locator('[data-testid="event-log"]')).toContainText(facedownCardId as string, {
-				timeout: CROSS_CLIENT_BUDGET_MS
-			});
+			await expect(page.locator('[data-testid="event-log"]')).toContainText(
+				cardTokenPattern(facedownCardId as string),
+				{ timeout: CROSS_CLIENT_BUDGET_MS }
+			);
 		}
 
 		// --- Discard: a public-top pile — the discarded face becomes every

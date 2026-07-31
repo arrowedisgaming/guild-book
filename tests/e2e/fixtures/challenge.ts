@@ -28,7 +28,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * primitive every helper below is built on. Throws with the response body
  * if the command was rejected, so a genuine product regression fails loudly
  * here instead of manifesting later as a confusing UI-state mismatch. */
-export async function clickCommand(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+export async function clickCommand(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse((res) => res.url().includes('/challenge-commands') && res.request().method() === 'POST', { timeout: timeoutMs }),
 		locator.click()

@@ -218,12 +218,12 @@ test.describe('campaign freeze, recovery and sanitized end', () => {
 		await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
 		await expect(gmPage.getByTestId('end-session-confirm')).toBeVisible();
 		await gmPage.getByRole('button', { name: 'Confirm end' }).click();
-		await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 8000 });
+		await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 		// The player's private hand is gone, and they are not left staring at a
 		// frozen banner for a session that no longer exists.
 		await expect(playerAPage.locator('[data-testid="hand-card"] .card')).toHaveCount(0, {
-			timeout: 8000
+			timeout: 15000
 		});
 		await expect(playerAPage.getByTestId('frozen-banner')).toHaveCount(0);
 

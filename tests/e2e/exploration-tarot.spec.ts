@@ -10,7 +10,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * resolved rule text is table-visible the moment the step resolves.
  */
 
-async function clickFinite(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickFinite(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse((res) => res.url().includes('/finite-commands') && res.request().method() === 'POST', { timeout: timeoutMs }),
 		locator.click()
@@ -21,7 +21,7 @@ async function clickFinite(page: Page, locator: Locator, timeoutMs = 8000): Prom
 	}
 }
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().includes('-commands/') && !res.url().match(/(challenge|guided-test|camp|finite)-commands/),

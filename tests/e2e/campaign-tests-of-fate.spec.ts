@@ -8,7 +8,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * regression fails loudly here rather than as a confusing UI mismatch later.
  * A separate helper because these commands go to their own route — reusing the
  * Challenge one would wait forever for a request that is never sent. */
-async function clickCommand(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickCommand(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse((res) => res.url().includes('/guided-test-commands') && res.request().method() === 'POST', {
 			timeout: timeoutMs

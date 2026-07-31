@@ -87,7 +87,7 @@ describe('createCampaignSessionStore', () => {
 		).toThrow('Unable to refresh the campaign table');
 	});
 
-	it('discards a command projection bound to a different recipient', async () => {
+	it('discards the entire session when a command projection is bound to a different recipient', async () => {
 		const initial = makeInitialSnapshot(1);
 		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
 			jsonResponse(200, {
@@ -105,7 +105,120 @@ describe('createCampaignSessionStore', () => {
 			ok: false,
 			message: 'That action could not be completed'
 		});
+		expect(store.session).toBeNull();
+		expect(store.snapshot.events).toEqual([]);
+		expect(store.error).toBe('Unable to refresh the campaign table');
+	});
+
+	it('keeps the session when a command response has no recipient at all', async () => {
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(500, {}));
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			fetchImpl
+		});
+
+		await expect(store.sendCommand({ type: 'end-round' })).resolves.toEqual({
+			ok: false,
+			message: 'That action could not be completed'
+		});
 		expect(store.snapshot).toEqual(initial);
+	});
+
+	it('clears the projection and halts polling when a sync payload is bound to a different recipient', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+			jsonResponse(200, {
+				recipientUserId: 'player-b',
+				cursor: 9,
+				events: [],
+				session: makeInitialSnapshot(9).session
+			})
+		);
+		const store = createCampaignSessionStore('campaign-1', makeInitialSnapshot(1), {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.session).toBeNull();
+		expect(store.error).toBe('Unable to refresh the campaign table');
+
+		const callsAfterMismatch = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(fetchImpl.mock.calls.length).toBe(callsAfterMismatch);
+	});
+
+	it.each([401, 403, 404])(
+		'clears the projection and halts polling when sync is refused with %d',
+		async (status) => {
+			vi.useFakeTimers();
+			installBrowserHarness();
+			const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status }));
+			const store = createCampaignSessionStore('campaign-1', makeInitialSnapshot(1), {
+				recipientUserId,
+				intervalMs: 1000,
+				jitterMs: 0,
+				fetchImpl
+			});
+
+			store.start();
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(store.session).toBeNull();
+			expect(store.error).toBe('Unable to refresh the campaign table');
+
+			const callsAfterRefusal = fetchImpl.mock.calls.length;
+			await vi.advanceTimersByTimeAsync(5000);
+			expect(fetchImpl.mock.calls.length).toBe(callsAfterRefusal);
+		}
+	);
+
+	it('keeps the session and keeps polling through a transient server error', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 500 }));
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.snapshot).toEqual(initial);
+		expect(store.error).toBe('Unable to refresh the campaign table');
+
+		const callsSoFar = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(fetchImpl.mock.calls.length).toBeGreaterThan(callsSoFar);
+	});
+
+	it('keeps the current session when a sync response is malformed without any recipient', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(200, { cursor: 9 }));
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.snapshot).toEqual(initial);
+		expect(store.error).toBe('Unable to refresh the campaign table');
+
+		const callsSoFar = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(fetchImpl.mock.calls.length).toBeGreaterThan(callsSoFar);
 	});
 
 	it('registers and removes each browser lifecycle listener exactly once', () => {
@@ -531,7 +644,13 @@ describe('createCampaignSessionStore', () => {
 				})
 		});
 
-		await expect(store.poll()).rejects.toThrow('Unable to refresh the campaign table');
-		expect(store.snapshot).toEqual(safeSnapshot);
+		await store.poll();
+		// Nothing of player B's payload is ever applied — and player A's
+		// previous actor-scoped state is scrubbed rather than left rendered
+		// for whoever is signed in now.
+		expect(store.session).toBeNull();
+		expect(store.snapshot.events).toEqual([]);
+		expect(JSON.stringify(store.snapshot)).not.toContain('PLAYER B PRIVATE CARD');
+		expect(store.error).toBe('Unable to refresh the campaign table');
 	});
 });

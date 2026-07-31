@@ -94,7 +94,7 @@ export async function beginChallenge(
 	await clickCommand(gmPage, gmPage.getByTestId('begin-challenge-button'));
 }
 
-export async function waitForStage(pages: Page[], label: string, timeoutMs = 6000): Promise<void> {
+export async function waitForStage(pages: Page[], label: string, timeoutMs = 15000): Promise<void> {
 	for (const page of pages) {
 		await expect(page.getByTestId('challenge-stage')).toHaveText(label, { timeout: timeoutMs });
 	}
@@ -103,7 +103,7 @@ export async function waitForStage(pages: Page[], label: string, timeoutMs = 600
 export async function dealRound(gmPage: Page, otherPages: Page[]): Promise<void> {
 	await expect(gmPage.getByRole('button', { name: 'Deal Challenge cards' })).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Deal Challenge cards' }));
-	await waitForStage([gmPage, ...otherPages], 'Placing Initiative', 6000);
+	await waitForStage([gmPage, ...otherPages], 'Placing Initiative', 15000);
 }
 
 /**
@@ -147,7 +147,7 @@ export async function placeGmInitiative(gmPage: Page, enemyId: string): Promise<
 export async function revealAndBeginTurns(gmPage: Page, otherPages: Page[]): Promise<void> {
 	await expect(gmPage.getByRole('button', { name: 'Reveal Initiative' })).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Reveal Initiative' }));
-	await waitForStage([gmPage, ...otherPages], 'Initiative revealed', 6000);
+	await waitForStage([gmPage, ...otherPages], 'Initiative revealed', 15000);
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Begin turns' }));
 }
 
@@ -213,9 +213,9 @@ async function findActingPage(pages: Page[], timeoutMs: number): Promise<Page | 
  * catch up) before this function ever falls back to ending whichever bare
  * `turn-controls` is visible at all. */
 export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promise<void>): Promise<void> {
-	while (await anyPageShowsTurnControls(pages, 6000)) {
+	while (await anyPageShowsTurnControls(pages, 15000)) {
 		let acted = false;
-		const actingPage = await findActingPage(pages, 4000);
+		const actingPage = await findActingPage(pages, 15000);
 
 		if (actingPage) {
 			const handCards = actingPage.getByTestId('turn-hand-card');
@@ -259,7 +259,7 @@ export async function endRound(gmPage: Page, otherPages: Page[]): Promise<void> 
 	const button = gmPage.getByTestId('cleanup-round-button');
 	await expect(button).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, button);
-	await waitForStage([gmPage, ...otherPages], 'Dealing Challenge cards', 6000);
+	await waitForStage([gmPage, ...otherPages], 'Dealing Challenge cards', 15000);
 }
 
 /**

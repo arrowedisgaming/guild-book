@@ -8,6 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Production releases are now exact-tag gated through GitHub Actions.** A
+  `vX.Y.Z` tag must match `package.json` and a dated changelog heading, then the
+  tagged commit must pass content verification, type checking, unit/integration
+  tests, Cloudflare builds and dry-runs, and the deterministic browser suite
+  before a protected `production` environment may deploy it with Wrangler.
+- **Browser failures now retain actionable evidence.** CI uses bounded
+  concurrency, treats retry-only passes as failures, and uploads Playwright
+  traces, screenshots, reports, and combined browser/server output. A separate
+  scheduled or manual stress profile exercises campaign concurrency without
+  authorizing a release.
+- **Release-critical client state has direct regression coverage.** Campaign
+  polling covers lifecycle scheduling, cancellation, sanitization,
+  deduplication, and every command projection path. The adventurer wizard has a
+  complete save-and-resume flow plus invalid-state, migration, reset, and
+  storage coverage.
+
+### Changed
+
+- **Campaign sync responses are bound to their authenticated recipient.** Each
+  changed sync response carries a request ID and recipient ID; unchanged 204
+  responses carry the request ID. Command and lifecycle responses that can
+  replace a projection are recipient-bound as well. The browser discards an
+  entire payload addressed to another user, preserving its last safe state.
+  Privacy specifications attach cursor/version/request metadata without card
+  faces, private payloads, cookies, or credentials.
+
+### Fixed
+
+- **Wizard persistence keeps real in-progress work.** A non-default talent
+  choice now survives a reload before continuing, and an older valid draft is
+  written back in its migrated shape once without recreating absent or invalid
+  storage.
+
 ## [0.8.0] - 2026-07-31
 
 ### Changed

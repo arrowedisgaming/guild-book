@@ -31,7 +31,10 @@
 	});
 
 	function createStoreFor(pageData: PageData) {
-		return createCampaignSessionStore(pageData.campaignId, pageData.initial, { intervalMs: 1000 });
+		return createCampaignSessionStore(pageData.campaignId, pageData.initial, {
+			intervalMs: 1000,
+			recipientUserId: pageData.userId
+		});
 	}
 
 	const session = $derived(store.session);

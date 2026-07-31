@@ -26,9 +26,11 @@ main = ".svelte-kit/cloudflare/_worker.js"
 # deploy fails with "already in use" until the domain is removed from the
 # `guild-book` PAGES project first. That ordering is the cutover.
 #
-# Rollback: remove the custom domain here, redeploy, and re-attach it to the
-# Pages project — its last successful deployment is still servable even though
-# its Git builds now fail on the missing `pages_build_output_dir`.
+# Rollback: re-run the previous governed tag's Release workflow (GitHub allows
+# re-runs for 30 days), or use `npx wrangler rollback [version-id]` for
+# immediate code-only recovery — also the path when the prior run is too old
+# or absent, as for the first governed release.
+# Never re-attach the domain to Pages; old code may be incompatible with D1.
 routes = [{ pattern = "guildbook.arrowed.games", custom_domain = true }]
 
 # Non-secret production values only. Everything sensitive is a secret set via

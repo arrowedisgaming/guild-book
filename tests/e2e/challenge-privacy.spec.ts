@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInAs, createTestAdventurer } from './fixtures/auth';
+import { attachSyncDiagnostics, captureSyncDiagnostics } from './fixtures/sync-diagnostics';
 import {
 	attachAdventurer,
 	beginChallenge,
@@ -133,6 +134,8 @@ async function assertCanaryPresentEventually(
 }
 
 test.describe('guided Challenge table privacy', () => {
+	test.afterEach(async ({}, testInfo) => attachSyncDiagnostics(testInfo));
+
 	test('unique hand-card canaries never leak before their rule-defined disclosure point, at initiative reveal, a private transfer, Stun, and a Fool paired play', async ({
 		browser
 	}) => {
@@ -144,6 +147,9 @@ test.describe('guided Challenge table privacy', () => {
 		const gmPage = await gm.newPage();
 		const playerAPage = await playerA.newPage();
 		const playerBPage = await playerB.newPage();
+		captureSyncDiagnostics(gmPage, test.info(), 'gm');
+		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
+		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
 
 		const gmResponses = collectResponses(gmPage);
 		const aResponses = collectResponses(playerAPage);

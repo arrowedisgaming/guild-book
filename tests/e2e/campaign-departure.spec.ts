@@ -47,8 +47,11 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// Player A holds two private cards the cleanup must sweep.
+	const playerHand = playerAPage.getByTestId('hand-card');
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+	await expect(playerHand).toHaveCount(1);
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+	await expect(playerHand).toHaveCount(2);
 
 	// The GM sees A's hand count before the departure.
 	await expect(gmPage.getByText(/2 cards?/).first()).toBeVisible({ timeout: 15000 });

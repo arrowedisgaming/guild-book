@@ -848,7 +848,7 @@ describe('oracle lookup tables', () => {
 		}
 	});
 
-	/** Codex review: the <br> strip welded clauses together without a space. */
+	/** Regression: the <br> strip previously welded clauses together without a space. */
 	it('never welds two clauses together where the source had a line break', () => {
 		for (const table of getTarotProcedures().lookupTables) {
 			for (const row of table.rows) {

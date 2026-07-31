@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInAs } from './fixtures/auth';
+import { attachSyncDiagnostics, captureSyncDiagnostics } from './fixtures/sync-diagnostics';
 
 /**
  * TDD Step 1 (task-7-brief): privacy of the shared table's role-scoped
@@ -35,6 +36,8 @@ function campaignIdFromUrl(url: string): string {
 }
 
 test.describe('shared table privacy', () => {
+	test.afterEach(async ({}, testInfo) => attachSyncDiagnostics(testInfo));
+
 	test('each participant sees only their own hand face; every other hand is an opaque back', async ({
 		browser
 	}) => {
@@ -44,6 +47,9 @@ test.describe('shared table privacy', () => {
 		const gmPage = await gm.newPage();
 		const playerAPage = await playerA.newPage();
 		const playerBPage = await playerB.newPage();
+		captureSyncDiagnostics(gmPage, test.info(), 'gm');
+		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
+		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
 
 		const consoleTexts: string[] = [];
 		for (const page of [gmPage, playerAPage, playerBPage]) {
@@ -183,6 +189,9 @@ test.describe('shared table privacy', () => {
 		const gmPage = await gm.newPage();
 		const playerAPage = await playerA.newPage();
 		const playerBPage = await playerB.newPage();
+		captureSyncDiagnostics(gmPage, test.info(), 'gm');
+		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
+		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
 
 		await signInAs(gmPage, 'Actions GM');
 		await signInAs(playerAPage, 'Actions Player A');

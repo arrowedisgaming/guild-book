@@ -63,6 +63,7 @@ export interface FakeEventOptions {
 	sessionId?: string;
 	body?: unknown;
 	searchParams?: Record<string, string>;
+	authenticatedUserId?: string;
 }
 
 /** A fake `RequestEvent` good enough for our route handlers: a real
@@ -87,7 +88,14 @@ export function fakeEvent(options: FakeEventOptions): { request: Request; params
 		}),
 		params,
 		url,
-		platform: { env: { CAMPAIGNS_ENABLED: 'true' } },
+		platform: {
+			env: {
+				CAMPAIGNS_ENABLED: 'true',
+				...(options.authenticatedUserId
+					? { TEST_AUTHENTICATED_USER_ID: options.authenticatedUserId }
+					: {})
+			}
+		},
 		setHeaders: () => {}
 	};
 }

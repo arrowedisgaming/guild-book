@@ -30,6 +30,24 @@ export interface WizardDraftSummary {
 	currentStep: number;
 }
 
+export interface WizardStorage {
+	getItem(key: string): string | null;
+	setItem(key: string, value: string): void;
+	removeItem(key: string): void;
+}
+
+/** Wizard steps. Path precedes Attributes because the 4 locks to the path suit. */
+export const WIZARD_STEPS = [
+	{ id: 'identity', label: 'Identity', path: '/create/hmtw/identity' },
+	{ id: 'kith', label: 'Kith & Kin', path: '/create/hmtw/kith' },
+	{ id: 'path', label: 'Path', path: '/create/hmtw/path' },
+	{ id: 'attributes', label: 'Attributes', path: '/create/hmtw/attributes' },
+	{ id: 'talents', label: 'Talents', path: '/create/hmtw/talents' },
+	{ id: 'story', label: 'Quest & Motifs', path: '/create/hmtw/story' },
+	{ id: 'equipment', label: 'Gear', path: '/create/hmtw/equipment' },
+	{ id: 'review', label: 'Review', path: '/create/hmtw/review' }
+] as const;
+
 function createInitialState(): WizardState {
 	return {
 		version: WIZARD_STATE_VERSION,
@@ -63,34 +81,54 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	const candidate = parsed as Partial<WizardState>;
 	if (!candidate.character || typeof candidate.character !== 'object') return null;
 	if (typeof candidate.currentStep !== 'number') return null;
+	if (
+		!Number.isInteger(candidate.currentStep) ||
+		candidate.currentStep < 0 ||
+		candidate.currentStep >= WIZARD_STEPS.length
+	) {
+		return null;
+	}
+	const completedSteps = Array.isArray(candidate.completedSteps)
+		? [
+				...new Set(
+					candidate.completedSteps.filter(
+						(step): step is number =>
+							typeof step === 'number' &&
+							Number.isInteger(step) &&
+							step >= 0 &&
+							step < WIZARD_STEPS.length
+					)
+				)
+			]
+		: [];
 
 	return {
 		version: WIZARD_STATE_VERSION,
 		active: candidate.active === true,
 		currentStep: candidate.currentStep,
-		completedSteps: Array.isArray(candidate.completedSteps) ? candidate.completedSteps : [],
+		completedSteps,
 		character: migrateCharacterData(candidate.character),
 		nonce: typeof candidate.nonce === 'number' ? candidate.nonce : 0
 	};
 }
 
-function loadFromStorage(): WizardState {
-	if (!browser) return createInitialState();
+function loadFromStorage(storage: WizardStorage | null): WizardState {
+	if (!storage) return createInitialState();
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
+		const raw = storage.getItem(STORAGE_KEY);
 		if (!raw) return createInitialState();
 
 		let parsed: unknown;
 		try {
 			parsed = JSON.parse(raw);
 		} catch {
-			localStorage.removeItem(STORAGE_KEY);
+			storage.removeItem(STORAGE_KEY);
 			return createInitialState();
 		}
 
 		const migrated = migrateWizardState(parsed);
 		if (!migrated) {
-			localStorage.removeItem(STORAGE_KEY);
+			storage.removeItem(STORAGE_KEY);
 			return createInitialState();
 		}
 		return migrated;
@@ -99,15 +137,25 @@ function loadFromStorage(): WizardState {
 	}
 }
 
-function saveToStorage(state: WizardState): void {
-	if (!browser) return;
-	localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function saveToStorage(storage: WizardStorage | null, state: WizardState): void {
+	if (!storage) return;
+	storage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function createWizardStore() {
-	const { subscribe, update } = writable<WizardState>(loadFromStorage());
+function defaultWizardStorage(): WizardStorage | null {
+	return browser ? localStorage : null;
+}
 
-	subscribe((state) => saveToStorage(state));
+export function createWizardStore(storage: WizardStorage | null = defaultWizardStorage()) {
+	const { subscribe, update } = writable<WizardState>(loadFromStorage(storage));
+
+	// A readable subscription fires immediately. Do not rewrite an absent or
+	// invalid blob merely by importing this module; persist only real mutations.
+	let initialized = false;
+	subscribe((state) => {
+		if (initialized) saveToStorage(storage, state);
+	});
+	initialized = true;
 
 	return {
 		subscribe,
@@ -161,21 +209,9 @@ function createWizardStore() {
 				state.nonce = (s.nonce ?? 0) + 1;
 				return state;
 			});
-			if (browser) localStorage.removeItem(STORAGE_KEY);
+			storage?.removeItem(STORAGE_KEY);
 		}
 	};
 }
 
 export const wizard = createWizardStore();
-
-/** Wizard steps. Path precedes Attributes because the 4 locks to the path suit. */
-export const WIZARD_STEPS = [
-	{ id: 'identity', label: 'Identity', path: '/create/hmtw/identity' },
-	{ id: 'kith', label: 'Kith & Kin', path: '/create/hmtw/kith' },
-	{ id: 'path', label: 'Path', path: '/create/hmtw/path' },
-	{ id: 'attributes', label: 'Attributes', path: '/create/hmtw/attributes' },
-	{ id: 'talents', label: 'Talents', path: '/create/hmtw/talents' },
-	{ id: 'story', label: 'Quest & Motifs', path: '/create/hmtw/story' },
-	{ id: 'equipment', label: 'Gear', path: '/create/hmtw/equipment' },
-	{ id: 'review', label: 'Review', path: '/create/hmtw/review' }
-] as const;

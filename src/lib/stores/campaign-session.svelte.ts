@@ -245,6 +245,36 @@ export function createCampaignSessionStore(
 		return body?.recipientUserId === options.recipientUserId;
 	}
 
+	/** A response addressed to a *different* user — as opposed to a malformed
+	 * or error body with no recipient at all, which stays a transient failure.
+	 * A foreign recipient means this browser's authenticated user changed out
+	 * from under the store, so the projection it renders belongs to someone
+	 * who is no longer signed in here. */
+	function isForeignRecipient(body: { recipientUserId?: unknown } | null): boolean {
+		return typeof body?.recipientUserId === 'string' && body.recipientUserId !== options.recipientUserId;
+	}
+
+	/** Scrub everything actor-scoped (private card faces included) and halt:
+	 * retaining the previous user's projection while rejecting the new user's
+	 * payloads would leave the old user's private state rendered indefinitely. */
+	function discardForeignSession(): void {
+		snapshot = { recipientUserId: options.recipientUserId, cursor: 0, events: [], session: null };
+		error = SYNC_ERROR_MESSAGE;
+		stop();
+	}
+
+	/** Shared refusal for every command path: a foreign recipient scrubs the
+	 * session before failing; an absent recipient just fails. Returns null
+	 * when the body is addressed to the expected recipient. */
+	function commandRecipientRefusal(body: { recipientUserId?: unknown } | null): SendCommandResult | null {
+		if (isForeignRecipient(body)) {
+			discardForeignSession();
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+		if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		return null;
+	}
+
 	function currentVisibility(): boolean {
 		return typeof document === 'undefined' ? true : document.visibilityState === 'visible';
 	}
@@ -274,9 +304,21 @@ export function createCampaignSessionStore(
 			error = null;
 			return;
 		}
+		// An authorization-class refusal is an identity signal, not a
+		// transient fault: the signed-in user changed or lost access to this
+		// campaign, so whatever this store still renders belongs to someone
+		// who can no longer read it. Scrub and halt; 5xx stays transient.
+		if (response.status === 401 || response.status === 403 || response.status === 404) {
+			discardForeignSession();
+			return;
+		}
 		if (!response.ok) throw new Error(SYNC_ERROR_MESSAGE);
 
 		const body = (await response.json()) as SyncResponseBody;
+		if (isForeignRecipient(body)) {
+			discardForeignSession();
+			return;
+		}
 		if (!hasExpectedRecipient(body)) {
 			throw new Error(SYNC_ERROR_MESSAGE);
 		}
@@ -419,7 +461,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			// Same-class race as `poll()` above, mirrored: a slow command
 			// response can resolve after a poll (or another command) already
@@ -486,7 +529,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as ChallengeCommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -565,7 +609,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as GuidedTestCommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -629,7 +674,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CampCommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -682,7 +728,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (
 				body?.projection &&
 				snapshot.session &&
@@ -732,7 +779,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as FiniteCommandResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (
 				body?.projection &&
 				snapshot.session &&
@@ -801,7 +849,8 @@ export function createCampaignSessionStore(
 			if (!response.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
 
 			const body = (await response.json().catch(() => null)) as LifecycleResponseBody | null;
-			if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (!body?.success) return { ok: false, message: COMMAND_ERROR_MESSAGE };
 
 			if (snapshot.session && snapshot.session.sessionId === sessionId) {

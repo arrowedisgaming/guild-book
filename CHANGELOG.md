@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-31
+
 ### Added
 
 - **Production releases are now exact-tag gated through GitHub Actions.** A
@@ -15,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tagged commit must pass content verification, type checking, unit/integration
   tests, Cloudflare builds and dry-runs, and the deterministic browser suite
   before a protected `production` environment may deploy it with Wrangler.
+  Release tags must be annotated, and a pre-tag `--require-new` validation
+  refuses a tag that already exists or is lower than the newest existing
+  release, failing closed when tag history cannot be read.
 - **Browser failures now retain actionable evidence.** CI uses bounded
   concurrency, treats retry-only passes as failures, and uploads Playwright
   traces, screenshots, reports, and combined browser/server output. A separate
@@ -32,12 +37,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   changed sync response carries a request ID and recipient ID; unchanged 204
   responses carry the request ID. Command and lifecycle responses that can
   replace a projection are recipient-bound as well. The browser discards an
-  entire payload addressed to another user, preserving its last safe state.
-  Privacy specifications attach cursor/version/request metadata without card
-  faces, private payloads, cookies, or credentials.
+  entire payload addressed to another user and scrubs the previously rendered
+  actor-scoped state (see Fixed below). Privacy specifications attach
+  cursor/version/request metadata without card faces, private payloads,
+  cookies, or credentials.
 
 ### Fixed
 
+- **A signed-in user change can no longer leave the previous user's table
+  state rendered** (issue #22). The campaign table rebuilds its session store
+  when the authenticated user changes, and any sync or command response
+  addressed to a different user — or a sync refusal (401/403/404) signalling
+  the viewer lost access — scrubs the previous user's actor-scoped projection,
+  private card faces included, and halts polling instead of retaining it.
+  Transient server errors without any recipient keep the current state.
+- **Challenge browser-test helpers wait the full 15 s convention.** The
+  fixture's internal 4–6 s stage and acting-page budgets matched the rest of
+  the suite's raised waits, so slow CI polling can no longer let the GM's
+  oversight override silently substitute for an active player's turn.
 - **Wizard persistence keeps real in-progress work.** A non-default talent
   choice now survives a reload before continuing, and an older valid draft is
   written back in its migrated shape once without recreating absent or invalid
@@ -57,9 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restarts do not over-sample first polls. Every emitted line carries `sample: 10` so
   counts can be multiplied back up. Command, rejection, freeze, and recovery
   points remain unsampled — they are low-volume and are what an incident needs.
-- **Campaign E2E waits lengthened from 8 s to 15 s** across all session specs
-  and fixtures (helper defaults and inline `waitForResponse`/navigation
-  timeouts).
+- **Campaign E2E waits lengthened from 8 s to 15 s** across the session specs'
+  8-second inline `waitForResponse`/navigation timeouts and helper defaults
+  (shorter 2–6 s waits and the Challenge fixture's internal budgets followed
+  after this release).
   Under artificial full-core saturation the dev server genuinely answered
   slower than 8 s in 3 of 40 runs; the longer wait costs nothing on passing
   runs, which resolve as soon as the response arrives (issue #17).

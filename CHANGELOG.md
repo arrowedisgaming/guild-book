@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Production releases are now exact-tag gated through GitHub Actions.** A
+  `vX.Y.Z` tag must match `package.json` and a dated changelog heading, then the
+  tagged commit must pass content verification, type checking, unit/integration
+  tests, Cloudflare builds and dry-runs, and the deterministic browser suite
+  before a protected `production` environment may deploy it with Wrangler.
+- **Browser failures now retain actionable evidence.** CI uses bounded
+  concurrency, treats retry-only passes as failures, and uploads Playwright
+  traces, screenshots, reports, and combined browser/server output. A separate
+  scheduled or manual stress profile exercises campaign concurrency without
+  authorizing a release.
+- **Campaign sync responses are bound to their authenticated recipient.** Each
+  response carries a request ID and recipient ID; the browser discards the
+  entire payload if it belongs to another user, preserving its last safe state.
+  Privacy specifications attach cursor/version/request metadata without card
+  faces, private payloads, cookies, or credentials.
+- **Release-critical client state has direct regression coverage.** Campaign
+  polling now covers lifecycle scheduling, cancellation, sanitization,
+  deduplication, and every command projection path. The adventurer wizard now
+  covers a complete save-and-resume flow plus invalid persisted state,
+  migration, reset, and storage behavior.
+
 ## [0.8.0] - 2026-07-31
 
 ### Changed

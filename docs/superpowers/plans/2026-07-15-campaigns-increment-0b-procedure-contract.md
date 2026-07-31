@@ -40,7 +40,7 @@ Both behaviors are correct for the rules reference and must not be changed. Neit
 
 Range keys use an **en-dash** (`I–VII`), not a hyphen. Suit header cells contain `<img src="images/suit-swords.svg" …>` markup followed by the visible label. Six table cells contain live-value tokens — `[value]`, `[odd]`, `[even]`, `[discard]`, `[adventurers]` — which Chapter 9 defines: "Anything in brackets [ ] refers to the top card of the minor arcana discard pile." Four table cells contain wikilink cross-references to Appendix C denizens and Appendix B alchemy.
 
-## Findings from an adversarial review (Codex gpt-5.5, 2026-07-15)
+## Findings from an adversarial review (2026-07-15)
 
 Seven issues found after 0b/0.5 merged. All fixed on `fix/campaigns-oracle-review-findings`. Recorded because the *pattern* matters more than the individual bugs.
 

@@ -1,0 +1,36 @@
+name: E2E Stress
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 2'
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run controlled campaign concurrency profile
+        run: npm run test:e2e:ci -- --config=playwright.stress.config.ts
+        env:
+          AUTH_SECRET: ci-e2e-validation-only
+      - name: Upload stress failure evidence
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-stress-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results
+          if-no-files-found: warn
+          retention-days: 14

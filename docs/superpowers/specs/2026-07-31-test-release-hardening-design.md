@@ -33,8 +33,9 @@ deliberately outside this change.
 
 ## Privacy Boundary
 
-The existing DOM poison-card test remains a required, non-retried privacy
-canary. A pass on rerun must not convert a failing CI run into success.
+The existing DOM poison-card test remains a required privacy canary. CI may run
+one diagnostic retry to capture a trace, but a pass on retry must not convert
+the failing run into success.
 
 Every table bootstrap and `/sync` response will carry the authenticated
 recipient user ID alongside the cursor, events, and projection. The browser
@@ -127,9 +128,9 @@ Tests use fake timers and controllable fetch promises to verify:
   response paths.
 
 Tests assert observable store state and request envelopes, not internal helper
-calls. Any production changes follow a red-green cycle. The duplicate `focus`
-listener currently visible in `start()` is expected to be the first test-proven
-fix.
+calls. Any production changes follow a red-green cycle. Listener registration
+and cleanup are covered as browser-lifecycle contracts even when the existing
+implementation already satisfies them.
 
 ## Wizard Coverage
 

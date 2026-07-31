@@ -54,7 +54,7 @@ actually built):**
 `card-commands.ts` 95.34% stmts / 96.17% lines (uncovered: lines 115-124, 130
 — see the file directly for what those branches are); `projection.ts` 100%
 stmts / 100% lines (one uncovered branch, line 42). Both comfortably clear
-the CLAUDE.md-stated 90%+ target for this codebase's engine layer.
+the project-stated 90%+ target for this codebase's engine layer.
 
 **"All files" aggregate reported by this same command: 89.17% statements /
 81.74% branches / 82.19% functions / 90.23% lines.** This is lower than the

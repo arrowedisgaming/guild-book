@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const isCI = process.env.CI === 'true';
+
 export default defineConfig({
 	webServer: {
 		command:
@@ -12,7 +14,6 @@ export default defineConfig({
 			AUTH_DEV_LOGIN: 'true',
 			AUTH_DEV_AUTOLOGIN: 'false',
 			AUTH_SECRET: process.env.AUTH_SECRET ?? 'guild-book-e2e-secret',
-			AUTH_URL: 'http://localhost:4173',
 			ORIGIN: 'http://localhost:4173',
 			CAMPAIGNS_ENABLED: 'true',
 			CAMPAIGN_INVITE_SECRET: 'guild-book-e2e-invite-secret',
@@ -21,7 +22,21 @@ export default defineConfig({
 	},
 	testDir: 'tests/e2e',
 	fullyParallel: false,
+	workers: isCI ? 2 : undefined,
+	retries: isCI ? 1 : 0,
+	failOnFlakyTests: isCI,
+	outputDir: 'test-results/artifacts',
+	reporter: isCI
+		? [
+				['list'],
+				['html', { outputFolder: 'playwright-report', open: 'never' }],
+				['junit', { outputFile: 'test-results/junit.xml' }]
+			]
+		: [['list']],
 	use: {
-		baseURL: 'http://localhost:4173'
+		baseURL: 'http://localhost:4173',
+		trace: 'on-first-retry',
+		screenshot: 'only-on-failure',
+		video: 'retain-on-failure'
 	}
 });

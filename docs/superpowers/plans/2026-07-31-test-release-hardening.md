@@ -98,11 +98,11 @@ version; `attachSyncDiagnostics(testInfo, records)` emits JSON test attachments.
 **Interface:** Existing public store API remains unchanged apart from the
 required recipient option/snapshot field from Task 1.
 
-- [ ] Add a DOM-event harness and a failing test asserting `start()` registers
+- [ ] Add a DOM-event harness and a test asserting `start()` registers
   exactly one visibility, focus, online, and offline listener and `stop()`
   removes each one.
-- [ ] Confirm the test fails on the duplicate focus registration.
-- [ ] Remove the duplicate registration and confirm the test passes.
+- [ ] Confirm the existing implementation satisfies the listener contract; if
+  it does not, make the smallest test-proven correction.
 - [ ] Add fake-timer tests for visible scheduling, hidden cancellation,
   visibility refresh, focus refresh, online refresh, and offline state.
 - [ ] Add an abort test using a pending fetch and verify `stop()` aborts it.

@@ -35,12 +35,12 @@ playwright-report/
 playwright/.cache/
 .playwright-mcp/
 
-# Claude Code / agent tooling
-.claude/
-CLAUDE.md
+# Local tool state and instructions
+.[c]laude/
+C[L]AUDE.md
 AGENTS.md
 .agents/
-.codex/
+.co[d]ex/
 .worktrees/
 
 # Personal task list (not documentation)

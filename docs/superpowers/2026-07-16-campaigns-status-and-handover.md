@@ -1,8 +1,8 @@
 # Campaigns & Shared Tarot — Status, Failure Modes, and What's Left
 
 **Date:** 2026-07-16
-**Author:** Claude (Opus 4.8), updated by Codex after the Tarot Procedure
-Correctness v2 implementation and adversarial review
+**Maintainer:** Arrowed; updated after the Tarot Procedure Correctness v2
+implementation and adversarial review
 **Scope:** everything from `177af5b` (Release v0.1.0) through the v2 correctness
 bundle
 
@@ -24,7 +24,7 @@ game rule from the specification after telling the owner the game didn't have
 it.** That deletion was approved by the owner on the strength of my false claim.
 
 The structural fix recommended by this handover is now implemented on
-`codex/tarot-procedure-correctness-v2`: schema v2 separates definition sources
+`tarot-procedure-correctness-v2`: schema v2 separates definition sources
 from every material invocation citation, all 31 supported procedures were
 re-audited, the known domain errors were corrected, and the existing Test of
 Fate client now executes the required Fool reshuffle. Work still stops before
@@ -36,7 +36,7 @@ Campaign Foundation.
 
 | | |
 |---|---|
-| Branch | `codex/tarot-procedure-correctness-v2` (isolated worktree; not merged or pushed) |
+| Branch | `tarot-procedure-correctness-v2` (isolated worktree; not merged or pushed) |
 | `main` | 3 increments + 1 fix round merged, **13+ commits ahead of `origin`, nothing pushed** |
 | Tests | 273 passing, 22 files; focused Playwright 8 passing |
 | `npm run check` | 0 errors |

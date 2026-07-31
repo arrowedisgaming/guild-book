@@ -373,7 +373,7 @@ loads a schema-v2 pack or rejects it during normal Zod validation.
 
 ## Delivery structure
 
-Work proceeds on `codex/tarot-procedure-correctness-v2` in the isolated
+Work proceeds on `tarot-procedure-correctness-v2` in the isolated
 worktree. Reviewable commits are:
 
 1. this approved design;

@@ -10,12 +10,70 @@ which contains `_worker.js` **and** the static asset tree.
 `main` + `[assets]` present it emits an `.assetsignore` and no `_routes.json`.
 The build command is identical to the old Pages one.
 
-> **Deploys are currently manual.** Workers Builds (the Git connection) is not
-> wired up yet, so pushing to `main` does **not** deploy. Ship with:
->
-> ```bash
-> ADAPTER=cloudflare npm run build && npx wrangler deploy
-> ```
+> **Production deploys are GitHub-gated.** Pushing `main` does not deploy.
+> Production is published only by `.github/workflows/release.yml`, from an
+> exact `vX.Y.Z` tag after the tagged commit passes the complete reusable CI
+> workflow and the protected `production` environment is approved. Direct
+> local deploys are reserved for emergency recovery.
+
+---
+
+## GitHub-gated production releases
+
+### One-time GitHub and Cloudflare setup
+
+1. In Cloudflare, create a dedicated API token from the **Edit Cloudflare
+   Workers** template. Restrict its account resources to the account containing
+   `guild-book` and its zone resources to `arrowed.games`; do not use a global
+   API key or a personal all-resources token.
+2. Copy the account ID from the Cloudflare dashboard. Keep both values out of
+   local files, shell history, commits, issue comments, and workflow logs.
+3. In GitHub, open **Settings → Environments → New environment** and create an
+   environment named exactly `production`.
+4. Add the repository owner as a required reviewer. Restrict deployment
+   branches and tags so only tags matching `v*` may enter the environment.
+5. Add these as **environment secrets**, not plaintext variables and not
+   committed `.env` values:
+
+   | Secret | Value |
+   | --- | --- |
+   | `CLOUDFLARE_API_TOKEN` | The restricted deployment token |
+   | `CLOUDFLARE_ACCOUNT_ID` | The account containing the production Worker |
+
+The workflow intentionally has read-only repository permissions. Cloudflare
+credentials are available only to the protected deployment job; pull requests,
+ordinary `main` builds, metadata validation, and browser tests cannot read them.
+
+### Cut a release
+
+1. Move the release notes out of `[Unreleased]`, add a dated
+   `## [X.Y.Z] - YYYY-MM-DD` heading, and set `package.json` to the same version.
+2. Run the complete credential-free release gate locally:
+
+   ```bash
+   npm run release:verify
+   ```
+
+3. Merge that exact commit to `main`. Apply any required production D1
+   migrations and preflights before approving deployment; the workflow never
+   applies remote migrations automatically.
+4. Create and push the matching annotated tag:
+
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+5. Open the **Release** workflow in GitHub Actions. Metadata validation and the
+   reusable CI workflow must both succeed before the production approval prompt
+   appears. Confirm migrations are complete, then approve the `production`
+   environment.
+6. After Wrangler reports the deployment, perform the smoke test in section 5
+   against `https://guildbook.arrowed.games`.
+
+If verification fails, do not move or recreate the tag. Fix the problem on a
+new commit, update the version/changelog as appropriate, and cut a new tag. A
+tagged build that passed only on Playwright retry remains failed by design.
 
 ---
 
@@ -40,21 +98,14 @@ Either deploy from the CLI (what was actually done):
 
 ```bash
 ADAPTER=cloudflare npm run build
-npx wrangler deploy
+npx wrangler deploy --env ''
 ```
 
-…or, to get auto-deploy on push, connect Workers Builds in the dashboard →
-**Workers & Pages → Create → Worker → Connect to Git**:
-
-1. Authorize the Cloudflare GitHub App for the `arrowedisgaming` org, select the
-   **guild-book** repo.
-2. Production branch **main**; build command `ADAPTER=cloudflare npm run build`.
-3. Leave the deploy command at its default `npx wrangler deploy` — it reads
-   `wrangler.toml`, which already declares `main`, `[assets]`, D1, the
-   rate-limit bindings and the custom domain.
-4. Add `preview_urls = true` to `wrangler.toml` if you want per-branch previews.
-   Declaring `routes` without `workers_dev`/`preview_urls` disables both by
-   default — Wrangler warns about this on every deploy.
+Do not also connect Workers Builds to this repository. GitHub Actions owns the
+production deployment path; enabling a second push-to-deploy system would
+bypass its tag validation, required checks, and protected-environment approval.
+Wrangler still reads `wrangler.toml`, which declares `main`, `[assets]`, D1, the
+rate-limit bindings, and the custom domain.
 
 ### Secrets (`wrangler secret put <NAME>`)
 
@@ -91,8 +142,8 @@ is not needed (that was a Pages build-image setting). Do **not** set
 
 ### Bindings
 
-`wrangler.toml` declares them all; `npx wrangler deploy` prints the resolved
-list on every deploy, and `npx wrangler deploy --dry-run` does the same without
+`wrangler.toml` declares them all; `npx wrangler deploy --env ''` prints the resolved
+list on every deploy, and `npx wrangler deploy --dry-run --env ''` does the same without
 shipping. Expect:
 
 | Binding | Resource |
@@ -199,8 +250,10 @@ environment flag. Never use it for staging.
 
 ## Ongoing
 
-- **Deploy** = `ADAPTER=cloudflare npm run build && npx wrangler deploy` until
-  Workers Builds is connected. Pushing `main` alone deploys nothing.
+- **Deploy** = push a validated `vX.Y.Z` tag and approve the protected
+  `production` environment after its exact commit passes reusable CI. Pushing
+  `main` alone deploys nothing. Use local `wrangler deploy` only during a
+  documented emergency recovery when the GitHub release path is unavailable.
 - **Schema changes**: `npm run db:generate` locally and commit the migration.
   Apply every required remote migration **before** deploying code that depends
   on it; CI does not migrate D1.

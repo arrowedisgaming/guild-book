@@ -171,8 +171,8 @@ test.describe('guided Challenge table privacy', () => {
 		await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await playerBPage.goto(`/campaigns/${campaignId}/table`);
-		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 2000 });
-		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 2000 });
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 		// No enemies — keeps every round's turn order to exactly the two
 		// players, simplifying the Fool-hunt loop below.

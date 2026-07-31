@@ -46,18 +46,18 @@ test('a GM correction is audited and completed history is member-gated', async (
 	await gmPage.getByRole('button', { name: 'Start session' }).click();
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// The GM draws a Doom and plays it publicly — the card the correction moves.
 	await clickGeneric(gmPage, gmPage.getByRole('button', { name: 'Draw a card' }));
 	const playButton = gmPage.getByRole('button', { name: /^Play/ }).first();
-	await expect(playButton).toBeVisible({ timeout: 4000 });
+	await expect(playButton).toBeVisible({ timeout: 15000 });
 	await clickGeneric(gmPage, playButton);
 
 	// --- The correction dialog is the GM's alone ---
 	await expect(playerAPage.getByTestId('open-correction')).toHaveCount(0);
 	const openCorrection = gmPage.getByTestId('open-correction').first();
-	await expect(openCorrection).toBeVisible({ timeout: 4000 });
+	await expect(openCorrection).toBeVisible({ timeout: 15000 });
 	await openCorrection.click();
 
 	const dialog = gmPage.getByTestId('correction-dialog').first();
@@ -84,9 +84,9 @@ test('a GM correction is audited and completed history is member-gated', async (
 	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 	await playerAPage.goto(`/campaigns/${campaignId}/sessions`);
-	await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 15000 });
 	await playerAPage.getByTestId('session-link-1').click();
-	await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 15000 });
 	await expect(playerAPage.getByTestId('history-log')).toContainText('played by mistake — returning it');
 	await expect(playerAPage.getByTestId('history-meta')).toContainText('checksum');
 

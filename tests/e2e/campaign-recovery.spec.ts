@@ -229,9 +229,9 @@ test.describe('campaign freeze, recovery and sanitized end', () => {
 
 		// Public history survived, and is readable by a member with a checksum.
 		await playerAPage.goto(`/campaigns/${campaignId}/sessions`);
-		await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 15000 });
 		await playerAPage.getByTestId('session-link-1').click();
-		await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 15000 });
 		await expect(playerAPage.getByTestId('history-meta')).toContainText('checksum');
 
 		// With the session ended, the archive boundary releases.

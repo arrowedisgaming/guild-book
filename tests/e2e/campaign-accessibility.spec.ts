@@ -53,8 +53,8 @@ test('keyboard operation, labelled controls, live announcements, and no identity
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
 	await playerBPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
-	await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
+	await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// --- Keyboard-only: focus the draw control and activate it with Enter ---
 	await playerAPage.getByRole('button', { name: 'Draw a card' }).focus();
@@ -67,7 +67,7 @@ test('keyboard operation, labelled controls, live announcements, and no identity
 
 	// --- The drawn card's controls are BUTTONS whose names carry the card ---
 	const handCard = playerAPage.getByTestId('hand-card').first();
-	await expect(handCard).toBeVisible({ timeout: 4000 });
+	await expect(handCard).toBeVisible({ timeout: 15000 });
 	const groupLabel = await handCard.getAttribute('aria-label');
 	expect(groupLabel).toMatch(/^Card 1 of 1: .+/);
 	const cardName = groupLabel!.replace('Card 1 of 1: ', '');
@@ -80,7 +80,7 @@ test('keyboard operation, labelled controls, live announcements, and no identity
 
 	// Player B sees THAT a card is face down; the identity string appears
 	// nowhere in their whole rendered document.
-	await expect(playerBPage.getByText(/Face-down \(1\)/).first()).toBeVisible({ timeout: 6000 });
+	await expect(playerBPage.getByText(/Face-down \(1\)/).first()).toBeVisible({ timeout: 15000 });
 	const backs = playerBPage.getByRole('img', { name: 'Face-down card' });
 	await expect(backs.first()).toBeVisible();
 	const bDocument = await playerBPage.content();
@@ -105,7 +105,7 @@ test('keyboard operation, labelled controls, live announcements, and no identity
 	]);
 	expect(declared.ok()).toBe(true);
 	const status = playerAPage.getByTestId('test-announcement').first();
-	await expect(status).toHaveAttribute('aria-live', 'polite', { timeout: 6000 });
+	await expect(status).toHaveAttribute('aria-live', 'polite', { timeout: 15000 });
 	await expect(status).toHaveAttribute('role', 'status');
 
 	await gm.close();

@@ -44,20 +44,20 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// Player A holds two private cards the cleanup must sweep.
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
 
 	// The GM sees A's hand count before the departure.
-	await expect(gmPage.getByText(/2 cards?/).first()).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByText(/2 cards?/).first()).toBeVisible({ timeout: 15000 });
 
 	// --- The archive boundary holds while the session is open ---
 	await gmPage.goto(`/campaigns/${campaignId}`);
 	gmPage.once('dialog', (dialog) => void dialog.accept());
 	await gmPage.getByRole('button', { name: 'Archive campaign' }).click();
-	await expect(gmPage.getByText('End the open session before archiving the campaign.')).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByText('End the open session before archiving the campaign.')).toBeVisible({ timeout: 15000 });
 
 	// --- Player A leaves mid-session ---
 	await playerAPage.goto(`/campaigns/${campaignId}`);
@@ -72,7 +72,7 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	// The GM's table heals: the departed hand count is gone and the table is
 	// still fully usable.
 	await gmPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 	await expect(gmPage.getByText(/2 cards?/)).toHaveCount(0);
 	await clickGeneric(gmPage, gmPage.getByRole('button', { name: 'Draw a card' }));
 

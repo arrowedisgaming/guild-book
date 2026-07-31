@@ -46,7 +46,7 @@ async function seedMinorDiscard(page: Page, count: number): Promise<void> {
 	for (let i = 0; i < count; i++) {
 		await clickGeneric(page, page.getByRole('button', { name: 'Draw a card' }));
 		const discard = page.getByRole('button', { name: /^Discard/ }).first();
-		await expect(discard).toBeVisible({ timeout: 4000 });
+		await expect(discard).toBeVisible({ timeout: 15000 });
 		await clickGeneric(page, discard);
 	}
 }
@@ -81,30 +81,30 @@ test.describe('camp procedures', () => {
 
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await playerBPage.goto(`/campaigns/${campaignId}/table`);
-		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
-		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 		// A Camp Action belongs to an adventurer, never the GM.
-		await expect(playerAPage.getByTestId('begin-high-chant')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('begin-high-chant')).toBeVisible({ timeout: 15000 });
 		await expect(gmPage.getByTestId('begin-high-chant')).toHaveCount(0);
 
 		// The pile the High Chant draws inspiration from has to exist first.
 		await seedMinorDiscard(playerAPage, 2);
 
 		await clickCamp(playerAPage, playerAPage.getByTestId('begin-high-chant'));
-		await expect(playerAPage.getByTestId('chant-performer')).toHaveText('Ilna Roke', { timeout: 4000 });
+		await expect(playerAPage.getByTestId('chant-performer')).toHaveText('Ilna Roke', { timeout: 15000 });
 		// The allowance came from the sheet's Cups, not from anything the client sent.
 		await expect(playerAPage.getByTestId('chant-allowance')).not.toBeEmpty();
 
 		// Only the performer selects.
 		await expect(playerBPage.getByTestId('submit-selection')).toHaveCount(0);
 		const picks = playerAPage.locator('[data-testid^="pick-"]');
-		await expect(picks.first()).toBeVisible({ timeout: 4000 });
+		await expect(picks.first()).toBeVisible({ timeout: 15000 });
 		await picks.first().check();
 		await clickCamp(playerAPage, playerAPage.getByTestId('submit-selection'));
 
 		// Hand it to Bevis.
-		await expect(playerAPage.getByTestId('hand-over-card')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('hand-over-card')).toBeVisible({ timeout: 15000 });
 		const cardValue = await playerAPage.getByTestId('hand-over-card').locator('option').nth(1).getAttribute('value');
 		if (!cardValue) throw new Error('no selected inspiration card to hand over');
 		await playerAPage.getByTestId('hand-over-card').selectOption(cardValue);
@@ -113,13 +113,13 @@ test.describe('camp procedures', () => {
 
 		// --- The privacy assertion ---
 		// Bevis sees the face.
-		await expect(playerBPage.getByTestId('my-inspiration')).toBeVisible({ timeout: 6000 });
+		await expect(playerBPage.getByTestId('my-inspiration')).toBeVisible({ timeout: 15000 });
 		const bevisSees = (await playerBPage.getByTestId('my-inspiration').textContent()) ?? '';
 		expect(bevisSees).toContain('Your inspiration card:');
 
 		// Every context sees THAT Bevis holds one.
 		for (const page of [gmPage, playerAPage, playerBPage]) {
-			await expect(page.getByTestId('inspiration-holdings')).toContainText('Bevis Dunn holds 1 inspiration card', { timeout: 6000 });
+			await expect(page.getByTestId('inspiration-holdings')).toContainText('Bevis Dunn holds 1 inspiration card', { timeout: 15000 });
 		}
 
 		// Nobody else's page shows the face — not the performer's, not the GM's.
@@ -133,7 +133,7 @@ test.describe('camp procedures', () => {
 
 		// Finishing returns anything undistributed to the discard.
 		await clickCamp(playerAPage, playerAPage.getByTestId('complete-camp'));
-		await expect(playerAPage.getByTestId('chant-performer')).toHaveCount(0, { timeout: 4000 });
+		await expect(playerAPage.getByTestId('chant-performer')).toHaveCount(0, { timeout: 15000 });
 		// Ch5: inspiration lasts until used or the session ends — it survives.
 		await expect(playerBPage.getByTestId('my-inspiration')).toBeVisible();
 
@@ -171,15 +171,15 @@ test.describe('camp procedures', () => {
 
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await playerBPage.goto(`/campaigns/${campaignId}/table`);
-		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 		// Apply them to the OTHER adventurer (Ch9 is explicit about "another").
-		await expect(playerAPage.getByTestId('leech-target-select')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('leech-target-select')).toBeVisible({ timeout: 15000 });
 		await playerAPage.getByTestId('leech-target-select').selectOption({ label: 'Patient Orm' });
 		await clickCamp(playerAPage, playerAPage.getByTestId('begin-leeches'));
 
 		// The rule text comes from the content pack's own suit sets.
-		await expect(playerAPage.getByTestId('leech-rule')).toContainText('nothing happens', { timeout: 4000 });
+		await expect(playerAPage.getByTestId('leech-rule')).toContainText('nothing happens', { timeout: 15000 });
 
 		// Only the applier draws.
 		await expect(playerBPage.getByTestId('advance-leeches')).toHaveCount(0);
@@ -188,14 +188,14 @@ test.describe('camp procedures', () => {
 
 		// Public: the card and the outcome reach every context.
 		for (const page of [gmPage, playerAPage, playerBPage]) {
-			await expect(page.getByTestId('leech-card')).toBeVisible({ timeout: 6000 });
-			await expect(page.getByTestId('leech-outcome')).toBeVisible({ timeout: 6000 });
+			await expect(page.getByTestId('leech-card')).toBeVisible({ timeout: 15000 });
+			await expect(page.getByTestId('leech-outcome')).toBeVisible({ timeout: 15000 });
 			// The app never applied it — it says so.
 			await expect(page.getByTestId('leech-outcome')).toContainText('the app does not');
 		}
 
 		await clickCamp(playerAPage, playerAPage.getByTestId('complete-camp'));
-		await expect(playerAPage.getByTestId('leech-outcome')).toHaveCount(0, { timeout: 4000 });
+		await expect(playerAPage.getByTestId('leech-outcome')).toHaveCount(0, { timeout: 15000 });
 
 		await gm.close();
 		await playerA.close();

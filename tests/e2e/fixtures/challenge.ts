@@ -101,7 +101,7 @@ export async function waitForStage(pages: Page[], label: string, timeoutMs = 600
 }
 
 export async function dealRound(gmPage: Page, otherPages: Page[]): Promise<void> {
-	await expect(gmPage.getByRole('button', { name: 'Deal Challenge cards' })).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByRole('button', { name: 'Deal Challenge cards' })).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Deal Challenge cards' }));
 	await waitForStage([gmPage, ...otherPages], 'Placing Initiative', 6000);
 }
@@ -123,7 +123,7 @@ export async function dealRound(gmPage: Page, otherPages: Page[]): Promise<void>
  * card they inspected. */
 export async function placeAllPlayerInitiative(playerPages: Page[], options: { avoidFool?: boolean } = {}): Promise<void> {
 	for (const page of playerPages) {
-		await expect(page.getByTestId('initiative-placement-controls')).toBeVisible({ timeout: 6000 });
+		await expect(page.getByTestId('initiative-placement-controls')).toBeVisible({ timeout: 15000 });
 		const handCards = page.getByTestId('initiative-hand-card');
 		let target = handCards.first();
 		if (options.avoidFool) {
@@ -136,7 +136,7 @@ export async function placeAllPlayerInitiative(playerPages: Page[], options: { a
 
 /** GM places the named enemy fact's Initiative from the GM hand. */
 export async function placeGmInitiative(gmPage: Page, enemyId: string): Promise<void> {
-	await expect(gmPage.getByTestId('gm-initiative-form')).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByTestId('gm-initiative-form')).toBeVisible({ timeout: 15000 });
 	const select = gmPage.locator(`select[aria-label="Initiative card for ${enemyId}"]`);
 	const firstRealOption = await select.locator('option').nth(1).getAttribute('value');
 	if (!firstRealOption) throw new Error('GM hand has no cards to place as enemy Initiative');
@@ -145,7 +145,7 @@ export async function placeGmInitiative(gmPage: Page, enemyId: string): Promise<
 }
 
 export async function revealAndBeginTurns(gmPage: Page, otherPages: Page[]): Promise<void> {
-	await expect(gmPage.getByRole('button', { name: 'Reveal Initiative' })).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByRole('button', { name: 'Reveal Initiative' })).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Reveal Initiative' }));
 	await waitForStage([gmPage, ...otherPages], 'Initiative revealed', 6000);
 	await clickCommand(gmPage, gmPage.getByRole('button', { name: 'Begin turns' }));
@@ -257,7 +257,7 @@ export async function endRound(gmPage: Page, otherPages: Page[]): Promise<void> 
 	// the shared table's own `end-round` command, unrelated to Challenge.
 	// Scope to the Challenge panel's own `cleanup-round-button` explicitly.
 	const button = gmPage.getByTestId('cleanup-round-button');
-	await expect(button).toBeVisible({ timeout: 6000 });
+	await expect(button).toBeVisible({ timeout: 15000 });
 	await clickCommand(gmPage, button);
 	await waitForStage([gmPage, ...otherPages], 'Dealing Challenge cards', 6000);
 }

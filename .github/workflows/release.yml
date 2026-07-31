@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 22
       - name: Validate tag, package, and changelog agreement
-        run: node scripts/release/validate-tag.mjs "$GITHUB_REF_NAME"
+        run: node scripts/release/validate-tag.mjs "$GITHUB_REF_NAME" --require-annotated
 
   verify:
     needs: metadata

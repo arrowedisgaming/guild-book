@@ -25,7 +25,10 @@ The build command is identical to the old Pages one.
 1. In Cloudflare, create a dedicated API token from the **Edit Cloudflare
    Workers** template. Restrict its account resources to the account containing
    `guild-book` and its zone resources to `arrowed.games`; do not use a global
-   API key or a personal all-resources token.
+   API key or a personal all-resources token. Keep only **Workers Scripts
+   Write** and **Account Settings Read** on that account plus **Workers Routes
+   Write** on that zone. Do not grant D1, KV, R2, or Workers Tail access. The
+   Release workflow deploys code and its declared route but never migrates D1.
 2. Copy the account ID from the Cloudflare dashboard. Keep both values out of
    local files, shell history, commits, issue comments, and workflow logs.
 3. In GitHub, open **Settings → Environments → New environment** and create an
@@ -57,22 +60,34 @@ ordinary `main` builds, metadata validation, and browser tests cannot read them.
 
    This validates the current package/changelog metadata and compares content
    changes against the freshly fetched `origin/main` before running the rest of
-   the credential-free gate.
+   the credential-free gate. Run it on the release branch **before** merging:
+   the content-pack comparison only detects a missing pack-version bump while
+   `origin/main` does not yet contain the change. Pull request CI enforces the
+   same comparison against the PR base commit.
 
 3. Merge that exact commit to `main`. Apply any required production D1
    migrations and preflights before approving deployment; the workflow never
    applies remote migrations automatically.
-4. Create and push the matching annotated tag:
+4. Validate the proposed tag against existing releases, then create and push
+   the matching annotated tag on the merged `main` commit:
 
    ```bash
+   git fetch --tags origin
+   npm run release:validate -- vX.Y.Z --require-new
    git tag -a vX.Y.Z -m "Release vX.Y.Z"
    git push origin vX.Y.Z
    ```
 
+   `--require-new` fails if the tag already exists or is lower than the newest
+   existing release tag, before anything reaches GitHub. It only sees locally
+   known tags, which is why the fetch comes first.
+
 5. Open the **Release** workflow in GitHub Actions. Metadata validation and the
    reusable CI workflow must both succeed before the production approval prompt
-   appears. Confirm migrations are complete, then approve the `production`
-   environment.
+   appears. Before approving, confirm the tag commit is the current
+   `origin/main` head — the workflow only verifies the tag is an *ancestor* of
+   `main`, so a tag on an older commit would deploy without later fixes.
+   Confirm migrations are complete, then approve the `production` environment.
 6. After Wrangler reports the deployment, perform the smoke test in section 5
    against `https://guildbook.arrowed.games`.
 
@@ -111,6 +126,13 @@ production deployment path; enabling a second push-to-deploy system would
 bypass its tag validation, required checks, and protected-environment approval.
 Wrangler still reads `wrangler.toml`, which declares `main`, `[assets]`, D1, the
 rate-limit bindings, and the custom domain.
+
+The legacy `guild-book` Pages project must have automatic production-branch
+deployments disabled and its preview branch set to **None**. Keep its frozen
+last deployment only until the first GitHub-governed release completes and
+passes the production smoke test, then retire the Pages project. It is not a
+durable rollback target: later D1 migrations can make old Pages code
+incompatible with the live schema.
 
 ### Secrets (`wrangler secret put <NAME>`)
 
@@ -261,7 +283,9 @@ environment flag. Never use it for staging.
   documented emergency recovery when the GitHub release path is unavailable.
 - **Schema changes**: `npm run db:generate` locally and commit the migration.
   Apply every required remote migration **before** deploying code that depends
-  on it; CI does not migrate D1.
+  on it; CI does not migrate D1. Every production migration must remain
+  backward compatible with the currently deployed release because migration
+  precedes deployment and D1 migrations do not roll back.
 - **User activity tracking (migration `0009_user_activity.sql`) — this
   ordering is not optional**: run `npm run db:migrate:d1:remote` **before**
   deploying the activity-tracking code. The `jwt` callback in
@@ -277,13 +301,17 @@ environment flag. Never use it for staging.
   then run `npm run db:migrate:d1:remote`. Do not deploy the adapter-backed auth
   code until every migration succeeds. Rotate `AUTH_SECRET` during the rollout
   to sign out legacy sessions.
-- **Rollback**: `npx wrangler deployments list` then
-  `npx wrangler rollback [version-id]`. Cloudflare dashboard → the Worker →
-  **Deployments** shows the same versions. Until the Pages project is retired,
-  the deeper fallback is to remove the custom domain from the Worker and
-  re-attach it to the `guild-book` Pages project — its last successful
-  deployment is still servable even though its Git builds now fail on the
-  missing `pages_build_output_dir`.
+- **Rollback**: re-run the previous governed tag's Release workflow and approve
+  its `production` deployment. While that run is in flight, use
+  `npx wrangler deployments list` followed by
+  `npx wrangler rollback [version-id]` for the immediate code-only rollback;
+  the Cloudflare dashboard → the Worker → **Deployments** shows the same
+  versions. Neither path rolls back D1 migrations. GitHub only allows workflow
+  re-runs for 30 days after the original run, and an immutable tag cannot be
+  re-pushed to start a fresh one — when the previous release is older than
+  that, or for the first governed release (whose predecessor has no Release
+  workflow run at all), `npx wrangler rollback [version-id]` is the rollback
+  path. Fix forward on a new branch and new version tag after any rollback.
 - Logs: `npx wrangler tail` (add `--env staging` for staging).
 
 ## Backup and Restore

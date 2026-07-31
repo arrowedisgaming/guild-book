@@ -156,8 +156,10 @@ behavior changes only where a failing regression test identifies a real defect.
 - Missing Cloudflare secrets: the protected deployment job fails before
   Wrangler can publish.
 - Browser failure: CI remains red even if a diagnostic retry passes.
-- Logs and artifacts: never include secret card payloads, cookies, OAuth
-  secrets, or Cloudflare credentials.
+- Logs and artifacts: may contain synthetic fixture cards in screenshots,
+  videos, traces, and network bodies, but never OAuth secrets, Cloudflare
+  credentials, production cookies, or production data. Browser tests must not
+  target production.
 
 ## Acceptance Criteria
 

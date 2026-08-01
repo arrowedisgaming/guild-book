@@ -6,7 +6,7 @@
 	let bodyHtml = $derived(renderMarkdown(rule.body));
 </script>
 
-<article id={rule.id} class="rule">
+<article id={rule.id} class="rule" tabindex="-1">
 	<h3>{rule.title}</h3>
 	<div class="body">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
@@ -62,5 +62,28 @@
 		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
 		border-radius: 999px;
 		color: var(--ink-soft);
+	}
+	.rule:focus {
+		outline: none;
+	}
+	.rule:target,
+	.rule.anchored {
+		animation: rule-flash 1.6s ease-out 1;
+	}
+	@keyframes rule-flash {
+		from {
+			background: color-mix(in oklab, var(--accent) 18%, transparent);
+		}
+		to {
+			background: transparent;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.rule:target,
+		.rule.anchored {
+			animation: none;
+			outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+			outline-offset: 4px;
+		}
 	}
 </style>

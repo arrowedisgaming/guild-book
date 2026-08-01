@@ -67,7 +67,7 @@
 		outline: none;
 	}
 	.rule:target,
-	.rule.anchored {
+	.rule:global(.anchored) {
 		animation: rule-flash 1.6s ease-out 1;
 	}
 	@keyframes rule-flash {
@@ -80,7 +80,7 @@
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.rule:target,
-		.rule.anchored {
+		.rule:global(.anchored) {
 			animation: none;
 			outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
 			outline-offset: 4px;

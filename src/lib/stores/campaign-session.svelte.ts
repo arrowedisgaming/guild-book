@@ -108,12 +108,16 @@ export interface TableSession {
 }
 
 export interface SessionSyncSnapshot {
+	recipientUserId: string;
 	cursor: number;
 	events: WireSessionEventLike[];
 	session: TableSession | null;
 }
 
 export interface CampaignSessionStoreOptions {
+	/** Authenticated recipient this browser store is bound to. A sync payload
+	 * for any other recipient is discarded in full. */
+	recipientUserId: string;
 	/** Base poll interval while visible, in ms. Defaults to the table's ~1s
 	 * cadence. */
 	intervalMs?: number;
@@ -129,12 +133,14 @@ export interface SendCommandResult {
 }
 
 interface SyncResponseBody {
+	recipientUserId: string;
 	cursor: number;
 	events: WireSessionEventLike[];
 	session: TableSession | null;
 }
 
 interface CommandResponseBody {
+	recipientUserId?: string;
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 }
@@ -142,6 +148,7 @@ interface CommandResponseBody {
 /** Response shape of `POST .../challenge-commands` — the generic projection
  * envelope PLUS the Challenge-specific slice, both fresh. */
 interface ChallengeCommandResponseBody {
+	recipientUserId?: string;
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	challengeProjection?: ChallengeProjection | null;
@@ -151,6 +158,7 @@ interface ChallengeCommandResponseBody {
 /** Response shape of `POST .../guided-test-commands` — the generic projection
  * envelope PLUS the guided-test slice, both fresh. */
 interface GuidedTestCommandResponseBody {
+	recipientUserId?: string;
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	guidedTestProjection?: GuidedTestProjection | null;
@@ -159,6 +167,7 @@ interface GuidedTestCommandResponseBody {
 
 /** Response shape of `POST .../camp-commands`. */
 interface CampCommandResponseBody {
+	recipientUserId?: string;
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	campProjection?: CampProjection | null;
@@ -167,6 +176,7 @@ interface CampCommandResponseBody {
 
 /** Response shape of `POST .../finite-commands`. */
 interface FiniteCommandResponseBody {
+	recipientUserId?: string;
 	outcome?: { ok: boolean };
 	projection?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
 	finiteProjection?: FiniteProjection | null;
@@ -189,6 +199,7 @@ export interface ResolveReconfirmation {
  * only — an extra field would 400), and `end` has no fresh projection to
  * return (the session is gone), only a `publicHistoryChecksum`. */
 interface LifecycleResponseBody {
+	recipientUserId?: string;
 	success?: boolean;
 	action?: LifecycleAction;
 	session?: { campaignCursor: number; sessionVersion: number; projection: SessionProjection } | null;
@@ -206,8 +217,11 @@ export const COMMAND_ERROR_MESSAGE = 'That action could not be completed';
 export function createCampaignSessionStore(
 	campaignId: string,
 	initial: SessionSyncSnapshot,
-	options: CampaignSessionStoreOptions = {}
+	options: CampaignSessionStoreOptions
 ) {
+	if (initial.recipientUserId !== options.recipientUserId) {
+		throw new Error(SYNC_ERROR_MESSAGE);
+	}
 	const intervalMs = options.intervalMs ?? 1000;
 	const jitterMs = options.jitterMs ?? 150;
 	const doFetch = options.fetchImpl ?? fetch;
@@ -227,6 +241,40 @@ export function createCampaignSessionStore(
 	 * the same promise/commandId instead of issuing a second request. */
 	const pending = new Map<string, Promise<SendCommandResult>>();
 
+	function hasExpectedRecipient(body: { recipientUserId?: unknown } | null): boolean {
+		return body?.recipientUserId === options.recipientUserId;
+	}
+
+	/** A response addressed to a *different* user — as opposed to a malformed
+	 * or error body with no recipient at all, which stays a transient failure.
+	 * A foreign recipient means this browser's authenticated user changed out
+	 * from under the store, so the projection it renders belongs to someone
+	 * who is no longer signed in here. */
+	function isForeignRecipient(body: { recipientUserId?: unknown } | null): boolean {
+		return typeof body?.recipientUserId === 'string' && body.recipientUserId !== options.recipientUserId;
+	}
+
+	/** Scrub everything actor-scoped (private card faces included) and halt:
+	 * retaining the previous user's projection while rejecting the new user's
+	 * payloads would leave the old user's private state rendered indefinitely. */
+	function discardForeignSession(): void {
+		snapshot = { recipientUserId: options.recipientUserId, cursor: 0, events: [], session: null };
+		error = SYNC_ERROR_MESSAGE;
+		stop();
+	}
+
+	/** Shared refusal for every command path: a foreign recipient scrubs the
+	 * session before failing; an absent recipient just fails. Returns null
+	 * when the body is addressed to the expected recipient. */
+	function commandRecipientRefusal(body: { recipientUserId?: unknown } | null): SendCommandResult | null {
+		if (isForeignRecipient(body)) {
+			discardForeignSession();
+			return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		}
+		if (!hasExpectedRecipient(body)) return { ok: false, message: COMMAND_ERROR_MESSAGE };
+		return null;
+	}
+
 	function currentVisibility(): boolean {
 		return typeof document === 'undefined' ? true : document.visibilityState === 'visible';
 	}
@@ -235,9 +283,11 @@ export function createCampaignSessionStore(
 		return typeof navigator === 'undefined' ? true : navigator.onLine;
 	}
 
-	/** One `/sync` request. Resolves normally on 204 (nothing changed) or a
-	 * successful 200 (snapshot replaced). Throws a fixed, generic error on
-	 * any other status — the response body is never read or surfaced. */
+	/** One `/sync` request. Resolves normally on 204 (nothing changed — after
+	 * verifying the `X-Guildbook-Recipient` header, when present, still names
+	 * this store's recipient) or a successful 200 (snapshot replaced). Throws a
+	 * fixed, generic error on any other status — the response body is never
+	 * read or surfaced. */
 	async function poll(): Promise<void> {
 		if (destroyed) return;
 		controller?.abort();
@@ -253,12 +303,37 @@ export function createCampaignSessionStore(
 		});
 
 		if (response.status === 204) {
+			// Issue #25: a 204 has no body to carry `recipientUserId`, so the
+			// account-switch signal rides a header instead. Foreign value →
+			// same scrub as a foreign body; absent header (older server build
+			// mid-deploy) → tolerated, matching the body-side rule that only a
+			// *different* recipient is an identity signal.
+			const headerRecipient = response.headers.get('X-Guildbook-Recipient');
+			if (headerRecipient !== null && headerRecipient !== options.recipientUserId) {
+				discardForeignSession();
+				return;
+			}
 			error = null;
+			return;
+		}
+		// An authorization-class refusal is an identity signal, not a
+		// transient fault: the signed-in user changed or lost access to this
+		// campaign, so whatever this store still renders belongs to someone
+		// who can no longer read it. Scrub and halt; 5xx stays transient.
+		if (response.status === 401 || response.status === 403 || response.status === 404) {
+			discardForeignSession();
 			return;
 		}
 		if (!response.ok) throw new Error(SYNC_ERROR_MESSAGE);
 
 		const body = (await response.json()) as SyncResponseBody;
+		if (isForeignRecipient(body)) {
+			discardForeignSession();
+			return;
+		}
+		if (!hasExpectedRecipient(body)) {
+			throw new Error(SYNC_ERROR_MESSAGE);
+		}
 		// Review round 2 fix: a poll started before a command's POST can
 		// resolve *after* that command's response already replaced `session`
 		// with a newer projection (sendCommand's optimistic update) — the
@@ -269,6 +344,7 @@ export function createCampaignSessionStore(
 		// advances them — see `performSend`), so they always take the poll's
 		// value.
 		snapshot = {
+			recipientUserId: body.recipientUserId,
 			cursor: body.cursor,
 			events: body.events,
 			session: isOlderSessionVersion(snapshot.session?.sessionVersion, body.session?.sessionVersion)
@@ -397,6 +473,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			// Same-class race as `poll()` above, mirrored: a slow command
 			// response can resolve after a poll (or another command) already
@@ -463,6 +541,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as ChallengeCommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -541,6 +621,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as GuidedTestCommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -604,6 +686,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CampCommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 
 			if (
 				body?.projection &&
@@ -656,6 +740,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as CommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (
 				body?.projection &&
 				snapshot.session &&
@@ -705,6 +791,8 @@ export function createCampaignSessionStore(
 				body: JSON.stringify(envelope)
 			});
 			const body = (await response.json().catch(() => null)) as FiniteCommandResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (
 				body?.projection &&
 				snapshot.session &&
@@ -773,6 +861,8 @@ export function createCampaignSessionStore(
 			if (!response.ok) return { ok: false, message: COMMAND_ERROR_MESSAGE };
 
 			const body = (await response.json().catch(() => null)) as LifecycleResponseBody | null;
+			const refusal = commandRecipientRefusal(body);
+			if (refusal) return refusal;
 			if (!body?.success) return { ok: false, message: COMMAND_ERROR_MESSAGE };
 
 			if (snapshot.session && snapshot.session.sessionId === sessionId) {

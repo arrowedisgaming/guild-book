@@ -95,12 +95,29 @@ export type RateLimitEnforcement = 'enforcing' | 'not-enforcing' | 'unavailable'
  * Worker — a 5-per-60s limiter on a fixed key allowed 13 consecutive
  * requests, with no application code involved.
  *
- * So: call the limiter `limit + 1` times against one fixed key. A working
+ * So: call the limiter well past its limit against one fixed key. A working
  * limiter must deny at least once. Zero denials means it is not counting.
+ *
+ * **Why it overshoots by more than one.** Cloudflare documents these counters
+ * as permissive and eventually consistent rather than exact, so `limit + 1`
+ * calls is too thin a margin to draw a conclusion from — a healthy binding
+ * could allow the extra call and be reported as broken. Since a
+ * `not-enforcing` verdict is treated as a release blocker, a false alarm is
+ * expensive, and the original margin could not distinguish "slightly
+ * permissive, as documented" from "not counting at all". `SELF_TEST_OVERSHOOT`
+ * extra calls puts the result well outside the slack the documentation claims.
+ * (Raised in the 0.7.0 pre-release review; the 2026-07-27 throwaway-Worker
+ * experiment above — 13 consecutive allowed against a limit of 5 — is what the
+ * margin needs to be wide enough to match.)
+ *
+ * The overshoot is only ever paid by a BROKEN binding: a working one denies on
+ * the first call past its limit and returns immediately.
  *
  * Uses its own binding and its own key, so it never spends a real policy's
  * budget and can never deny a real request.
  */
+export const SELF_TEST_OVERSHOOT = 5;
+
 export async function probeRateLimitEnforcement(
 	binding: CloudflareRateLimitBinding | undefined,
 	limit: number = SELF_TEST_LIMIT
@@ -108,7 +125,7 @@ export async function probeRateLimitEnforcement(
 	if (!binding) return 'absent';
 
 	try {
-		for (let attempt = 0; attempt <= limit; attempt++) {
+		for (let attempt = 0; attempt < limit + SELF_TEST_OVERSHOOT; attempt++) {
 			const { success } = await binding.limit({ key: 'health-self-test' });
 			// One denial is proof enough; stop rather than spend the rest.
 			if (!success) return 'enforcing';

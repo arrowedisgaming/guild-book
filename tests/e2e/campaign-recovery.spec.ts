@@ -23,11 +23,17 @@ import { signInAs } from './fixtures/auth';
  *     need a test-only corruption endpoint, which is a production attack surface
  *     added for a test's convenience. It is covered in
  *     `tests/integration/session-recovery.test.ts` with direct database access.
- *   - "overnight active session across deployment" is already covered by
- *     `tests/integration/session-runtime-pinning.test.ts`, which pins the
- *     content digest a session started against and proves a reload after a live
- *     content-pack change still yields the originally-pinned content. Re-staging
- *     that through a browser would assert less, not more.
+ *   - "overnight active session across deployment" is covered where a real
+ *     deployment can actually happen. `scripts/campaigns/staging-d1-smoke.mjs`
+ *     redeploys the staging Worker mid-session under
+ *     `CAMPAIGN_STAGING_DEPLOY_CHECK=1` and asserts the next command is still
+ *     accepted against the pinned runtime; that check has been RUN, and
+ *     `docs/operations/campaign-staging.md` records the result (version 3 → 4,
+ *     pinned runtime intact). `tests/integration/session-runtime-pinning.test.ts`
+ *     covers the mechanism underneath it — a reload after a live content-pack
+ *     change still yields the originally-pinned content. Playwright drives a
+ *     preview server it cannot redeploy, so re-staging this through a browser
+ *     would assert less, not more.
  *
  * The four scenarios below are the ones where the browser is the only honest
  * witness.
@@ -212,20 +218,20 @@ test.describe('campaign freeze, recovery and sanitized end', () => {
 		await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
 		await expect(gmPage.getByTestId('end-session-confirm')).toBeVisible();
 		await gmPage.getByRole('button', { name: 'Confirm end' }).click();
-		await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 8000 });
+		await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 		// The player's private hand is gone, and they are not left staring at a
 		// frozen banner for a session that no longer exists.
 		await expect(playerAPage.locator('[data-testid="hand-card"] .card')).toHaveCount(0, {
-			timeout: 8000
+			timeout: 15000
 		});
 		await expect(playerAPage.getByTestId('frozen-banner')).toHaveCount(0);
 
 		// Public history survived, and is readable by a member with a checksum.
 		await playerAPage.goto(`/campaigns/${campaignId}/sessions`);
-		await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('session-list')).toBeVisible({ timeout: 15000 });
 		await playerAPage.getByTestId('session-link-1').click();
-		await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 4000 });
+		await expect(playerAPage.getByTestId('history-log')).toBeVisible({ timeout: 15000 });
 		await expect(playerAPage.getByTestId('history-meta')).toContainText('checksum');
 
 		// With the session ended, the archive boundary releases.

@@ -7,6 +7,7 @@ import {
 	resetRateLimitCountersForTest
 } from '$lib/server/rate-limit/campaign';
 import {
+	SELF_TEST_OVERSHOOT,
 	createCloudflareRateLimiter,
 	probeRateLimitEnforcement
 } from '$lib/server/rate-limit/cloudflare';
@@ -211,7 +212,21 @@ describe('enforcement self-test', () => {
 		const binding = { limit: vi.fn(async () => ({ success: true })) };
 
 		await expect(probeRateLimitEnforcement(binding, 1)).resolves.toBe('not-enforcing');
-		expect(binding.limit).toHaveBeenCalledTimes(2);
+		// Overshoots the limit by a documented margin rather than by one, so a
+		// binding that is merely permissive — which Cloudflare says these counters
+		// are allowed to be — is not reported as broken. Asserted against the
+		// exported constant so the probe and this expectation cannot drift.
+		expect(binding.limit).toHaveBeenCalledTimes(1 + SELF_TEST_OVERSHOOT);
+	});
+
+	it('does not call a healthy-but-permissive binding broken', async () => {
+		// Allows exactly one call past the limit, then counts. That is inside the
+		// documented slack, and the old `limit + 1` probe would have reported it
+		// as not-enforcing.
+		let calls = 0;
+		const binding = { limit: vi.fn(async () => ({ success: ++calls <= 2 })) };
+
+		await expect(probeRateLimitEnforcement(binding, 1)).resolves.toBe('enforcing');
 	});
 
 	it('reports absent when the binding is not configured', async () => {

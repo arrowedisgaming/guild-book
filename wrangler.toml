@@ -26,9 +26,11 @@ main = ".svelte-kit/cloudflare/_worker.js"
 # deploy fails with "already in use" until the domain is removed from the
 # `guild-book` PAGES project first. That ordering is the cutover.
 #
-# Rollback: remove the custom domain here, redeploy, and re-attach it to the
-# Pages project — its last successful deployment is still servable even though
-# its Git builds now fail on the missing `pages_build_output_dir`.
+# Rollback: re-run the previous governed tag's Release workflow (GitHub allows
+# re-runs for 30 days), or use `npx wrangler rollback [version-id]` for
+# immediate code-only recovery — also the path when the prior run is too old
+# or absent, as for the first governed release.
+# Never re-attach the domain to Pages; old code may be incompatible with D1.
 routes = [{ pattern = "guildbook.arrowed.games", custom_domain = true }]
 
 # Non-secret production values only. Everything sensitive is a secret set via
@@ -161,29 +163,39 @@ database_name = "guild-book-staging-db"
 database_id = "684b27e8-8593-4020-a3f8-b2b022c25a2f"
 migrations_dir = "src/lib/server/db/migrations"
 
-# Same limits as production: staging exists to measure production behaviour,
-# so a different budget here would invalidate the Task 4 capacity numbers.
+# Same LIMITS as production — staging exists to measure production behaviour, so
+# a different budget here would invalidate the Task 4 capacity numbers — but
+# deliberately DIFFERENT namespace ids (2001-2005 against production's
+# 1001-1005).
+#
+# `namespace_id` is scoped to the Cloudflare account, not to the Worker, so two
+# Workers declaring the same id share one set of counters. With matching ids,
+# staging traffic would spend production's budget. Most keys are hashed from the
+# actor and campaign and so would not have collided in practice, but the
+# self-test's key is the fixed string `health-self-test`, which collides every
+# time — staging's health check would have been counting against production's.
+# Caught in the 0.7.0 pre-release review.
 [[env.staging.ratelimits]]
 name = "CAMPAIGN_SESSION_COMMAND_LIMITER"
-namespace_id = "1001"
+namespace_id = "2001"
 simple = { limit = 300, period = 60 }
 
 [[env.staging.ratelimits]]
 name = "CAMPAIGN_MUTATION_LIMITER"
-namespace_id = "1002"
+namespace_id = "2002"
 simple = { limit = 60, period = 60 }
 
 [[env.staging.ratelimits]]
 name = "CAMPAIGN_JOIN_LIMITER"
-namespace_id = "1003"
+namespace_id = "2003"
 simple = { limit = 10, period = 60 }
 
 [[env.staging.ratelimits]]
 name = "CAMPAIGN_POLL_LIMITER"
-namespace_id = "1004"
+namespace_id = "2004"
 simple = { limit = 30, period = 10 }
 
 [[env.staging.ratelimits]]
 name = "CAMPAIGN_LIMITER_SELFTEST"
-namespace_id = "1005"
+namespace_id = "2005"
 simple = { limit = 1, period = 10 }

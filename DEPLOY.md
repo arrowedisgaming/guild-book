@@ -10,12 +10,90 @@ which contains `_worker.js` **and** the static asset tree.
 `main` + `[assets]` present it emits an `.assetsignore` and no `_routes.json`.
 The build command is identical to the old Pages one.
 
-> **Deploys are currently manual.** Workers Builds (the Git connection) is not
-> wired up yet, so pushing to `main` does **not** deploy. Ship with:
->
-> ```bash
-> ADAPTER=cloudflare npm run build && npx wrangler deploy
-> ```
+> **Production deploys are GitHub-gated.** Pushing `main` does not deploy.
+> Production is published only by `.github/workflows/release.yml`, from an
+> exact `vX.Y.Z` tag after the tagged commit passes the complete reusable CI
+> workflow and the protected `production` environment is approved. Direct
+> local deploys are reserved for emergency recovery.
+
+---
+
+## GitHub-gated production releases
+
+### One-time GitHub and Cloudflare setup
+
+1. In Cloudflare, create a dedicated API token from the **Edit Cloudflare
+   Workers** template. Restrict its account resources to the account containing
+   `guild-book` and its zone resources to `arrowed.games`; do not use a global
+   API key or a personal all-resources token. Keep only **Workers Scripts
+   Write** and **Account Settings Read** on that account plus **Workers Routes
+   Write** on that zone. Do not grant D1, KV, R2, or Workers Tail access. The
+   Release workflow deploys code and its declared route but never migrates D1.
+2. Copy the account ID from the Cloudflare dashboard. Keep both values out of
+   local files, shell history, commits, issue comments, and workflow logs.
+3. In GitHub, open **Settings → Environments → New environment** and create an
+   environment named exactly `production`.
+4. Add the repository owner as a required reviewer. Restrict deployment
+   branches and tags so only tags matching `v*` may enter the environment.
+5. Add these as **environment secrets**, not plaintext variables and not
+   committed `.env` values:
+
+   | Secret | Value |
+   | --- | --- |
+   | `CLOUDFLARE_API_TOKEN` | The restricted deployment token |
+   | `CLOUDFLARE_ACCOUNT_ID` | The account containing the production Worker |
+
+The workflow intentionally has read-only repository permissions. Cloudflare
+credentials are available only to the protected deployment job; pull requests,
+ordinary `main` builds, metadata validation, and browser tests cannot read them.
+
+### Cut a release
+
+1. Move the release notes out of `[Unreleased]`, add a dated
+   `## [X.Y.Z] - YYYY-MM-DD` heading, and set `package.json` to the same version.
+2. Run the complete credential-free release gate locally:
+
+   ```bash
+   git fetch origin main
+   npm run release:verify
+   ```
+
+   This validates the current package/changelog metadata and compares content
+   changes against the freshly fetched `origin/main` before running the rest of
+   the credential-free gate. Run it on the release branch **before** merging:
+   the content-pack comparison only detects a missing pack-version bump while
+   `origin/main` does not yet contain the change. Pull request CI enforces the
+   same comparison against the PR base commit.
+
+3. Merge that exact commit to `main`. Apply any required production D1
+   migrations and preflights before approving deployment; the workflow never
+   applies remote migrations automatically.
+4. Validate the proposed tag against existing releases, then create and push
+   the matching annotated tag on the merged `main` commit:
+
+   ```bash
+   git fetch --tags origin
+   npm run release:validate -- vX.Y.Z --require-new
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+   `--require-new` fails if the tag already exists or is lower than the newest
+   existing release tag, before anything reaches GitHub. It only sees locally
+   known tags, which is why the fetch comes first.
+
+5. Open the **Release** workflow in GitHub Actions. Metadata validation and the
+   reusable CI workflow must both succeed before the production approval prompt
+   appears. Before approving, confirm the tag commit is the current
+   `origin/main` head — the workflow only verifies the tag is an *ancestor* of
+   `main`, so a tag on an older commit would deploy without later fixes.
+   Confirm migrations are complete, then approve the `production` environment.
+6. After Wrangler reports the deployment, perform the smoke test in section 5
+   against `https://guildbook.arrowed.games`.
+
+If verification fails, do not move or recreate the tag. Fix the problem on a
+new commit, update the version/changelog as appropriate, and cut a new tag. A
+tagged build that passed only on Playwright retry remains failed by design.
 
 ---
 
@@ -40,21 +118,21 @@ Either deploy from the CLI (what was actually done):
 
 ```bash
 ADAPTER=cloudflare npm run build
-npx wrangler deploy
+npx wrangler deploy --env ''
 ```
 
-…or, to get auto-deploy on push, connect Workers Builds in the dashboard →
-**Workers & Pages → Create → Worker → Connect to Git**:
+Do not also connect Workers Builds to this repository. GitHub Actions owns the
+production deployment path; enabling a second push-to-deploy system would
+bypass its tag validation, required checks, and protected-environment approval.
+Wrangler still reads `wrangler.toml`, which declares `main`, `[assets]`, D1, the
+rate-limit bindings, and the custom domain.
 
-1. Authorize the Cloudflare GitHub App for the `arrowedisgaming` org, select the
-   **guild-book** repo.
-2. Production branch **main**; build command `ADAPTER=cloudflare npm run build`.
-3. Leave the deploy command at its default `npx wrangler deploy` — it reads
-   `wrangler.toml`, which already declares `main`, `[assets]`, D1, the
-   rate-limit bindings and the custom domain.
-4. Add `preview_urls = true` to `wrangler.toml` if you want per-branch previews.
-   Declaring `routes` without `workers_dev`/`preview_urls` disables both by
-   default — Wrangler warns about this on every deploy.
+The legacy `guild-book` Pages project must have automatic production-branch
+deployments disabled and its preview branch set to **None**. Keep its frozen
+last deployment only until the first GitHub-governed release completes and
+passes the production smoke test, then retire the Pages project. It is not a
+durable rollback target: later D1 migrations can make old Pages code
+incompatible with the live schema.
 
 ### Secrets (`wrangler secret put <NAME>`)
 
@@ -91,8 +169,8 @@ is not needed (that was a Pages build-image setting). Do **not** set
 
 ### Bindings
 
-`wrangler.toml` declares them all; `npx wrangler deploy` prints the resolved
-list on every deploy, and `npx wrangler deploy --dry-run` does the same without
+`wrangler.toml` declares them all; `npx wrangler deploy --env ''` prints the resolved
+list on every deploy, and `npx wrangler deploy --dry-run --env ''` does the same without
 shipping. Expect:
 
 | Binding | Resource |
@@ -105,14 +183,32 @@ shipping. Expect:
 | `CAMPAIGN_POLL_LIMITER` | Rate Limit, 30/10s |
 | `CAMPAIGN_LIMITER_SELFTEST` | Rate Limit, 1/10s — never limits a real request |
 
-> **Known issue (2026-07-27): the rate-limit bindings do not enforce.** They
-> deploy, type-check, and appear above as Rate Limit resources, but
-> `limit()` returns `success: true` regardless of volume. Reproduced on Workers
-> Paid with a bare throwaway Worker and both config syntaxes, so it is not a
-> configuration or application fault. `/api/internal/campaign-health` reports
-> `rateLimit.enforcement`; anything other than `"enforcing"` is a **release
-> blocker for making campaigns public**, and is currently `"not-enforcing"`.
-> Open with Cloudflare support. This does not affect the rest of the site.
+> **RESOLVED 2026-07-30 — the bindings do enforce; our probe was wrong.**
+>
+> From 2026-07-27 this section reported that the rate-limit bindings never
+> counted, and that was treated as a release blocker for making campaigns
+> public. The 0.7.0 pre-release review found the fault was in the self-test,
+> not the provider: it called the limiter `limit + 1` times — **two** calls
+> against a 1-per-10s binding — and Cloudflare documents these counters as
+> permissive and eventually consistent rather than exact, so a working binding
+> is allowed to let two through. Zero denials was read as "never counts".
+>
+> Widening the overshoot to `limit + 5` (`SELF_TEST_OVERSHOOT` in
+> `src/lib/server/rate-limit/cloudflare.ts`) flipped staging to `"enforcing"`
+> on **10 of 11 consecutive probes**, the single exception being the first
+> probe against a freshly-created namespace whose counter had not yet
+> materialised.
+>
+> `/api/internal/campaign-health` reports `rateLimit.enforcement`; anything
+> other than `"enforcing"` is still a release blocker for making campaigns
+> public. **Verify production separately** — the result above is staging, and
+> production has its own namespaces and its own health secret.
+>
+> **One thing this does not explain.** The 2026-07-27 investigation recorded a
+> bare throwaway Worker allowing 13 consecutive requests against a 5-per-60s
+> limiter. That overshoot is far too wide for documented permissiveness, so it
+> is not accounted for by the probe bug. Update the Cloudflare ticket with this
+> finding rather than simply closing it.
 
 ## 3. One-time: OAuth apps
 
@@ -181,11 +277,15 @@ environment flag. Never use it for staging.
 
 ## Ongoing
 
-- **Deploy** = `ADAPTER=cloudflare npm run build && npx wrangler deploy` until
-  Workers Builds is connected. Pushing `main` alone deploys nothing.
+- **Deploy** = push a validated `vX.Y.Z` tag and approve the protected
+  `production` environment after its exact commit passes reusable CI. Pushing
+  `main` alone deploys nothing. Use local `wrangler deploy` only during a
+  documented emergency recovery when the GitHub release path is unavailable.
 - **Schema changes**: `npm run db:generate` locally and commit the migration.
   Apply every required remote migration **before** deploying code that depends
-  on it; CI does not migrate D1.
+  on it; CI does not migrate D1. Every production migration must remain
+  backward compatible with the currently deployed release because migration
+  precedes deployment and D1 migrations do not roll back.
 - **User activity tracking (migration `0009_user_activity.sql`) — this
   ordering is not optional**: run `npm run db:migrate:d1:remote` **before**
   deploying the activity-tracking code. The `jwt` callback in
@@ -201,13 +301,17 @@ environment flag. Never use it for staging.
   then run `npm run db:migrate:d1:remote`. Do not deploy the adapter-backed auth
   code until every migration succeeds. Rotate `AUTH_SECRET` during the rollout
   to sign out legacy sessions.
-- **Rollback**: `npx wrangler deployments list` then
-  `npx wrangler rollback [version-id]`. Cloudflare dashboard → the Worker →
-  **Deployments** shows the same versions. Until the Pages project is retired,
-  the deeper fallback is to remove the custom domain from the Worker and
-  re-attach it to the `guild-book` Pages project — its last successful
-  deployment is still servable even though its Git builds now fail on the
-  missing `pages_build_output_dir`.
+- **Rollback**: re-run the previous governed tag's Release workflow and approve
+  its `production` deployment. While that run is in flight, use
+  `npx wrangler deployments list` followed by
+  `npx wrangler rollback [version-id]` for the immediate code-only rollback;
+  the Cloudflare dashboard → the Worker → **Deployments** shows the same
+  versions. Neither path rolls back D1 migrations. GitHub only allows workflow
+  re-runs for 30 days after the original run, and an immutable tag cannot be
+  re-pushed to start a fresh one — when the previous release is older than
+  that, or for the first governed release (whose predecessor has no Release
+  workflow run at all), `npx wrangler rollback [version-id]` is the rollback
+  path. Fix forward on a new branch and new version tag after any rollback.
 - Logs: `npx wrangler tail` (add `--env staging` for staging).
 
 ## Backup and Restore

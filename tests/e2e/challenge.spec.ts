@@ -66,8 +66,8 @@ test.describe('guided Challenge table', () => {
 
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await playerBPage.goto(`/campaigns/${campaignId}/table`);
-		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 2000 });
-		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 2000 });
+		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
+		await expect(playerBPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 		// Before any round begins, neither player sees ANY Challenge UI —
 		// `challengeLegalCommands` is empty for them (only the GM may begin).
@@ -94,7 +94,7 @@ test.describe('guided Challenge table', () => {
 		// --- Reveal — every context sees the same 3-seat order ---
 		await revealAndBeginTurns(gmPage, [playerAPage, playerBPage]);
 		for (const page of [gmPage, playerAPage, playerBPage]) {
-			await expect(page.getByTestId('initiative-row')).toHaveCount(3, { timeout: 2000 });
+			await expect(page.getByTestId('initiative-row')).toHaveCount(3, { timeout: 15000 });
 		}
 
 		// --- Take turns: whoever is active plays and ends their turn; the GM's

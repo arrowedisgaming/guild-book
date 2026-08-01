@@ -12,26 +12,34 @@
 
 	// Constructed exactly once (review round 2: no throwaway store built
 	// before the mount effect swaps in a second one). Reactive on
-	// `data.campaignId`, not just captured once: SvelteKit can reuse this
-	// same +page.svelte instance across a client-side navigation between two
-	// different campaigns' table routes, so the store is torn down and
-	// rebuilt for the new campaign rather than silently continuing to poll
-	// the old one — but only then, not on every unrelated `data` refresh.
+	// `data.campaignId` AND `data.userId`, not just captured once: SvelteKit
+	// can reuse this same +page.svelte instance across a client-side
+	// navigation between two different campaigns' table routes, and the
+	// signed-in user can change under the same mounted page (login switch in
+	// another tab, then a `data` refresh here). Either way the store is torn
+	// down and rebuilt so it never keeps polling — or rendering — the old
+	// identity's actor-scoped projection; but only then, not on every
+	// unrelated `data` refresh.
 	let store = $state.raw(untrack(() => createStoreFor(data)));
 	let storeCampaignId = untrack(() => data.campaignId);
+	let storeUserId = untrack(() => data.userId);
 
 	$effect(() => {
-		if (data.campaignId !== storeCampaignId) {
+		if (data.campaignId !== storeCampaignId || data.userId !== storeUserId) {
 			store.stop();
 			store = createStoreFor(data);
 			storeCampaignId = data.campaignId;
+			storeUserId = data.userId;
 		}
 		store.start();
 		return () => store.stop();
 	});
 
 	function createStoreFor(pageData: PageData) {
-		return createCampaignSessionStore(pageData.campaignId, pageData.initial, { intervalMs: 1000 });
+		return createCampaignSessionStore(pageData.campaignId, pageData.initial, {
+			intervalMs: 1000,
+			recipientUserId: pageData.userId
+		});
 	}
 
 	const session = $derived(store.session);

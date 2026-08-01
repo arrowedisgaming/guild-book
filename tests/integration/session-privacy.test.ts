@@ -217,6 +217,49 @@ describe('session HTTP surface — privacy canary', () => {
 		assertNoPoisonInHeaders(playerBSync, "player-b's sync poll headers");
 	});
 
+	it('keeps concurrent sync recipients and their private projections request-scoped', async () => {
+		mocks.ensureUser.mockImplementation(
+			async (event: { platform?: { env?: Record<string, string> } }) => {
+				const userId = event.platform?.env?.TEST_AUTHENTICATED_USER_ID;
+				if (!userId) throw new Error('test request is missing its authenticated user');
+				return userId;
+			}
+		);
+
+		const [playerAResponse, playerBResponse] = await Promise.all([
+			getSync(
+				fakeEvent({
+					campaignId,
+					authenticatedUserId: playerAUserId,
+					searchParams: { after: '0', version: '0' }
+				}) as never
+			),
+			getSync(
+				fakeEvent({
+					campaignId,
+					authenticatedUserId: playerBUserId,
+					searchParams: { after: '0', version: '0' }
+				}) as never
+			)
+		]);
+
+		const playerABody = (await playerAResponse.json()) as {
+			recipientUserId: string;
+			session: { projection: unknown } | null;
+		};
+		const playerBBody = (await playerBResponse.json()) as {
+			recipientUserId: string;
+			session: { projection: unknown } | null;
+		};
+
+		expect(playerABody.recipientUserId).toBe(playerAUserId);
+		expect(JSON.stringify(playerABody.session?.projection)).toContain(PLAYER_A_SECRET);
+		expect(JSON.stringify(playerABody)).not.toContain(GM_SECRET);
+
+		expect(playerBBody.recipientUserId).toBe(playerBUserId);
+		assertNoPoison(JSON.stringify(playerBBody), 'concurrent player-b sync response');
+	});
+
 	it('a nonmember gets an indistinguishable 404 with no secret in the thrown error', async () => {
 		mocks.ensureUser.mockResolvedValue('stranger');
 		let caught: unknown;

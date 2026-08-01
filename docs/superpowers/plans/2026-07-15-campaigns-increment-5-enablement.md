@@ -273,11 +273,11 @@ Do not commit secrets or raw load logs containing identifiers; commit the saniti
 - Create: `docs/operations/campaign-rollback.md`
 - Modify: `docs/operations/campaign-pilot.md`
 
-- [ ] **Step 1: Automate recovery scenarios**
+- [x] **Step 1: Automate recovery scenarios**
 
 Test corrupt fragment/version mismatch detection, automatic freeze, GM recovery after valid fragment repair/reload, GM sanitized end when recovery cannot proceed, overnight active session across deployment, and campaign archive blocked while frozen.
 
-- [ ] **Step 2: Rehearse configuration rollback on staging**
+- [x] **Step 2: Rehearse configuration rollback on staging**
 
 1. Start an active staging session and record its safe aggregate health.
 2. Deploy `CAMPAIGNS_ENABLED=false` and empty pilot allowlist.
@@ -285,7 +285,7 @@ Test corrupt fragment/version mismatch detection, automatic freeze, GM recovery 
 4. Restore only operator pilot access, recover/end the session, verify public history.
 5. Re-enable staging and verify no data migration rollback was required.
 
-- [ ] **Step 3: Document the forward-only rollback**
+- [x] **Step 3: Document the forward-only rollback**
 
 The runbook states who can flip flags, expected propagation time measured in rehearsal, how to identify/freeze affected sessions using aggregate IDs in secure operator tooling, privacy-safe evidence collection, and escalation. It explicitly forbids dropping tables or deleting journals/secrets as rollback.
 

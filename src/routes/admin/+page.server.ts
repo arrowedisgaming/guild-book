@@ -139,6 +139,13 @@ export const load: PageServerLoad = async (event) => {
 		characters: characterRows,
 		usersPage,
 		charactersPage,
+		// A full page is not evidence of a next page: with an exact multiple of
+		// PAGE_SIZE rows, the last page comes back full and "Next" would lead to
+		// an empty one. Both tables list every row their count counts (the
+		// characters join cannot drop rows — user_id is NOT NULL with an
+		// enforced FK), so the totals are the authority.
+		usersHasNext: usersPage * PAGE_SIZE < totalUsers,
+		charactersHasNext: charactersPage * PAGE_SIZE < totalCharacters,
 		userSort,
 		characterSort,
 		pageSize: PAGE_SIZE

@@ -35,8 +35,8 @@
 			: null
 	);
 
-	function next() {
-		if (!resolved || !path) return;
+	function persistTalents(): boolean {
+		if (!resolved || !path) return false;
 		const talents = buildStartingTalents({
 			kin: resolved.kin,
 			path,
@@ -48,6 +48,16 @@
 			talents,
 			arete: { ...c.arete, triggersMet: [false, false, false] }
 		}));
+		return true;
+	}
+
+	function selectPathTalent(talentId: string) {
+		masteredPathTalentId = talentId;
+		persistTalents();
+	}
+
+	function next() {
+		if (!persistTalents()) return;
 		wizard.completeStep(STEP);
 		goto(WIZARD_STEPS[STEP + 1].path);
 	}
@@ -91,7 +101,7 @@
 					class:sel={masteredPathTalentId === id}
 					role="radio"
 					aria-checked={masteredPathTalentId === id}
-					onclick={() => (masteredPathTalentId = id)}
+					onclick={() => selectPathTalent(id)}
 				>
 					{talentName(id)}
 				</button>

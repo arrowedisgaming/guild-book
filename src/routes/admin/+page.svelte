@@ -76,7 +76,7 @@
 <nav class="pager">
 	{#if data.usersPage > 1}<a href={pageHref('usersPage', data.usersPage - 1)}>Previous</a>{/if}
 	<span>Page {data.usersPage}</span>
-	{#if data.users.length === data.pageSize}
+	{#if data.usersHasNext}
 		<a href={pageHref('usersPage', data.usersPage + 1)}>Next</a>
 	{/if}
 </nav>
@@ -114,7 +114,7 @@
 		<a href={pageHref('charactersPage', data.charactersPage - 1)}>Previous</a>
 	{/if}
 	<span>Page {data.charactersPage}</span>
-	{#if data.characters.length === data.pageSize}
+	{#if data.charactersHasNext}
 		<a href={pageHref('charactersPage', data.charactersPage + 1)}>Next</a>
 	{/if}
 </nav>

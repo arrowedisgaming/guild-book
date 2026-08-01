@@ -556,5 +556,42 @@ describe('session HTTP contracts', () => {
 			expect(body.events.length).toBeLessThanOrEqual(200);
 			expect(body.cursor).toBeLessThan(1249);
 		});
+
+		it('echoes the authenticated recipient as a header on 204 responses', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			const response = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(response.status).toBe(204);
+			expect(response.headers.get('x-guildbook-recipient')).toBe(gmUserId);
+		});
+
+		it('echoes the recipient header on the hint-path 204 too', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			// First caught-up poll answers 204 and records the isolate-local cursor
+			// hint; the identical second call short-circuits on that hint (the
+			// `hasFreshMatchingCursorHint` path) and must still carry the header.
+			const first = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(first.status).toBe(204);
+			const second = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(second.status).toBe(204);
+			expect(second.headers.get('x-guildbook-recipient')).toBe(gmUserId);
+		});
+
+		it('echoes the recipient header on 200 responses alongside the body field', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			const response = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '0', version: '0' } }) as never
+			);
+			expect(response.status).toBe(200);
+			expect(response.headers.get('x-guildbook-recipient')).toBe(gmUserId);
+		});
 	});
 });

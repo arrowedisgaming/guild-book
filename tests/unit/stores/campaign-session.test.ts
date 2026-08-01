@@ -653,4 +653,79 @@ describe('createCampaignSessionStore', () => {
 		expect(JSON.stringify(store.snapshot)).not.toContain('PLAYER B PRIVATE CARD');
 		expect(store.error).toBe('Unable to refresh the campaign table');
 	});
+
+	it('clears the projection and halts polling when a 204 carries a foreign recipient header', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 204,
+				headers: { 'X-Guildbook-Recipient': 'player-b' }
+			})
+		);
+		const store = createCampaignSessionStore('campaign-1', makeInitialSnapshot(1), {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.session).toBeNull();
+		expect(store.error).toBe('Unable to refresh the campaign table');
+
+		const callsAfterMismatch = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(fetchImpl.mock.calls.length).toBe(callsAfterMismatch);
+	});
+
+	it('keeps the session when a 204 carries the expected recipient header', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+			new Response(null, {
+				status: 204,
+				headers: { 'X-Guildbook-Recipient': recipientUserId }
+			})
+		);
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.snapshot).toEqual(initial);
+		expect(store.error).toBeNull();
+
+		const callsSoFar = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(fetchImpl.mock.calls.length).toBeGreaterThan(callsSoFar);
+	});
+
+	it('keeps the session when a 204 has no recipient header (deploy skew)', async () => {
+		vi.useFakeTimers();
+		installBrowserHarness();
+		const initial = makeInitialSnapshot(1);
+		const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
+		const store = createCampaignSessionStore('campaign-1', initial, {
+			recipientUserId,
+			intervalMs: 1000,
+			jitterMs: 0,
+			fetchImpl
+		});
+
+		store.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(store.snapshot).toEqual(initial);
+		expect(store.error).toBeNull();
+
+		const callsSoFar = fetchImpl.mock.calls.length;
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(fetchImpl.mock.calls.length).toBeGreaterThan(callsSoFar);
+	});
 });

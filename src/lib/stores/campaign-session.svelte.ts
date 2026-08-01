@@ -283,9 +283,11 @@ export function createCampaignSessionStore(
 		return typeof navigator === 'undefined' ? true : navigator.onLine;
 	}
 
-	/** One `/sync` request. Resolves normally on 204 (nothing changed) or a
-	 * successful 200 (snapshot replaced). Throws a fixed, generic error on
-	 * any other status — the response body is never read or surfaced. */
+	/** One `/sync` request. Resolves normally on 204 (nothing changed — after
+	 * verifying the `X-Guildbook-Recipient` header, when present, still names
+	 * this store's recipient) or a successful 200 (snapshot replaced). Throws a
+	 * fixed, generic error on any other status — the response body is never
+	 * read or surfaced. */
 	async function poll(): Promise<void> {
 		if (destroyed) return;
 		controller?.abort();
@@ -301,6 +303,16 @@ export function createCampaignSessionStore(
 		});
 
 		if (response.status === 204) {
+			// Issue #25: a 204 has no body to carry `recipientUserId`, so the
+			// account-switch signal rides a header instead. Foreign value →
+			// same scrub as a foreign body; absent header (older server build
+			// mid-deploy) → tolerated, matching the body-side rule that only a
+			// *different* recipient is an identity signal.
+			const headerRecipient = response.headers.get('X-Guildbook-Recipient');
+			if (headerRecipient !== null && headerRecipient !== options.recipientUserId) {
+				discardForeignSession();
+				return;
+			}
 			error = null;
 			return;
 		}

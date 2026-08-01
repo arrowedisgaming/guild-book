@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Work only in `.worktrees/tarot-procedure-correctness-v2` on `codex/tarot-procedure-correctness-v2`.
+- Work only in `.worktrees/tarot-procedure-correctness-v2` for the Tarot Procedure Correctness v2 workstream.
 - Base this increment on `fc30837` and preserve the completed second-review correction commits.
 - Treat the Fool reshuffle trigger as `fool-drawn`; the lone `played` wording is an owner-confirmed rulebook erratum.
 - Re-audit all 31 `supported-v1` procedures against every material call site, not one representative citation.

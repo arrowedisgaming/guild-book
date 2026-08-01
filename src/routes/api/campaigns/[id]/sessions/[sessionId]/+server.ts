@@ -68,7 +68,10 @@ export const PATCH: RequestHandler = async (event) => {
 			expectedVersion: parsed.data.expectedVersion
 		});
 		if (!result.ok) return respondToLifecycleRejection(result.code);
-		return json({ success: true, action: 'freeze', session: await freshProjection() }, { headers: campaignHeaders() });
+		return json(
+			{ recipientUserId: role.userId, success: true, action: 'freeze', session: await freshProjection() },
+			{ headers: campaignHeaders() }
+		);
 	}
 
 	if (parsed.data.action === 'recover') {
@@ -80,7 +83,10 @@ export const PATCH: RequestHandler = async (event) => {
 			expectedVersion: parsed.data.expectedVersion
 		});
 		if (!result.ok) return respondToLifecycleRejection(result.code);
-		return json({ success: true, action: 'recover', session: await freshProjection() }, { headers: campaignHeaders() });
+		return json(
+			{ recipientUserId: role.userId, success: true, action: 'recover', session: await freshProjection() },
+			{ headers: campaignHeaders() }
+		);
 	}
 
 	const result = await endSession({
@@ -92,7 +98,12 @@ export const PATCH: RequestHandler = async (event) => {
 	});
 	if (!result.ok) return respondToLifecycleRejection(result.code);
 	return json(
-		{ success: true, action: 'end', publicHistoryChecksum: result.publicHistoryChecksum },
+		{
+			recipientUserId: role.userId,
+			success: true,
+			action: 'end',
+			publicHistoryChecksum: result.publicHistoryChecksum
+		},
 		{ headers: campaignHeaders() }
 	);
 

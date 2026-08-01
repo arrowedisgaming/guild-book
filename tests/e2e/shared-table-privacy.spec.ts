@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInAs } from './fixtures/auth';
+import { attachSyncDiagnostics, captureSyncDiagnostics } from './fixtures/sync-diagnostics';
 
 /**
  * TDD Step 1 (task-7-brief): privacy of the shared table's role-scoped
@@ -34,7 +35,27 @@ function campaignIdFromUrl(url: string): string {
 	return match[1];
 }
 
+/**
+ * Boundary-safe leak matcher. Card labels and ids are not substring-free:
+ * "III of Pentacles" is the tail of "VIII of Pentacles", and card id
+ * "pentacles-vii" is a prefix of "pentacles-viii" — so a bare
+ * `content.includes(label)` false-positives whenever another client
+ * legitimately renders the longer rank of the same suit. A real leak is the
+ * token NOT embedded in a longer roman rank (lookbehind) and NOT continued by
+ * more of a longer id (lookahead).
+ */
+function cardTokenPattern(token: string): RegExp {
+	const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return new RegExp(`(?<![IVXLCDMa-z-])${escaped}(?![a-z])`);
+}
+
+function containsCardToken(content: string, token: string): boolean {
+	return cardTokenPattern(token).test(content);
+}
+
 test.describe('shared table privacy', () => {
+	test.afterEach(async ({}, testInfo) => attachSyncDiagnostics(testInfo));
+
 	test('each participant sees only their own hand face; every other hand is an opaque back', async ({
 		browser
 	}) => {
@@ -44,6 +65,9 @@ test.describe('shared table privacy', () => {
 		const gmPage = await gm.newPage();
 		const playerAPage = await playerA.newPage();
 		const playerBPage = await playerB.newPage();
+		captureSyncDiagnostics(gmPage, test.info(), 'gm');
+		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
+		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
 
 		const consoleTexts: string[] = [];
 		for (const page of [gmPage, playerAPage, playerBPage]) {
@@ -150,23 +174,23 @@ test.describe('shared table privacy', () => {
 		// not on the GM's page, not on the other player's page, and the GM's
 		// own card never leaks to either player.
 		const gmContent = await gmPage.content();
-		expect(gmContent).not.toContain(labelA as string);
-		expect(gmContent).not.toContain(labelB as string);
+		expect(containsCardToken(gmContent, labelA as string), "GM page leaks A's card").toBe(false);
+		expect(containsCardToken(gmContent, labelB as string), "GM page leaks B's card").toBe(false);
 
 		const playerBContent = await playerBPage.content();
-		expect(playerBContent).not.toContain(labelA as string);
-		expect(playerBContent).not.toContain(labelGm as string);
+		expect(containsCardToken(playerBContent, labelA as string), "B's page leaks A's card").toBe(false);
+		expect(containsCardToken(playerBContent, labelGm as string), "B's page leaks GM's card").toBe(false);
 
 		const playerAContent = await playerAPage.content();
-		expect(playerAContent).not.toContain(labelB as string);
-		expect(playerAContent).not.toContain(labelGm as string);
+		expect(containsCardToken(playerAContent, labelB as string), "A's page leaks B's card").toBe(false);
+		expect(containsCardToken(playerAContent, labelGm as string), "A's page leaks GM's card").toBe(false);
 
 		// Never leaked to the console on any client either.
 		const leaked = consoleTexts.some(
 			(text) =>
-				text.includes(labelA as string) ||
-				text.includes(labelB as string) ||
-				text.includes(labelGm as string)
+				containsCardToken(text, labelA as string) ||
+				containsCardToken(text, labelB as string) ||
+				containsCardToken(text, labelGm as string)
 		);
 		expect(leaked).toBe(false);
 
@@ -210,6 +234,9 @@ test.describe('shared table privacy', () => {
 		const gmPage = await gm.newPage();
 		const playerAPage = await playerA.newPage();
 		const playerBPage = await playerB.newPage();
+		captureSyncDiagnostics(gmPage, test.info(), 'gm');
+		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
+		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
 
 		// Issue #10 artwork canary: capture request URLs so the face-down flow
 		// below can prove the hidden card's face image is never fetched.
@@ -279,7 +306,7 @@ test.describe('shared table privacy', () => {
 				timeout: CROSS_CLIENT_BUDGET_MS
 			});
 			const content = await page.content();
-			expect(content).not.toContain(facedownCardId as string);
+			expect(containsCardToken(content, facedownCardId as string), 'face-down card id leaked').toBe(false);
 		}
 
 		// Artwork canary (issue #10): the observers rendered that face-down card
@@ -296,9 +323,10 @@ test.describe('shared table privacy', () => {
 			.click();
 
 		for (const page of [playerBPage, gmPage]) {
-			await expect(page.locator('[data-testid="event-log"]')).toContainText(facedownCardId as string, {
-				timeout: CROSS_CLIENT_BUDGET_MS
-			});
+			await expect(page.locator('[data-testid="event-log"]')).toContainText(
+				cardTokenPattern(facedownCardId as string),
+				{ timeout: CROSS_CLIENT_BUDGET_MS }
+			);
 		}
 
 		// --- Discard: a public-top pile — the discarded face becomes every

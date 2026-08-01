@@ -128,3 +128,64 @@ describe('walkChapter ownership', () => {
 		expect(() => walkChapter(OWNERSHIP, { skip: [{ at: 'Nope/Missing', reason: 'x' }] })).toThrow(/locator/i);
 	});
 });
+
+import { cleanTitle, defaultSlug, resolveEntries } from '../../scripts/content-import/md-walk.mjs';
+
+describe('id and title normalization', () => {
+	it('strips ordinal junk and chapter prefixes', () => {
+		expect(defaultSlug('8 - Conditions')).toBe('conditions');
+		expect(defaultSlug('9 -Resolve')).toBe('resolve');
+		expect(defaultSlug('1. Draw Challenge cards')).toBe('draw-challenge-cards');
+		expect(defaultSlug('Chapter 2: The Adventurer')).toBe('the-adventurer');
+		expect(defaultSlug("We're doomed!")).toBe('were-doomed');
+		expect(cleanTitle('8 - Conditions')).toBe('Conditions');
+		expect(cleanTitle('Chapter 2: The Adventurer')).toBe('The Adventurer');
+	});
+});
+
+describe('resolveEntries', () => {
+	const cand = (locator: string, text: string, occurrence = 1) => ({
+		locator, occurrence, level: 2, text, bodyLines: ['x']
+	});
+
+	it('prefixes ids with the section', () => {
+		const out = resolveEntries([cand('A/Watches', 'Watches')], { section: 'crawl-phase' });
+		expect(out[0]).toMatchObject({ id: 'crawl-phase-watches', title: 'Watches' });
+	});
+
+	it('applies explicit ids and aliases by locator', () => {
+		const out = resolveEntries(
+			[cand('Flow/1. Draw Challenge cards', '1. Draw Challenge cards'), cand('GMing/1. Draw Challenge cards', '1. Draw Challenge cards')],
+			{
+				section: 'challenge-phase',
+				idAliases: { 'Flow/1. Draw Challenge cards': 'challenge-draw-cards' },
+				ids: { 'GMing/1. Draw Challenge cards': 'challenge-gm-hand-size' }
+			}
+		);
+		expect(out.map((e) => e.id)).toEqual(['challenge-draw-cards', 'challenge-gm-hand-size']);
+	});
+
+	it('throws on an unresolved id collision, naming both locators', () => {
+		expect(() =>
+			resolveEntries(
+				[cand('Flow/1. Draw Challenge cards', '1. Draw Challenge cards'), cand('GMing/1. Draw Challenge cards', '1. Draw Challenge cards')],
+				{ section: 'challenge-phase' }
+			)
+		).toThrow(/Flow\/1\. Draw Challenge cards[\s\S]*GMing\/1\. Draw Challenge cards/);
+	});
+
+	it('throws when two locators claim the same alias (bijectivity)', () => {
+		expect(() =>
+			resolveEntries([cand('A/X', 'X'), cand('A/Y', 'Y')], {
+				section: 's',
+				idAliases: { 'A/X': 'legacy-id', 'A/Y': 'legacy-id' }
+			})
+		).toThrow(/alias/i);
+	});
+
+	it('throws when an ids/idAliases locator matches no candidate', () => {
+		expect(() =>
+			resolveEntries([cand('A/X', 'X')], { section: 's', ids: { 'A/Zed': 'nope' } })
+		).toThrow(/locator/i);
+	});
+});

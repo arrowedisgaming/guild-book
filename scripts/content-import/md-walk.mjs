@@ -114,3 +114,68 @@ export function walkChapter(markdown, config) {
 	}
 	return { candidates, ledger };
 }
+
+/** "Chapter 2: X" / "8 - X" / "1. X" -> "X"; used for both slugs and titles. */
+function stripOrdinal(text) {
+	return text
+		.replace(/^chapter\s+\d+\s*[:.–-]\s*/i, '')
+		.replace(/^\d+\s*[.:–-]?\s*/, '')
+		.trim();
+}
+
+export function cleanTitle(text) {
+	return stripOrdinal(text.replace(/\s+/g, ' ').trim());
+}
+
+export function defaultSlug(text) {
+	return stripOrdinal(text.toLowerCase())
+		.replace(/[''']/g, '')
+		.normalize('NFD')
+		.replace(/[̀-ͯ]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Assigns final ids/titles to candidates. Priority per candidate:
+ * idAliases[locator] (legacy id preservation) > ids[locator] (explicit, for
+ * collisions) > `${section}-${defaultSlug(text)}`. Collisions and unmatched or
+ * non-bijective alias maps are build errors — never auto-suffixed, because
+ * suffixes are insertion-order-dependent and these ids are permanent URLs.
+ */
+export function resolveEntries(candidates, config) {
+	const byLocator = (map, kind) => {
+		const out = new Map();
+		for (const [at, id] of Object.entries(map ?? {})) {
+			const hit = candidates.find((c) => c.locator.toLowerCase() === at.toLowerCase());
+			if (!hit) throw new Error(`${kind} locator matches no candidate: ${JSON.stringify(at)}`);
+			out.set(hit, id);
+		}
+		return out;
+	};
+	const aliases = byLocator(config.idAliases, 'idAliases');
+	const explicit = byLocator(config.ids, 'ids');
+
+	const aliasValues = [...aliases.values()];
+	if (new Set(aliasValues).size !== aliasValues.length) {
+		throw new Error(`idAliases must be bijective; duplicate alias target in ${JSON.stringify(aliasValues)}`);
+	}
+
+	const entries = candidates.map((c) => ({
+		...c,
+		id: aliases.get(c) ?? explicit.get(c) ?? `${config.section}-${defaultSlug(c.text)}`,
+		title: cleanTitle(c.text)
+	}));
+
+	const seen = new Map();
+	for (const e of entries) {
+		if (seen.has(e.id)) {
+			throw new Error(
+				`id collision "${e.id}":\n  ${seen.get(e.id).locator}\n  ${e.locator}\n` +
+					`Resolve it with an explicit "ids" entry keyed by locator.`
+			);
+		}
+		seen.set(e.id, e);
+	}
+	return entries;
+}

@@ -1,102 +1,131 @@
 [
 	{
-		"id": "the-four-phases",
-		"section": "basics",
-		"title": "The Four Phases",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "The Four Phases",
-		"tags": ["core", "structure", "crawl", "challenge", "camp", "city"]
+		"walk": {
+			"file": "01 - Chapter 1 - The Basics.md",
+			"section": "basics",
+			"idAliases": {
+				"The Four Phases": "the-four-phases",
+				"The Flow of the Play": "the-flow-of-play",
+				"The Flow of the Play/Adjudicating the game: GM responses": "adjudicating-the-game",
+				"The Major and Minor Arcana": "the-major-and-minor-arcana",
+				"Tests of Fate": "tests-of-fate",
+				"Pushing fate": "pushing-fate",
+				"Pushing fate/Favor and disfavor": "favor-and-disfavor",
+				"Pushing fate/Bound by fate": "bound-by-fate",
+				"Pushing fate/Group tests": "group-tests",
+				"Effects": "effects"
+			},
+			"overrides": {
+				"the-four-phases": {
+					"tags": ["core", "structure", "crawl", "challenge", "camp", "city"]
+				},
+				"the-flow-of-play": {
+					"tags": ["session", "structure"]
+				},
+				"adjudicating-the-game": {
+					"omitRange": {
+						"from": "- “OK, you grab the portcullis before it slams down.",
+						"to": "### “No, you can’t do that”"
+					},
+					"mustContain": [
+						"### “No, you can’t do that”",
+						"bits of wire just lying around your jail cell"
+					],
+					"mustNotContain": ["mechanism’s gears"],
+					"tags": ["gm", "adjudication"]
+				},
+				"the-major-and-minor-arcana": {
+					"tags": ["tarot", "deck", "card-values"]
+				},
+				"tests-of-fate": {
+					"tags": ["core", "resolution", "tarot", "attributes", "outcomes"]
+				},
+				"pushing-fate": {
+					"tags": ["core", "resolution", "great-failure", "the-fool"]
+				},
+				"favor-and-disfavor": {
+					"tags": ["core", "resolution", "motifs", "resolve", "aiding"]
+				},
+				"bound-by-fate": {
+					"tags": ["core", "resolution", "retries"]
+				},
+				"group-tests": {
+					"tags": ["core", "resolution", "group"]
+				},
+				"effects": {
+					"tags": ["core", "effects", "conditions"]
+				}
+			}
+		}
 	},
 	{
-		"id": "the-flow-of-play",
-		"section": "basics",
-		"title": "The Flow of the Play",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "The Flow of the Play",
-		"until": "Adjudicating the game: GM responses",
-		"tags": ["session", "structure"]
+		"walk": {
+			"file": "02 - Chapter 2 - The Adventurer.md",
+			"section": "adventurer",
+			"skip": [
+				{
+					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST",
+					"occurrence": 2,
+					"reason": "duplicate all-caps copy of the New adventurer checklist section"
+				}
+			]
+		}
 	},
 	{
-		"id": "adjudicating-the-game",
-		"section": "basics",
-		"title": "Adjudicating the Game: GM Responses",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Adjudicating the game: GM responses",
-		"omitRange": {
-			"from": "- “OK, you grab the portcullis before it slams down.",
-			"to": "### “No, you can’t do that”"
-		},
-		"mustContain": [
-			"### “No, you can’t do that”",
-			"bits of wire just lying around your jail cell"
-		],
-		"mustNotContain": ["mechanism’s gears"],
-		"tags": ["gm", "adjudication"]
+		"walk": {
+			"file": "03 - Chapter 3 - The Guild.md",
+			"section": "guild",
+			"idAliases": {
+				"The Guild Roster/7. Deeds and Fame": "guild-deeds-and-fame"
+			},
+			"overrides": {
+				"guild-deeds-and-fame": {
+					"tags": ["guild", "fame", "city"]
+				}
+			}
+		}
 	},
 	{
-		"id": "the-major-and-minor-arcana",
-		"section": "basics",
-		"title": "The Major and Minor Arcana",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "The Major and Minor Arcana",
-		"tags": ["tarot", "deck", "card-values"]
+		"walk": {
+			"file": "04 - Chapter 4 - Kith and Kin.md",
+			"section": "kith-and-kin",
+			"splitDeeper": [
+				{
+					"at": "Fay/Fay kin/Wood elf arête talent: Area Sense",
+					"id": "kith-area-sense"
+				}
+			],
+			"overrides": {
+				"kith-area-sense": {
+					"tags": ["kith", "talent", "crawl", "tarot"]
+				}
+			}
+		}
 	},
 	{
-		"id": "tests-of-fate",
-		"section": "basics",
-		"title": "Tests of Fate",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Tests of Fate",
-		"tags": ["core", "resolution", "tarot", "attributes", "outcomes"]
-	},
-	{
-		"id": "pushing-fate",
-		"section": "basics",
-		"title": "Pushing Fate",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Pushing fate",
-		"until": "Example test of fate",
-		"tags": ["core", "resolution", "great-failure", "the-fool"]
-	},
-	{
-		"id": "favor-and-disfavor",
-		"section": "basics",
-		"title": "Favor and Disfavor",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Favor and disfavor",
-		"tags": ["core", "resolution", "motifs", "resolve", "aiding"]
-	},
-	{
-		"id": "bound-by-fate",
-		"section": "basics",
-		"title": "Bound by Fate",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Bound by fate",
-		"tags": ["core", "resolution", "retries"]
-	},
-	{
-		"id": "group-tests",
-		"section": "basics",
-		"title": "Group Tests",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Group tests",
-		"tags": ["core", "resolution", "group"]
-	},
-	{
-		"id": "effects",
-		"section": "basics",
-		"title": "Effects",
-		"file": "01 - Chapter 1 - The Basics.md",
-		"heading": "Effects",
-		"tags": ["core", "effects", "conditions"]
-	},
-	{
-		"id": "guild-deeds-and-fame",
-		"section": "guild",
-		"title": "Deeds and Fame",
-		"file": "03 - Chapter 3 - The Guild.md",
-		"heading": "7. Deeds and Fame",
-		"tags": ["guild", "fame", "city"]
+		"walk": {
+			"file": "05 - Chapter 5 - The Four Paths.md",
+			"section": "four-paths",
+			"splitDeeper": [
+				{
+					"at": "Path of Cups/Cups talents/Counsel",
+					"id": "paths-counsel"
+				},
+				{
+					"at": "Path of Cups/Cups talents/High Chant",
+					"id": "paths-high-chant"
+				}
+			],
+			"overrides": {
+				"paths-counsel": {
+					"tags": ["paths", "talent", "challenge", "tarot", "transfer"]
+				},
+				"paths-high-chant": {
+					"mustContain": ["inspiration card"],
+					"tags": ["paths", "talent", "camp", "tarot", "inspiration"]
+				}
+			}
+		}
 	},
 	{
 		"id": "crawl-sequence",
@@ -415,31 +444,6 @@
 		"file": "09 - Chapter 9 - The City Phase.md",
 		"heading": "Leeches",
 		"tags": ["city", "tarot", "equipment", "camp", "afflictions"]
-	},
-	{
-		"id": "kith-area-sense",
-		"section": "kith-and-kin",
-		"title": "Area Sense",
-		"file": "04 - Chapter 4 - Kith and Kin.md",
-		"heading": "Wood elf arête talent: Area Sense",
-		"tags": ["kith", "talent", "crawl", "tarot"]
-	},
-	{
-		"id": "paths-counsel",
-		"section": "four-paths",
-		"title": "Counsel",
-		"file": "05 - Chapter 5 - The Four Paths.md",
-		"heading": "Counsel",
-		"tags": ["paths", "talent", "challenge", "tarot", "transfer"]
-	},
-	{
-		"id": "paths-high-chant",
-		"section": "four-paths",
-		"title": "High Chant",
-		"file": "05 - Chapter 5 - The Four Paths.md",
-		"heading": "High Chant",
-		"mustContain": ["inspiration card"],
-		"tags": ["paths", "talent", "camp", "tarot", "inspiration"]
 	},
 	{
 		"id": "gm-creating-surprises",

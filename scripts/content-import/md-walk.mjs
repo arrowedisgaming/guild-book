@@ -141,7 +141,8 @@ export function defaultSlug(text) {
 /**
  * Assigns final ids/titles to candidates. Priority per candidate:
  * idAliases[locator] (legacy id preservation) > ids[locator] (explicit, for
- * collisions) > `${section}-${defaultSlug(text)}`. Collisions and unmatched or
+ * collisions) > splitDeeper[].id (the id a lifted H3 declares inline) >
+ * `${section}-${defaultSlug(text)}`. Collisions and unmatched or
  * non-bijective alias maps are build errors — never auto-suffixed, because
  * suffixes are insertion-order-dependent and these ids are permanent URLs.
  */
@@ -157,6 +158,13 @@ export function resolveEntries(candidates, config) {
 	};
 	const aliases = byLocator(config.idAliases, 'idAliases');
 	const explicit = byLocator(config.ids, 'ids');
+	// A splitDeeper entry's own `id` names the lifted H3's final id inline,
+	// so a manifest author doesn't have to repeat the same locator a second
+	// time in `ids` just to assign it.
+	const deeperIds = byLocator(
+		Object.fromEntries((config.splitDeeper ?? []).filter((d) => d.id).map((d) => [d.at, d.id])),
+		'splitDeeper'
+	);
 
 	const aliasValues = [...aliases.values()];
 	if (new Set(aliasValues).size !== aliasValues.length) {
@@ -165,7 +173,7 @@ export function resolveEntries(candidates, config) {
 
 	const entries = candidates.map((c) => ({
 		...c,
-		id: aliases.get(c) ?? explicit.get(c) ?? `${config.section}-${defaultSlug(c.text)}`,
+		id: aliases.get(c) ?? explicit.get(c) ?? deeperIds.get(c) ?? `${config.section}-${defaultSlug(c.text)}`,
 		title: cleanTitle(c.text)
 	}));
 

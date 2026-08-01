@@ -82,6 +82,15 @@ export function extractSection(file, heading, until, after) {
 }
 
 /**
+ * Callout types that are pure vault scaffolding — never book content — so they
+ * are dropped whole rather than converted. `hmw-nav` is the cross-chapter
+ * "← Introduction / Contents / Chapter N →" footer/header every exported
+ * chapter file carries; it has no rules-reference meaning and its wikilinks
+ * don't even resolve to a rule id.
+ */
+const SCAFFOLD_CALLOUTS = new Set(['hmw-nav']);
+
+/**
  * Converts Obsidian callout blocks into the app's markdown dialect instead of
  * dropping them. Opt-in per manifest entry via `keepCallouts`, because most
  * callouts are flavor sidebars that the rules reference deliberately excludes —
@@ -96,25 +105,32 @@ export function extractSection(file, heading, until, after) {
 export function convertCallouts(lines) {
 	const out = [];
 	let inCallout = false;
+	let suppress = false;
 	for (const line of lines) {
-		const opener = /^\s*>\s*\[!\w+\]\s*(.*)$/.exec(line);
+		// The callout type can contain a hyphen (`hmw-nav`), so the match must
+		// not restrict itself to `\w+` — a stricter regex here previously let
+		// `[!hmw-nav]` fall through unrecognized and leak into the body verbatim.
+		const opener = /^\s*>\s*\[!([\w-]+)\]\s*(.*)$/.exec(line);
 		if (opener) {
 			inCallout = true;
-			const title = opener[1].trim();
+			suppress = SCAFFOLD_CALLOUTS.has(opener[1].toLowerCase());
+			if (suppress) continue;
+			const title = opener[2].trim();
 			if (out.length && out[out.length - 1].trim() !== '') out.push('');
 			if (title) out.push(`### ${title}`, '');
 			continue;
 		}
 		if (inCallout) {
 			if (/^\s*>/.test(line)) {
-				out.push(line.replace(/^\s*>\s?/, ''));
+				if (!suppress) out.push(line.replace(/^\s*>\s?/, ''));
 				continue;
 			}
 			if (line.trim() === '') {
-				out.push('');
+				if (!suppress) out.push('');
 				continue;
 			}
 			inCallout = false;
+			suppress = false;
 		}
 		// A stray blockquote outside a recognized callout: unquote rather than
 		// leak `>` into the body.

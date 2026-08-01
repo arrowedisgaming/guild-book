@@ -1,0 +1,555 @@
+[
+	{
+		"file": "01 - Chapter 1 - The Basics.md",
+		"section": "basics",
+		"sourceSha256": "ee45aae9d3bd99392703d4ddf21609aea7b12ae8be6870f4ef46141574bf1e50",
+		"headings": [
+			{
+				"locator": "Chapter 1: The Basics",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "basics-the-basics"
+			},
+			{
+				"locator": "The Four Phases",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "the-four-phases"
+			},
+			{
+				"locator": "The Four Phases/The Crawl Phase",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-the-crawl-phase"
+			},
+			{
+				"locator": "The Four Phases/The Challenge Phase",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-the-challenge-phase"
+			},
+			{
+				"locator": "The Flow of the Play",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "the-flow-of-play"
+			},
+			{
+				"locator": "The Flow of the Play/Before play",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-before-play"
+			},
+			{
+				"locator": "The Flow of the Play/During play",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-during-play"
+			},
+			{
+				"locator": "The Flow of the Play/End of play",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-end-of-play"
+			},
+			{
+				"locator": "The Flow of the Play/Adjudicating the game: GM responses",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adjudicating-the-game"
+			},
+			{
+				"locator": "The Major and Minor Arcana",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "the-major-and-minor-arcana"
+			},
+			{
+				"locator": "Tests of Fate",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "tests-of-fate"
+			},
+			{
+				"locator": "Pushing fate",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "pushing-fate"
+			},
+			{
+				"locator": "Pushing fate/Example test of fate",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-example-test-of-fate"
+			},
+			{
+				"locator": "Pushing fate/Favor and disfavor",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "favor-and-disfavor"
+			},
+			{
+				"locator": "Pushing fate/Bound by fate",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "bound-by-fate"
+			},
+			{
+				"locator": "Pushing fate/Group tests",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "group-tests"
+			},
+			{
+				"locator": "Effects",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "effects"
+			}
+		]
+	},
+	{
+		"file": "02 - Chapter 2 - The Adventurer.md",
+		"section": "adventurer",
+		"sourceSha256": "3558b57b2b42cf2b0d73b1e02310f760faf24bc9c9f5cc920b4b2302fe54a916",
+		"headings": [
+			{
+				"locator": "Chapter 2: The Adventurer",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "adventurer-the-adventurer"
+			},
+			{
+				"locator": "The Player’s Manifesto",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "adventurer-the-players-manifesto"
+			},
+			{
+				"locator": "Session 0",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "adventurer-session-0"
+			},
+			{
+				"locator": "The Call to Adventure",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "adventurer-the-call-to-adventure"
+			},
+			{
+				"locator": "The Call to Adventure/1. Name, kith, and kin",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-name-kith-and-kin"
+			},
+			{
+				"locator": "The Call to Adventure/2. Attributes",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-attributes"
+			},
+			{
+				"locator": "The Call to Adventure/3. Quests",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-quests"
+			},
+			{
+				"locator": "The Call to Adventure/4. Motifs",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-motifs"
+			},
+			{
+				"locator": "The Call to Adventure/5. Bonds",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-bonds"
+			},
+			{
+				"locator": "The Call to Adventure/6. Arête",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-arete"
+			},
+			{
+				"locator": "The Call to Adventure/7. Languages",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-languages"
+			},
+			{
+				"locator": "The Call to Adventure/8 - Conditions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-conditions"
+			},
+			{
+				"locator": "The Call to Adventure/9 -Resolve",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-resolve"
+			},
+			{
+				"locator": "The Call to Adventure/10 - Lore",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-lore"
+			},
+			{
+				"locator": "The Call to Adventure/11 - Talents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-talents"
+			},
+			{
+				"locator": "The Call to Adventure/12 - Experience",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-experience"
+			},
+			{
+				"locator": "The Call to Adventure/13 - Animal companions and familiars",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-animal-companions-and-familiars"
+			},
+			{
+				"locator": "The Call to Adventure/War pigs",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-war-pigs"
+			},
+			{
+				"locator": "The Call to Adventure/14 - Pack space and gear",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-pack-space-and-gear"
+			},
+			{
+				"locator": "The Call to Adventure/Retirement",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-retirement"
+			},
+			{
+				"locator": "The Call to Adventure/New adventurer checklist",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-new-adventurer-checklist"
+			},
+			{
+				"locator": "The Call to Adventure/NEW ADVENTURER CHECKLIST",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "skipped",
+				"reason": "duplicate all-caps copy of the New adventurer checklist section"
+			},
+			{
+				"locator": "The Call to Adventure/Prior to your first session",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-prior-to-your-first-session"
+			},
+			{
+				"locator": "The Call to Adventure/At your first session",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-at-your-first-session"
+			},
+			{
+				"locator": "The Call to Adventure/Prior to your second session",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-prior-to-your-second-session"
+			},
+			{
+				"locator": "The Call to Adventure/At the end of your second session",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "adventurer-at-the-end-of-your-second-session"
+			}
+		]
+	},
+	{
+		"file": "03 - Chapter 3 - The Guild.md",
+		"section": "guild",
+		"sourceSha256": "de708e56932ea92ae7126a6b3c6958643aa5c754770faada51f3a28cd0e6c804",
+		"headings": [
+			{
+				"locator": "Chapter 3: The Guild",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "guild-the-guild"
+			},
+			{
+				"locator": "The Guild Roster",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "guild-the-guild-roster"
+			},
+			{
+				"locator": "The Guild Roster/1. Guild name",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-guild-name"
+			},
+			{
+				"locator": "The Guild Roster/2. Terms",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-terms"
+			},
+			{
+				"locator": "The Guild Roster/3. Sigil",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-sigil"
+			},
+			{
+				"locator": "The Guild Roster/4. Marching order",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-marching-order"
+			},
+			{
+				"locator": "The Guild Roster/5. Role",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-role"
+			},
+			{
+				"locator": "The Guild Roster/6. Current Contracts",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-current-contracts"
+			},
+			{
+				"locator": "The Guild Roster/7. Deeds and Fame",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "guild-deeds-and-fame"
+			}
+		]
+	},
+	{
+		"file": "04 - Chapter 4 - Kith and Kin.md",
+		"section": "kith-and-kin",
+		"sourceSha256": "71aa5e9302891c407282f53faa9aaab3dee0f094f1aec04b732b754610c2b935",
+		"headings": [
+			{
+				"locator": "Chapter 4: Kith and Kin",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "kith-and-kin-kith-and-kin"
+			},
+			{
+				"locator": "Humans",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "kith-and-kin-humans"
+			},
+			{
+				"locator": "Humans/Human houses",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "kith-and-kin-human-houses"
+			},
+			{
+				"locator": "Fay",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "kith-and-kin-fay"
+			},
+			{
+				"locator": "Fay/Fay kin",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "kith-and-kin-fay-kin"
+			},
+			{
+				"locator": "Fay/Fay kin/Wood elf arête talent: Area Sense",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "kith-area-sense"
+			},
+			{
+				"locator": "Underfolk",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "kith-and-kin-underfolk"
+			},
+			{
+				"locator": "Underfolk/Underfolk kin",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "kith-and-kin-underfolk-kin"
+			},
+			{
+				"locator": "Orcs",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "kith-and-kin-orcs"
+			},
+			{
+				"locator": "Orcs/Orcish kin",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "kith-and-kin-orcish-kin"
+			}
+		]
+	},
+	{
+		"file": "05 - Chapter 5 - The Four Paths.md",
+		"section": "four-paths",
+		"sourceSha256": "f7b77eeb47b8416d325a3008b901e1a91ebac5c39baaede40c8e24ef954f9397",
+		"headings": [
+			{
+				"locator": "Chapter 5: The Four Paths",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "four-paths-the-four-paths"
+			},
+			{
+				"locator": "Path of Swords",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "four-paths-path-of-swords"
+			},
+			{
+				"locator": "Path of Swords/Swords talents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "four-paths-swords-talents"
+			},
+			{
+				"locator": "Path of Pentacles",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "four-paths-path-of-pentacles"
+			},
+			{
+				"locator": "Path of Pentacles/Pentacles talents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "four-paths-pentacles-talents"
+			},
+			{
+				"locator": "Path of Cups",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "four-paths-path-of-cups"
+			},
+			{
+				"locator": "Path of Cups/Cups talents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "four-paths-cups-talents"
+			},
+			{
+				"locator": "Path of Cups/Cups talents/Counsel",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "paths-counsel"
+			},
+			{
+				"locator": "Path of Cups/Cups talents/High Chant",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "paths-high-chant"
+			},
+			{
+				"locator": "Path of Wands",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "four-paths-path-of-wands"
+			},
+			{
+				"locator": "Path of Wands/Wands talents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "four-paths-wands-talents"
+			},
+			{
+				"locator": "Path of Wands/Pacts",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "four-paths-pacts"
+			}
+		]
+	}
+]

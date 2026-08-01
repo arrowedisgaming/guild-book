@@ -98,10 +98,10 @@ describe('rules reference coverage', () => {
 		expect(missing).toEqual([]);
 	});
 
-	it('gives every entry a non-empty body and at least one tag', () => {
+	it('gives every entry a non-empty body and a tags array', () => {
 		for (const rule of rules) {
 			expect(rule.body.trim().length, `${rule.id} body`).toBeGreaterThan(0);
-			expect(rule.tags.length, `${rule.id} tags`).toBeGreaterThan(0);
+			expect(Array.isArray(rule.tags), `${rule.id} tags`).toBe(true);
 		}
 	});
 

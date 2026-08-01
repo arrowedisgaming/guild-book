@@ -188,6 +188,14 @@ describe('resolveEntries', () => {
 			resolveEntries([cand('A/X', 'X')], { section: 's', ids: { 'A/Zed': 'nope' } })
 		).toThrow(/locator/i);
 	});
+
+	it('honors a splitDeeper entry\'s own id without a redundant ids/idAliases entry', () => {
+		const out = resolveEntries([cand('Fay/Wood elves/Area Sense', 'Area Sense')], {
+			section: 'kith-and-kin',
+			splitDeeper: [{ at: 'Fay/Wood elves/Area Sense', id: 'kith-area-sense' }]
+		});
+		expect(out[0]).toMatchObject({ id: 'kith-area-sense', title: 'Area Sense' });
+	});
 });
 
 import { walkRuleBody, extractRuleBody } from '../../scripts/content-import/md-lib.mjs';
@@ -218,6 +226,28 @@ describe('walkRuleBody (full-preservation mode)', () => {
 		expect(body).toContain('see Bonds for details');
 		expect(body).not.toContain('p. 44');
 		expect(body).not.toContain('[[');
+	});
+
+	/**
+	 * `[!hmw-nav]` is the vault's cross-chapter "← Introduction / Contents /
+	 * Chapter N →" scaffolding, present at the head and tail of every exported
+	 * chapter file — never book content. Every walked chapter ends its last
+	 * heading's subtree right at this footer, so it must vanish rather than
+	 * leak "[!hmw-nav]" or its dead wikilinks into the last rule of the chapter.
+	 * A hyphenated callout type also regression-guards the opener regex, which
+	 * previously required `\w+` and let `[!hmw-nav]` fall through unrecognized.
+	 */
+	it('drops hmw-nav vault-navigation callouts entirely, hyphen and all', () => {
+		const body = walkRuleBody([
+			'Rule text.',
+			'',
+			'> [!hmw-nav]',
+			'> [[00 - Introduction|← Introduction]] [[02 - Chapter 2|Chapter 2 →]]'
+		]);
+		expect(body).toBe('Rule text.');
+		expect(body).not.toContain('[!');
+		expect(body).not.toContain('hmw-nav');
+		expect(body).not.toContain('Introduction');
 	});
 
 	it('leaves the curated excerpt path untouched (examples still stripped)', () => {

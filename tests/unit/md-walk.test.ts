@@ -229,3 +229,53 @@ describe('walkRuleBody (full-preservation mode)', () => {
 		expect(stripped).toBe('text');
 	});
 });
+
+import { createHash } from 'node:crypto';
+import { buildWalk } from '../../scripts/content-import/md-walk.mjs';
+
+describe('buildWalk', () => {
+	const md = ['# Chapter 9: The City Phase', 'City intro.', '## Carouse', 'Carouse text.'].join('\n');
+	const deps = {
+		walkRuleBody: (lines: string[]) => lines.join('\n'),
+		lintBody: () => [],
+		omitRange: (body: string) => body
+	};
+
+	it('emits rule entries with section, resolved ids, and empty default tags', () => {
+		const { rules } = buildWalk(md, { file: '09.md', section: 'city-phase' }, deps);
+		expect(rules).toEqual([
+			{ id: 'city-phase-the-city-phase', section: 'city-phase', title: 'The City Phase', body: 'City intro.', tags: [] },
+			{ id: 'city-phase-carouse', section: 'city-phase', title: 'Carouse', body: 'Carouse text.', tags: [] }
+		]);
+	});
+
+	it('applies overrides (title, tags, mustContain sentinel) keyed by final id', () => {
+		const cfg = {
+			file: '09.md', section: 'city-phase',
+			idAliases: { 'Chapter 9: The City Phase/Carouse': 'city-carouse' },
+			overrides: { 'city-carouse': { title: 'Carouse!', tags: ['city'], mustContain: ['Carouse text.'] } }
+		};
+		const seen: unknown[] = [];
+		const { rules } = buildWalk(md, cfg, { ...deps, lintBody: (_b: string, entry: unknown) => (seen.push(entry), []) });
+		expect(rules[1]).toMatchObject({ id: 'city-carouse', title: 'Carouse!', tags: ['city'] });
+		expect(seen[1]).toMatchObject({ mustContain: ['Carouse text.'] });
+	});
+
+	it('ledgers the chapter with a source hash and emitted ids', () => {
+		const { ledger } = buildWalk(md, { file: '09.md', section: 'city-phase' }, deps);
+		expect(ledger.file).toBe('09.md');
+		expect(ledger.sourceSha256).toBe(createHash('sha256').update(md).digest('hex'));
+		expect(ledger.headings).toEqual([
+			{ locator: 'Chapter 9: The City Phase', occurrence: 1, level: 1, disposition: 'emitted', id: 'city-phase-the-city-phase' },
+			{ locator: 'Chapter 9: The City Phase/Carouse', occurrence: 1, level: 2, disposition: 'emitted', id: 'city-phase-carouse' }
+		]);
+	});
+
+	it('throws when lint reports problems, naming the entry', () => {
+		expect(() => buildWalk(md, { file: '09.md', section: 'city-phase' }, { ...deps, lintBody: () => ['bad'] })).toThrow(/city-phase-the-city-phase.*bad/);
+	});
+
+	it('throws on an overrides key that matches no emitted id', () => {
+		expect(() => buildWalk(md, { file: '09.md', section: 'city-phase', overrides: { ghost: {} } }, deps)).toThrow(/ghost/);
+	});
+});

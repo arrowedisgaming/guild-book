@@ -6,6 +6,8 @@
 // addressable. Pure functions over strings — no filesystem access — so the
 // tests never need the gitignored vault.
 
+import { createHash } from 'node:crypto';
+
 /** ATX heading match: returns { level, text } or null. Mirrors md-lib. */
 function parseHeadingLine(line) {
 	const m = /^(#{1,6})\s+(.*\S)\s*$/.exec(line);
@@ -178,4 +180,39 @@ export function resolveEntries(candidates, config) {
 		seen.set(e.id, e);
 	}
 	return entries;
+}
+
+/**
+ * Full walk of one chapter file's text into rule entries + its ledger chapter.
+ * Pure: body pipeline, lint, and omitRange are injected so tests run without
+ * the vault and md-rules.mjs stays the only module with filesystem knowledge.
+ */
+export function buildWalk(markdown, walkCfg, deps) {
+	const { walkRuleBody, lintBody, omitRange } = deps;
+	const { candidates, ledger } = walkChapter(markdown, walkCfg);
+	const resolved = resolveEntries(candidates, walkCfg);
+	const overrides = walkCfg.overrides ?? {};
+	const known = new Set(resolved.map((e) => e.id));
+	for (const key of Object.keys(overrides)) {
+		if (!known.has(key)) throw new Error(`walk override for unknown id "${key}" in ${walkCfg.file}`);
+	}
+
+	const rules = resolved.map((e) => {
+		const ov = overrides[e.id] ?? {};
+		const body = omitRange(walkRuleBody(e.bodyLines), ov.omitRange);
+		const problems = lintBody(body, ov);
+		if (problems.length) throw new Error(`[rules#${e.id}] ${problems.join('; ')}`);
+		return { id: e.id, section: walkCfg.section, title: ov.title ?? e.title, body, tags: ov.tags ?? [] };
+	});
+
+	const idByLocator = new Map(resolved.map((e) => [`${e.locator.toLowerCase()}#${e.occurrence}`, e.id]));
+	const headings = ledger.map((row) =>
+		row.disposition === 'candidate'
+			? { ...row, disposition: 'emitted', id: idByLocator.get(`${row.locator.toLowerCase()}#${row.occurrence}`) }
+			: row
+	);
+	return {
+		rules,
+		ledger: { file: walkCfg.file, section: walkCfg.section, sourceSha256: createHash('sha256').update(markdown).digest('hex'), headings }
+	};
 }

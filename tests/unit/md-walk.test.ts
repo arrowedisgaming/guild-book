@@ -162,7 +162,7 @@ describe('resolveEntries', () => {
 				ids: { 'GMing/1. Draw Challenge cards': 'challenge-gm-hand-size' }
 			}
 		);
-		expect(out.map((e) => e.id)).toEqual(['challenge-draw-cards', 'challenge-gm-hand-size']);
+		expect(out.map((e: { id: string }) => e.id)).toEqual(['challenge-draw-cards', 'challenge-gm-hand-size']);
 	});
 
 	it('throws on an unresolved id collision, naming both locators', () => {

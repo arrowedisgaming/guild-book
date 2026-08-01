@@ -11,11 +11,13 @@
 		const id = location.hash.slice(1);
 		if (!id) return;
 		const target = document.getElementById(id);
-		if (target instanceof HTMLElement) {
-			target.classList.add('anchored');
-			target.focus({ preventScroll: true });
-			target.scrollIntoView({ block: 'start' });
-		}
+		if (!(target instanceof HTMLElement)) return;
+		// Clear previous targets so only the current article is highlighted, and
+		// so re-anchoring the same article restarts its flash animation.
+		for (const el of document.querySelectorAll('.anchored')) el.classList.remove('anchored');
+		requestAnimationFrame(() => target.classList.add('anchored'));
+		target.focus({ preventScroll: true });
+		target.scrollIntoView({ block: 'start' });
 	});
 </script>
 

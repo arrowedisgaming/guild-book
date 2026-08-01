@@ -174,8 +174,13 @@ describe('session HTTP contracts', () => {
 				fakeEvent({ method: 'PATCH', campaignId, sessionId, body: { action: 'end' } }) as never
 			);
 			expect(response.status).toBe(200);
-			const body = (await response.json()) as { success: boolean; action: string; publicHistoryChecksum: string };
-			expect(body).toMatchObject({ success: true, action: 'end' });
+			const body = (await response.json()) as {
+				recipientUserId: string;
+				success: boolean;
+				action: string;
+				publicHistoryChecksum: string;
+			};
+			expect(body).toMatchObject({ recipientUserId: gmUserId, success: true, action: 'end' });
 			expect(body.publicHistoryChecksum).toMatch(/^[a-f0-9]{64}$/);
 		});
 
@@ -300,7 +305,11 @@ describe('session HTTP contracts', () => {
 				}) as never
 			);
 			expect(response.status).toBe(200);
-			const body = (await response.json()) as { outcome: { ok: boolean; resultingVersion: number } };
+			const body = (await response.json()) as {
+				recipientUserId: string;
+				outcome: { ok: boolean; resultingVersion: number };
+			};
+			expect(body.recipientUserId).toBe(playerAUserId);
 			expect(body.outcome).toEqual({ ok: true, resultingVersion: 2 });
 		});
 
@@ -447,6 +456,7 @@ describe('session HTTP contracts', () => {
 			const response = await getSync(fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never);
 			expect(response.status).toBe(204);
 			expect(response.headers.get('cache-control')).toBe('private, no-store');
+			expect(response.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
 			expect(await response.text()).toBe('');
 		});
 
@@ -456,10 +466,13 @@ describe('session HTTP contracts', () => {
 			const response = await getSync(fakeEvent({ campaignId, searchParams: { after: '0', version: '0' } }) as never);
 			expect(response.status).toBe(200);
 			const body = (await response.json()) as {
+				recipientUserId: string;
 				cursor: number;
 				events: Array<{ kind: string }>;
 				session: { sessionId: string; sessionVersion: number } | null;
 			};
+			expect(body.recipientUserId).toBe(gmUserId);
+			expect(response.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
 			expect(body.cursor).toBeGreaterThan(0);
 			expect(body.events.some((event) => event.kind === 'session-started')).toBe(true);
 			expect(body.session?.sessionId).toBe(sessionId);
@@ -542,6 +555,43 @@ describe('session HTTP contracts', () => {
 			const body = (await response.json()) as { cursor: number; events: unknown[] };
 			expect(body.events.length).toBeLessThanOrEqual(200);
 			expect(body.cursor).toBeLessThan(1249);
+		});
+
+		it('echoes the authenticated recipient as a header on 204 responses', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			const response = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(response.status).toBe(204);
+			expect(response.headers.get('x-guildbook-recipient')).toBe(gmUserId);
+		});
+
+		it('echoes the recipient header on the hint-path 204 too', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			// First caught-up poll answers 204 and records the isolate-local cursor
+			// hint; the identical second call short-circuits on that hint (the
+			// `hasFreshMatchingCursorHint` path) and must still carry the header.
+			const first = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(first.status).toBe(204);
+			const second = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '1', version: '1' } }) as never
+			);
+			expect(second.status).toBe(204);
+			expect(second.headers.get('x-guildbook-recipient')).toBe(gmUserId);
+		});
+
+		it('echoes the recipient header on 200 responses alongside the body field', async () => {
+			await startAsGm();
+			mocks.ensureUser.mockResolvedValue(gmUserId);
+			const response = await getSync(
+				fakeEvent({ campaignId, searchParams: { after: '0', version: '0' } }) as never
+			);
+			expect(response.status).toBe(200);
+			expect(response.headers.get('x-guildbook-recipient')).toBe(gmUserId);
 		});
 	});
 });

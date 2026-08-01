@@ -25,15 +25,28 @@ import { setCampaignMetricSink, type CampaignMetricPoint } from './campaign-metr
  * property that makes emitting these to a shared log pipeline defensible,
  * unlike the surrounding session logs (see `campaign-rollback.md` §5).
  *
- * VOLUME, BEFORE CAMPAIGNS GO PUBLIC: `poll_duration_ms` and `poll_no_change`
- * fire on every `/sync`, which is roughly one per second per open client. Nine
- * campaigns of three clients is ~27 lines/second. That is fine today, because
- * campaigns are server-gated off in production and the volume is zero, but it
- * is the number to look at before Task 6 Step 5 flips the flag — sample the two
- * poll metrics here rather than turning the whole sink off, since the command,
- * rejection, freeze and recovery points are low-volume and are the ones an
- * incident actually needs.
+ * VOLUME: `poll_duration_ms` fires on every `/sync` (roughly one per second
+ * per open client) and `poll_no_change` adds a second line on the no-change
+ * majority of them — ~50 lines/second at pilot scale and growing linearly
+ * with public users. So those two, and only those two, are
+ * sampled 1-in-10 below rather than the whole sink being turned off: the
+ * command, rejection, freeze and recovery points are low-volume and are the
+ * ones an incident actually needs, and they stay unsampled. The sampling
+ * decision is PROBABILISTIC and made once per POLL, not per metric or on a
+ * counter: `poll_no_change` only fires on some polls, so sampling it
+ * independently turns a rare no-change into a guaranteed "first point" line
+ * and wildly overstates the no-change ratio at low volume — and a
+ * deterministic every-Nth counter would alias periodic outcome patterns and
+ * over-sample fresh isolates (every restart re-samples its "first" poll). A
+ * random 1-in-10 roll shared by both of a poll's points has none of those
+ * biases. Every emitted sampled line carries `sample: 10` so a reader
+ * multiplies counts back up instead of misreading a tenth of the traffic as
+ * all of it.
  */
+
+const POLL_SAMPLE_RATE = 10;
+let currentPollSampled = false;
+let hintDurationPending = false;
 
 let installed = false;
 
@@ -46,17 +59,37 @@ export function installCampaignMetricSink(): void {
 /** Exposed for tests; returns the sink to its uninstalled state. */
 export function resetCampaignMetricSinkForTest(): void {
 	installed = false;
+	currentPollSampled = false;
+	hintDurationPending = false;
 	setCampaignMetricSink(null);
 }
 
 function emitStructuredLine(point: CampaignMetricPoint): void {
+	const sampled = point.name === 'poll_duration_ms' || point.name === 'poll_no_change';
+	if (sampled) {
+		// A poll reaches this sink in one of three shapes, each emitted
+		// synchronously (no awaits between the points) inside one handler:
+		//   hint:          poll_no_change(outcome 'hint'), then poll_duration_ms
+		//                  (`hasFreshMatchingCursorHint`, then the /sync route)
+		//   authoritative: poll_duration_ms, then poll_no_change (`recordPoll`)
+		//   changed:       poll_duration_ms alone (`recordPoll`)
+		// So a hint no-change starts a poll and flags that its duration is the
+		// same poll's trailer; a duration starts a poll unless it is that
+		// trailer; any other no-change inherits its poll's decision.
+		const hintNoChange = point.name === 'poll_no_change' && point.tags.outcome === 'hint';
+		const startsPoll = hintNoChange || (point.name === 'poll_duration_ms' && !hintDurationPending);
+		if (startsPoll) currentPollSampled = Math.random() * POLL_SAMPLE_RATE < 1;
+		hintDurationPending = hintNoChange;
+		if (!currentPollSampled) return;
+	}
 	// A single line, parseable without a log-shipper. `metric` rather than
 	// `name` so it does not collide with the platform's own log fields.
 	console.log(
 		JSON.stringify({
 			metric: point.name,
 			value: point.value,
-			...point.tags
+			...point.tags,
+			...(sampled ? { sample: POLL_SAMPLE_RATE } : {})
 		})
 	);
 }

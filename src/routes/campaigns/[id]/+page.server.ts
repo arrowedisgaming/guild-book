@@ -63,6 +63,7 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	return {
+		userId: role.userId,
 		campaign,
 		...rosterView,
 		eligibleAdventurers,

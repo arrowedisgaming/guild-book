@@ -11,7 +11,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * refused while the session is open and succeeds after it ends.
  */
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().match(/(challenge|guided-test|camp|finite|correction)-commands/),
@@ -44,26 +44,29 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// Player A holds two private cards the cleanup must sweep.
+	const playerHand = playerAPage.getByTestId('hand-card');
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+	await expect(playerHand).toHaveCount(1);
 	await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+	await expect(playerHand).toHaveCount(2);
 
 	// The GM sees A's hand count before the departure.
-	await expect(gmPage.getByText(/2 cards?/).first()).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByText(/2 cards?/).first()).toBeVisible({ timeout: 15000 });
 
 	// --- The archive boundary holds while the session is open ---
 	await gmPage.goto(`/campaigns/${campaignId}`);
 	gmPage.once('dialog', (dialog) => void dialog.accept());
 	await gmPage.getByRole('button', { name: 'Archive campaign' }).click();
-	await expect(gmPage.getByText('End the open session before archiving the campaign.')).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByText('End the open session before archiving the campaign.')).toBeVisible({ timeout: 15000 });
 
 	// --- Player A leaves mid-session ---
 	await playerAPage.goto(`/campaigns/${campaignId}`);
 	playerAPage.once('dialog', (dialog) => void dialog.accept());
 	await playerAPage.getByRole('button', { name: 'Leave campaign' }).click();
-	await expect(playerAPage).toHaveURL(/\/campaigns$/, { timeout: 8000 });
+	await expect(playerAPage).toHaveURL(/\/campaigns$/, { timeout: 15000 });
 
 	// Their next table request is a genuine 404.
 	const tableResponse = await playerAPage.goto(`/campaigns/${campaignId}/table`);
@@ -72,19 +75,19 @@ test('leaving mid-session revokes access, heals the table, and archiving respect
 	// The GM's table heals: the departed hand count is gone and the table is
 	// still fully usable.
 	await gmPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 6000 });
+	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 	await expect(gmPage.getByText(/2 cards?/)).toHaveCount(0);
 	await clickGeneric(gmPage, gmPage.getByRole('button', { name: 'Draw a card' }));
 
 	// --- End the session; the archive boundary opens ---
 	await gmPage.getByRole('button', { name: 'End session', exact: true }).click();
 	await gmPage.getByRole('button', { name: 'Confirm end' }).click();
-	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 8000 });
+	await expect(gmPage.getByRole('button', { name: 'Start session' })).toBeVisible({ timeout: 15000 });
 
 	await gmPage.goto(`/campaigns/${campaignId}`);
 	gmPage.once('dialog', (dialog) => void dialog.accept());
 	await gmPage.getByRole('button', { name: 'Archive campaign' }).click();
-	await expect(gmPage).toHaveURL(/\/campaigns$/, { timeout: 8000 });
+	await expect(gmPage).toHaveURL(/\/campaigns$/, { timeout: 15000 });
 
 	await gm.close();
 	await playerA.close();

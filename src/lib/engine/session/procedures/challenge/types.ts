@@ -2,7 +2,7 @@
  * Types for the Challenge procedure — His Majesty the Worm's guided combat
  * round (Ch7, "The Challenge Phase"). Shapes only: numeric budgets and
  * formula parameters are content-driven (hydrated from the content pack by
- * `schema.ts`'s `buildChallengeConfig`, never hardcoded here — CLAUDE.md:
+ * `schema.ts`'s `buildChallengeConfig`, never hardcoded here — project rule:
  * "All game data changes go in content-pack JSON, not application code").
  * Pure — no UI/DB/network imports (see
  * `tests/unit/session/import-boundaries.test.ts`).

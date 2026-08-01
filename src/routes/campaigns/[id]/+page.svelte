@@ -50,8 +50,13 @@
 	function createDashboardStoreFor(pageData: PageData) {
 		return createCampaignSessionStore(
 			pageData.campaign.id,
-			{ cursor: pageData.cursor, events: [], session: null },
-			{ intervalMs: 5000 }
+			{
+				recipientUserId: pageData.userId,
+				cursor: pageData.cursor,
+				events: [],
+				session: null
+			},
+			{ intervalMs: 5000, recipientUserId: pageData.userId }
 		);
 	}
 

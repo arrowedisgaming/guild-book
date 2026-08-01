@@ -145,6 +145,21 @@ Other expectations:
   because they encode a rule that would otherwise be re-broken.
 - Keep pull requests focused. One concern per PR reviews far faster.
 
+### Protected main and releases
+
+`main` is pull-request-only. GitHub rejects direct pushes, force pushes, and
+branch deletion. Every pull request must be current with `main`, resolve all
+review conversations, and pass the required `check` and `e2e` jobs before it
+can merge. No approving review is required while the project has one
+maintainer; the pull request and required checks are still mandatory.
+
+Merging to `main` does not deploy production. Maintainers cut production only
+from an annotated `vX.Y.Z` tag on an exact `main` commit after version,
+changelog, local release verification, and any backward-compatible D1
+migrations are ready. The tag runs the Release workflow; deployment waits for
+approval in the protected `production` environment. Existing `v*` tags are
+immutable. See `DEPLOY.md` for the complete release and rollback runbook.
+
 ## Licensing — please read before contributing content
 
 The application source is **GPL-3.0-or-later** (see `LICENSE`). By opening a

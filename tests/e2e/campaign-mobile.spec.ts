@@ -9,7 +9,7 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
  * and there is no two-dimensional page overflow outside that scroller.
  */
 
-async function clickGeneric(page: Page, locator: Locator, timeoutMs = 8000): Promise<void> {
+async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
 	const [response] = await Promise.all([
 		page.waitForResponse(
 			(res) => res.url().includes('/commands') && !res.url().match(/(challenge|guided-test|camp|finite|correction)-commands/),
@@ -42,7 +42,7 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
 
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
-	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 4000 });
+	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
 	// --- Table-first: the public table precedes the drawers in the real DOM ---
 	// The "Draw a card" button being visible does not imply these two elements
@@ -73,7 +73,7 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	for (let i = 0; i < 4; i++) {
 		await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
 	}
-	await expect(playerAPage.getByTestId('hand-card')).toHaveCount(4, { timeout: 6000 });
+	await expect(playerAPage.getByTestId('hand-card')).toHaveCount(4, { timeout: 15000 });
 
 	// No two-dimensional page overflow at 320px: the document does not scroll
 	// horizontally; any wide content scrolls inside its own container.

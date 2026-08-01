@@ -128,322 +128,289 @@
 		}
 	},
 	{
-		"id": "crawl-sequence",
-		"section": "crawl-phase",
-		"title": "The Flow of the Crawl Phase",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "The Flow of the Crawl Phase",
-		"tags": ["crawl", "structure", "session"]
+		"walk": {
+			"file": "06 - Chapter 6 - The Crawl Phase.md",
+			"section": "crawl-phase",
+			"idAliases": {
+				"The Flow of the Crawl Phase": "crawl-sequence",
+				"Abandon All Hope, Ye Who Enter Here/Watches": "crawl-watches",
+				"Meatgrinder": "crawl-meatgrinder",
+				"Meatgrinder/Loud noises": "crawl-loud-noises",
+				"Meatgrinder/Moving carefully": "crawl-moving-carefully",
+				"Light/Flickers": "crawl-flickers",
+				"Light/We’re doomed!": "crawl-were-doomed",
+				"Social Encounters & Disposition": "crawl-social-encounters-disposition",
+				"Social Encounters & Disposition/Starting Disposition": "crawl-starting-disposition",
+				"Social Encounters & Disposition/Influencing Disposition": "crawl-influencing-disposition"
+			},
+			"splitDeeper": [
+				{
+					"at": "Light/Darkness",
+					"id": "crawl-darkness"
+				},
+				{
+					"at": "Example afflictions/Black honey",
+					"id": "crawl-black-honey"
+				}
+			],
+			"overrides": {
+				"crawl-sequence": {
+					"tags": ["crawl", "structure", "session"]
+				},
+				"crawl-watches": {
+					"tags": ["crawl", "time", "structure"]
+				},
+				"crawl-meatgrinder": {
+					"tags": ["crawl", "tarot", "oracle", "random-events"]
+				},
+				"crawl-loud-noises": {
+					"title": "Loud Noises",
+					"tags": ["crawl", "tarot", "meatgrinder"]
+				},
+				"crawl-moving-carefully": {
+					"title": "Moving Carefully",
+					"tags": ["crawl", "tarot", "meatgrinder"]
+				},
+				"crawl-darkness": {
+					"tags": ["crawl", "light", "darkness"]
+				},
+				"crawl-flickers": {
+					"tags": ["crawl", "light", "torches"]
+				},
+				"crawl-were-doomed": {
+					"title": "We’re Doomed!",
+					"tags": ["crawl", "tarot", "oracle", "darkness"]
+				},
+				"crawl-black-honey": {
+					"title": "Black Honey",
+					"tags": ["crawl", "afflictions", "challenge", "tarot"]
+				},
+				"crawl-social-encounters-disposition": {
+					"tags": ["crawl", "social", "disposition"]
+				},
+				"crawl-starting-disposition": {
+					"tags": ["crawl", "social", "disposition", "tarot", "oracle"]
+				},
+				"crawl-influencing-disposition": {
+					"tags": ["crawl", "social", "disposition"]
+				}
+			}
+		}
 	},
 	{
-		"id": "crawl-watches",
-		"section": "crawl-phase",
-		"title": "Watches",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Watches",
-		"tags": ["crawl", "time", "structure"]
+		"walk": {
+			"file": "07 - Chapter 7 - The Challenge Phase.md",
+			"section": "challenge-phase",
+			"idAliases": {
+				"The Flow of the Challenge Phase": "challenge-sequence",
+				"0. Set the scene/1. Draw Challenge cards": "challenge-draw-cards",
+				"0. Set the scene/2. Play Initiative": "challenge-play-initiative",
+				"0. Set the scene/3. Take turns": "challenge-take-turns",
+				"0. Set the scene/4. Minor actions": "challenge-minor-actions",
+				"0. Set the scene/5. End the round": "challenge-end-the-round",
+				"Challenge Actions/Miscellaneous actions (Any Suit)": "challenge-miscellaneous-actions",
+				"GMing the Challenge/1. Draw Challenge cards": "challenge-gm-hand-size",
+				"GMing the Challenge/3. Enemy actions": "challenge-enemy-actions"
+			},
+			"ids": {
+				"0. Set the scene": "challenge-set-the-scene",
+				"GMing the Challenge/0. Set the scene": "challenge-gm-set-the-scene",
+				"GMing the Challenge/2. Play Initiative for each significant enemy": "challenge-gm-play-initiative",
+				"GMing the Challenge/4. Minor actions": "challenge-gm-minor-actions",
+				"GMing the Challenge/5. End the round": "challenge-gm-end-the-round"
+			},
+			"splitDeeper": [
+				{
+					"at": "0. Set the scene/3. Take turns/Action value",
+					"id": "challenge-action-value"
+				},
+				{
+					"at": "0. Set the scene/3. Take turns/Facedown cards",
+					"id": "challenge-facedown-cards"
+				},
+				{
+					"at": "0. Set the scene/3. Take turns/Interrupt actions",
+					"id": "challenge-interrupt-actions"
+				},
+				{
+					"at": "0. Set the scene/3. Take turns/The Fool",
+					"id": "challenge-the-fool"
+				},
+				{
+					"at": "GMing the Challenge/3. Enemy actions/Lesser dooms",
+					"id": "challenge-lesser-dooms"
+				},
+				{
+					"at": "GMing the Challenge/3. Enemy actions/Greater dooms",
+					"id": "challenge-greater-dooms"
+				},
+				{
+					"at": "Challenge Actions/Miscellaneous actions (Any Suit)/Guard",
+					"id": "challenge-guard"
+				}
+			],
+			"overrides": {
+				"challenge-sequence": {
+					"tags": ["challenge", "structure", "rounds"]
+				},
+				"challenge-set-the-scene": {
+					"title": "Set the Scene",
+					"tags": ["challenge", "structure", "scene", "zones"]
+				},
+				"challenge-draw-cards": {
+					"title": "Draw Challenge Cards",
+					"mustContain": ["four Challenge cards"],
+					"tags": ["challenge", "tarot", "hand", "deal"]
+				},
+				"challenge-play-initiative": {
+					"tags": ["challenge", "tarot", "initiative"]
+				},
+				"challenge-take-turns": {
+					"title": "Take Turns",
+					"tags": ["challenge", "turns", "actions"]
+				},
+				"challenge-action-value": {
+					"title": "Action Value",
+					"tags": ["challenge", "tarot", "card-values"]
+				},
+				"challenge-facedown-cards": {
+					"title": "Facedown Cards",
+					"mustContain": [
+						"only have one facedown action at a time",
+						"Nobody but the player can look at the facedown card",
+						"No peeking!"
+					],
+					"tags": ["challenge", "tarot", "privacy", "facedown"]
+				},
+				"challenge-interrupt-actions": {
+					"title": "Interrupt Actions",
+					"tags": ["challenge", "interrupts", "turns"]
+				},
+				"challenge-the-fool": {
+					"tags": ["challenge", "tarot", "the-fool", "reshuffle"]
+				},
+				"challenge-minor-actions": {
+					"title": "Minor Actions",
+					"tags": ["challenge", "minor-actions", "turns"]
+				},
+				"challenge-end-the-round": {
+					"title": "End the Round",
+					"tags": ["challenge", "rounds", "cleanup"]
+				},
+				"challenge-miscellaneous-actions": {
+					"title": "Miscellaneous Actions",
+					"tags": ["challenge", "actions"]
+				},
+				"challenge-guard": {
+					"mustContain": ["replace your Initiative"],
+					"tags": ["challenge", "tarot", "initiative", "shield", "miscellaneous-action"]
+				},
+				"challenge-gm-set-the-scene": {
+					"title": "GMing the Challenge: Set the Scene",
+					"tags": ["challenge", "gm", "scene"]
+				},
+				"challenge-gm-hand-size": {
+					"title": "GM Challenge Hand Size",
+					"mustContain": ["elite enemy", "dungeon lord"],
+					"tags": ["challenge", "tarot", "gm", "hand", "threat"]
+				},
+				"challenge-gm-play-initiative": {
+					"title": "GMing the Challenge: Play Initiative for Each Significant Enemy",
+					"tags": ["challenge", "gm", "tarot", "initiative"]
+				},
+				"challenge-enemy-actions": {
+					"title": "Enemy Actions",
+					"tags": ["challenge", "gm", "denizens", "actions"]
+				},
+				"challenge-lesser-dooms": {
+					"title": "Lesser Dooms",
+					"tags": ["challenge", "tarot", "gm", "dooms"]
+				},
+				"challenge-greater-dooms": {
+					"title": "Greater Dooms",
+					"tags": ["challenge", "tarot", "gm", "dooms"]
+				},
+				"challenge-gm-minor-actions": {
+					"title": "GMing the Challenge: Minor Actions",
+					"tags": ["challenge", "gm", "minor-actions"]
+				},
+				"challenge-gm-end-the-round": {
+					"title": "GMing the Challenge: End the Round",
+					"tags": ["challenge", "gm", "rounds", "cleanup"]
+				}
+			}
+		}
 	},
 	{
-		"id": "crawl-meatgrinder",
-		"section": "crawl-phase",
-		"title": "Meatgrinder",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Meatgrinder",
-		"until": "Loud noises",
-		"tags": ["crawl", "tarot", "oracle", "random-events"]
+		"walk": {
+			"file": "08 - Chapter 8 - The Camp Phase.md",
+			"section": "camp-phase",
+			"idAliases": {
+				"The Flow of the Camp Phase/3. No rest for the wicked": "camp-no-rest-for-the-wicked",
+				"Overland Travel": "camp-overland-travel"
+			},
+			"splitDeeper": [
+				{
+					"at": "The Flow of the Camp Phase/1. Camp Actions/Patrol",
+					"id": "camp-patrol"
+				}
+			],
+			"overrides": {
+				"camp-patrol": {
+					"tags": ["camp", "tarot", "meatgrinder", "camp-action"]
+				},
+				"camp-no-rest-for-the-wicked": {
+					"title": "No Rest for the Wicked",
+					"mustContain": ["top card of the minor arcana discard pile", "tests Cups"],
+					"tags": ["camp", "tarot", "oracle", "watch", "meatgrinder"]
+				},
+				"camp-overland-travel": {
+					"tags": ["camp", "travel", "tarot", "optional"]
+				}
+			}
+		}
 	},
 	{
-		"id": "crawl-loud-noises",
-		"section": "crawl-phase",
-		"title": "Loud Noises",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Loud noises",
-		"tags": ["crawl", "tarot", "meatgrinder"]
-	},
-	{
-		"id": "crawl-moving-carefully",
-		"section": "crawl-phase",
-		"title": "Moving Carefully",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Moving carefully",
-		"tags": ["crawl", "tarot", "meatgrinder"]
-	},
-	{
-		"id": "crawl-darkness",
-		"section": "crawl-phase",
-		"title": "Darkness",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Darkness",
-		"tags": ["crawl", "light", "darkness"]
-	},
-	{
-		"id": "crawl-flickers",
-		"section": "crawl-phase",
-		"title": "Flickers",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Flickers",
-		"tags": ["crawl", "light", "torches"]
-	},
-	{
-		"id": "crawl-were-doomed",
-		"section": "crawl-phase",
-		"title": "We’re Doomed!",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "We’re doomed!",
-		"tags": ["crawl", "tarot", "oracle", "darkness"]
-	},
-	{
-		"id": "crawl-black-honey",
-		"section": "crawl-phase",
-		"title": "Black Honey",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Black honey",
-		"tags": ["crawl", "afflictions", "challenge", "tarot"]
-	},
-	{
-		"id": "crawl-social-encounters-disposition",
-		"section": "crawl-phase",
-		"title": "Social Encounters & Disposition",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Social Encounters & Disposition",
-		"until": "Starting Disposition",
-		"tags": ["crawl", "social", "disposition"]
-	},
-	{
-		"id": "crawl-starting-disposition",
-		"section": "crawl-phase",
-		"title": "Starting Disposition",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Starting Disposition",
-		"tags": ["crawl", "social", "disposition", "tarot", "oracle"]
-	},
-	{
-		"id": "crawl-influencing-disposition",
-		"section": "crawl-phase",
-		"title": "Influencing Disposition",
-		"file": "06 - Chapter 6 - The Crawl Phase.md",
-		"heading": "Influencing Disposition",
-		"tags": ["crawl", "social", "disposition"]
-	},
-	{
-		"id": "challenge-sequence",
-		"section": "challenge-phase",
-		"title": "The Flow of the Challenge Phase",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "The Flow of the Challenge Phase",
-		"tags": ["challenge", "structure", "rounds"]
-	},
-	{
-		"id": "challenge-draw-cards",
-		"section": "challenge-phase",
-		"title": "Draw Challenge Cards",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "1. Draw Challenge cards",
-		"after": "Special rules",
-		"mustContain": ["four Challenge cards"],
-		"tags": ["challenge", "tarot", "hand", "deal"]
-	},
-	{
-		"id": "challenge-play-initiative",
-		"section": "challenge-phase",
-		"title": "Play Initiative",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "2. Play Initiative",
-		"after": "Special rules",
-		"tags": ["challenge", "tarot", "initiative"]
-	},
-	{
-		"id": "challenge-take-turns",
-		"section": "challenge-phase",
-		"title": "Take Turns",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "3. Take turns",
-		"after": "Special rules",
-		"until": "Action value",
-		"tags": ["challenge", "turns", "actions"]
-	},
-	{
-		"id": "challenge-action-value",
-		"section": "challenge-phase",
-		"title": "Action Value",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Action value",
-		"tags": ["challenge", "tarot", "card-values"]
-	},
-	{
-		"id": "challenge-facedown-cards",
-		"section": "challenge-phase",
-		"title": "Facedown Cards",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Facedown cards",
-		"keepCallouts": true,
-		"mustContain": [
-			"only have one facedown action at a time",
-			"Nobody but the player can look at the facedown card"
-		],
-		"tags": ["challenge", "tarot", "privacy", "facedown"]
-	},
-	{
-		"id": "challenge-interrupt-actions",
-		"section": "challenge-phase",
-		"title": "Interrupt Actions",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Interrupt actions",
-		"tags": ["challenge", "interrupts", "turns"]
-	},
-	{
-		"id": "challenge-the-fool",
-		"section": "challenge-phase",
-		"title": "The Fool",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "The Fool",
-		"tags": ["challenge", "tarot", "the-fool", "reshuffle"]
-	},
-	{
-		"id": "challenge-minor-actions",
-		"section": "challenge-phase",
-		"title": "Minor Actions",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "4. Minor actions",
-		"after": "Special rules",
-		"tags": ["challenge", "minor-actions", "turns"]
-	},
-	{
-		"id": "challenge-end-the-round",
-		"section": "challenge-phase",
-		"title": "End the Round",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "5. End the round",
-		"after": "Special rules",
-		"tags": ["challenge", "rounds", "cleanup"]
-	},
-	{
-		"id": "challenge-gm-hand-size",
-		"section": "challenge-phase",
-		"title": "GM Challenge Hand Size",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "1. Draw Challenge cards",
-		"after": "GMing the Challenge",
-		"mustContain": ["elite enemy", "dungeon lord"],
-		"tags": ["challenge", "tarot", "gm", "hand", "threat"]
-	},
-	{
-		"id": "challenge-enemy-actions",
-		"section": "challenge-phase",
-		"title": "Enemy Actions",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "3. Enemy actions",
-		"until": "Lesser dooms",
-		"tags": ["challenge", "gm", "denizens", "actions"]
-	},
-	{
-		"id": "challenge-lesser-dooms",
-		"section": "challenge-phase",
-		"title": "Lesser Dooms",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Lesser dooms",
-		"tags": ["challenge", "tarot", "gm", "dooms"]
-	},
-	{
-		"id": "challenge-greater-dooms",
-		"section": "challenge-phase",
-		"title": "Greater Dooms",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Greater dooms",
-		"tags": ["challenge", "tarot", "gm", "dooms"]
-	},
-	{
-		"id": "challenge-guard",
-		"section": "challenge-phase",
-		"title": "Guard",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Guard",
-		"mustContain": ["replace your Initiative"],
-		"tags": [
-			"challenge",
-			"tarot",
-			"initiative",
-			"shield",
-			"miscellaneous-action"
-		]
-	},
-	{
-		"id": "challenge-miscellaneous-actions",
-		"section": "challenge-phase",
-		"title": "Miscellaneous Actions",
-		"file": "07 - Chapter 7 - The Challenge Phase.md",
-		"heading": "Miscellaneous actions (Any Suit)",
-		"until": "Bid Lore",
-		"tags": ["challenge", "actions"]
-	},
-	{
-		"id": "camp-patrol",
-		"section": "camp-phase",
-		"title": "Patrol",
-		"file": "08 - Chapter 8 - The Camp Phase.md",
-		"heading": "Patrol",
-		"tags": ["camp", "tarot", "meatgrinder", "camp-action"]
-	},
-	{
-		"id": "camp-no-rest-for-the-wicked",
-		"section": "camp-phase",
-		"title": "No Rest for the Wicked",
-		"file": "08 - Chapter 8 - The Camp Phase.md",
-		"heading": "3. No rest for the wicked",
-		"after": "Use a Talent",
-		"mustContain": ["top card of the minor arcana discard pile", "tests Cups"],
-		"tags": ["camp", "tarot", "oracle", "watch", "meatgrinder"]
-	},
-	{
-		"id": "camp-overland-travel",
-		"section": "camp-phase",
-		"title": "Overland Travel",
-		"file": "08 - Chapter 8 - The Camp Phase.md",
-		"heading": "Overland Travel",
-		"until": "Overland actions",
-		"tags": ["camp", "travel", "tarot", "optional"]
-	},
-	{
-		"id": "city-events",
-		"section": "city-phase",
-		"title": "City Events",
-		"file": "09 - Chapter 9 - The City Phase.md",
-		"heading": "3. City Events",
-		"after": "8. Restock the Underworld",
-		"tags": ["city", "tarot", "oracle", "events"]
-	},
-	{
-		"id": "city-signs-and-portents",
-		"section": "city-phase",
-		"title": "Signs and Portents",
-		"file": "09 - Chapter 9 - The City Phase.md",
-		"heading": "Signs and Portents",
-		"tags": ["city", "tarot", "oracle", "signs"]
-	},
-	{
-		"id": "city-beg-and-busk",
-		"section": "city-phase",
-		"title": "Beg and Busk",
-		"file": "09 - Chapter 9 - The City Phase.md",
-		"heading": "Beg and Busk",
-		"tags": ["city", "tarot", "city-action"]
-	},
-	{
-		"id": "city-carouse",
-		"section": "city-phase",
-		"title": "Carouse",
-		"file": "09 - Chapter 9 - The City Phase.md",
-		"heading": "Carouse",
-		"mustContain": ["Hangover"],
-		"tags": ["city", "tarot", "oracle", "hangover", "city-action"]
-	},
-	{
-		"id": "city-leeches",
-		"section": "city-phase",
-		"title": "Leeches",
-		"file": "09 - Chapter 9 - The City Phase.md",
-		"heading": "Leeches",
-		"tags": ["city", "tarot", "equipment", "camp", "afflictions"]
+		"walk": {
+			"file": "09 - Chapter 9 - The City Phase.md",
+			"section": "city-phase",
+			"idAliases": {
+				"The Flow of the City Phase/3. City Events": "city-events",
+				"The Flow of the City Phase/Signs and Portents": "city-signs-and-portents"
+			},
+			"splitDeeper": [
+				{
+					"at": "The Flow of the City Phase/6. City Actions/Beg and Busk",
+					"id": "city-beg-and-busk"
+				},
+				{
+					"at": "The Flow of the City Phase/6. City Actions/Carouse",
+					"id": "city-carouse"
+				},
+				{
+					"at": "The Omphalic Market/An incomplete list of pretty things/Leeches",
+					"id": "city-leeches"
+				}
+			],
+			"overrides": {
+				"city-events": {
+					"tags": ["city", "tarot", "oracle", "events"]
+				},
+				"city-signs-and-portents": {
+					"tags": ["city", "tarot", "oracle", "signs"]
+				},
+				"city-beg-and-busk": {
+					"tags": ["city", "tarot", "city-action"]
+				},
+				"city-carouse": {
+					"mustContain": ["Hangover"],
+					"tags": ["city", "tarot", "oracle", "hangover", "city-action"]
+				},
+				"city-leeches": {
+					"tags": ["city", "tarot", "equipment", "camp", "afflictions"]
+				}
+			}
+		}
 	},
 	{
 		"id": "gm-creating-surprises",

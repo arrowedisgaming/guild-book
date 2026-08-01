@@ -303,6 +303,11 @@ export function normalizeMarkdown(lines, opts = {}) {
 	// in the rules reference and the oracle catalog.
 	text = text.replace(/<br\s*\/?>/gi, ' ');
 	text = text.replace(/<[^>]+>/g, '');
+	// A bullet glyph (•) is sometimes typeset directly against the preceding
+	// word or bold-marker with no separating space (e.g. "**• 25 gold**",
+	// "month.** • 1000 gold**") — the same welded-clause hazard as `<br>`
+	// above, just without the tag. Insert the missing space.
+	text = text.replace(/(\S)•/g, '$1 •');
 	text = text.replace(/\\([[\]|])/g, '$1'); // unescape \[ \] \|
 	text = text.replace(SUIT_GLYPHS, '');
 	text = text.replace(/_([^_\n]+)_/g, '*$1*'); // _italic_ -> *italic*

@@ -551,5 +551,691 @@
 				"id": "four-paths-pacts"
 			}
 		]
+	},
+	{
+		"file": "06 - Chapter 6 - The Crawl Phase.md",
+		"section": "crawl-phase",
+		"sourceSha256": "89cde6df4072824b33efc231b28f0994e1e1befd9b2ebf878914cf3293b4f01a",
+		"headings": [
+			{
+				"locator": "Chapter 6: The Crawl Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-the-crawl-phase"
+			},
+			{
+				"locator": "The Flow of the Crawl Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-sequence"
+			},
+			{
+				"locator": "Abandon All Hope, Ye Who Enter Here",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-abandon-all-hope-ye-who-enter-here"
+			},
+			{
+				"locator": "Abandon All Hope, Ye Who Enter Here/Maps",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-phase-maps"
+			},
+			{
+				"locator": "Abandon All Hope, Ye Who Enter Here/Watches",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-watches"
+			},
+			{
+				"locator": "Meatgrinder",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-meatgrinder"
+			},
+			{
+				"locator": "Meatgrinder/Loud noises",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-loud-noises"
+			},
+			{
+				"locator": "Meatgrinder/Moving carefully",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-moving-carefully"
+			},
+			{
+				"locator": "Meatgrinder/Example Meatgrinder table",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-phase-example-meatgrinder-table"
+			},
+			{
+				"locator": "Light",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-light"
+			},
+			{
+				"locator": "Light/Darkness",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "crawl-darkness"
+			},
+			{
+				"locator": "Light/Flickers",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-flickers"
+			},
+			{
+				"locator": "Light/We’re doomed!",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-were-doomed"
+			},
+			{
+				"locator": "Stress",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-stress"
+			},
+			{
+				"locator": "Item Durability",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-item-durability"
+			},
+			{
+				"locator": "Falling",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-falling"
+			},
+			{
+				"locator": "Afflictions",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-afflictions"
+			},
+			{
+				"locator": "Afflictions/Curing an affliction",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-phase-curing-an-affliction"
+			},
+			{
+				"locator": "Example afflictions",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-example-afflictions"
+			},
+			{
+				"locator": "Example afflictions/Black honey",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "crawl-black-honey"
+			},
+			{
+				"locator": "Social Encounters & Disposition",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-social-encounters-disposition"
+			},
+			{
+				"locator": "Social Encounters & Disposition/Starting Disposition",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-starting-disposition"
+			},
+			{
+				"locator": "Social Encounters & Disposition/Influencing Disposition",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-influencing-disposition"
+			},
+			{
+				"locator": "Social Encounters & Disposition/Role-playing Disposition",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-phase-role-playing-disposition"
+			},
+			{
+				"locator": "Social Encounters & Disposition/Example social encounter",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "crawl-phase-example-social-encounter"
+			},
+			{
+				"locator": "Example Crawl Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "crawl-phase-example-crawl-phase"
+			}
+		]
+	},
+	{
+		"file": "07 - Chapter 7 - The Challenge Phase.md",
+		"section": "challenge-phase",
+		"sourceSha256": "76076cce0cd5b8a6b9ca2eb84ef77d565480723d6ca245af6987104266fe9ac4",
+		"headings": [
+			{
+				"locator": "Chapter 7: The Challenge Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-the-challenge-phase"
+			},
+			{
+				"locator": "The Flow of the Challenge Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-sequence"
+			},
+			{
+				"locator": "0. Set the scene",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-set-the-scene"
+			},
+			{
+				"locator": "0. Set the scene/Special rules",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-special-rules"
+			},
+			{
+				"locator": "0. Set the scene/1. Draw Challenge cards",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-draw-cards"
+			},
+			{
+				"locator": "0. Set the scene/2. Play Initiative",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-play-initiative"
+			},
+			{
+				"locator": "0. Set the scene/3. Take turns",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-take-turns"
+			},
+			{
+				"locator": "0. Set the scene/3. Take turns/Action value",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-action-value"
+			},
+			{
+				"locator": "0. Set the scene/3. Take turns/Facedown cards",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-facedown-cards"
+			},
+			{
+				"locator": "0. Set the scene/3. Take turns/Interrupt actions",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-interrupt-actions"
+			},
+			{
+				"locator": "0. Set the scene/3. Take turns/The Fool",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-the-fool"
+			},
+			{
+				"locator": "0. Set the scene/4. Minor actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-minor-actions"
+			},
+			{
+				"locator": "0. Set the scene/5. End the round",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-end-the-round"
+			},
+			{
+				"locator": "Challenge Actions",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-challenge-actions"
+			},
+			{
+				"locator": "Challenge Actions/Swords actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-swords-actions"
+			},
+			{
+				"locator": "Challenge Actions/Pentacles actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-pentacles-actions"
+			},
+			{
+				"locator": "Challenge Actions/Cups actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-cups-actions"
+			},
+			{
+				"locator": "Challenge Actions/Wands actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-wands-actions"
+			},
+			{
+				"locator": "Challenge Actions/Miscellaneous actions (Any Suit)",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-miscellaneous-actions"
+			},
+			{
+				"locator": "Challenge Actions/Miscellaneous actions (Any Suit)/Guard",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-guard"
+			},
+			{
+				"locator": "GMing the Challenge",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-gming-the-challenge"
+			},
+			{
+				"locator": "GMing the Challenge/0. Set the scene",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-gm-set-the-scene"
+			},
+			{
+				"locator": "GMing the Challenge/1. Draw Challenge cards",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-gm-hand-size"
+			},
+			{
+				"locator": "GMing the Challenge/2. Play Initiative for each significant enemy",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-gm-play-initiative"
+			},
+			{
+				"locator": "GMing the Challenge/3. Enemy actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-enemy-actions"
+			},
+			{
+				"locator": "GMing the Challenge/3. Enemy actions/Lesser dooms",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-lesser-dooms"
+			},
+			{
+				"locator": "GMing the Challenge/3. Enemy actions/Greater dooms",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "challenge-greater-dooms"
+			},
+			{
+				"locator": "GMing the Challenge/4. Minor actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-gm-minor-actions"
+			},
+			{
+				"locator": "GMing the Challenge/5. End the round",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-gm-end-the-round"
+			},
+			{
+				"locator": "Retreating",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-retreating"
+			},
+			{
+				"locator": "Wounds",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-wounds"
+			},
+			{
+				"locator": "Wounds/Notching armor",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-notching-armor"
+			},
+			{
+				"locator": "Wounds/Piercing and Critical damage",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-piercing-and-critical-damage"
+			},
+			{
+				"locator": "Wounds/Tracking enemy damage",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "challenge-phase-tracking-enemy-damage"
+			},
+			{
+				"locator": "Death’s Door",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-deaths-door"
+			},
+			{
+				"locator": "New Adventurers",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-new-adventurers"
+			},
+			{
+				"locator": "Example Challenge Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "challenge-phase-example-challenge-phase"
+			}
+		]
+	},
+	{
+		"file": "08 - Chapter 8 - The Camp Phase.md",
+		"section": "camp-phase",
+		"sourceSha256": "7d7e8c0b40979d7869fab3ec1b4ccb2e7c902404d803a252dd55b7f8e453dce0",
+		"headings": [
+			{
+				"locator": "Chapter 8: The Camp Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "camp-phase-the-camp-phase"
+			},
+			{
+				"locator": "The Flow of the Camp Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "camp-phase-the-flow-of-the-camp-phase"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/1. Camp Actions",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-phase-camp-actions"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/1. Camp Actions/Patrol",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "camp-patrol"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/2. Break bread",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-phase-break-bread"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/3. No rest for the wicked",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-no-rest-for-the-wicked"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/4. Recovery",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-phase-recovery"
+			},
+			{
+				"locator": "The Flow of the Camp Phase/5. End of Camp Phase",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-phase-end-of-camp-phase"
+			},
+			{
+				"locator": "Overland Travel",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "camp-overland-travel"
+			},
+			{
+				"locator": "Overland Travel/Overland actions",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "camp-phase-overland-actions"
+			},
+			{
+				"locator": "Example Camp Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "camp-phase-example-camp-phase"
+			}
+		]
+	},
+	{
+		"file": "09 - Chapter 9 - The City Phase.md",
+		"section": "city-phase",
+		"sourceSha256": "e14bb462f2885684ced9cdc2141754e260b3ec8a1cc86a530fe3bef47d11c824",
+		"headings": [
+			{
+				"locator": "Chapter 9: The City Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "city-phase-the-city-phase"
+			},
+			{
+				"locator": "The Flow of the City Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "city-phase-the-flow-of-the-city-phase"
+			},
+			{
+				"locator": "The Flow of the City Phase/1. Death and taxes",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-death-and-taxes"
+			},
+			{
+				"locator": "The Flow of the City Phase/2. Noteworthy deeds",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-noteworthy-deeds"
+			},
+			{
+				"locator": "The Flow of the City Phase/3. City Events",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-events"
+			},
+			{
+				"locator": "The Flow of the City Phase/Example City Events",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-example-city-events"
+			},
+			{
+				"locator": "The Flow of the City Phase/Signs and Portents",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-signs-and-portents"
+			},
+			{
+				"locator": "The Flow of the City Phase/4. Turn in contracts",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-turn-in-contracts"
+			},
+			{
+				"locator": "The Flow of the City Phase/5. Upkeep",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-upkeep"
+			},
+			{
+				"locator": "The Flow of the City Phase/6. City Actions",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-city-actions"
+			},
+			{
+				"locator": "The Flow of the City Phase/6. City Actions/Beg and Busk",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "city-beg-and-busk"
+			},
+			{
+				"locator": "The Flow of the City Phase/6. City Actions/Carouse",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "city-carouse"
+			},
+			{
+				"locator": "The Flow of the City Phase/7. Plan the next Crawl",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-plan-the-next-crawl"
+			},
+			{
+				"locator": "The Flow of the City Phase/8. Restock the Underworld",
+				"occurrence": 2,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-restock-the-underworld"
+			},
+			{
+				"locator": "The Omphalic Market",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "city-phase-the-omphalic-market"
+			},
+			{
+				"locator": "The Omphalic Market/Buying new gear",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-buying-new-gear"
+			},
+			{
+				"locator": "The Omphalic Market/An incomplete list of pretty things",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-an-incomplete-list-of-pretty-things"
+			},
+			{
+				"locator": "The Omphalic Market/An incomplete list of pretty things/Leeches",
+				"occurrence": 1,
+				"level": 3,
+				"disposition": "emitted",
+				"id": "city-leeches"
+			},
+			{
+				"locator": "The Omphalic Market/Weapons",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "city-phase-weapons"
+			},
+			{
+				"locator": "Example City Phase",
+				"occurrence": 1,
+				"level": 1,
+				"disposition": "emitted",
+				"id": "city-phase-example-city-phase"
+			}
+		]
 	}
 ]

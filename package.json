@@ -82,6 +82,7 @@
 		"clsx": "^2.1.1",
 		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.2",
+		"minisearch": "^7.2.0",
 		"nanoid": "^3.3.11",
 		"pdfmake": "^0.3.7",
 		"tailwind-merge": "^3.5.0",

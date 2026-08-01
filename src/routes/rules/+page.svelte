@@ -12,6 +12,12 @@
 	let engine = $state<RulesSearchEngine | null>(null);
 	let engineFailed = $state(false);
 
+	// SvelteKit reuses this component when only ?q= changes, so sync from the
+	// URL; local typing still wins between navigations.
+	$effect(() => {
+		query = page.url.searchParams.get('q') ?? '';
+	});
+
 	$effect(() => {
 		getRulesSearch(page.data.packVersion as string)
 			.then((e) => (engine = e))

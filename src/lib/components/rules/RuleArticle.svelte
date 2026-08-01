@@ -12,9 +12,8 @@
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 		{@html bodyHtml}
 	</div>
-	{#if rule.tags.length}
-		<div class="tags">{#each rule.tags as tag}<span class="tag">{tag}</span>{/each}</div>
-	{/if}
+	<!-- Legacy curated tags are metadata only (the index page's fallback filter
+	     still reads them); with full text + real search they aren't shown. -->
 </article>
 
 <style>
@@ -49,19 +48,6 @@
 		padding: 0.05rem 0.3rem;
 		border-radius: 3px;
 		font-size: 0.9em;
-	}
-	.tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.5rem;
-	}
-	.tag {
-		font-size: 0.72rem;
-		padding: 0.05rem 0.45rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
-		border-radius: 999px;
-		color: var(--ink-soft);
 	}
 	.rule:focus {
 		outline: none;

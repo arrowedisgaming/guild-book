@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Full rules coverage: every section of His Majesty the Worm chapters 1–9 is
+  now in the rules reference — including worked examples, sidebars, and
+  epigraphs — reproduced with the creator's permission (content pack 4.0.0).
+- Site-wide rules search: a fuzzy, ranked search box in the header of every
+  page, with keyboard navigation (`/` to focus) and deep links into the
+  reference; the `/rules` index gains a ranked full-text results mode.
+
+### Changed
+
+- Rule entries' tags are now optional metadata; chapter-walked entries carry
+  none by default.
+
 ## [0.9.1] - 2026-07-31
 
 ### Fixed

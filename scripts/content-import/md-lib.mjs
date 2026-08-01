@@ -82,6 +82,15 @@ export function extractSection(file, heading, until, after) {
 }
 
 /**
+ * Callout types that are pure vault scaffolding — never book content — so they
+ * are dropped whole rather than converted. `hmw-nav` is the cross-chapter
+ * "← Introduction / Contents / Chapter N →" footer/header every exported
+ * chapter file carries; it has no rules-reference meaning and its wikilinks
+ * don't even resolve to a rule id.
+ */
+const SCAFFOLD_CALLOUTS = new Set(['hmw-nav']);
+
+/**
  * Converts Obsidian callout blocks into the app's markdown dialect instead of
  * dropping them. Opt-in per manifest entry via `keepCallouts`, because most
  * callouts are flavor sidebars that the rules reference deliberately excludes —
@@ -96,25 +105,32 @@ export function extractSection(file, heading, until, after) {
 export function convertCallouts(lines) {
 	const out = [];
 	let inCallout = false;
+	let suppress = false;
 	for (const line of lines) {
-		const opener = /^\s*>\s*\[!\w+\]\s*(.*)$/.exec(line);
+		// The callout type can contain a hyphen (`hmw-nav`), so the match must
+		// not restrict itself to `\w+` — a stricter regex here previously let
+		// `[!hmw-nav]` fall through unrecognized and leak into the body verbatim.
+		const opener = /^\s*>\s*\[!([\w-]+)\]\s*(.*)$/.exec(line);
 		if (opener) {
 			inCallout = true;
-			const title = opener[1].trim();
+			suppress = SCAFFOLD_CALLOUTS.has(opener[1].toLowerCase());
+			if (suppress) continue;
+			const title = opener[2].trim();
 			if (out.length && out[out.length - 1].trim() !== '') out.push('');
 			if (title) out.push(`### ${title}`, '');
 			continue;
 		}
 		if (inCallout) {
 			if (/^\s*>/.test(line)) {
-				out.push(line.replace(/^\s*>\s?/, ''));
+				if (!suppress) out.push(line.replace(/^\s*>\s?/, ''));
 				continue;
 			}
 			if (line.trim() === '') {
-				out.push('');
+				if (!suppress) out.push('');
 				continue;
 			}
 			inCallout = false;
+			suppress = false;
 		}
 		// A stray blockquote outside a recognized callout: unquote rather than
 		// leak `>` into the body.
@@ -212,12 +228,41 @@ function h4IsHeading(text) {
 }
 
 /**
+ * Full-preservation variant of stripWikilinks: cross-reference *sentences and
+ * clauses are kept* (the spec's content guarantee), links flatten to their
+ * label, and only bare page-number references disappear — a page number is
+ * meaningless on the web (permitted omission class).
+ */
+function stripWikilinksGentle(text) {
+	const isPageRef = (s) => /^pp?\.?\s*\d|^page\s*\d/i.test(s.trim());
+	const labelOf = (inner) => {
+		const [target, label] = inner.split('|');
+		return (label ?? (target.includes('#') ? target.slice(target.indexOf('#') + 1) : target)).trim();
+	};
+	let out = text.replace(/\s*\(\s*\[\[([^\]]*)\]\]\s*\)/g, (m, inner) => {
+		const label = labelOf(inner);
+		return isPageRef(label) ? '' : ` (${label})`;
+	});
+	out = out.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
+		const label = labelOf(inner);
+		return isPageRef(label) ? '' : label;
+	});
+	return out.replace(/\s+\(\s*\)/g, '').replace(/[ \t]{2,}/g, ' ');
+}
+
+/**
  * Normalizes a raw Markdown section body into the small dialect the app's
  * renderer understands (paragraphs, `##`/`###` sub-headings, `-` lists,
  * `**bold**`, `*italic*`). Callouts and example sub-sections should already be
  * stripped by the caller.
+ *
+ * @param {object} [opts]
+ * @param {'full'} [opts.preserve] full-preservation mode for the chapter-walk
+ *   pipeline (see {@link walkRuleBody}): epigraphs become italic quotations
+ *   instead of being dropped, and wikilinks flatten via {@link stripWikilinksGentle}
+ *   instead of {@link stripWikilinks}.
  */
-export function normalizeMarkdown(lines) {
+export function normalizeMarkdown(lines, opts = {}) {
 	// 1. Heading normalization, line by line:
 	//    - `#####`/`######` are always epigraph quotations (flavor) — drop them
 	//      plus an immediately-following `_– attribution_` line.
@@ -228,6 +273,12 @@ export function normalizeMarkdown(lines) {
 	for (let i = 0; i < lines.length; i++) {
 		const h = parseHeading(lines[i]);
 		if (h && h.level >= 5) {
+			if (opts.preserve === 'full') {
+				// Epigraph quotation: keep as an italic paragraph; the following
+				// `_– attribution_` line survives on its own (italics normalize below).
+				processed.push(`*${h.text.replace(/[*_`]/g, '')}*`);
+				continue;
+			}
 			let attribution = i + 1;
 			while (attribution < lines.length && lines[attribution].trim() === '') attribution++;
 			if (/^\s*[*_].*[–-].*[*_]\s*$/.test(lines[attribution] ?? '')) i = attribution;
@@ -242,7 +293,7 @@ export function normalizeMarkdown(lines) {
 
 	let text = processed.join('\n');
 
-	text = stripWikilinks(text);
+	text = opts.preserve === 'full' ? stripWikilinksGentle(text) : stripWikilinks(text);
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
 	text = text.replace(/<img\b[^>]*>/gi, '');
@@ -252,6 +303,11 @@ export function normalizeMarkdown(lines) {
 	// in the rules reference and the oracle catalog.
 	text = text.replace(/<br\s*\/?>/gi, ' ');
 	text = text.replace(/<[^>]+>/g, '');
+	// A bullet glyph (•) is sometimes typeset directly against the preceding
+	// word or bold-marker with no separating space (e.g. "**• 25 gold**",
+	// "month.** • 1000 gold**") — the same welded-clause hazard as `<br>`
+	// above, just without the tag. Insert the missing space.
+	text = text.replace(/(\S)•/g, '$1 •');
 	text = text.replace(/\\([[\]|])/g, '$1'); // unescape \[ \] \|
 	text = text.replace(SUIT_GLYPHS, '');
 	text = text.replace(/_([^_\n]+)_/g, '*$1*'); // _italic_ -> *italic*
@@ -303,6 +359,16 @@ export function extractRuleBody(file, heading, until, after, options = {}) {
 	const decallouted = options.keepCallouts ? convertCallouts(lines) : stripCallouts(lines);
 	const clean = normalizeMarkdown(stripExampleSubsections(decallouted));
 	return clean;
+}
+
+/**
+ * Walk-path body pipeline (full-preservation semantics per the 2026-08-01
+ * rules-coverage spec): callouts always convert, examples and epigraphs are
+ * kept, cross-reference sentences survive. The curated excerpt path
+ * (extractRuleBody) intentionally keeps its stricter, lossier behavior.
+ */
+export function walkRuleBody(bodyLines) {
+	return normalizeMarkdown(convertCallouts(bodyLines), { preserve: 'full' });
 }
 
 // ---------------------------------------------------------------------------

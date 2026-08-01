@@ -15,6 +15,9 @@
 		border-radius: 4px;
 		background: var(--parchment);
 		font: inherit;
+		/* User-typed text, not book text: IM Fell (the body face) draws ASCII
+		 * straight quotes as right-side curly marks. Goudy has neutral glyphs. */
+		font-family: var(--font-sidebar);
 	}
 	.sr-only {
 		position: absolute;

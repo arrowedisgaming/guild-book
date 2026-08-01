@@ -129,7 +129,7 @@ export function cleanTitle(text) {
 
 export function defaultSlug(text) {
 	return stripOrdinal(text.toLowerCase())
-		.replace(/[''']/g, '')
+		.replace(/[‘'’]/g, '')
 		.normalize('NFD')
 		.replace(/[̀-ͯ]/g, '')
 		.replace(/[^a-z0-9]+/g, '-')

@@ -137,7 +137,7 @@ describe('id and title normalization', () => {
 		expect(defaultSlug('9 -Resolve')).toBe('resolve');
 		expect(defaultSlug('1. Draw Challenge cards')).toBe('draw-challenge-cards');
 		expect(defaultSlug('Chapter 2: The Adventurer')).toBe('the-adventurer');
-		expect(defaultSlug("We're doomed!")).toBe('were-doomed');
+		expect(defaultSlug("We’re doomed!")).toBe('were-doomed');
 		expect(cleanTitle('8 - Conditions')).toBe('Conditions');
 		expect(cleanTitle('Chapter 2: The Adventurer')).toBe('The Adventurer');
 	});

@@ -38,6 +38,12 @@ function sha256(data) {
  * Case differences surface as one missing + one unexpected name, which is
  * the loud failure the plan requires. Non-PNG entries (e.g. `.DS_Store`)
  * are ignored.
+ *
+ * Throws rather than exiting: `buildCollection` is also called by
+ * `verify --from-source`, and an exit here would skip that caller's
+ * `finally` (leaking its temporary directory) and bypass verify's
+ * aggregated FAIL report. Both entry points already catch, print, and
+ * exit 1.
  * @param {string} sourceDir
  */
 async function validateInventory(sourceDir) {
@@ -46,10 +52,12 @@ async function validateInventory(sourceDir) {
 	const missing = expected.filter((name) => !actual.includes(name));
 	const unexpected = actual.filter((name) => !expected.includes(name));
 	if (missing.length > 0 || unexpected.length > 0) {
-		console.error(`source inventory mismatch in ${sourceDir}`);
-		for (const name of missing) console.error(`  missing:    ${name}`);
-		for (const name of unexpected) console.error(`  unexpected: ${name}`);
-		process.exit(1);
+		const lines = [
+			`source inventory mismatch in ${sourceDir}`,
+			...missing.map((name) => `  missing:    ${name}`),
+			...unexpected.map((name) => `  unexpected: ${name}`)
+		];
+		throw new Error(lines.join('\n'));
 	}
 }
 

@@ -28,6 +28,15 @@ describe('tarot art resolver', () => {
 		}
 	});
 
+	it('pins a requested tier to a single candidate in every format', () => {
+		const sources = getTarotFaceSources('fool', 960);
+		expect(sources.avifSrcset).toBe('/tarot/rwsa/faces/fool-960.avif 960w');
+		expect(sources.webpSrcset).toBe('/tarot/rwsa/faces/fool-960.webp 960w');
+		// The plain-`src` fallback follows the tier too, so a browser without
+		// srcset support does not quietly drop back to 480.
+		expect(sources.fallbackWebp).toBe('/tarot/rwsa/faces/fool-960.webp');
+	});
+
 	it('throws on an unknown id rather than resolving a guess', () => {
 		expect(() => getTarotFaceSources('not-a-card')).toThrow(/unknown tarot art id/i);
 	});

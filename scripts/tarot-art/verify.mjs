@@ -2,9 +2,10 @@
  * Verification of the committed tarot artwork (issue #10, per the
  * maintainer's amendment in the issue thread replacing Task 2 Step 6).
  *
- * Default mode needs NO ignored sources and runs anywhere — including the
- * clean-install release suite: it proves the committed output matches the
- * committed manifest. Checks:
+ * Default mode needs NO ignored sources and no Sharp (the build module is
+ * imported lazily, only by `--from-source`), so it runs anywhere — including
+ * the clean-install release suite and the CI check job: it proves the
+ * committed output matches the committed manifest. Checks:
  *   1. every variant the manifest lists exists with matching SHA-256 and size;
  *   2. the output directory contains exactly the manifest's files plus the
  *      manifest itself — no strays;
@@ -24,7 +25,6 @@ import { mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { buildCollection } from './build.mjs';
 import { COLLECTION } from './source-map.mjs';
 
 /** @param {Buffer | Uint8Array} data */
@@ -87,6 +87,11 @@ async function verifyCommitted(problems) {
 /** @param {string[]} problems */
 async function verifyFromSource(problems) {
 	const committedRoot = COLLECTION.outputDir;
+	// Imported here, not at module scope: `build.mjs` pulls in Sharp's
+	// platform-specific native binary, and the default mode must not depend on
+	// it — that mode is the one the CI gate runs, and it only hashes committed
+	// files.
+	const { buildCollection } = await import('./build.mjs');
 	const temporaryRoot = await mkdtemp(path.join(tmpdir(), 'tarot-art-verify-'));
 	try {
 		await buildCollection({ outputRoot: temporaryRoot });

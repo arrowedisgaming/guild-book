@@ -71,7 +71,25 @@ test.describe('tarot artwork rendering', () => {
 		await enlarge.click();
 		const dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
+		// The tier is pinned, not offered: the srcset carries 960 and nothing
+		// smaller, and `currentSrc` proves the browser actually resolved to it.
+		// Asserting only that 960 appears in the srcset would pass even when
+		// `sizes` selects the 480 asset, which is the whole requirement.
 		await expect(dialog.locator('source[type="image/avif"]')).toHaveAttribute('srcset', /960\.avif 960w/);
+		await expect(dialog.locator('source[type="image/avif"]')).not.toHaveAttribute('srcset', /240w|480w/);
+		const dialogImg = dialog.locator('img');
+		await expect
+			.poll(() => dialogImg.evaluate((el) => (el as HTMLImageElement).currentSrc))
+			.toMatch(/-960\.(avif|webp)$/);
+		// `complete` is true for a BROKEN image too, so it cannot stand as the
+		// load check; `decode()` rejects on one. Not `naturalWidth`: when a
+		// `w`-descriptor candidate is selected the intrinsic size is
+		// density-corrected against the resolved `sizes` (this image reports
+		// 374, the `sizes` value, for a 960-wide file), so it measures the
+		// attribute rather than the asset.
+		await expect(dialogImg.evaluate((el) => (el as HTMLImageElement).decode().then(() => 'decoded'))).resolves.toBe(
+			'decoded'
+		);
 		await dialog.getByRole('button', { name: /close/i }).click();
 		await expect(dialog).not.toBeVisible();
 		await expect(enlarge).toBeFocused();

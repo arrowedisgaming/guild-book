@@ -9,6 +9,13 @@
 	 * viewer already sees face-up, so resolving the face here discloses
 	 * nothing new. Native `showModal()` gives Esc-to-close and returns focus
 	 * to the trigger on close.
+	 *
+	 * The tier is pinned rather than offered: with the shared 240/480/960 set,
+	 * `sizes` against this dialog's `min(85vw, 26rem)` cap resolves to ~416 px
+	 * on a 1x display and the browser would legitimately pick the 480 asset —
+	 * satisfying the markup but not the requirement. `sizes` stays as the
+	 * honest description of the rendered box; the one-candidate srcset is what
+	 * guarantees 960.
 	 */
 	interface Props {
 		card: DrawnCard;
@@ -30,7 +37,7 @@
 	}}
 	aria-label={card.label}
 >
-	<TarotCardImage sources={getTarotFaceSources(card.id)} alt={card.label} sizes="min(80vw, 52vh)" eager />
+	<TarotCardImage sources={getTarotFaceSources(card.id, 960)} alt={card.label} sizes="min(80vw, 52vh)" eager />
 	<div class="bar">
 		<span class="title">{card.label}</span>
 		<button type="button" onclick={() => dialog.close()}>Close</button>

@@ -21,7 +21,7 @@
  */
 
 import { tarotArtManifestSchema, type TarotArtAsset, type TarotArtManifest } from '$lib/schemas/tarot-art.schema';
-import type { TarotBackId, TarotImageSources } from '$lib/types/tarot-art';
+import type { TarotArtTier, TarotBackId, TarotImageSources } from '$lib/types/tarot-art';
 
 const manifestModules = import.meta.glob<{ default: unknown }>('../../../static/tarot/rwsa/tarot-art.json', {
 	eager: true
@@ -39,13 +39,20 @@ const manifest: TarotArtManifest | null = manifestModule
  * between image rendering and the glyph fallback. */
 export const hasTarotArt = manifest !== null;
 
-function toSources(asset: TarotArtAsset): TarotImageSources {
+/**
+ * With `tier` set, the returned srcsets carry that single candidate, so the
+ * browser cannot resolve `sizes` down to a smaller derivative. A multi-tier
+ * srcset expresses a preference; a one-candidate srcset is a requirement,
+ * which is what the enlargement dialog's 960 rule is.
+ */
+function toSources(asset: TarotArtAsset, tier?: TarotArtTier): TarotImageSources {
 	const byFormat = (format: 'avif' | 'webp') =>
 		asset.variants
-			.filter((variant) => variant.format === format)
+			.filter((variant) => variant.format === format && (tier === undefined || variant.width === tier))
 			.sort((a, b) => a.width - b.width);
 	const webp = byFormat('webp');
 	const fallback = webp.find((variant) => variant.width === 480) ?? webp[webp.length - 1];
+	if (!fallback) throw new Error(tier === undefined ? 'tarot art asset has no webp variants' : `tarot art tier not emitted: ${tier}`);
 	return {
 		avifSrcset: byFormat('avif')
 			.map((variant) => `${variant.path} ${variant.width}w`)
@@ -57,10 +64,12 @@ function toSources(asset: TarotArtAsset): TarotImageSources {
 	};
 }
 
-export function getTarotFaceSources(cardId: string): TarotImageSources {
+/** `tier` pins the resolved derivative to one width; omit it for the normal
+ * responsive set. */
+export function getTarotFaceSources(cardId: string, tier?: TarotArtTier): TarotImageSources {
 	const asset = manifest?.faces[cardId];
 	if (!asset) throw new Error(`unknown tarot art id: ${cardId}`);
-	return toSources(asset);
+	return toSources(asset, tier);
 }
 
 /** No default: with theme-selected backs there is no single right answer,

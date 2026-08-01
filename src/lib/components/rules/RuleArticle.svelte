@@ -49,6 +49,25 @@
 		border-radius: 3px;
 		font-size: 0.9em;
 	}
+	.body :global(table) {
+		display: block;
+		width: 100%;
+		overflow-x: auto;
+		border-collapse: collapse;
+		margin: 0.9rem 0;
+		font-size: 0.92em;
+	}
+	.body :global(th),
+	.body :global(td) {
+		border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+		padding: 0.5rem 0.75rem;
+		text-align: center;
+		vertical-align: middle;
+	}
+	.body :global(th) {
+		font-family: var(--font-subhead);
+		background: color-mix(in oklab, var(--ink) 6%, transparent);
+	}
 	.rule:focus {
 		outline: none;
 	}

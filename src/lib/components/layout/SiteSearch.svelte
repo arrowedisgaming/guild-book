@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
 	import { createSiteSearch } from './site-search.svelte';
+	import { hitHref } from '$lib/search/rules-search';
 	import { buildSnippet } from '$lib/search/snippets';
 	import { sectionLabel } from '$lib/content/sections';
 
@@ -36,7 +37,7 @@
 	function pick(index: number) {
 		const hit = search.hits[index];
 		search.close();
-		void goto(`/rules/${hit.doc.section}#${hit.doc.id}`);
+		void goto(hitHref(hit));
 	}
 
 	const listboxId = 'site-search-listbox';
@@ -95,7 +96,7 @@
 								<span class="title">{hit.doc.title}</span>
 								<span class="crumb">{sectionLabel(hit.doc.section)}</span>
 								<span class="snippet">
-									{#each buildSnippet(hit.doc.body, hit.terms) as part}
+									{#each buildSnippet(hit.doc.body, hit.terms, 220, hit.phrase) as part}
 										{#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
 									{/each}
 								</span>
@@ -123,6 +124,10 @@
 		border-radius: 4px;
 		background: var(--parchment);
 		font: inherit;
+		/* User-typed text, not book text: IM Fell (the body face) draws ASCII
+		 * straight quotes as right-side curly marks, which reads as a bug while
+		 * typing. Goudy renders neutral quote glyphs. */
+		font-family: var(--font-sidebar);
 		font-size: 0.9rem;
 	}
 	.dropdown {

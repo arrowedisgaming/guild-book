@@ -112,9 +112,37 @@ test.describe('site-wide rules search', () => {
 		await searchbox(page).fill('beg and busk');
 		await expect(listbox.getByRole('option').first()).toContainText('Beg and Busk');
 		await searchbox(page).press('Enter');
-		await expect(page).toHaveURL(/\/rules\/city-phase#city-beg-and-busk/);
+		// "beg and busk" is itself a verbatim phrase match, so the link carries ?hl=.
+		await expect(page).toHaveURL(/\/rules\/city-phase\?hl=beg%20and%20busk#city-beg-and-busk/);
 
 		await expect(page.locator('.anchored')).toHaveCount(1);
 		await expect(page.locator('#city-beg-and-busk.anchored')).toHaveCount(1);
+	});
+
+	test('a literal phrase deep-links to the phrase itself, highlighted in place', async ({ page }) => {
+		await page.goto('/');
+		await searchbox(page).click();
+		await searchbox(page).fill('dealing with traps');
+		const listbox = page.getByRole('listbox', { name: 'Rules search results' });
+		await expect(listbox.getByRole('option').first()).toContainText('Abandon All Hope');
+		// The snippet marks the whole phrase, not scattered words.
+		await expect(listbox.locator('mark').first()).toContainText(/dealing with traps/i);
+		await searchbox(page).press('Enter');
+		await expect(page).toHaveURL(/\/rules\/crawl-phase\?hl=dealing%20with%20traps#crawl-phase-abandon-all-hope-ye-who-enter-here/);
+		const mark = page.locator('mark.phrase-hl').first();
+		await expect(mark).toContainText(/dealing with traps/i);
+		await expect(mark).toBeInViewport();
+		await expect(page.locator('article:focus')).toHaveId('crawl-phase-abandon-all-hope-ye-who-enter-here');
+	});
+
+	test('double quotes around a phrase are tolerated, never required', async ({ page }) => {
+		await page.goto('/');
+		await searchbox(page).click();
+		await searchbox(page).fill('"dealing with traps"');
+		const listbox = page.getByRole('listbox', { name: 'Rules search results' });
+		await expect(listbox.getByRole('option').first()).toContainText('Abandon All Hope');
+		await searchbox(page).press('Enter');
+		await expect(page).toHaveURL(/\?hl=dealing%20with%20traps#/);
+		await expect(page.locator('mark.phrase-hl').first()).toBeInViewport();
 	});
 });

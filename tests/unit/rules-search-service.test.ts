@@ -1,10 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { foldText, getRulesSearch, resetRulesSearchForTests, tokenize } from '$lib/search/rules-search';
+import {
+	cleanQuery,
+	foldText,
+	getRulesSearch,
+	hitHref,
+	resetRulesSearchForTests,
+	tokenize
+} from '$lib/search/rules-search';
 
 const DOCS = [
 	{ id: 'tests-of-fate', section: 'basics', title: 'Tests of Fate', headings: ['Attributes'], body: 'Draw a card to test fate. Death’s Door is elsewhere.' },
 	{ id: 'challenge-sequence', section: 'challenge-phase', title: 'The Flow of the Challenge Phase', headings: [], body: 'The Challenge Phase is played in rounds and turns.' },
-	{ id: 'challenge-guard', section: 'challenge-phase', title: 'Guard', headings: [], body: 'Replace your Initiative to guard during a challenge.' }
+	{ id: 'challenge-guard', section: 'challenge-phase', title: 'Guard', headings: [], body: 'Replace your Initiative to guard during a challenge.' },
+	{ id: 'crawl-hazards', section: 'crawl-phase', title: 'Abandon All Hope', headings: ['Dealing with traps'], body: 'Hazards ahead. Dealing with traps is careful work.' },
+	{ id: 'crawl-scattered', section: 'crawl-phase', title: 'Scattered Terms', headings: [], body: 'Dealing damage happens. Go with the guild. Avoid traps always.' }
 ] as const;
 
 function okFetch(payload: unknown = DOCS) {
@@ -32,7 +41,7 @@ describe('rules search service', () => {
 		await expect(getRulesSearch('4.0.0', bad)).rejects.toThrow(/500/);
 		const good = okFetch();
 		const engine = await getRulesSearch('4.0.0', good);
-		expect(engine.docs).toHaveLength(3);
+		expect(engine.docs).toHaveLength(5);
 	});
 
 	it('ranks title matches above body matches and reports matched terms', async () => {
@@ -67,5 +76,53 @@ describe('rules search service', () => {
 		const engine = await getRulesSearch('4.0.0', okFetch());
 		expect(engine.search('a')).toEqual([]);
 		expect(engine.search('  ')).toEqual([]);
+	});
+});
+
+describe('phrase-aware search', () => {
+	beforeEach(() => resetRulesSearchForTests());
+
+	it('strips straight and curly double quotes from queries', () => {
+		expect(cleanQuery('"dealing with traps"')).toBe('dealing with traps');
+		expect(cleanQuery('“dealing  with traps”')).toBe('dealing with traps');
+	});
+
+	it('ranks a verbatim phrase occurrence above scattered-terms matches', async () => {
+		const engine = await getRulesSearch('4.0.0', okFetch());
+		const hits = engine.search('dealing with traps');
+		expect(hits.map((h) => h.doc.id)).toEqual(['crawl-hazards', 'crawl-scattered']);
+		expect(hits[0].phrase).toBe('dealing with traps');
+		expect(hits[1].phrase).toBeNull();
+	});
+
+	it('treats quoted queries identically to unquoted ones', async () => {
+		const engine = await getRulesSearch('4.0.0', okFetch());
+		const quoted = engine.search('“dealing with traps”');
+		const plain = engine.search('dealing with traps');
+		expect(quoted.map((h) => h.doc.id)).toEqual(plain.map((h) => h.doc.id));
+		expect(quoted[0].phrase).toBe('dealing with traps');
+	});
+
+	it('single-word queries never claim a phrase match', async () => {
+		const engine = await getRulesSearch('4.0.0', okFetch());
+		for (const hit of engine.search('traps')) expect(hit.phrase).toBeNull();
+	});
+
+	it('hitHref carries the phrase as ?hl= before the anchor', () => {
+		const base = {
+			doc: { ...DOCS[3], headings: [...DOCS[3].headings] },
+			score: 1,
+			terms: [] as string[],
+			bookIndex: 3
+		};
+		expect(hitHref({ ...base, phrase: 'dealing with traps' })).toBe(
+			'/rules/crawl-phase?hl=dealing%20with%20traps#crawl-hazards'
+		);
+		expect(hitHref({ ...base, phrase: null })).toBe('/rules/crawl-phase#crawl-hazards');
+	});
+
+	it('exact-title bonus still applies when the query is quoted', async () => {
+		const engine = await getRulesSearch('4.0.0', okFetch());
+		expect(engine.search('"guard"')[0].doc.id).toBe('challenge-guard');
 	});
 });

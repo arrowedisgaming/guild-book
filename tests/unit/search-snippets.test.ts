@@ -56,3 +56,26 @@ describe('buildSnippet', () => {
 		expect(parts.map((p) => p.text).join('')).toContain('Intro sentence');
 	});
 });
+
+describe('buildSnippet with a phrase', () => {
+	const body =
+		'Intro sentence about hazards. You will spend time dealing with traps in the dark. Final sentence.';
+
+	it('windows on the phrase and marks it whole', () => {
+		const parts = buildSnippet(body, ['dealing', 'with', 'traps'], 220, 'dealing with traps');
+		const marked = parts.filter((p) => p.marked);
+		expect(marked).toHaveLength(1);
+		expect(marked[0].text).toBe('dealing with traps');
+	});
+
+	it('falls back to term snippets when the phrase is absent from this body', () => {
+		const parts = buildSnippet(body, ['hazards'], 220, 'phrase not present');
+		expect(parts.some((p) => p.marked && /hazards/i.test(p.text))).toBe(true);
+	});
+
+	it('prefixes an ellipsis when the window starts mid-body', () => {
+		const long = 'x'.repeat(200) + ' dealing with traps follows.';
+		const parts = buildSnippet(long, [], 220, 'dealing with traps');
+		expect(parts[0].text.startsWith('…')).toBe(true);
+	});
+});

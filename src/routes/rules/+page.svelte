@@ -2,7 +2,12 @@
 	import { page } from '$app/state';
 	import RulesSearch from '$lib/components/rules/RulesSearch.svelte';
 	import { sectionLabel } from '$lib/content/sections';
-	import { getRulesSearch, type RulesSearchEngine, type RuleSearchHit } from '$lib/search/rules-search';
+	import {
+		getRulesSearch,
+		hitHref,
+		type RulesSearchEngine,
+		type RuleSearchHit
+	} from '$lib/search/rules-search';
 	import { buildSnippet } from '$lib/search/snippets';
 	import type { PageData } from './$types';
 
@@ -64,10 +69,10 @@
 			<ol class="results">
 				{#each hits as hit (hit.doc.id)}
 					<li>
-						<a href={`/rules/${hit.doc.section}#${hit.doc.id}`}>{hit.doc.title}</a>
+						<a href={hitHref(hit)}>{hit.doc.title}</a>
 						<span class="crumb">{sectionLabel(hit.doc.section)}</span>
 						<p class="snippet">
-							{#each buildSnippet(hit.doc.body, hit.terms) as part}
+							{#each buildSnippet(hit.doc.body, hit.terms, 220, hit.phrase) as part}
 								{#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
 							{/each}
 						</p>

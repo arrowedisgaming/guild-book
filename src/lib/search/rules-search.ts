@@ -14,6 +14,10 @@ export interface RuleSearchHit {
 	 * (a fuzzy hit for "challnge" reports "challenge"). */
 	terms: string[];
 	bookIndex: number;
+	/** The cleaned query when it occurs verbatim in this doc (title, heading,
+	 * or body) — drives phrase snippets and the ?hl= deep link. Null when the
+	 * doc matched on scattered terms only. */
+	phrase: string | null;
 }
 
 export interface RulesSearchEngine {
@@ -24,6 +28,25 @@ export interface RulesSearchEngine {
 /** Case + straight/curly apostrophe folding, shared with snippet highlighting. */
 export const foldText = (s: string): string => s.toLowerCase().replace(/[’‘']/g, '');
 
+/** Double quotes (straight or typographic) are tolerated, never operators:
+ * they're stripped before matching, so "dealing with traps" ≡ dealing with traps. */
+export const cleanQuery = (s: string): string =>
+	s
+		.replace(/["“”„]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+
+/** Phrase-comparison folding: foldText plus whitespace collapse, so a phrase
+ * matches across the artifact's line breaks. */
+const foldPhrase = (s: string): string => foldText(s).replace(/\s+/g, ' ');
+
+/** Where a result links: the section page anchored to the entry, carrying the
+ * matched phrase for in-page scroll-and-highlight when there is one. */
+export function hitHref(hit: RuleSearchHit): string {
+	const hl = hit.phrase ? `?hl=${encodeURIComponent(hit.phrase)}` : '';
+	return `/rules/${hit.doc.section}${hl}#${hit.doc.id}`;
+}
+
 export const tokenize = (s: string): string[] =>
 	foldText(s)
 		.split(/[^\p{L}\p{N}]+/u)
@@ -31,6 +54,9 @@ export const tokenize = (s: string): string[] =>
 
 const ARTIFACT_PATH = '/content-packs/hmtw/rules-search.json';
 const EXACT_TITLE_BONUS = 100;
+/** A verbatim phrase occurrence outranks any scattered-terms match; where it
+ * occurs tiers the boost the same way field boosts do. */
+const PHRASE_BONUS = { title: 90, headings: 70, body: 50 } as const;
 
 let memo: Promise<RulesSearchEngine> | null = null;
 
@@ -73,12 +99,27 @@ async function build(packVersion: string, fetchFn: typeof fetch): Promise<RulesS
 	return {
 		docs,
 		search(query: string): RuleSearchHit[] {
-			if (tokenize(query).join('').length < 2) return [];
-			const folded = foldText(query.trim());
-			const hits = mini.search(query).map((r) => {
+			const cleaned = cleanQuery(query);
+			if (tokenize(cleaned).join('').length < 2) return [];
+			const folded = foldPhrase(cleaned);
+			const multiTerm = tokenize(cleaned).length > 1;
+			const hits = mini.search(cleaned).map((r) => {
 				const { doc, bookIndex } = byId.get(String(r.id))!;
-				const bonus = foldText(doc.title) === folded ? EXACT_TITLE_BONUS : 0;
-				return { doc, bookIndex, terms: r.terms, score: r.score + bonus };
+				let bonus = foldText(doc.title) === folded ? EXACT_TITLE_BONUS : 0;
+				let phrase: string | null = null;
+				if (multiTerm) {
+					if (foldPhrase(doc.title).includes(folded)) {
+						bonus += PHRASE_BONUS.title;
+						phrase = cleaned;
+					} else if (doc.headings.some((h) => foldPhrase(h).includes(folded))) {
+						bonus += PHRASE_BONUS.headings;
+						phrase = cleaned;
+					} else if (foldPhrase(doc.body).includes(folded)) {
+						bonus += PHRASE_BONUS.body;
+						phrase = cleaned;
+					}
+				}
+				return { doc, bookIndex, terms: r.terms, phrase, score: r.score + bonus };
 			});
 			hits.sort((a, b) => b.score - a.score || a.bookIndex - b.bookIndex);
 			return hits;

@@ -1,4 +1,9 @@
-import { getRulesSearch, type RuleSearchHit, type RulesSearchEngine } from '$lib/search/rules-search';
+import {
+	getRulesSearch,
+	hitHref,
+	type RuleSearchHit,
+	type RulesSearchEngine
+} from '$lib/search/rules-search';
 
 export type SiteSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -93,7 +98,7 @@ export function createSiteSearch(packVersion: string, deps: { getEngine?: typeof
 				e.preventDefault();
 				const hit = hits[active];
 				close();
-				return `/rules/${hit.doc.section}#${hit.doc.id}`;
+				return hitHref(hit);
 			}
 			return null;
 		}

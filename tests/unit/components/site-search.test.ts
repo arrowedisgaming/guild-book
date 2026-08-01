@@ -7,8 +7,8 @@ const engine: RulesSearchEngine = {
 	search: (q: string) =>
 		q.includes('challenge')
 			? [
-					{ doc: { id: 'challenge-sequence', section: 'challenge-phase', title: 'Flow', headings: [], body: 'b' }, score: 2, terms: ['challenge'], bookIndex: 0 },
-					{ doc: { id: 'challenge-guard', section: 'challenge-phase', title: 'Guard', headings: [], body: 'b' }, score: 1, terms: ['challenge'], bookIndex: 1 }
+					{ doc: { id: 'challenge-sequence', section: 'challenge-phase', title: 'Flow', headings: [], body: 'b' }, score: 2, terms: ['challenge'], bookIndex: 0, phrase: null },
+					{ doc: { id: 'challenge-guard', section: 'challenge-phase', title: 'Guard', headings: [], body: 'b' }, score: 1, terms: ['challenge'], bookIndex: 1, phrase: null }
 				]
 			: []
 };

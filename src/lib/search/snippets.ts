@@ -35,10 +35,26 @@ function termRegex(term: string): RegExp {
 	return new RegExp(pattern, 'gi');
 }
 
+/** A whole-phrase regex: apostrophe-tolerant per word, flexible whitespace. */
+function phraseRegex(phrase: string): RegExp {
+	const words = phrase
+		.trim()
+		.split(/\s+/)
+		.map((word) => word.split('').map(escapeRe).join('[’‘\']?'));
+	return new RegExp(words.join('\\s+'), 'gi');
+}
+
 export function markParts(text: string, terms: string[]): SnippetPart[] {
+	return markByRegexes(
+		text,
+		terms.filter(Boolean).map((t) => termRegex(t))
+	);
+}
+
+function markByRegexes(text: string, regexes: RegExp[]): SnippetPart[] {
 	const ranges: Array<[number, number]> = [];
-	for (const term of terms.filter(Boolean)) {
-		for (const m of text.matchAll(termRegex(term))) {
+	for (const re of regexes) {
+		for (const m of text.matchAll(re)) {
 			if (m[0]) ranges.push([m.index, m.index + m[0].length]);
 		}
 	}
@@ -60,7 +76,25 @@ export function markParts(text: string, terms: string[]): SnippetPart[] {
 	return parts.length ? parts : [{ text, marked: false }];
 }
 
-export function buildSnippet(body: string, terms: string[], contextChars = 220): SnippetPart[] {
+export function buildSnippet(
+	body: string,
+	terms: string[],
+	contextChars = 220,
+	phrase?: string | null
+): SnippetPart[] {
+	// A verbatim phrase match wins: window around the phrase itself and mark
+	// the whole phrase, not its individual words.
+	if (phrase) {
+		const re = phraseRegex(phrase);
+		const m = re.exec(body);
+		if (m) {
+			const start = Math.max(0, m.index - 60);
+			const window =
+				(start > 0 ? '…' : '') +
+				body.slice(start, Math.min(body.length, m.index + m[0].length + contextChars));
+			return markByRegexes(window, [phraseRegex(phrase)]);
+		}
+	}
 	const sentences = splitSentences(body);
 	const hit = sentences.find((s) => terms.some((t) => t && termRegex(t).test(s)));
 	const window = (hit ?? body.slice(0, contextChars)).slice(0, contextChars * 2);

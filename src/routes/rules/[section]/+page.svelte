@@ -2,6 +2,8 @@
 	import RuleArticle from '$lib/components/rules/RuleArticle.svelte';
 	import { sectionLabel } from '$lib/content/sections';
 	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/state';
+	import { clearPhraseHighlights, highlightPhrase } from '$lib/search/highlight-dom';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -15,9 +17,21 @@
 		// Clear previous targets so only the current article is highlighted, and
 		// so re-anchoring the same article restarts its flash animation.
 		for (const el of document.querySelectorAll('.anchored')) el.classList.remove('anchored');
-		requestAnimationFrame(() => target.classList.add('anchored'));
+		clearPhraseHighlights();
 		target.focus({ preventScroll: true });
-		target.scrollIntoView({ block: 'start' });
+		// When the search result matched a literal phrase (?hl=…), scroll to the
+		// phrase itself, highlighted in place; otherwise land at the article top.
+		const hl = page.url.searchParams.get('hl');
+		const mark = hl ? highlightPhrase(target, hl) : null;
+		// Double rAF: the second frame runs after SvelteKit's own scroll-to-hash,
+		// which would otherwise override the phrase scroll back to the article top.
+		requestAnimationFrame(() => {
+			target.classList.add('anchored');
+			requestAnimationFrame(() => {
+				if (mark) mark.scrollIntoView({ block: 'center' });
+				else target.scrollIntoView({ block: 'start' });
+			});
+		});
 	});
 </script>
 
@@ -43,5 +57,12 @@
 	.crumb a {
 		color: var(--ink-soft);
 		text-decoration: none;
+	}
+	/* Runtime-inserted by the search deep link (highlight-dom.ts). */
+	.section :global(mark.phrase-hl) {
+		background: color-mix(in oklab, var(--accent) 32%, transparent);
+		color: inherit;
+		border-radius: 2px;
+		padding: 0 0.05em;
 	}
 </style>

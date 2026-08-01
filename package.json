@@ -39,7 +39,7 @@
 		"test:e2e:ci": "node scripts/e2e/run-ci.mjs",
 		"test:e2e:stress": "playwright test --config=playwright.stress.config.ts",
 		"release:validate": "node scripts/release/validate-tag.mjs",
-		"release:verify": "npm run release:validate && CONTENT_BASE_REF=origin/main npm run content:verify:ci && npm run check && npm run test && ADAPTER=cloudflare AUTH_SECRET=release-build-validation-only npm run build && npx wrangler deploy --dry-run --env '' && npx wrangler deploy --dry-run --env staging && npm run test:e2e",
+		"release:verify": "npm run release:validate && CONTENT_BASE_REF=origin/main npm run content:verify:ci && npm run check && npm run test && ADAPTER=cloudflare AUTH_SECRET=release-build-validation-only npm run build && npx wrangler deploy --dry-run --env '' && npx wrangler deploy --dry-run --env staging && npm run test:e2e && npm run content:verify",
 		"content:build": "node scripts/content-import/md-inject.mjs && node scripts/content-import/md-rules.mjs && node scripts/content-import/md-spells.mjs && node scripts/content-import/md-procedures.mjs",
 		"content:verify": "node scripts/content-import/md-inject.mjs --check && node scripts/content-import/md-rules.mjs --check && node scripts/content-import/md-spells.mjs --check && node scripts/content-import/md-procedures.mjs --check && node scripts/content-import/verify-pack-version.mjs",
 		"content:inject": "node scripts/content-import/md-inject.mjs",

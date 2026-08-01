@@ -189,6 +189,18 @@ describe('resolveEntries', () => {
 		).toThrow(/locator/i);
 	});
 
+	it('throws when an ids/idAliases locator path matches more than one candidate (occurrence collision)', () => {
+		expect(() =>
+			resolveEntries(
+				[
+					cand('Flow/1. Draw Challenge cards', '1. Draw Challenge cards', 1),
+					cand('Flow/1. Draw Challenge cards', '1. Draw Challenge cards', 2)
+				],
+				{ section: 'challenge-phase', ids: { 'Flow/1. Draw Challenge cards': 'challenge-draw-cards' } }
+			)
+		).toThrow(/occurrence/i);
+	});
+
 	it('honors a splitDeeper entry\'s own id without a redundant ids/idAliases entry', () => {
 		const out = resolveEntries([cand('Fay/Wood elves/Area Sense', 'Area Sense')], {
 			section: 'kith-and-kin',

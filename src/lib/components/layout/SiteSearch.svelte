@@ -19,6 +19,7 @@
 		if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
 		const target = e.target as HTMLElement | null;
 		if (target && (/^(input|textarea|select)$/i.test(target.tagName) || target.isContentEditable)) return;
+		if (target?.closest('[role="dialog"]')) return;
 		e.preventDefault();
 		input?.focus();
 	}

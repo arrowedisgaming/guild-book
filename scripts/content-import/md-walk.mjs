@@ -150,9 +150,16 @@ export function resolveEntries(candidates, config) {
 	const byLocator = (map, kind) => {
 		const out = new Map();
 		for (const [at, id] of Object.entries(map ?? {})) {
-			const hit = candidates.find((c) => c.locator.toLowerCase() === at.toLowerCase());
-			if (!hit) throw new Error(`${kind} locator matches no candidate: ${JSON.stringify(at)}`);
-			out.set(hit, id);
+			const hits = candidates.filter((c) => c.locator.toLowerCase() === at.toLowerCase());
+			if (hits.length === 0) throw new Error(`${kind} locator matches no candidate: ${JSON.stringify(at)}`);
+			if (hits.length > 1) {
+				throw new Error(
+					`${kind} locator ${JSON.stringify(at)} matches ${hits.length} candidates sharing that path; ` +
+						`occurrence-based disambiguation is required — the "${kind}" map matches by path only, ` +
+						`not occurrence, so an explicit occurrence-aware key is needed to bind unambiguously.`
+				);
+			}
+			out.set(hits[0], id);
 		}
 		return out;
 	};

@@ -49,3 +49,82 @@ describe('scanHeadings', () => {
 		expect(headings[1]).toMatchObject({ level: 3, text: 'Dwarf arête talent: Iron Beards' });
 	});
 });
+
+import { walkChapter } from '../../scripts/content-import/md-walk.mjs';
+
+const OWNERSHIP = [
+	'# Chapter 2: The Adventurer',
+	'Chapter intro paragraph.',
+	'# Session 0',
+	'H1 intro prose.',
+	'## 2. Attributes',
+	'Attributes prose.',
+	'### Details',
+	'Detail prose stays inline.',
+	'## 3. Quests',
+	'Quests prose.',
+	'# Pure Container',
+	'## Only Child',
+	'Child prose.'
+].join('\n');
+
+describe('walkChapter ownership', () => {
+	it('assigns every source paragraph to exactly one candidate body', () => {
+		const { candidates } = walkChapter(OWNERSHIP, {});
+		const bodies = candidates.map((c) => c.bodyLines.join('\n'));
+		for (const paragraph of [
+			'Chapter intro paragraph.',
+			'H1 intro prose.',
+			'Attributes prose.',
+			'Detail prose stays inline.',
+			'Quests prose.',
+			'Child prose.'
+		]) {
+			expect(bodies.filter((b) => b.includes(paragraph))).toHaveLength(1);
+		}
+	});
+
+	it('gives an H1 only its pre-H2 prose, and keeps H3 inline in its H2', () => {
+		const { candidates } = walkChapter(OWNERSHIP, {});
+		const session0 = candidates.find((c) => c.text === 'Session 0');
+		expect(session0?.bodyLines.join('\n')).toBe('H1 intro prose.');
+		const attrs = candidates.find((c) => c.text === '2. Attributes');
+		expect(attrs?.bodyLines.join('\n')).toContain('### Details');
+		expect(attrs?.bodyLines.join('\n')).toContain('Detail prose stays inline.');
+	});
+
+	it('records a prose-less H1 as a container, not a candidate', () => {
+		const { candidates, ledger } = walkChapter(OWNERSHIP, {});
+		expect(candidates.find((c) => c.text === 'Pure Container')).toBeUndefined();
+		expect(ledger.find((r) => r.locator === 'Pure Container')).toMatchObject({
+			disposition: 'container'
+		});
+	});
+
+	it('splitDeeper lifts an H3 out of its H2 into its own candidate', () => {
+		const md = ['# Flow', '## 3. Take turns', 'Turn prose.', '### Action value', 'Value prose.'].join('\n');
+		const { candidates } = walkChapter(md, {
+			splitDeeper: [{ at: 'Flow/3. Take turns/Action value', id: 'x-action-value' }]
+		});
+		const turns = candidates.find((c) => c.text === '3. Take turns');
+		const value = candidates.find((c) => c.text === 'Action value');
+		expect(turns?.bodyLines.join('\n')).toBe('Turn prose.');
+		expect(value?.bodyLines.join('\n')).toBe('Value prose.');
+	});
+
+	it('skip excludes the heading and its whole subtree, with the reason ledgered', () => {
+		const md = ['# Keep', 'kept.', '## NEW ADVENTURER CHECKLIST', 'dupe.', '### Sub', 'sub dupe.', '## After', 'after.'].join('\n');
+		const { candidates, ledger } = walkChapter(md, {
+			skip: [{ at: 'Keep/NEW ADVENTURER CHECKLIST', reason: 'duplicate all-caps copy of the checklist' }]
+		});
+		expect(candidates.map((c) => c.text)).toEqual(['Keep', 'After']);
+		expect(ledger.find((r) => r.disposition === 'skipped')).toMatchObject({
+			locator: 'Keep/NEW ADVENTURER CHECKLIST',
+			reason: 'duplicate all-caps copy of the checklist'
+		});
+	});
+
+	it('throws on a skip/splitDeeper locator that matches nothing', () => {
+		expect(() => walkChapter(OWNERSHIP, { skip: [{ at: 'Nope/Missing', reason: 'x' }] })).toThrow(/locator/i);
+	});
+});

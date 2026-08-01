@@ -53,7 +53,13 @@
 
 <svelte:window onkeydown={onWindowKeydown} onpointerdown={onPointerDownOutside} />
 
-<div class="site-search" bind:this={root}>
+<div
+	class="site-search"
+	bind:this={root}
+	onfocusout={(e) => {
+		if (root && !root.contains(e.relatedTarget as Node)) search.close();
+	}}
+>
 	<input
 		bind:this={input}
 		type="search"
@@ -92,7 +98,15 @@
 							aria-selected={i === search.active}
 							class:active={i === search.active}
 						>
-							<button type="button" onpointerdown={(e) => e.preventDefault()} onclick={() => pick(i)}>
+							<!-- tabindex -1: options are reached via aria-activedescendant +
+							     arrows, never Tab — a tabbable descendant inside role=option
+							     breaks the listbox contract and strands keyboard handling. -->
+							<button
+								type="button"
+								tabindex="-1"
+								onpointerdown={(e) => e.preventDefault()}
+								onclick={() => pick(i)}
+							>
 								<span class="title">{hit.doc.title}</span>
 								<span class="crumb">{sectionLabel(hit.doc.section)}</span>
 								<span class="snippet">

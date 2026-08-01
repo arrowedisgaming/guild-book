@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rule entries' tags are now optional metadata; chapter-walked entries carry
-  none by default.
+  none by default, and rule articles no longer display the legacy curated tag
+  chips.
+- Rulebook tables render with grid lines and centered cells.
 
 ## [0.9.1] - 2026-07-31
 

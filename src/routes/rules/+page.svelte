@@ -16,6 +16,7 @@
 	let query = $state(page.url.searchParams.get('q') ?? '');
 	let engine = $state<RulesSearchEngine | null>(null);
 	let engineFailed = $state(false);
+	let engineLoading = $derived(!engine && !engineFailed);
 
 	// SvelteKit reuses this component when only ?q= changes, so sync from the
 	// URL; local typing still wins between navigations.
@@ -85,7 +86,13 @@
 			<p class="empty">Full-text search is unavailable — filtering titles only.</p>
 		{/if}
 		{#if bySection.length === 0}
-			<p class="empty">No rules match “{query}”.</p>
+			{#if query.trim() && engineLoading}
+				<!-- The title-only fallback can't see body matches; don't claim "no
+				     match" for a body-only query while the engine is still loading. -->
+				<p class="empty">Searching the rulebook…</p>
+			{:else}
+				<p class="empty">No rules match “{query}”.</p>
+			{/if}
 		{:else}
 			<nav class="jump" aria-label="Chapters">
 				{#each bySection as g (g.section)}

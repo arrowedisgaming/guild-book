@@ -10,14 +10,15 @@
 	const label = $derived(sectionLabel(data.section));
 
 	afterNavigate(() => {
+		// Always clear previous highlight state FIRST: navigating Back to a plain
+		// section URL (no hash) reuses this component, and the early returns
+		// below must not preserve the previous navigation's marks or flash.
+		for (const el of document.querySelectorAll('.anchored')) el.classList.remove('anchored');
+		clearPhraseHighlights();
 		const id = location.hash.slice(1);
 		if (!id) return;
 		const target = document.getElementById(id);
 		if (!(target instanceof HTMLElement)) return;
-		// Clear previous targets so only the current article is highlighted, and
-		// so re-anchoring the same article restarts its flash animation.
-		for (const el of document.querySelectorAll('.anchored')) el.classList.remove('anchored');
-		clearPhraseHighlights();
 		target.focus({ preventScroll: true });
 		// When the search result matched a literal phrase (?hl=…), scroll to the
 		// phrase itself, highlighted in place; otherwise land at the article top.

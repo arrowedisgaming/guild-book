@@ -121,7 +121,15 @@ async function build(packVersion: string, fetchFn: typeof fetch): Promise<RulesS
 				}
 				return { doc, bookIndex, terms: r.terms, phrase, score: r.score + bonus };
 			});
-			hits.sort((a, b) => b.score - a.score || a.bookIndex - b.bookIndex);
+			// Phrase presence is the PRIMARY key — a verbatim occurrence always
+			// outranks scattered-term matches regardless of raw term-frequency
+			// score (which is unbounded and could otherwise swamp a flat bonus).
+			hits.sort(
+				(a, b) =>
+					Number(b.phrase !== null) - Number(a.phrase !== null) ||
+					b.score - a.score ||
+					a.bookIndex - b.bookIndex
+			);
 			return hits;
 		}
 	};

@@ -121,6 +121,18 @@ describe('phrase-aware search', () => {
 		expect(hitHref({ ...base, phrase: null })).toBe('/rules/crawl-phase#crawl-hazards');
 	});
 
+	it('phrase matches outrank scattered matches even against extreme term frequency', async () => {
+		const spam = 'dealing damage with allies near traps. '.repeat(60);
+		const docs = [
+			{ id: 'spam', section: 'crawl-phase', title: 'Spam', headings: [], body: spam },
+			{ id: 'real', section: 'crawl-phase', title: 'Real', headings: [], body: 'Dealing with traps is careful work.' }
+		];
+		const engine = await getRulesSearch('4.0.0', okFetch(docs));
+		const hits = engine.search('dealing with traps');
+		expect(hits[0].doc.id).toBe('real');
+		expect(hits[0].phrase).toBe('dealing with traps');
+	});
+
 	it('exact-title bonus still applies when the query is quoted', async () => {
 		const engine = await getRulesSearch('4.0.0', okFetch());
 		expect(engine.search('"guard"')[0].doc.id).toBe('challenge-guard');

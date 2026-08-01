@@ -71,6 +71,12 @@
 	.rule:focus {
 		outline: none;
 	}
+	/* Keyboard-driven focus keeps a visible indicator after the flash ends;
+	 * programmatic focus from a pointer click stays quiet. */
+	.rule:focus-visible {
+		outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+		outline-offset: 4px;
+	}
 	.rule:target,
 	.rule:global(.anchored) {
 		animation: rule-flash 1.6s ease-out 1;

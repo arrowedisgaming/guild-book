@@ -23,7 +23,8 @@
 				class="buy"
 				href="https://www.hismajestytheworm.games/his-majesty-the-worm"
 				target="_blank"
-				rel="noopener">His Majesty the Worm</a
+				rel="noopener"
+				aria-label="Learn more and purchase His Majesty the Worm">His Majesty the Worm</a
 			>
 		</p>
 	</OrnamentalBorder>

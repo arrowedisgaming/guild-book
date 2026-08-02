@@ -405,7 +405,14 @@ async function executeCommandInstrumented(
 			requestHash,
 			commandType: envelope.command.type,
 			clientObservedVersion: envelope.observedSessionVersion,
-			structuralPreconditionVersion: envelope.expectedStructuralVersion ?? null,
+			// Only a STRUCTURAL command's declared version is a structural
+			// precondition. The envelope field is schema-valid on every command,
+			// so a non-structural one may carry a stale value the guard above
+			// deliberately does not police — recording it here would both
+			// mislabel the audit row and trip the claim builder's invariant,
+			// which throws outside the commit's `catch` and would escape as a
+			// 500 instead of a command outcome.
+			structuralPreconditionVersion: isStructural ? (envelope.expectedStructuralVersion ?? null) : null,
 			expectedVersion: loaded.currentVersion,
 			nextState,
 			events: reduceResult.events,

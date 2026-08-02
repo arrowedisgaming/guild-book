@@ -203,6 +203,48 @@ describe('structural command precondition under a mid-flight rival (issue #14)',
 		).toThrow(/structural precondition/);
 	});
 
+	/**
+	 * The claim guard's invariant is about STRUCTURAL claims, but
+	 * `expectedStructuralVersion` is schema-valid on every envelope, so a
+	 * non-structural command may legitimately carry a stale one. Passing it
+	 * into the claim regardless made the guard fire on a command it was never
+	 * meant to police — and because the claim is built before the commit's
+	 * `try`, that surfaced as an uncaught throw (HTTP 500 at the route) rather
+	 * than a command outcome. A non-structural command must ignore the field
+	 * and be evaluated on its own merits.
+	 */
+	it('accepts a non-structural command carrying a stale expectedStructuralVersion', async () => {
+		await startFixtureSession();
+
+		const result = await executeCommand({
+			dbContext: ctx,
+			campaignId: 'campaign-a',
+			sessionId: 'session-a',
+			actorUserId: 'player-a',
+			envelope: {
+				commandId: 'nonstructural-with-stale-precondition',
+				observedSessionVersion: 1,
+				// Deliberately mismatched against the current version (1).
+				expectedStructuralVersion: 0,
+				command: { type: 'draw', deck: 'player', destinationZoneId: 'hand:player-a', count: 1 }
+			} as SessionCommandEnvelope<SessionCommand>
+		});
+
+		expect(result.outcome).toEqual({ ok: true, resultingVersion: 2 });
+		// The field is not a structural precondition here, so it must not be
+		// recorded as one — otherwise the audit invariant below would fail.
+		const row = sqlite
+			.prepare(
+				`SELECT structural_precondition_version AS declared FROM session_commands
+				 WHERE command_id = 'nonstructural-with-stale-precondition' AND status = 'accepted'`
+			)
+			.get() as { declared: number | null };
+		// Not `expectStructuralAuditInvariant()`: no structural command ran
+		// here, so there is nothing for it to inspect and it would fail its own
+		// vacuous-pass guard. A null precondition IS the assertion.
+		expect(row.declared).toBeNull();
+	});
+
 	function currentVersion(): number {
 		const row = sqlite.prepare('SELECT version FROM play_sessions WHERE id = ?').get('session-a') as { version: number };
 		return row.version;

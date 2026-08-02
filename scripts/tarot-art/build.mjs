@@ -157,9 +157,18 @@ async function buildAsset(input, outputRoot, kind, id, source, sourceSha256) {
 	return { source: filename, sourceSha256, width, height, variants };
 }
 
-/** @param {Record<string, unknown>} object */
+/**
+ * Key-sorted shallow copy, preserving the value type — `Object.fromEntries`
+ * alone widens it to `any`/`unknown`, which silently erased `Asset` from the
+ * manifest's `faces`/`backs` and left the CLI summary below unchecked.
+ * @template T
+ * @param {Record<string, T>} object
+ * @returns {Record<string, T>}
+ */
 function sortedShallow(object) {
-	return Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b)));
+	return /** @type {Record<string, T>} */ (
+		Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b)))
+	);
 }
 
 /**

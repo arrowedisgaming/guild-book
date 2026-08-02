@@ -21,9 +21,10 @@
  */
 
 import { createHash } from 'node:crypto';
-import { mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { lstat, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import { COLLECTION } from './source-map.mjs';
 
@@ -46,6 +47,35 @@ async function walk(dir) {
 	return out.sort();
 }
 
+/**
+ * Maps a manifest variant's public URL back to a path under the output root,
+ * refusing anything that does not land inside it.
+ *
+ * Both checks matter. Stripping the prefix alone leaves `..` segments intact,
+ * so `/tarot/rwsa/../../favicon.svg` would resolve to a file outside the
+ * artwork tree — and since verification is "hash the file this path names",
+ * an unrelated file's hash could stand in for a derivative that is actually
+ * missing, and the run would pass. The verifier's whole claim is that the
+ * committed derivatives are present and unmodified, so a path it cannot place
+ * inside the output root is a failure, not something to resolve leniently.
+ *
+ * @param {string} variantPath public URL from the manifest
+ * @param {string} root output root the derivatives live under
+ * @returns {{ relative: string; problem: null } | { relative: null; problem: string }}
+ */
+export function manifestRelativePath(variantPath, root) {
+	const prefix = `${COLLECTION.publicPathPrefix}/`;
+	if (!variantPath.startsWith(prefix)) {
+		return { relative: null, problem: `manifest path outside the collection prefix: ${variantPath}` };
+	}
+	const relative = variantPath.slice(prefix.length);
+	const rootResolved = path.resolve(root);
+	if (!path.resolve(root, relative).startsWith(`${rootResolved}${path.sep}`)) {
+		return { relative: null, problem: `manifest path escapes the output root: ${variantPath}` };
+	}
+	return { relative, problem: null };
+}
+
 /** @param {string[]} problems */
 async function verifyCommitted(problems) {
 	const root = COLLECTION.outputDir;
@@ -56,10 +86,14 @@ async function verifyCommitted(problems) {
 	const expected = new Map();
 	for (const asset of [...Object.values(manifest.faces), ...Object.values(manifest.backs)]) {
 		for (const variant of asset.variants) {
-			// Manifest paths are public URLs under the collection prefix; map
-			// them back to files under the output root.
-			const relative = variant.path.replace(`${COLLECTION.publicPathPrefix}/`, '');
-			expected.set(relative, { sha256: variant.sha256, bytes: variant.bytes });
+			const resolved = manifestRelativePath(variant.path, root);
+			// Narrow on `relative`, not `problem`: it is the discriminant that
+			// tells the checker which arm of the union this is.
+			if (resolved.relative === null) {
+				problems.push(resolved.problem);
+				continue;
+			}
+			expected.set(resolved.relative, { sha256: variant.sha256, bytes: variant.bytes });
 		}
 	}
 
@@ -74,7 +108,19 @@ async function verifyCommitted(problems) {
 	for (const [name, want] of expected) {
 		const filePath = path.join(root, name);
 		try {
-			const [bytes, info] = await Promise.all([readFile(filePath), stat(filePath)]);
+			// `lstat`, and reject links outright: the containment check above is
+			// lexical, so a symlink committed inside the output root could still
+			// point outside it and have its target's bytes hashed in place of a
+			// derivative that is absent. `walk` cannot catch that either — it
+			// enumerates `isFile()` entries, and a symlink is not one, so such a
+			// link is invisible to the stray-file check. A derivative is always a
+			// regular file.
+			const info = await lstat(filePath);
+			if (!info.isFile()) {
+				problems.push(`manifest path is not a regular file: ${name}`);
+				continue;
+			}
+			const bytes = await readFile(filePath);
 			if (sha256(bytes) !== want.sha256) problems.push(`hash mismatch: ${name}`);
 			if (info.size !== want.bytes) problems.push(`size mismatch: ${name}`);
 		} catch {
@@ -133,7 +179,13 @@ async function main() {
 	);
 }
 
-main().catch((error) => {
-	console.error(error instanceof Error ? error.message : error);
-	process.exit(1);
-});
+// Guarded like `build.mjs`'s CLI block, and with the same `fileURLToPath`
+// reasoning: importing this module (as the unit tests do, for
+// `manifestRelativePath`) must not run a full verification pass.
+const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) {
+	main().catch((error) => {
+		console.error(error instanceof Error ? error.message : error);
+		process.exit(1);
+	});
+}

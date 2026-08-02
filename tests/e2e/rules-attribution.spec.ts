@@ -58,7 +58,9 @@ test.describe('rulebook attribution card', () => {
 		for (const name of ['licensed the game', 'Learn more and purchase His Majesty the Worm']) {
 			const link = card.getByRole('link', { name });
 			await expect(link).toHaveAttribute('target', '_blank');
-			await expect(link).toHaveAttribute('rel', /noopener/);
+			// `rel` is a token list, so anchor the match — a bare /noopener/ would
+			// also accept a typo like "noopenerish", which grants no protection.
+			await expect(link).toHaveAttribute('rel', /\bnoopener\b/);
 		}
 	});
 

@@ -1,5 +1,23 @@
 # Rules Attribution Card Implementation Plan
 
+> **Executed and merged 2026-08-02 (PRs #36 and #37). Retained as a record —
+> two of its instructions were wrong and were corrected during execution. If
+> you are reusing any part of this plan, read these first:**
+>
+> 1. **Task 2 instructs you to run `sed` over
+>    `static/content-packs/hmtw/index.json`. Do not.** That file is covered by
+>    the content-pack tamper-evidence digest
+>    (`scripts/content-import/verify-pack-version.mjs`), which the required CI
+>    `check` job enforces via `npm run content:verify:ci`. Editing even a prose
+>    string there fails CI, and satisfying the digest means bumping the pack
+>    `version`, which invalidates session-pinned pack versions and the `?v=`
+>    cache key for the rules-search artifact. The file was reverted and keeps
+>    the British spelling. Task 2's file list, `sed` command, and expected
+>    grep/diff counts are all one file too wide as written.
+> 2. **Task 1 Step 7 tells you to run `npx prettier --check`. Prettier is not a
+>    dependency of this repo** and there is no format script. Match the
+>    surrounding files' style by hand instead.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Put an ever-present card on every rules page thanking Josh McCrowell for the open license and linking to where the book can be bought, and align the project's spelling of "license" with his.

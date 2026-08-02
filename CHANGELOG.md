@@ -28,6 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environments without built artwork keep working: the app detects the absent
   manifest and falls back to the previous glyph rendering.
 
+### Fixed
+
+- A structural command can no longer apply to a session version its actor
+  declared it was not expecting (#14). The declared precondition was checked
+  against one read of the session but the version claim was built from a later
+  one, so a second command committing between the two could slip through
+  unnoticed — at a shared table this showed up as the round advancing twice
+  when only one GM had asked for it. The precondition is now re-checked against
+  the read that feeds the claim, and the claim builder refuses outright to
+  write a row whose precondition and target version disagree.
+
 ## [0.10.0] - 2026-08-01
 
 ### Added

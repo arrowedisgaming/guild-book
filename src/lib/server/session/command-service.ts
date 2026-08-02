@@ -310,6 +310,40 @@ async function executeCommandInstrumented(
 		// Coarse phase only — never the specific procedure the table is running.
 		telemetry.procedureKind = loaded.engineState.phase;
 
+		// Issue #14: the guard above validated the precondition against
+		// `summary.version`, but the claim below is built from
+		// `loaded.currentVersion` — a different, later read. On D1 the gap
+		// between the two is a real network round trip, and a rival committing
+		// inside it advanced the version so the claim targeted a *free*
+		// resulting version and `session_commands_resulting_version_uq` never
+		// fired: the command applied to a version its actor declared it was not
+		// expecting. Re-validating against the read that feeds the claim (the
+		// same pattern `procedure-command-loop.ts` uses) closes the window, not
+		// merely narrows it: after this check the declared precondition and the
+		// claim base are the same number, so a rival committing in the
+		// remaining window must claim the same resulting version and collide on
+		// the unique index, taking the `stale-structure` path in the catch
+		// below. The summary-level guard stays as the cheap fast path that
+		// spares the full fragment load for the common sequential-stale case.
+		if (isStructural && envelope.expectedStructuralVersion !== loaded.currentVersion) {
+			const rejection: SessionRejection = {
+				code: 'stale-structure',
+				message: `expected structural version ${envelope.expectedStructuralVersion ?? 'unset'} does not match current version ${loaded.currentVersion}`
+			};
+			return await persistRejectionOrReplayDuplicate(
+				dbContext,
+				db,
+				campaignId,
+				sessionId,
+				envelope,
+				actor,
+				actorUserId,
+				requestHash,
+				loaded.currentVersion,
+				rejection
+			);
+		}
+
 		// The purchase is evaluated BEFORE the reduce, so a refused spend never
 		// draws a card (Step 3: "no command row/version is accepted"). Re-read
 		// on every attempt — a retry that lost a session version race may also

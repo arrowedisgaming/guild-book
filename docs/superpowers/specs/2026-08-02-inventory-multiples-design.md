@@ -70,8 +70,8 @@ or DB imports).
 
 A taken card shows a stepper beside its checkmark: `☑ Dagger  − 2 +`. Clicking
 an untaken card still takes one, so existing one-click behaviour is unchanged.
-Stackables step by `stack.per` and label the real unit — Arrows reads
-`×24 (2 quivers)`, not `×2`. Stepping down below the minimum — one unit for a
+Stackables step by `stack.per` and label the real unit from `stack.unit` —
+Arrows reads `×24 arrows`, not `×2`. Stepping down below the minimum — one unit for a
 plain item, one full stack for a stackable — removes the item from the cart.
 
 Talent-required items get the same stepper and never count against the

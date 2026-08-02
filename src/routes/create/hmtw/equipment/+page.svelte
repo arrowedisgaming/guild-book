@@ -1,9 +1,16 @@
 <script lang="ts">
+	import { tick, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { wizard, WIZARD_STEPS } from '$lib/stores/wizard';
 	import { ITEM_TIERS, type ItemTier } from '$lib/types/common';
-	import type { EquipmentEntry } from '$lib/types/character';
 	import { autoPlace, loadSummary, indexItems } from '$lib/engine/encumbrance';
+	import {
+		cartFromEntries,
+		cartToEntries,
+		stepCart,
+		tierPicks,
+		type MarketCart
+	} from '$lib/engine/market-cart';
 	import WizardNav from '$lib/components/wizard/WizardNav.svelte';
 	import Prose from '$lib/components/ui/Prose.svelte';
 	import type { PageData } from './$types';
@@ -33,30 +40,19 @@
 		return ids;
 	});
 
-	let selected = $state<Set<string>>(
-		new Set($wizard.character.equipment.map((e) => e.itemId).filter((x): x is string => !!x))
+	// Seeded once, on mount, from the wizard store and the content pack — not
+	// recomputed reactively, so wrap in untrack to avoid capturing `data`
+	// locally by accident (Svelte 5's state_referenced_locally warning).
+	let cart = $state<MarketCart>(
+		untrack(() => cartFromEntries($wizard.character.equipment, data.items))
 	);
 	let detailItemId = $state<string | null>(
 		$wizard.character.equipment.find((entry) => entry.itemId)?.itemId ?? null
 	);
 	let detailItem = $derived(data.items.find((item) => item.id === detailItemId) ?? null);
 
-	function toEntries(ids: Set<string>): EquipmentEntry[] {
-		return data.items
-			.filter((i) => ids.has(i.id))
-			.map((i) => ({
-				itemId: i.id,
-				customName: null,
-				tier: i.tier,
-				packSpace: i.slots ?? 1,
-				location: 'pack' as const,
-				quantity: 1,
-				notchesTaken: 0
-			}));
-	}
-
-	// Live auto-placement + slot meters, recomputed as the selection changes.
-	const placed = $derived(autoPlace(toEntries(selected), itemIndex, caps));
+	// Live auto-placement + slot meters, recomputed as the cart changes.
+	const placed = $derived(autoPlace(cartToEntries(cart, data.items), itemIndex, caps));
 	const load = $derived(loadSummary(placed, itemIndex, caps));
 
 	const tierCaps = $derived<Record<ItemTier, number | null>>({
@@ -70,25 +66,54 @@
 	const requiredItems = $derived(data.items.filter((i) => requiredItemIds.has(i.id)));
 
 	function countInTier(tier: ItemTier): number {
-		return data.items.filter(
-			(i) => i.tier === tier && selected.has(i.id) && !requiredItemIds.has(i.id)
-		).length;
+		return tierPicks(cart, data.items, tier, requiredItemIds);
 	}
+	/** True when one more pick of this item would break the tier allowance. */
 	function atCap(tier: ItemTier, itemId: string): boolean {
 		const cap = tierCaps[tier];
 		if (cap === null || requiredItemIds.has(itemId)) return false;
-		return !selected.has(itemId) && countInTier(tier) >= cap;
+		return countInTier(tier) >= cap;
 	}
-	function toggle(itemId: string) {
+	// .pick button elements, keyed by item id — so removing the last unit can
+	// return focus to the card instead of dropping it to <body> when the .qty
+	// block (which held the focused button) unmounts.
+	let pickButtons: Record<string, HTMLButtonElement | undefined> = {};
+
+	async function step(itemId: string, delta: 1 | -1) {
 		detailItemId = itemId;
-		const next = new Set(selected);
-		if (next.has(itemId)) next.delete(itemId);
-		else next.add(itemId);
-		selected = next;
+		const hadItem = cart.has(itemId);
+		cart = stepCart(cart, itemId, itemIndex.get(itemId), delta);
+		if (hadItem && !cart.has(itemId)) {
+			await tick();
+			pickButtons[itemId]?.focus();
+		}
 	}
-	function chooseItem(itemId: string, unavailable = false) {
+	/** Clicking the card body toggles the whole item: taken → removed
+	 * entirely (whatever its quantity), untaken → take one. This is what
+	 * `role="checkbox"` promises — a step-down would leave ×2 checked, which
+	 * isn't a toggle. Quantity is only ever adjusted by the −/+ stepper. At
+	 * the tier cap, an untaken card stays details-only. */
+	async function chooseItem(itemId: string, unavailable = false) {
 		detailItemId = itemId;
-		if (!unavailable) toggle(itemId);
+		if (unavailable) return;
+		if (cart.has(itemId)) {
+			const next = new Map(cart);
+			next.delete(itemId);
+			cart = next;
+			// The .pick button itself doesn't unmount here (only the sibling
+			// .qty block does), but restore focus explicitly anyway so this
+			// path doesn't silently rely on that — same as step()'s removal.
+			await tick();
+			pickButtons[itemId]?.focus();
+		} else {
+			step(itemId, 1);
+		}
+	}
+	/** "×24 arrows" for stackables, "×2" for everything else. */
+	function quantityLabel(itemId: string): string {
+		const quantity = cart.get(itemId) ?? 0;
+		const unit = itemIndex.get(itemId)?.stack?.unit;
+		return unit ? `×${quantity} ${unit}` : `×${quantity}`;
 	}
 
 	function next() {
@@ -130,18 +155,27 @@
 		<h2>Your talents need these <span class="count">impoverished for you</span></h2>
 		<div class="grid">
 			{#each requiredItems as item (item.id)}
-				<button
-					type="button"
-					class="item req"
-					class:sel={selected.has(item.id)}
-					class:focused={detailItemId === item.id}
-					role="checkbox"
-					aria-checked={selected.has(item.id)}
-					onclick={() => chooseItem(item.id)}
-				>
-					<span class="check" aria-hidden="true">{selected.has(item.id) ? '☑' : '☐'}</span>
-					<span class="iname">{item.name}</span>
-				</button>
+				{@const taken = cart.has(item.id)}
+				<div class="item req" class:sel={taken} class:focused={detailItemId === item.id}>
+					<button
+						type="button"
+						class="pick"
+						role="checkbox"
+						aria-checked={taken}
+						bind:this={pickButtons[item.id]}
+						onclick={() => chooseItem(item.id)}
+					>
+						<span class="check" aria-hidden="true">{taken ? '☑' : '☐'}</span>
+						<span class="iname">{item.name}</span>
+					</button>
+					{#if taken}
+						<div class="qty">
+							<button type="button" onclick={() => step(item.id, -1)} aria-label={`Remove one ${item.name}`}>−</button>
+							<span class="qnum" aria-live="polite">{quantityLabel(item.id)}</span>
+							<button type="button" onclick={() => step(item.id, 1)} aria-label={`Add another ${item.name}`}>+</button>
+						</div>
+					{/if}
+				</div>
 			{/each}
 		</div>
 		{#if detailItem && requiredItemIds.has(detailItem.id)}
@@ -164,21 +198,30 @@
 		</h2>
 		<div class="grid">
 			{#each itemsByTier(tier) as item (item.id)}
-				<button
-					type="button"
-					class="item"
-					class:sel={selected.has(item.id)}
-					class:focused={detailItemId === item.id}
-					class:disabled={atCap(tier, item.id)}
-					role="checkbox"
-					aria-checked={selected.has(item.id)}
-					aria-label={`${item.name}${atCap(tier, item.id) ? ', unavailable because the tier limit is reached; show details' : ''}`}
-					onclick={() => chooseItem(item.id, atCap(tier, item.id))}
-				>
-					<span class="check" aria-hidden="true">{selected.has(item.id) ? '☑' : '☐'}</span>
-					<span class="iname">{item.name}</span>
-					<span class="islots">{item.slots ?? 1} slot{(item.slots ?? 1) === 1 ? '' : 's'}{item.carry === 'belt-only' ? ' · belt only' : ''}{item.stack ? ` · ${item.stack.per}/slot` : ''}</span>
-				</button>
+				{@const taken = cart.has(item.id)}
+				{@const full = atCap(tier, item.id)}
+				<div class="item" class:sel={taken} class:focused={detailItemId === item.id} class:disabled={full && !taken}>
+					<button
+						type="button"
+						class="pick"
+						role="checkbox"
+						aria-checked={taken}
+						aria-label={`${item.name}${taken ? `, ×${cart.get(item.id) ?? 0}` : ''}${full && !taken ? ', unavailable because the tier limit is reached; show details' : ''}`}
+						bind:this={pickButtons[item.id]}
+						onclick={() => chooseItem(item.id, full && !taken)}
+					>
+						<span class="check" aria-hidden="true">{taken ? '☑' : '☐'}</span>
+						<span class="iname">{item.name}</span>
+						<span class="islots">{item.slots ?? 1} slot{(item.slots ?? 1) === 1 ? '' : 's'}{item.carry === 'belt-only' ? ' · belt only' : ''}{item.stack ? ` · ${item.stack.per}/slot` : ''}</span>
+					</button>
+					{#if taken}
+						<div class="qty">
+							<button type="button" onclick={() => step(item.id, -1)} aria-label={`Remove one ${item.name}`}>−</button>
+							<span class="qnum" aria-live="polite">{quantityLabel(item.id)}</span>
+							<button type="button" disabled={full} onclick={() => step(item.id, 1)} aria-label={`Add another ${item.name}`}>+</button>
+						</div>
+					{/if}
+				</div>
 			{/each}
 		</div>
 		{#if detailItem && detailItem.tier === tier && !requiredItemIds.has(detailItem.id)}
@@ -269,19 +312,53 @@
 		gap: 0.5rem;
 	}
 	.item {
+		display: flex;
+		flex-direction: column;
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border-radius: 4px;
+		background: var(--parchment);
+	}
+	.pick {
 		display: grid;
 		grid-template-columns: auto 1fr;
 		grid-template-areas: 'chk name' 'chk slots';
 		gap: 0.1rem 0.5rem;
 		align-items: start;
 		padding: 0.55rem 0.7rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border: none;
 		border-radius: 4px;
 		cursor: pointer;
 		text-align: left;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+	}
+	.qty {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0 0.7rem 0.5rem;
+		font-family: var(--font-subhead);
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+	}
+	.qty button {
+		width: 1.5rem;
+		height: 1.5rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 3px;
 		background: var(--parchment);
 		color: inherit;
 		font: inherit;
+		cursor: pointer;
+	}
+	.qty button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+	.qnum {
+		min-width: 3.5rem;
+		text-align: center;
 	}
 	.item.sel {
 		border-color: var(--accent);
@@ -295,6 +372,8 @@
 	}
 	.item.disabled {
 		opacity: 0.45;
+	}
+	.item.disabled .pick {
 		cursor: not-allowed;
 	}
 	.check {

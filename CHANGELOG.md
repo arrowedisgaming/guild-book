@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-02
+
+### Added
+
+- Adventurers can now take more than one of the same item, both at the Omphalic
+  Market during creation and on the character sheet afterwards. Each copy spends
+  one of your market picks, so two daggers cost two of your five common items.
+  Stackable gear arrives a stack at a time — choosing arrows gets you a quiver
+  of twelve, which is what the rules give you and what a slot holds — while the
+  character sheet spends it one arrow at a time, the way a session does. Going
+  over your belt or backpack still only warns you; it never stops you choosing.
+
+### Fixed
+
+- A second suit of armor no longer travels for free. Only one suit is worn and
+  billed against the belt; the spares are carried in the backpack, where they
+  take up the room they should.
+- An adventurer left half-finished in the Omphalic Market before this release
+  kept a single arrow where a quiver was meant to be. Reopening that adventurer
+  now restores the full quiver instead of losing the arrows on the next change.
+
 ## [0.13.0] - 2026-08-02
 
 ### Changed

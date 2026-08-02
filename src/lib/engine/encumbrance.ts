@@ -1,9 +1,12 @@
 /**
  * Slot-based encumbrance. Capacities come from the content pack
  * (hands 2 / belt 4 / pack 21). Worn armor consumes its wornBeltSlots from the
- * BELT capacity; other worn things (clothes, helms) take no slots. Oversized
- * gear (carry: 'belt-only') can never ride in the backpack. Stackables share a
- * slot per their stack rule (arrows 12/slot, lockpicks 6/slot…). Pure.
+ * BELT capacity; a second (and further) worn suit of the same armor bills its
+ * full base slots per spare, since only one suit is ever actually worn — the
+ * rest just rides along on the same entry. Other worn things (clothes, helms)
+ * take no slots regardless of quantity. Oversized gear (carry: 'belt-only')
+ * can never ride in the backpack. Stackables share a slot per their stack
+ * rule (arrows 12/slot, lockpicks 6/slot…). Pure.
  */
 
 import type { EquipmentEntry, CarryLocation } from '$lib/types/character';
@@ -15,12 +18,28 @@ export function indexItems(items: ItemDefinition[]): ItemIndex {
 	return new Map(items.map((i) => [i.id, i]));
 }
 
-/** Slots one entry consumes at its current location. */
+/** Where the spares on a worn armor entry actually ride. */
+function spareLocation(def: ItemDefinition | undefined): CarryLocation {
+	return def?.carry === 'belt-only' ? 'belt' : 'pack';
+}
+
+/**
+ * Slots one entry consumes at its current location, TOTAL — for a worn
+ * armor entry this is the one worn suit's belt slots plus every spare's base
+ * slots, added together. `loadSummary` is what divides that total between
+ * the belt (the worn suit) and wherever the spares ride (`spareLocation`),
+ * so the two stay in lockstep only if you don't change one without the
+ * other.
+ */
 export function slotsFor(entry: EquipmentEntry, def: ItemDefinition | undefined): number {
 	const baseSlots = def?.slots ?? entry.packSpace ?? 1;
 	if (entry.location === 'worn') {
-		// Worn armor bills its belt slots; other worn gear is free.
-		return def?.wornBeltSlots ?? 0;
+		// Worn armor bills its belt slots for the one suit actually worn, plus
+		// its base slots for each spare riding along on the same entry.
+		// Clothing and helms (no wornBeltSlots) stay free no matter the quantity.
+		if (def?.wornBeltSlots == null) return 0;
+		const spares = Math.max(0, entry.quantity - 1);
+		return def.wornBeltSlots + spares * baseSlots;
 	}
 	const qty = Math.max(1, entry.quantity);
 	const per = def?.stack?.per;
@@ -56,17 +75,30 @@ export function loadSummary(
 
 	for (const entry of entries) {
 		const def = entry.itemId ? items.get(entry.itemId) : undefined;
-		const slots = slotsFor(entry, def);
 		switch (entry.location) {
 			case 'hand':
-				hands += slots;
+				hands += slotsFor(entry, def);
 				break;
-			case 'worn':
+			case 'worn': {
+				// Split a worn entry's total (see slotsFor) between the belt —
+				// the one suit actually worn — and wherever the spares ride, so
+				// this agrees with autoPlace regardless of who placed the entry.
+				// Clothing and helms (no wornBeltSlots) stay free either way.
+				const wornBeltSlots = def?.wornBeltSlots ?? 0;
+				belt += wornBeltSlots;
+				if (wornBeltSlots > 0 && entry.quantity > 1) {
+					const baseSlots = def?.slots ?? entry.packSpace ?? 1;
+					const spareSlots = (entry.quantity - 1) * baseSlots;
+					if (spareLocation(def) === 'belt') belt += spareSlots;
+					else pack += spareSlots;
+				}
+				break;
+			}
 			case 'belt':
-				belt += slots;
+				belt += slotsFor(entry, def);
 				break;
 			case 'pack':
-				pack += slots;
+				pack += slotsFor(entry, def);
 				if (def?.carry === 'belt-only') {
 					violations.push({ entry, reason: `${def.name} is oversized — it can only ride on the belt.` });
 				}
@@ -84,7 +116,9 @@ export function loadSummary(
 
 /**
  * Deterministic rules-driven placement:
- *  1. Armor (has wornBeltSlots) is worn — billed against the belt.
+ *  1. Armor (has wornBeltSlots) is worn — billed against the belt. Only ONE
+ *     suit can be worn, so a multi-quantity armor entry is split: one worn,
+ *     the spares packed.
  *  2. Helms and clothing are worn (free).
  *  3. Oversized (belt-only) gear goes to the belt.
  *  4. Hand-carried gear (weapons/shields) fills the hands, then the belt,
@@ -102,13 +136,30 @@ export function autoPlace(
 	let beltUsed = 0;
 	let wornArmor = false;
 
-	return entries.map((entry) => {
+	return entries.flatMap((entry): EquipmentEntry[] => {
 		const def = entry.itemId ? items.get(entry.itemId) : undefined;
-		const place = (location: CarryLocation): EquipmentEntry => ({ ...entry, location });
+		const place = (location: CarryLocation): EquipmentEntry[] => [{ ...entry, location }];
 
 		if (def?.wornBeltSlots && !wornArmor) {
-			wornArmor = true; // wear the first suit of armor; spares travel in the pack
+			wornArmor = true; // wear the first suit of armor; spares ride per spareLocation
 			beltUsed += def.wornBeltSlots;
+			if (entry.quantity > 1) {
+				// You can only wear one suit. Split so the belt is billed once and
+				// the spares are honestly carried rather than silently free —
+				// belt-only spares (contract: never in the pack) stay on the belt.
+				const spareLoc = spareLocation(def);
+				if (spareLoc === 'belt') {
+					// Spares riding the belt (carry: 'belt-only' armor) must count
+					// against beltUsed too, or a later hand-carried item consults a
+					// stale counter and gets placed on an already-full belt.
+					const baseSlots = def.slots ?? entry.packSpace ?? 1;
+					beltUsed += (entry.quantity - 1) * baseSlots;
+				}
+				return [
+					{ ...entry, location: 'worn', quantity: 1 },
+					{ ...entry, location: spareLoc, quantity: entry.quantity - 1 }
+				];
+			}
 			return place('worn');
 		}
 		if (def && (def.category === 'clothing' || (def.category === 'armor' && !def.wornBeltSlots))) {

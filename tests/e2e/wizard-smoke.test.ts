@@ -37,6 +37,24 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 
 	await expect(page.getByRole('heading', { name: 'The Omphalic Market' })).toBeVisible();
 	await page.getByRole('checkbox').first().click();
+	// That first pick landed on the first item in the Luxurious section (no
+	// required items are in play here) — the tier's allowance is spent by a
+	// single pick, so it should immediately disable further luxurious picks:
+	// its own "+" control, and every other luxurious item's card.
+	const luxuriousSection = page
+		.locator('section')
+		.filter({ has: page.getByRole('heading', { name: /^Luxurious/ }) });
+	await expect(
+		luxuriousSection.locator('.item.sel').getByRole('button', { name: /^Add another/ })
+	).toBeDisabled();
+	await expect(
+		luxuriousSection.locator('.item.disabled').first().getByRole('checkbox')
+	).toHaveAttribute('aria-label', /unavailable because the tier limit is reached/);
+
+	// Rope is impoverished, so it is never capped — take a second length.
+	await page.getByRole('checkbox', { name: 'Rope', exact: true }).click();
+	await page.getByRole('button', { name: 'Add another Rope' }).click();
+	await expect(page.getByText('×2', { exact: true })).toBeVisible();
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await expect(page).toHaveURL(/\/create\/hmtw\/review$/);
@@ -46,12 +64,20 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await expect(page.getByRole('listitem').filter({ hasText: 'Ambusher' })).toBeVisible();
 	await expect(page.getByText('Recover the bell beneath the drowned abbey.')).toBeVisible();
 	await expect(page.getByText('Disgraced Soldier')).toBeVisible();
+	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Save adventurer' })).toBeEnabled();
 
 	await page.getByRole('button', { name: 'Save adventurer' }).click();
 	await expect(page).toHaveURL(/\/characters$/);
 	await expect(page.getByText('Mara of the Lantern')).toBeVisible();
 	expect(await page.evaluate(() => localStorage.getItem('guildbook-wizard-state'))).toBeNull();
+
+	// Confirm the multiple actually survived the save (not just pre-save client state):
+	// open the roster link into the saved sheet, which loads in read mode by default
+	// and renders gear via CharacterSheet.svelte's `{e.name} ×{e.quantity}` format.
+	await page.getByRole('link', { name: 'Mara of the Lantern' }).click();
+	await expect(page).toHaveURL(/\/sheet\/[^/]+$/);
+	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
 });
 
 test('wizard assigns unique attributes and exposes standard theme controls', async ({ page }) => {

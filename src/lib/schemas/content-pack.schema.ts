@@ -131,6 +131,7 @@ export const contentPackFilesSchema = z.object({
 	conditions: z.string().optional(),
 	afflictions: z.string().optional(),
 	rules: z.string().optional(),
+	rulesSearch: z.string().optional(),
 	spells: z.string().optional(),
 	denizens: z.string().optional(),
 	tarotProcedures: z.string()
@@ -365,6 +366,14 @@ export const ruleEntrySchema = z.object({
 	title: z.string(),
 	body: z.string(),
 	tags: z.array(z.string())
+});
+
+export const ruleSearchDocSchema = z.object({
+	id: z.string().min(1),
+	section: z.string().min(1),
+	title: z.string().min(1),
+	headings: z.array(z.string()),
+	body: z.string().min(1)
 });
 
 export const spellDefinitionSchema = z.object({

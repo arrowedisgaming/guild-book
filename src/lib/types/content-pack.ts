@@ -51,6 +51,7 @@ export interface ContentPackFiles {
 	conditions?: string;
 	afflictions?: string;
 	rules?: string;
+	rulesSearch?: string;
 	spells?: string;
 	denizens?: string;
 	tarotProcedures: string;
@@ -363,6 +364,18 @@ export interface RuleEntry {
 	/** Markdown body. */
 	body: string;
 	tags: string[];
+}
+
+/** One searchable rules document in rules-search.json: plain-text body for
+ * client-side indexing; array order is book order (the search tie-break). */
+export interface RuleSearchDoc {
+	id: string;
+	section: string;
+	title: string;
+	/** The entry's inline sub-headings, for boosted matching. */
+	headings: string[];
+	/** Markdown-stripped plain text. */
+	body: string;
 }
 
 /** A sorcery spell from one of the four traditions (wastes | weald | weird | welkin). */

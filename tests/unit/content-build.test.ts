@@ -25,5 +25,6 @@ describe('generated session content', () => {
 	it('declares every generated file it ships', () => {
 		expect(index.files.tarotProcedures).toBe('tarot-procedures.json');
 		expect(index.files.rules).toBe('rules.json');
+		expect(index.files.rulesSearch).toBe('rules-search.json');
 	});
 });

@@ -10,12 +10,47 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MD_DIR, extractRuleBody } from './md-lib.mjs';
+import { MD_DIR, extractRuleBody, walkRuleBody } from './md-lib.mjs';
+import { buildWalk } from './md-walk.mjs';
 import { PACK_DIR } from './pack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MANIFEST = join(__dirname, 'manifest', 'rules-md.json');
 const RULES_JSON = join(PACK_DIR, 'rules.json');
+const LEDGER = join(__dirname, 'manifest', 'rules-coverage-ledger.json');
+const SEARCH_JSON = join(PACK_DIR, 'rules-search.json');
+
+/** Markdown -> plain-text search document. Headings are captured for boosted
+ * matching; all markup (heading markers, emphasis, tables, bullets) flattens
+ * to readable text. Wording is untouched — this is formatting-only.
+ *
+ * Bullet-stripping runs *after* emphasis-removal: an italicized attribution
+ * line like `*- The Fellowship of the Ring, J. R. R. Tolkien*` has its `-`
+ * hidden behind the leading `*` until the italics are unwrapped, so stripping
+ * bullets first would miss it and leave a bare `-` line in the search body. */
+export function toSearchDoc(rule) {
+	const headings = [];
+	const body = rule.body
+		.split('\n')
+		.map((line) => {
+			const h = /^#{2,6}\s+(.*)$/.exec(line);
+			if (h) {
+				const text = h[1].replace(/[*_`]/g, '').trim();
+				headings.push(text);
+				return text;
+			}
+			return line;
+		})
+		.join('\n')
+		.replace(/\|/g, ' ')
+		.replace(/\*\*|`/g, '')
+		.replace(/(^|[^*])\*(?!\*)([^*\n]+)\*/g, '$1$2')
+		.replace(/^\s*-\s+/gm, '')
+		.replace(/[ \t]{2,}/g, ' ')
+		.replace(/\n{2,}/g, '\n')
+		.trim();
+	return { id: rule.id, section: rule.section, title: rule.title, headings, body };
+}
 
 /** Remove an explicitly documented corrupt range without inventing missing book text. */
 function omitRange(body, range) {
@@ -56,7 +91,16 @@ function build() {
 	}
 	const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 	const rules = [];
+	const ledgers = [];
 	for (const entry of manifest) {
+		if (entry.walk) {
+			const raw = readFileSync(join(MD_DIR, entry.walk.file), 'utf8');
+			const out = buildWalk(raw, entry.walk, { walkRuleBody, lintBody, omitRange });
+			if (out.rules.length === 0) throw new Error(`walk of ${entry.walk.file} emitted zero entries`);
+			rules.push(...out.rules);
+			ledgers.push(out.ledger);
+			continue;
+		}
 		const body = omitRange(
 			extractRuleBody(entry.file, entry.heading, entry.until, entry.after, {
 				keepCallouts: entry.keepCallouts
@@ -65,20 +109,16 @@ function build() {
 		);
 		const problems = lintBody(body, entry);
 		if (problems.length) throw new Error(`[rules#${entry.id}] ${problems.join('; ')}`);
-		rules.push({
-			id: entry.id,
-			section: entry.section,
-			title: entry.title,
-			body,
-			tags: entry.tags
-		});
+		rules.push({ id: entry.id, section: entry.section, title: entry.title, body, tags: entry.tags });
 	}
-	return rules;
+	const dupes = rules.map((r) => r.id).filter((id, i, all) => all.indexOf(id) !== i);
+	if (dupes.length) throw new Error(`duplicate rule ids across manifest: ${[...new Set(dupes)].join(', ')}`);
+	return { rules, ledgers };
 }
 
 function main() {
 	const args = process.argv.slice(2);
-	const rules = build();
+	const { rules, ledgers } = build();
 
 	if (args.includes('--check')) {
 		const committed = JSON.parse(readFileSync(RULES_JSON, 'utf8'));
@@ -99,6 +139,16 @@ function main() {
 			console.error(`count mismatch: committed ${committed.length} vs fresh ${rules.length}`);
 			drift++;
 		}
+		const committedLedger = existsSync(LEDGER) ? JSON.parse(readFileSync(LEDGER, 'utf8')) : [];
+		if (JSON.stringify(committedLedger) !== JSON.stringify(ledgers)) {
+			console.error('DRIFT rules-coverage-ledger.json (source vault or walk config changed)');
+			drift++;
+		}
+		const committedSearch = existsSync(SEARCH_JSON) ? readFileSync(SEARCH_JSON, 'utf8') : '';
+		if (committedSearch !== JSON.stringify(rules.map(toSearchDoc), null, '\t') + '\n') {
+			console.error('DRIFT rules-search.json');
+			drift++;
+		}
 		console.log(`\nChecked ${rules.length} rules, ${drift} drifted.`);
 		if (drift) process.exit(1);
 		return;
@@ -111,6 +161,10 @@ function main() {
 	if (!args.includes('--dry-run')) {
 		writeFileSync(RULES_JSON, JSON.stringify(rules, null, '\t') + '\n', 'utf8');
 		console.log(`\nWrote ${rules.length} rules to ${RULES_JSON}`);
+		writeFileSync(LEDGER, JSON.stringify(ledgers, null, '\t') + '\n', 'utf8');
+		console.log(`Wrote coverage ledger for ${ledgers.length} chapters to ${LEDGER}`);
+		writeFileSync(SEARCH_JSON, JSON.stringify(rules.map(toSearchDoc), null, '\t') + '\n', 'utf8');
+		console.log(`Wrote ${rules.length} search docs to ${SEARCH_JSON}`);
 	} else {
 		console.log(`\n${rules.length} rules previewed (no write).`);
 	}

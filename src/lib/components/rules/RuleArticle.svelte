@@ -6,15 +6,14 @@
 	let bodyHtml = $derived(renderMarkdown(rule.body));
 </script>
 
-<article id={rule.id} class="rule">
+<article id={rule.id} class="rule" tabindex="-1">
 	<h3>{rule.title}</h3>
 	<div class="body">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->
 		{@html bodyHtml}
 	</div>
-	{#if rule.tags.length}
-		<div class="tags">{#each rule.tags as tag}<span class="tag">{tag}</span>{/each}</div>
-	{/if}
+	<!-- Legacy curated tags are metadata only (the index page's fallback filter
+	     still reads them); with full text + real search they aren't shown. -->
 </article>
 
 <style>
@@ -50,17 +49,52 @@
 		border-radius: 3px;
 		font-size: 0.9em;
 	}
-	.tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.5rem;
+	.body :global(table) {
+		display: block;
+		width: 100%;
+		overflow-x: auto;
+		border-collapse: collapse;
+		margin: 0.9rem 0;
+		font-size: 0.92em;
 	}
-	.tag {
-		font-size: 0.72rem;
-		padding: 0.05rem 0.45rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
-		border-radius: 999px;
-		color: var(--ink-soft);
+	.body :global(th),
+	.body :global(td) {
+		border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+		padding: 0.5rem 0.75rem;
+		text-align: center;
+		vertical-align: middle;
+	}
+	.body :global(th) {
+		font-family: var(--font-subhead);
+		background: color-mix(in oklab, var(--ink) 6%, transparent);
+	}
+	.rule:focus {
+		outline: none;
+	}
+	/* Keyboard-driven focus keeps a visible indicator after the flash ends;
+	 * programmatic focus from a pointer click stays quiet. */
+	.rule:focus-visible {
+		outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+		outline-offset: 4px;
+	}
+	.rule:target,
+	.rule:global(.anchored) {
+		animation: rule-flash 1.6s ease-out 1;
+	}
+	@keyframes rule-flash {
+		from {
+			background: color-mix(in oklab, var(--accent) 18%, transparent);
+		}
+		to {
+			background: transparent;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.rule:target,
+		.rule:global(.anchored) {
+			animation: none;
+			outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+			outline-offset: 4px;
+		}
 	}
 </style>

@@ -182,7 +182,21 @@ describe('content pack — transcribed content invariants', () => {
 		const adjudicating = rules.find((rule) => rule.id === 'adjudicating-the-game');
 		expect(adjudicating?.body).toContain('### “No, you can’t do that”');
 		expect(adjudicating?.body).not.toContain('mechanism’s gears');
-		expect(JSON.stringify(rules), 'orphaned epigraph attribution').not.toContain('Italo Calvino');
+		// This guarded against the old excerpt pipeline dropping an epigraph
+		// heading but leaving its `_– Attribution_` line stranded alone. Since the
+		// 2026-08-01 rules-full-coverage-and-search chapter walk, epigraphs are a
+		// deliberate content-guarantee inclusion (kept as italic quotations with
+		// their attribution, never dropped) — Chapter 1's "Returning players"
+		// epigraph now legitimately carries "Italo Calvino" paired with its
+		// quotation, so the invariant is "never orphaned," not "never present."
+		const rulesJson = JSON.stringify(rules);
+		const calvinoAt = rulesJson.indexOf('Italo Calvino');
+		if (calvinoAt !== -1) {
+			expect(
+				rulesJson.slice(Math.max(0, calvinoAt - 200), calvinoAt),
+				'orphaned epigraph attribution'
+			).toContain('Pataphysics');
+		}
 	});
 
 	it('sorcery spells: 40 across the four traditions, unique ids, component + effect', () => {

@@ -5,6 +5,7 @@
 	import { signOut } from '@auth/sveltekit/client';
 	import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
 	import AlphaBanner from '$lib/components/layout/AlphaBanner.svelte';
+	import SiteSearch from '$lib/components/layout/SiteSearch.svelte';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
@@ -21,6 +22,7 @@
 
 	<header class="site-header">
 		<a class="brand" href="/">Guild Book</a>
+		<div class="header-search"><SiteSearch packVersion={data.packVersion} /></div>
 		<nav class="site-nav">
 			<a href="/create/hmtw/identity">Create</a>
 			<a href="/rules">Rules</a>
@@ -63,12 +65,15 @@
 		padding: 0 1.25rem;
 	}
 	.site-header {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: auto minmax(10rem, 14rem) 1fr;
+		align-items: center;
 		gap: 1rem;
 		padding: 1.25rem 0;
 		border-bottom: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+	}
+	.header-search {
+		min-width: 0;
 	}
 	.brand {
 		font-family: var(--font-display);
@@ -88,6 +93,7 @@
 		 * desktop widths because it only breaks when it genuinely cannot fit. */
 		flex-wrap: wrap;
 		row-gap: 0.5rem;
+		justify-content: flex-end;
 	}
 	.linkish {
 		border: none;
@@ -109,5 +115,15 @@
 	}
 	.site-footer p {
 		margin: 0 0 0.5rem;
+	}
+	@media (max-width: 44rem) {
+		.site-header {
+			grid-template-columns: auto 1fr;
+			row-gap: 0.6rem;
+		}
+		.header-search {
+			grid-column: 1 / -1;
+			grid-row: 2;
+		}
 	}
 </style>

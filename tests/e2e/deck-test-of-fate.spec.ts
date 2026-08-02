@@ -21,8 +21,8 @@ test.describe('test of fate', () => {
 		page
 	}) => {
 		await openTestOfFate(page, 'e2e-0');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('1');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
 		// Wands III (3) + attribute 1 = 4 → failure, and a free push remains.
@@ -33,8 +33,8 @@ test.describe('test of fate', () => {
 
 	test('favor adds +3 and disfavor cancels it, declared before the draw', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-0');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('1');
 		await page.getByLabel('Favor', { exact: true }).check();
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
@@ -57,33 +57,33 @@ test.describe('test of fate', () => {
 	 */
 	test('locks the declaration once a card is visible', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-0');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('1');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
-		await expect(page.getByRole('button', { name: 'Wands' })).toBeDisabled();
-		await expect(page.getByLabel('Attribute')).toBeDisabled();
+		await expect(page.getByRole('button', { name: 'Wands', exact: true })).toBeDisabled();
+		await expect(page.getByLabel('Attribute', { exact: true })).toBeDisabled();
 		await expect(page.getByLabel('Favor', { exact: true })).toBeDisabled();
 		await expect(page.getByLabel('Disfavor', { exact: true })).toBeDisabled();
-		await expect(page.getByLabel('Spend 1 Resolve for favor')).toBeDisabled();
+		await expect(page.getByLabel('Spend 1 Resolve for favor', { exact: true })).toBeDisabled();
 		await expect(page.getByRole('button', { name: 'Draw & test' })).toBeDisabled();
 
 		// Clearing starts a fresh declaration.
 		await page.getByRole('button', { name: 'Clear' }).click();
-		await expect(page.getByRole('button', { name: 'Wands' })).toBeEnabled();
-		await expect(page.getByLabel('Attribute')).toBeEnabled();
+		await expect(page.getByRole('button', { name: 'Wands', exact: true })).toBeEnabled();
+		await expect(page.getByLabel('Attribute', { exact: true })).toBeEnabled();
 		await expect(page.getByLabel('Favor', { exact: true })).toBeEnabled();
 		await expect(page.getByLabel('Disfavor', { exact: true })).toBeEnabled();
-		await expect(page.getByLabel('Spend 1 Resolve for favor')).toBeEnabled();
+		await expect(page.getByLabel('Spend 1 Resolve for favor', { exact: true })).toBeEnabled();
 		await expect(page.getByRole('button', { name: 'Draw & test' })).toBeEnabled();
 	});
 
 	test('spending Resolve buys favor and does not stack with it', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-0');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('1');
 		// Ch1: Resolve is spent *prior* to the test, so it is declared up front.
-		await page.getByLabel('Spend 1 Resolve for favor').check();
+		await page.getByLabel('Spend 1 Resolve for favor', { exact: true }).check();
 		await page.getByLabel('Favor', { exact: true }).check();
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
@@ -95,8 +95,8 @@ test.describe('test of fate', () => {
 
 	test('pushing into the Fool is an automatic great failure', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-330');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('1');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('1');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 		await expect(page.locator('.result')).toHaveAttribute('data-outcome', 'failure');
 
@@ -104,32 +104,32 @@ test.describe('test of fate', () => {
 		await expect(page.locator('.result')).toHaveAttribute('data-outcome', 'great-failure');
 		await expect(page.locator('.result')).toContainText('automatic great failure');
 		await expect(page.locator('.result')).toContainText('Both decks reshuffled');
-		await expect(page.getByLabel('The Fool')).toBeVisible();
+		await expect(page.getByLabel('The Fool', { exact: true })).toBeVisible();
 	});
 
 	test('an initial Fool fails at 0 but remains pushable', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-8');
-		await page.getByRole('button', { name: 'Wands' }).click();
-		await page.getByLabel('Attribute').selectOption('4');
+		await page.getByRole('button', { name: 'Wands', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('4');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
 		// The Fool is 0, so the total is the attribute alone.
 		await expect(page.locator('.result')).toHaveAttribute('data-total', '4');
 		await expect(page.locator('.result')).toHaveAttribute('data-outcome', 'failure');
 		await expect(page.locator('.result')).toContainText('Both decks reshuffled');
-		await expect(page.getByLabel('The Fool')).toBeVisible();
+		await expect(page.getByLabel('The Fool', { exact: true })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Push fate (+1 card)' })).toBeEnabled();
 
 		await page.getByRole('button', { name: 'Clear' }).click();
 		await page.getByRole('button', { name: 'Draw & test' }).click();
-		await expect(page.getByLabel('II of Pentacles')).toBeVisible();
-		await expect(page.getByLabel('VIII of Swords')).toHaveCount(0);
+		await expect(page.getByLabel('II of Pentacles', { exact: true })).toBeVisible();
+		await expect(page.getByLabel('VIII of Swords', { exact: true })).toHaveCount(0);
 	});
 
 	test('a matching initial suit great-succeeds and cannot be pushed', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-3');
-		await page.getByRole('button', { name: 'Pentacles' }).click();
-		await page.getByLabel('Attribute').selectOption('4');
+		await page.getByRole('button', { name: 'Pentacles', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('4');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
 		// Page of Pentacles (11) + 4 = 15, on the tested suit, with no push.
@@ -140,8 +140,8 @@ test.describe('test of fate', () => {
 
 	test('the same card off-suit is only a success', async ({ page }) => {
 		await openTestOfFate(page, 'e2e-3');
-		await page.getByRole('button', { name: 'Cups' }).click();
-		await page.getByLabel('Attribute').selectOption('4');
+		await page.getByRole('button', { name: 'Cups', exact: true }).click();
+		await page.getByLabel('Attribute', { exact: true }).selectOption('4');
 		await page.getByRole('button', { name: 'Draw & test' }).click();
 
 		await expect(page.locator('.result')).toHaveAttribute('data-total', '15');

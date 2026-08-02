@@ -53,7 +53,7 @@ graphify-out/
 src/lib/server/dev-auto-login.ts
 
 # Source art scans (large, licence-restricted — fetched via scripts/fetch-rwsa-tarot.sh)
-assets-src/
+assets-src
 
 # HMTW rulebook source material (copyrighted — supplied locally, not committed)
 rulebooks/

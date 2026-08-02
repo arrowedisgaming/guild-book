@@ -1,37 +1,53 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import RulesSearch from '$lib/components/rules/RulesSearch.svelte';
 	import { sectionLabel } from '$lib/content/sections';
-	import type { RuleEntry } from '$lib/types/content-pack';
+	import {
+		getRulesSearch,
+		hitHref,
+		type RulesSearchEngine,
+		type RuleSearchHit
+	} from '$lib/search/rules-search';
+	import { buildSnippet } from '$lib/search/snippets';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let query = $state('');
+	let query = $state(page.url.searchParams.get('q') ?? '');
+	let engine = $state<RulesSearchEngine | null>(null);
+	let engineFailed = $state(false);
+	let engineLoading = $derived(!engine && !engineFailed);
 
-	// Full-text search needs the rule bodies, which the index deliberately does
-	// not ship. Lazy-fetch the static content-pack file once (CDN-cached); until
-	// it arrives, search falls back to titles + tags from the SSR TOC.
-	let bodyById = $state<Map<string, string>>(new Map());
+	// SvelteKit reuses this component when only ?q= changes, so sync from the
+	// URL; local typing still wins between navigations.
 	$effect(() => {
-		fetch('/content-packs/hmtw/rules.json')
-			.then((r) => (r.ok ? (r.json() as Promise<RuleEntry[]>) : []))
-			.then((rules) => {
-				bodyById = new Map(rules.map((r) => [r.id, r.body]));
-			})
-			.catch(() => {});
+		query = page.url.searchParams.get('q') ?? '';
 	});
 
-	let filtered = $derived.by(() => {
+	$effect(() => {
+		getRulesSearch(page.data.packVersion as string)
+			.then((e) => (engine = e))
+			.catch(() => (engineFailed = true));
+	});
+
+	let hits = $derived.by<RuleSearchHit[] | null>(() => {
+		if (!query.trim() || !engine) return null;
+		return engine.search(query);
+	});
+
+	// Fallback while the engine loads (or if it failed): substring over the SSR TOC.
+	let fallbackToc = $derived.by(() => {
 		const q = query.trim().toLowerCase();
 		if (!q) return data.toc;
-		return data.toc.filter((r) =>
-			[r.title, ...r.tags, bodyById.get(r.id) ?? ''].join(' ').toLowerCase().includes(q)
-		);
+		return data.toc.filter((r) => [r.title, ...r.tags].join(' ').toLowerCase().includes(q));
 	});
 
 	let bySection = $derived(
 		data.sections
-			.map((section) => ({ section, rules: filtered.filter((r) => r.section === section) }))
+			.map((section) => ({
+				section,
+				rules: (query.trim() ? fallbackToc : data.toc).filter((r) => r.section === section)
+			}))
 			.filter((g) => g.rules.length > 0)
 	);
 </script>
@@ -41,31 +57,62 @@
 <section class="rules">
 	<h1>Rules Reference</h1>
 	<p class="lede">
-		The currently available Chapter 1 rules from His Majesty the Worm, reproduced from the core
-		rulebook. Pick a topic or search this reference.
+		The full text of His Majesty the Worm chapters 1–9, reproduced from the core rulebook, plus
+		selected gamemastering and sorcery entries. Pick a chapter or search the whole reference.
 	</p>
 
 	<RulesSearch bind:value={query} />
 
-	{#if bySection.length === 0}
-		<p class="empty">No rules match “{query}”.</p>
+	{#if query.trim() && hits}
+		{#if hits.length === 0}
+			<p class="empty">No rules match “{query}”.</p>
+		{:else}
+			<ol class="results">
+				{#each hits as hit (hit.doc.id)}
+					<li>
+						<a href={hitHref(hit)}>{hit.doc.title}</a>
+						<span class="crumb">{sectionLabel(hit.doc.section)}</span>
+						<p class="snippet">
+							{#each buildSnippet(hit.doc.body, hit.terms, 220, hit.phrase) as part}
+								{#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
+							{/each}
+						</p>
+					</li>
+				{/each}
+			</ol>
+		{/if}
 	{:else}
-		<nav class="jump" aria-label="Chapters">
+		{#if query.trim() && engineFailed}
+			<p class="empty">Full-text search is unavailable — filtering titles only.</p>
+		{/if}
+		{#if bySection.length === 0}
+			{#if query.trim() && engineLoading}
+				<!-- The title-only fallback can't see body matches; don't claim "no
+				     match" for a body-only query while the engine is still loading. -->
+				<p class="empty">Searching the rulebook…</p>
+			{:else}
+				<p class="empty">No rules match “{query}”.</p>
+			{/if}
+		{:else}
+			<nav class="jump" aria-label="Chapters">
+				{#each bySection as g (g.section)}
+					<a href={`/rules/${g.section}`}>{sectionLabel(g.section)}</a>
+				{/each}
+			</nav>
 			{#each bySection as g (g.section)}
-				<a href={`/rules/${g.section}`}>{sectionLabel(g.section)}</a>
+				<section class="group">
+					<h2>
+						<a href={`/rules/${g.section}`}>{sectionLabel(g.section)}</a>
+						<span class="count">{g.rules.length} entries</span>
+					</h2>
+					<ul class="toc">
+						{#each g.rules as rule (rule.id)}
+							<li><a href={`/rules/${g.section}#${rule.id}`}>{rule.title}</a></li>
+						{/each}
+					</ul>
+				</section>
 			{/each}
-		</nav>
-
-		{#each bySection as g (g.section)}
-			<section class="group">
-				<h2><a href={`/rules/${g.section}`}>{sectionLabel(g.section)}</a></h2>
-				<ul class="toc">
-					{#each g.rules as rule (rule.id)}
-						<li><a href={`/rules/${g.section}#${rule.id}`}>{rule.title}</a></li>
-					{/each}
-				</ul>
-			</section>
-		{/each}
+		{/if}
 	{/if}
 </section>
 
@@ -117,5 +164,39 @@
 	.empty {
 		color: var(--ink-soft);
 		margin-top: 1.25rem;
+	}
+	.results {
+		list-style: none;
+		padding: 0;
+		margin: 1.25rem 0 0;
+	}
+	.results li {
+		padding: 0.6rem 0;
+		border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+	}
+	.results a {
+		font-family: var(--font-subhead);
+		font-weight: 600;
+	}
+	.results .crumb {
+		margin-left: 0.5rem;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+	}
+	.results .snippet {
+		margin: 0.2rem 0 0;
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+	}
+	.results mark {
+		background: color-mix(in oklab, var(--accent) 30%, transparent);
+		color: inherit;
+		border-radius: 2px;
+	}
+	.count {
+		margin-left: 0.5rem;
+		font-size: 0.8rem;
+		font-weight: normal;
+		color: var(--ink-soft);
 	}
 </style>

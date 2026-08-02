@@ -8,6 +8,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tarot card artwork: drawn cards now render the full, uncropped Rider–Waite–Smith
+  illustration in an archival frame with a label footer, and an enlarge control
+  opens the card at full size. Face-down cards show an "Adherent of the Worm"
+  back, composed at build time in two treatments and paired for contrast with
+  the active theme.
+- A deterministic artwork build pipeline (`npm run tarot-art:build`) emitting
+  responsive 240/480/960 AVIF and WebP derivatives with a hash manifest, and a
+  verifier (`npm run tarot-art:verify`) that checks the committed derivatives
+  against that manifest. The verifier runs in CI and in `release:verify`.
+
+### Changed
+
+- A card's face image is resolved only for a viewer already entitled to see it,
+  so a hidden card's identity cannot leak through an image request URL. The
+  shared-table privacy suite now asserts this at the network level.
+- Environments without built artwork keep working: the app detects the absent
+  manifest and falls back to the previous glyph rendering.
+
+## [0.10.0] - 2026-08-01
+
+### Added
+
+- Full rules coverage: every section of His Majesty the Worm chapters 1–9 is
+  now in the rules reference — including worked examples, sidebars, and
+  epigraphs — reproduced with the creator's permission (content pack 4.0.0).
+- Site-wide rules search: a fuzzy, ranked search box in the header of every
+  page, with keyboard navigation (`/` to focus) and deep links into the
+  reference; the `/rules` index gains a ranked full-text results mode.
+- Phrase-aware search: a query that occurs verbatim in the rules (quoted or
+  not — double quotes are tolerated, never required) outranks scattered-word
+  matches, the result snippet shows the phrase itself, and clicking the
+  result scrolls to the phrase highlighted in place within the article.
+
+### Changed
+
+- Rule entries' tags are now optional metadata; chapter-walked entries carry
+  none by default, and rule articles no longer display the legacy curated tag
+  chips.
+- Rulebook tables render with grid lines and centered cells.
+
 ## [0.9.1] - 2026-07-31
 
 ### Fixed

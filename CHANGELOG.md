@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Every rules page now ends with a card thanking Josh McCrowell for the open
+  license that makes the reference possible, linking to the license itself and
+  to where His Majesty the Worm can be bought.
+
 ## [0.11.0] - 2026-08-01
 
 ### Added

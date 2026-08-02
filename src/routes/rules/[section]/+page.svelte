@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RuleArticle from '$lib/components/rules/RuleArticle.svelte';
+	import RulebookThanks from '$lib/components/rules/RulebookThanks.svelte';
 	import { sectionLabel } from '$lib/content/sections';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
@@ -44,6 +45,8 @@
 	{#each data.rules as rule (rule.id)}
 		<RuleArticle {rule} />
 	{/each}
+
+	<RulebookThanks />
 </section>
 
 <style>

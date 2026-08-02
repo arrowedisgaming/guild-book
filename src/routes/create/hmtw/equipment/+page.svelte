@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { wizard, WIZARD_STEPS } from '$lib/stores/wizard';
 	import { ITEM_TIERS, type ItemTier } from '$lib/types/common';
@@ -40,7 +40,12 @@
 		return ids;
 	});
 
-	let cart = $state<MarketCart>(cartFromEntries($wizard.character.equipment));
+	// Seeded once, on mount, from the wizard store and the content pack — not
+	// recomputed reactively, so wrap in untrack to avoid capturing `data`
+	// locally by accident (Svelte 5's state_referenced_locally warning).
+	let cart = $state<MarketCart>(
+		untrack(() => cartFromEntries($wizard.character.equipment, data.items))
+	);
 	let detailItemId = $state<string | null>(
 		$wizard.character.equipment.find((entry) => entry.itemId)?.itemId ?? null
 	);
@@ -83,12 +88,26 @@
 			pickButtons[itemId]?.focus();
 		}
 	}
-	/** Clicking the card body takes one; at the tier cap it only shows details. */
-	function chooseItem(itemId: string, unavailable = false) {
+	/** Clicking the card body toggles the whole item: taken → removed
+	 * entirely (whatever its quantity), untaken → take one. This is what
+	 * `role="checkbox"` promises — a step-down would leave ×2 checked, which
+	 * isn't a toggle. Quantity is only ever adjusted by the −/+ stepper. At
+	 * the tier cap, an untaken card stays details-only. */
+	async function chooseItem(itemId: string, unavailable = false) {
 		detailItemId = itemId;
 		if (unavailable) return;
-		if (cart.has(itemId)) step(itemId, -1);
-		else step(itemId, 1);
+		if (cart.has(itemId)) {
+			const next = new Map(cart);
+			next.delete(itemId);
+			cart = next;
+			// The .pick button itself doesn't unmount here (only the sibling
+			// .qty block does), but restore focus explicitly anyway so this
+			// path doesn't silently rely on that — same as step()'s removal.
+			await tick();
+			pickButtons[itemId]?.focus();
+		} else {
+			step(itemId, 1);
+		}
 	}
 	/** "×24 arrows" for stackables, "×2" for everything else. */
 	function quantityLabel(itemId: string): string {

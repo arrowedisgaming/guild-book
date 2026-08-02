@@ -42,22 +42,47 @@ describe('stepSize', () => {
 
 describe('cartFromEntries', () => {
 	it('reads quantities back off persisted entries', () => {
-		const cart = cartFromEntries([entry('rope', { quantity: 2 }), entry('arrows', { quantity: 24 })]);
+		const cart = cartFromEntries(
+			[entry('rope', { quantity: 2 }), entry('arrows', { quantity: 24 })],
+			items
+		);
 		expect(cart.get('rope')).toBe(2);
 		expect(cart.get('arrows')).toBe(24);
 	});
 
 	it('sums entries that autoPlace split across locations', () => {
-		const cart = cartFromEntries([
-			entry('armor-light', { location: 'worn', quantity: 1 }),
-			entry('armor-light', { location: 'pack', quantity: 1 })
-		]);
+		const cart = cartFromEntries(
+			[
+				entry('armor-light', { location: 'worn', quantity: 1 }),
+				entry('armor-light', { location: 'pack', quantity: 1 })
+			],
+			items
+		);
 		expect(cart.get('armor-light')).toBe(2);
 	});
 
 	it('ignores custom entries that have no item id', () => {
-		const cart = cartFromEntries([entry('rope'), { ...entry('rope'), itemId: null }]);
+		const cart = cartFromEntries([entry('rope'), { ...entry('rope'), itemId: null }], items);
 		expect(cart.size).toBe(1);
+	});
+
+	// A wizard saved before this release hardcoded quantity: 1 for every item,
+	// including stackables. Hydrating a legacy single arrow at face value would
+	// let a `−` press fall below one step and stepCart would delete it outright
+	// — so cartFromEntries snaps stackable totals up to a whole number of stacks.
+	it('snaps a legacy single-arrow entry up to a full quiver', () => {
+		const cart = cartFromEntries([entry('arrows', { quantity: 1 })], items);
+		expect(cart.get('arrows')).toBe(12);
+	});
+
+	it('snaps a legacy 13-arrow entry up to two full quivers', () => {
+		const cart = cartFromEntries([entry('arrows', { quantity: 13 })], items);
+		expect(cart.get('arrows')).toBe(24);
+	});
+
+	it('leaves a non-stackable at quantity 2 untouched', () => {
+		const cart = cartFromEntries([entry('rope', { quantity: 2 })], items);
+		expect(cart.get('rope')).toBe(2);
 	});
 });
 

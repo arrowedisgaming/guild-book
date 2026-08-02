@@ -98,8 +98,17 @@ common picks).
 
 Fix: `autoPlace` splits an armor entry with quantity > 1 into a worn entry of
 quantity 1 plus a pack entry of quantity n−1. Its signature changes from `map`
-to `flatMap`. `slotsFor` is unchanged — after the split, worn entries are always
-quantity 1, and billing one suit's slots for a worn entry remains correct.
+to `flatMap`.
+
+**Amended after review:** `slotsFor` did *not* stay unchanged. `GearEdit`
+lets a player raise a worn entry's quantity directly, bypassing `autoPlace`
+entirely, so `slotsFor` was extended to bill that entry's spares too (one
+suit's belt slots plus each spare's base slots) rather than silently letting
+spares ride free outside the `autoPlace` path. That in turn means
+`loadSummary` can no longer bill a `worn` entry as a flat add to the belt —
+it now splits `slotsFor`'s total between the belt (the one suit worn) and
+wherever the spares ride, so the two stay in agreement regardless of which
+path placed the entry.
 
 ### Known limitation, deliberately not fixed
 
@@ -139,3 +148,28 @@ calls for, and players can rearrange in `GearEdit`.
 
 [cart]: ../../../src/routes/create/hmtw/equipment/+page.svelte
 [gate]: ../../../src/lib/components/character/edit/GearEdit.svelte
+
+## Amended after review
+
+Two things in this spec changed during implementation, caught in the release
+review that also found a hydration bug and an aria-checkbox toggle bug:
+
+- **`slotsFor` is not unchanged.** `GearEdit`'s ungated stepper lets a player
+  raise a worn armor entry's quantity directly, with no `autoPlace` pass in
+  between, so `slotsFor` was extended to bill that entry's spares (belt slots
+  for the one suit worn, plus each spare's base slots) rather than let them
+  ride free. `loadSummary` was correspondingly changed to split that total
+  between the belt and wherever the spares ride (`spareLocation`), instead of
+  billing the whole `worn` entry to the belt — otherwise raising a worn
+  entry's quantity in `GearEdit` overcharged the belt for slots that actually
+  belong to the pack, and disagreed with what `autoPlace` produces for the
+  same gear.
+- The post-creation stepper in `GearEdit` steps by ONE unit, not by the
+  market's stack size (see the plan's Task 4, Step 1). The sheet is the play
+  surface — spending arrows one at a time needs a per-unit step — while
+  `add()` still seeds a full stack, matching the market.
+
+`market-cart.ts`'s `cartFromEntries` also gained an `items` parameter after
+this design was written, to snap a legacy wizard's quantity-1 entries up to a
+whole stack on hydration — the earlier wizard code hardcoded `quantity: 1`
+for every item, which stackables need normalized before they meet `stepCart`.

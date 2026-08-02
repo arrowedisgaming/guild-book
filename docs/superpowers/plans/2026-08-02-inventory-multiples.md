@@ -33,7 +33,7 @@
 | `src/lib/engine/encumbrance.ts` *(modify)* | `autoPlace` splits a multi-quantity armor entry into one worn suit plus packed spares. |
 | `tests/unit/encumbrance.test.ts` *(modify)* | Tests for the armor split. |
 | `src/routes/create/hmtw/equipment/+page.svelte` *(modify)* | Wizard UI: `Map` cart, per-card quantity stepper, per-copy tier counting. |
-| `src/lib/components/character/edit/GearEdit.svelte` *(modify)* | Post-creation stepper available on every item, stepping by stack size. |
+| `src/lib/components/character/edit/GearEdit.svelte` *(modify)* | Post-creation stepper available on every item, stepping by ONE unit — the sheet is the play surface ("I shot three arrows"), not the market; `add()` still seeds a full stack. |
 | `src/routes/create/hmtw/review/+page.svelte` *(modify)* | Render `×N` in the Gear list. |
 | `tests/e2e/wizard-smoke.test.ts` *(modify)* | End-to-end: take two of an item, assert `×2` survives to review and to the saved sheet. |
 
@@ -42,7 +42,7 @@
 Read these before starting. Do not re-derive them.
 
 - `EquipmentEntry` (`src/lib/types/character.ts:62-75`) **already has** `quantity`. So does the Zod schema (`src/lib/schemas/character.schema.ts:38-46`) and `migrateCharacterData` (`src/lib/engine/character-migration.ts:69`). **No type, schema, migration or database change is needed.**
-- `slotsFor` (`src/lib/engine/encumbrance.ts:19-30`) already does stack-aware slot math: quantity 12 of Arrows is 1 slot, 13 is 2 slots. Do not touch it.
+- `slotsFor` (`src/lib/engine/encumbrance.ts:19-30`) already does stack-aware slot math: quantity 12 of Arrows is 1 slot, 13 is 2 slots. It was later extended to bill a worn entry's spares too (see the encumbrance work below) — `loadSummary` is what divides that total between the belt and wherever the spares ride.
 - The character sheet, PDF export and markdown export already render `×N`. Do not touch them.
 - `ItemDefinition` (`src/lib/types/content-pack.ts:144-157`) fields that matter here: `slots?: number` (default 1), `carry?: 'any' | 'belt-only' | 'hand'`, `wornBeltSlots?: number` (armor only), `stack?: { per: number; unit?: string }`.
 - Stackable items in the pack: `iron-spikes` (6, "spikes"), `arrows` (12, "arrows"), `bolts` (12, "bolts"), `chain` (1, "10 ft"), `lockpicks` (6, "picks").
@@ -715,9 +715,17 @@ git commit -m "feat(wizard): take multiples of an item at the market"
 
 - [ ] **Step 1: Let every item be multiplied in `GearEdit`**
 
-The stepper is currently gated on `defFor(e.itemId)?.stack`, so a second dagger is unreachable after creation too. Remove the gate and step by stack size so it agrees with the market.
+The stepper is currently gated on `defFor(e.itemId)?.stack`, so a second dagger is unreachable after creation too. Remove the gate.
 
-Add the import beside the existing engine import:
+**Amended after review:** step by ONE unit, not by stack size. The sheet is
+the play surface — "I shot three arrows" needs to land on 11, not jump by 12
+— while `add()` already seeds a full stack when the item first arrives, which
+is where the market's stack-sized pick belongs. Stepping the sheet itself by
+the stack size would make the `−` button unusable for spending down a stack
+one unit at a time.
+
+Add the import beside the existing engine import (still needed for `add()`'s
+initial stack size):
 
 ```ts
 	import { stepSize } from '$lib/engine/market-cart';
@@ -728,8 +736,10 @@ Replace `stepQty` (lines 40-44):
 ```ts
 	function stepQty(i: number, delta: number) {
 		const e = char.equipment[i];
-		const step = stepSize(defFor(e.itemId));
-		char.equipment[i] = { ...e, quantity: Math.max(step, e.quantity + delta * step) };
+		// The sheet is the play surface — step by ONE unit at a time ("I shot
+		// three arrows"), never by the market stack size. Use the ✕ button to
+		// remove an item outright.
+		char.equipment[i] = { ...e, quantity: Math.max(1, e.quantity + delta) };
 		onChange();
 	}
 ```

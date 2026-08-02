@@ -21,12 +21,25 @@ export function stepSize(def: ItemDefinition | undefined): number {
 }
 
 /** Rebuild a cart from persisted entries, summing duplicate item ids —
- * `autoPlace` may have split one item across two locations. */
-export function cartFromEntries(entries: readonly EquipmentEntry[]): Map<string, number> {
+ * `autoPlace` may have split one item across two locations. Then snap each
+ * stackable's total UP to a whole number of stacks: a wizard saved before
+ * this release hardcoded `quantity: 1` for every item, so a legacy single
+ * arrow needs to become a full quiver (12) — left at 1, the next `−` press
+ * would fall below one step and `stepCart` would delete it outright. Items
+ * with step 1, and unknown item ids, are left exactly as summed. */
+export function cartFromEntries(
+	entries: readonly EquipmentEntry[],
+	items: readonly ItemDefinition[]
+): Map<string, number> {
+	const defs = new Map(items.map((i) => [i.id, i]));
 	const cart = new Map<string, number>();
 	for (const entry of entries) {
 		if (!entry.itemId) continue; // free-typed custom gear has no market id
 		cart.set(entry.itemId, (cart.get(entry.itemId) ?? 0) + Math.max(1, entry.quantity));
+	}
+	for (const [itemId, quantity] of cart) {
+		const step = stepSize(defs.get(itemId));
+		if (step > 1) cart.set(itemId, Math.ceil(quantity / step) * step);
 	}
 	return cart;
 }

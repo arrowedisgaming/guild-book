@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { slotsFor, loadSummary, autoPlace, indexItems } from '$lib/engine/encumbrance';
 import { getItems, getContentPack } from '$lib/server/content/loader';
 import type { EquipmentEntry } from '$lib/types/character';
+import type { ItemDefinition } from '$lib/types/content-pack';
 
 const items = indexItems(getItems());
 const caps = getContentPack().encumbrance;
@@ -95,6 +96,86 @@ describe('loadSummary', () => {
 		const s = loadSummary([entry('shovel', { location: 'pack' })], items, caps);
 		expect(s.violations).toHaveLength(1);
 		expect(s.violations[0].reason).toMatch(/belt/i);
+	});
+});
+
+describe('worn-entry spare billing (GearEdit path, no autoPlace)', () => {
+	// GearEdit lets a player raise a worn entry's quantity directly, with no
+	// autoPlace pass. loadSummary must split that entry's billing itself —
+	// one suit to the belt, the spares to wherever spareLocation says — so
+	// this path agrees with autoPlace's split rather than dumping both suits
+	// on the belt (see slotsFor's TOTAL vs loadSummary's split, FIX 2).
+	it('bills armor-light at quantity 2 as one suit on the belt, one spare in the pack', () => {
+		const s = loadSummary([entry('armor-light', { location: 'worn', quantity: 2 })], items, caps);
+		expect(s.belt.used).toBe(1);
+		expect(s.pack.used).toBe(1);
+	});
+
+	it('bills armor-steel at quantity 2 as one suit on the belt, one spare in the pack', () => {
+		const s = loadSummary([entry('armor-steel', { location: 'worn', quantity: 2 })], items, caps);
+		expect(s.belt.used).toBe(3);
+		expect(s.pack.used).toBe(3);
+	});
+
+	it('leaves worn clothing free at any quantity — no belt, no pack billing', () => {
+		const s = loadSummary([entry('clothes-common', { location: 'worn', quantity: 5 })], items, caps);
+		expect(s.belt.used).toBe(0);
+		expect(s.pack.used).toBe(0);
+	});
+
+	it('agrees with autoPlace: both paths bill 2x armor-light identically', () => {
+		const viaAutoPlace = loadSummary(
+			autoPlace([entry('armor-light', { quantity: 2 })], items, caps),
+			items,
+			caps
+		);
+		const viaGearEdit = loadSummary(
+			[entry('armor-light', { location: 'worn', quantity: 2 })],
+			items,
+			caps
+		);
+		expect(viaGearEdit.belt.used).toBe(viaAutoPlace.belt.used);
+		expect(viaGearEdit.pack.used).toBe(viaAutoPlace.pack.used);
+	});
+});
+
+describe('worn spares respect carry: belt-only (FIX 3, latent — no content-pack item does this today)', () => {
+	const beltOnlyArmor: ItemDefinition = {
+		id: 'synthetic-belt-only-armor',
+		name: 'Synthetic Belt-Only Armor',
+		tier: 'common',
+		category: 'armor',
+		description: 'A test fixture: worn armor that is also oversized.',
+		slots: 2,
+		carry: 'belt-only',
+		wornBeltSlots: 1
+	};
+	const synthItems = indexItems([beltOnlyArmor]);
+	function synthEntry(overrides: Partial<EquipmentEntry> = {}): EquipmentEntry {
+		return {
+			itemId: beltOnlyArmor.id,
+			customName: null,
+			tier: beltOnlyArmor.tier,
+			packSpace: beltOnlyArmor.slots ?? 1,
+			location: 'pack',
+			quantity: 1,
+			notchesTaken: 0,
+			...overrides
+		};
+	}
+
+	it('autoPlace sends the spare to the belt, not the pack', () => {
+		const placed = autoPlace([synthEntry({ quantity: 2 })], synthItems, caps);
+		expect(placed).toHaveLength(2);
+		expect(placed[0]).toMatchObject({ location: 'worn', quantity: 1 });
+		expect(placed[1]).toMatchObject({ location: 'belt', quantity: 1 });
+	});
+
+	it('loadSummary bills the spare against the belt, not the pack', () => {
+		const s = loadSummary([synthEntry({ location: 'worn', quantity: 2 })], synthItems, caps);
+		// wornBeltSlots 1 (worn suit) + 2 slots (one spare, belt-only) = 3
+		expect(s.belt.used).toBe(3);
+		expect(s.pack.used).toBe(0);
 	});
 });
 

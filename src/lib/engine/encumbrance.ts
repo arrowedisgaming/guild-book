@@ -147,9 +147,17 @@ export function autoPlace(
 				// You can only wear one suit. Split so the belt is billed once and
 				// the spares are honestly carried rather than silently free —
 				// belt-only spares (contract: never in the pack) stay on the belt.
+				const spareLoc = spareLocation(def);
+				if (spareLoc === 'belt') {
+					// Spares riding the belt (carry: 'belt-only' armor) must count
+					// against beltUsed too, or a later hand-carried item consults a
+					// stale counter and gets placed on an already-full belt.
+					const baseSlots = def.slots ?? entry.packSpace ?? 1;
+					beltUsed += (entry.quantity - 1) * baseSlots;
+				}
 				return [
 					{ ...entry, location: 'worn', quantity: 1 },
-					{ ...entry, location: spareLocation(def), quantity: entry.quantity - 1 }
+					{ ...entry, location: spareLoc, quantity: entry.quantity - 1 }
 				];
 			}
 			return place('worn');

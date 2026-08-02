@@ -179,6 +179,72 @@ describe('worn spares respect carry: belt-only (FIX 3, latent — no content-pac
 	});
 });
 
+describe('autoPlace beltUsed accounts for belt-routed armor spares (FIX 2)', () => {
+	const beltOnlyArmor: ItemDefinition = {
+		id: 'synthetic-belt-only-armor-2',
+		name: 'Synthetic Belt-Only Armor',
+		tier: 'common',
+		category: 'armor',
+		description: 'A test fixture: worn armor that is also oversized.',
+		slots: 2,
+		carry: 'belt-only',
+		wornBeltSlots: 1
+	};
+	const handItem: ItemDefinition = {
+		id: 'synthetic-2slot-hand-item',
+		name: 'Synthetic Two-Slot Hand Item',
+		tier: 'common',
+		category: 'weapon',
+		description: 'A test fixture: a 2-slot hand-carried item.',
+		slots: 2,
+		carry: 'hand'
+	};
+	const synthItems = indexItems([beltOnlyArmor, handItem]);
+
+	function synthEntry(itemId: string, overrides: Partial<EquipmentEntry> = {}): EquipmentEntry {
+		const d = itemId === beltOnlyArmor.id ? beltOnlyArmor : handItem;
+		return {
+			itemId,
+			customName: null,
+			tier: d.tier,
+			packSpace: d.slots ?? 1,
+			location: 'pack',
+			quantity: 1,
+			notchesTaken: 0,
+			...overrides
+		};
+	}
+
+	it('does not place a second hand item on a belt already filled by armor spares', () => {
+		// caps: hands 2, belt 4. The first hand item (2 slots) fills the hands.
+		// Belt-only armor at quantity 2 wears one suit (1 belt slot) and routes
+		// its one spare to the belt too (2 slots) — 3 belt slots used. Before
+		// FIX 2, autoPlace's running beltUsed counter only saw the worn suit's
+		// 1 slot, so it believed the belt had 3 slots free and wrongly placed
+		// the second hand item there. With the fix, 3 + 2 = 5 > 4 means the
+		// second hand item can't fit the belt either, so it falls to the pack.
+		const placed = autoPlace(
+			[
+				synthEntry(handItem.id),
+				synthEntry(beltOnlyArmor.id, { quantity: 2 }),
+				synthEntry(handItem.id)
+			],
+			synthItems,
+			caps
+		);
+
+		const handPlacements = placed.filter((e) => e.itemId === handItem.id);
+		expect(handPlacements[0].location).toBe('hand');
+		expect(handPlacements[1].location).toBe('pack');
+
+		// autoPlace's placement decisions must agree with loadSummary's totals
+		// — nothing should land on a belt that loadSummary then reports as over.
+		const load = loadSummary(placed, synthItems, caps);
+		expect(load.belt.used).toBe(3);
+		expect(load.belt.over).toBe(false);
+	});
+});
+
 describe('autoPlace', () => {
 	it('wears armor, holds weapons, belts oversized gear, packs the rest', () => {
 		const placed = autoPlace(

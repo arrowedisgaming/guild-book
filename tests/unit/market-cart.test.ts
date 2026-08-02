@@ -75,9 +75,18 @@ describe('cartFromEntries', () => {
 		expect(cart.get('arrows')).toBe(12);
 	});
 
-	it('snaps a legacy 13-arrow entry up to two full quivers', () => {
+	// A legitimately depleted stack (a character who has genuinely spent
+	// arrows down to 13) must NOT be inflated — cartFromEntries can't tell
+	// legacy data from a partial stack, so it only floors up to one full
+	// stack and leaves anything at or above that alone.
+	it('leaves a legitimately partial 13-arrow stack alone', () => {
 		const cart = cartFromEntries([entry('arrows', { quantity: 13 })], items);
-		expect(cart.get('arrows')).toBe(24);
+		expect(cart.get('arrows')).toBe(13);
+	});
+
+	it('leaves a quantity already above one full stack untouched', () => {
+		const cart = cartFromEntries([entry('arrows', { quantity: 20 })], items);
+		expect(cart.get('arrows')).toBe(20);
 	});
 
 	it('leaves a non-stackable at quantity 2 untouched', () => {
@@ -112,6 +121,39 @@ describe('stepCart', () => {
 		const before = new Map([['rope', 1]]);
 		stepCart(before, 'rope', def('rope'), 1);
 		expect(before.get('rope')).toBe(1);
+	});
+
+	// A downward step SNAPS to the stack grid instead of subtracting one step,
+	// so a legitimately partial stack (left alone by cartFromEntries) steps
+	// down to the nearest full stack below it rather than being deleted the
+	// moment a single subtraction would drop it under `step` (13 − 12 = 1).
+	describe('downward steps snap to the stack grid', () => {
+		it('steps two full quivers down to one', () => {
+			const cart = new Map([['arrows', 24]]);
+			expect(stepCart(cart, 'arrows', def('arrows'), -1).get('arrows')).toBe(12);
+		});
+
+		it('removes the item when one full quiver steps down', () => {
+			const cart = new Map([['arrows', 12]]);
+			expect(stepCart(cart, 'arrows', def('arrows'), -1).has('arrows')).toBe(false);
+		});
+
+		it('steps a legitimately partial 13-arrow stack down to 12, not deleted', () => {
+			const cart = new Map([['arrows', 13]]);
+			expect(stepCart(cart, 'arrows', def('arrows'), -1).get('arrows')).toBe(12);
+		});
+
+		it('steps 20 arrows down to 12', () => {
+			const cart = new Map([['arrows', 20]]);
+			expect(stepCart(cart, 'arrows', def('arrows'), -1).get('arrows')).toBe(12);
+		});
+
+		it('behaves exactly as before for a step-1 item (rope): 2 → 1, 1 → removed', () => {
+			const cart = new Map([['rope', 2]]);
+			const stepped = stepCart(cart, 'rope', def('rope'), -1);
+			expect(stepped.get('rope')).toBe(1);
+			expect(stepCart(stepped, 'rope', def('rope'), -1).has('rope')).toBe(false);
+		});
 	});
 });
 

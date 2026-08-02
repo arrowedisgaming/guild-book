@@ -21,12 +21,16 @@ export function stepSize(def: ItemDefinition | undefined): number {
 }
 
 /** Rebuild a cart from persisted entries, summing duplicate item ids —
- * `autoPlace` may have split one item across two locations. Then snap each
- * stackable's total UP to a whole number of stacks: a wizard saved before
+ * `autoPlace` may have split one item across two locations. Then floor each
+ * stackable's total up to at least one full stack: a wizard saved before
  * this release hardcoded `quantity: 1` for every item, so a legacy single
  * arrow needs to become a full quiver (12) — left at 1, the next `−` press
- * would fall below one step and `stepCart` would delete it outright. Items
- * with step 1, and unknown item ids, are left exactly as summed. */
+ * would fall below one step and `stepCart` would delete it outright. The
+ * floor exists only to repair those legacy single-unit entries; anything
+ * already at or above one full stack is taken at face value, because it may
+ * be a legitimately depleted stack rather than legacy data (13 arrows stays
+ * 13 — it is not rounded up to 24). Items with step 1, and unknown item
+ * ids, are left exactly as summed. */
 export function cartFromEntries(
 	entries: readonly EquipmentEntry[],
 	items: readonly ItemDefinition[]
@@ -39,13 +43,18 @@ export function cartFromEntries(
 	}
 	for (const [itemId, quantity] of cart) {
 		const step = stepSize(defs.get(itemId));
-		if (step > 1) cart.set(itemId, Math.ceil(quantity / step) * step);
+		if (step > 1) cart.set(itemId, Math.max(quantity, step));
 	}
 	return cart;
 }
 
-/** Add or drop one pick's worth. Dropping below a single step removes the
- * item outright, so `−` on the last unit un-takes it. Never mutates `cart`. */
+/** Add or drop one pick's worth. Upward adds a full step. Downward SNAPS to
+ * the stack grid rather than subtracting a step, so a legitimately partial
+ * stack (e.g. 13 arrows, left alone by `cartFromEntries`) steps down to the
+ * nearest full stack below it (13 → 12) instead of dropping straight below
+ * `step` and getting deleted by a single subtraction (13 − 12 = 1). Falling
+ * to or below zero removes the item outright, so `−` on the last unit or
+ * last partial stack un-takes it. Never mutates `cart`. */
 export function stepCart(
 	cart: MarketCart,
 	itemId: string,
@@ -54,8 +63,13 @@ export function stepCart(
 ): Map<string, number> {
 	const next = new Map(cart);
 	const step = stepSize(def);
-	const quantity = (next.get(itemId) ?? 0) + delta * step;
-	if (quantity < step) next.delete(itemId);
+	const current = next.get(itemId) ?? 0;
+	if (delta === 1) {
+		next.set(itemId, current + step);
+		return next;
+	}
+	const quantity = Math.floor((current - 1) / step) * step;
+	if (quantity <= 0) next.delete(itemId);
 	else next.set(itemId, quantity);
 	return next;
 }

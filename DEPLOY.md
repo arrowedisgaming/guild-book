@@ -320,7 +320,7 @@ See `docs/operations/backup-restore.md` for the complete disaster-recovery proce
 
 Do not run the restore procedure except in response to a genuine production incident involving data loss.
 
-## Pre-launch licence reminder
+## Pre-launch license reminder
 
 `static/fonts/LICENSES.md`: Goudy Old Style is a Monotype commercial face —
 license it for web embedding or swap the `--font-sidebar` token to an OFL

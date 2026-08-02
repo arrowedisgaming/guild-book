@@ -21,7 +21,7 @@
 		<li>
 			Guild Book is an unofficial, fan-made companion, published under the
 			<a href="https://www.hismajestytheworm.games/open-license" rel="noopener" target="_blank">
-				“Adherent of the Worm” open licence</a
+				“Adherent of the Worm” open license</a
 			>, which permits reuse of the game's mechanics and text.
 		</li>
 		<li>
@@ -30,7 +30,7 @@
 		</li>
 		<li>
 			Game text — talent, condition, affliction, kith, path, language, and equipment descriptions —
-			is reproduced verbatim from the core rulebook, per the licence's own terms: “the mechanics and
+			is reproduced verbatim from the core rulebook, per the license's own terms: “the mechanics and
 			game text of His Majesty the Worm may be reused freely.” No book artwork, logos, or trade dress
 			are reproduced.
 		</li>
@@ -40,7 +40,7 @@
 	<p>
 		The full rules text of chapters 1–9 — including worked examples, sidebars, and chapter
 		epigraphs — is reproduced with the direct permission of Joshua McCrowell, in addition to the
-		open licence's terms. No book artwork, logos, or trade dress is reproduced.
+		open license's terms. No book artwork, logos, or trade dress is reproduced.
 	</p>
 
 	<h2>Application source</h2>

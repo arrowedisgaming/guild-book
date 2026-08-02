@@ -6,7 +6,7 @@ in `src/lib/schemas/`. **No rules are hardcoded in components or routes.**
 
 ## Status: verbatim, Markdown-sourced
 
-Per the licence's own terms ("the mechanics and game text of His Majesty the Worm
+Per the license's own terms ("the mechanics and game text of His Majesty the Worm
 may be reused freely"), all prose is **exact wording from the core rulebook**,
 extracted by a script pipeline rather than retyped — diffable and re-runnable.
 
@@ -32,7 +32,7 @@ markdown through `Prose.svelte` (bold, italics, `-` lists, sub-headings).
 - **Transcribed directly (not pipeline-generated):** `denizens.json` (Appendix C:
   the six themes, five threats, and the full bestiary) reproduces the book text
   directly — the author has confirmed the full text is open content under the
-  Adherent of the Worm licence, not just the mechanics.
+  Adherent of the Worm license, not just the mechanics.
 
 ### The pipeline
 
@@ -76,7 +76,7 @@ tests reject a malformed pack before it reaches the UI.
 
 ## Legal
 
-Published under the [Adherent of the Worm open licence](https://www.hismajestytheworm.games/open-license).
+Published under the [Adherent of the Worm open license](https://www.hismajestytheworm.games/open-license).
 His Majesty the Worm is copyright Joshua McCrowell. No book artwork, logos, or trade
-dress are reproduced; game text is reproduced verbatim per the licence. See `/licensing`
+dress are reproduced; game text is reproduced verbatim per the license. See `/licensing`
 in the app.

@@ -56,11 +56,11 @@ All game data lives in `static/content-packs/hmtw/` as JSON. The committed pack 
 clearly-marked **placeholder**; real His Majesty the Worm rules data is dropped into these
 files with no code changes. See that folder's README for the swap procedure.
 
-## Licence
+## License
 
 Application source: **GPL-3.0-or-later** (see [`LICENSE`](./LICENSE)).
 
 His Majesty the Worm is copyright Joshua McCrowell. Guild Book is an independent production
 by Arrowed and is **not** affiliated with Joshua McCrowell or Exalted Funeral. It is
-published under the ["Adherent of the Worm" open licence](https://www.hismajestytheworm.games/open-license).
+published under the ["Adherent of the Worm" open license](https://www.hismajestytheworm.games/open-license).
 No His Majesty the Worm artwork, logos, or trade dress are reproduced.

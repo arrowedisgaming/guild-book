@@ -81,7 +81,7 @@ exactly what CI does. If you see `content:verify` fail with missing files, you
 have not broken anything — you just ran the wrong one.
 
 The same pattern applies elsewhere in the repo: anything that derives committed
-output from licence-restricted source has a `:ci` variant that checks the output
+output from license-restricted source has a `:ci` variant that checks the output
 instead. Prefer the `:ci` variant unless you know you have the source.
 
 ## How the codebase is organised
@@ -136,7 +136,7 @@ Scopes in use include `campaigns`, `deploy`, `staging`, `operations`, `plans`,
 Other expectations:
 
 - **Stage files explicitly.** `git add <paths>`, not `git add .` or `git add src`.
-  The gitignore protects licence-restricted material, but an explicit `add` is
+  The gitignore protects license-restricted material, but an explicit `add` is
   the habit that keeps it protected.
 - **Update `CHANGELOG.md`** for anything user-visible, under `## [Unreleased]`,
   following [Keep a Changelog](https://keepachangelog.com/).
@@ -163,10 +163,10 @@ immutable. See `DEPLOY.md` for the complete release and rollback runbook.
 ## Licensing — please read before contributing content
 
 The application source is **GPL-3.0-or-later** (see `LICENSE`). By opening a
-pull request you agree your contribution ships under that licence.
+pull request you agree your contribution ships under that license.
 
 The game content is a separate and stricter matter. Guild Book is published
-under the ["Adherent of the Worm" open licence](https://www.hismajestytheworm.games/open-license).
+under the ["Adherent of the Worm" open license](https://www.hismajestytheworm.games/open-license).
 *His Majesty the Worm* is copyright Joshua McCrowell; Guild Book is an
 independent production by Arrowed and is **not** affiliated with Joshua
 McCrowell or Exalted Funeral.
@@ -177,7 +177,7 @@ Concretely, in a pull request:
   transcriptions. `assets-src/` and `rulebooks/` are gitignored; keep it that way.
 - **Never add HMTW artwork, logos, or trade dress.** The "Adherent of the Worm"
   logo is the single permitted mark.
-- **No verbatim copyrighted rule text** beyond what the licence allows. The
+- **No verbatim copyrighted rule text** beyond what the license allows. The
   content pack paraphrases and encodes mechanics; it does not reproduce prose.
 - If a change affects the licensing posture in any way, say so explicitly in the
   PR. Licensing text in `README.md`, `/licensing`, and the content pack README is

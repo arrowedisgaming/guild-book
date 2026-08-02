@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   license that makes the reference possible, linking to the license itself and
   to where His Majesty the Worm can be bought.
 
+### Changed
+
+- The project now spells "license" the way the author does on his own site,
+  rather than using the British "licence", in the licensing page, the READMEs,
+  the contributing and deploy guides, and the content pack metadata.
+
 ## [0.11.0] - 2026-08-01
 
 ### Added

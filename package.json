@@ -2,7 +2,7 @@
 	"name": "guild-book",
 	"version": "0.11.0",
 	"private": true,
-	"description": "A His Majesty the Worm adventurer creator and rules reference. SvelteKit monolith, content-pack driven, tarot-based, Adherent of the Worm licence-compliant.",
+	"description": "A His Majesty the Worm adventurer creator and rules reference. SvelteKit monolith, content-pack driven, tarot-based, Adherent of the Worm license-compliant.",
 	"license": "GPL-3.0-or-later",
 	"author": "Arrowed",
 	"homepage": "https://github.com/arrowedisgaming/guild-book#readme",

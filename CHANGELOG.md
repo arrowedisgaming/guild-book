@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Every rules page now ends with a card thanking Josh McCrowell for the open
+  license that makes the reference possible, linking to the license itself and
+  to where His Majesty the Worm can be bought.
+
+### Changed
+
+- The project now spells "license" the way the author does on his own site,
+  rather than using the British "licence", in the licensing page, the READMEs,
+  the contributing and deploy guides, and other documentation. The content
+  pack's own metadata (`static/content-packs/hmtw/index.json`) is unchanged —
+  it is covered by a tamper-evidence digest, and a cosmetic spelling edit
+  there is not worth the pack version bump regenerating that digest would
+  force.
+
 ## [0.11.0] - 2026-08-01
 
 ### Added

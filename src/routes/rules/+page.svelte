@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import RulesSearch from '$lib/components/rules/RulesSearch.svelte';
+	import RulebookThanks from '$lib/components/rules/RulebookThanks.svelte';
 	import { sectionLabel } from '$lib/content/sections';
 	import {
 		getRulesSearch,
@@ -114,6 +115,8 @@
 			{/each}
 		{/if}
 	{/if}
+
+	<RulebookThanks />
 </section>
 
 <style>

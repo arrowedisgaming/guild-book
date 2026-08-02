@@ -12,7 +12,7 @@ export interface GuildBookContentPack {
 	version: string;
 	description: string;
 	system: 'hmtw';
-	/** Licence marker — "placeholder" until real (licensed) data replaces it. */
+	/** License marker — "placeholder" until real (licensed) data replaces it. */
 	license: string;
 	authors: string[];
 	/**

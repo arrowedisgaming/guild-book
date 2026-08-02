@@ -151,7 +151,7 @@ acceptable for v1 (localStorage persistence is a cheap follow-up if it annoys an
 ## Licensing
 
 **Decided:** Josh has clarified that the full book text — not just the mechanics — is
-open content under the Adherent of the Worm licence. So `denizens.json` uses the book
+open content under the Adherent of the Worm license. So `denizens.json` uses the book
 text directly: flavor prose, notes, and doom descriptions are transcribed, not
 paraphrased. No rewriting effort needed, and no `PLACEHOLDER SUMMARY` pass for this
 collection.

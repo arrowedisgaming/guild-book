@@ -71,10 +71,19 @@
 		background: color-mix(in oklab, var(--accent) 12%, transparent);
 	}
 	/* OrnamentalBorder's own 2rem padding leaves ~216px of usable width at a
-	 * 320px viewport. Claw some of it back rather than let the CTA overflow. */
+	 * 320px viewport. Claw some of it back rather than let the CTA overflow.
+	 *
+	 * The corner flourishes are 3.5rem square and absolutely positioned, so at
+	 * this width they sit over the heading's wrapped first line and over the
+	 * CTA. Shrink them and buy back the vertical room they occupy, rather than
+	 * hiding them — they are the frame's whole character. */
 	@media (max-width: 30rem) {
 		.thanks :global(.frame) {
-			padding: 1.25rem;
+			padding: 2.75rem 1.25rem;
+		}
+		.thanks :global(.deco) {
+			width: 2.5rem;
+			height: 2.5rem;
 		}
 	}
 </style>

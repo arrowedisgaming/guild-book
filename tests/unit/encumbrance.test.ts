@@ -42,6 +42,29 @@ describe('slotsFor', () => {
 		expect(slotsFor(entry('helm', { location: 'worn' }), items.get('helm'))).toBe(0);
 		expect(slotsFor(entry('clothes-common', { location: 'worn' }), items.get('clothes-common'))).toBe(0);
 	});
+
+	it('still bills a single worn suit its belt slots (regression: quantity 1)', () => {
+		expect(
+			slotsFor(entry('armor-light', { location: 'worn', quantity: 1 }), items.get('armor-light'))
+		).toBe(1);
+	});
+
+	it('bills worn spares their base slots on top of the belt slots', () => {
+		// armor-light: wornBeltSlots 1, slots 1 → 1 + 2*1 = 3 at quantity 3
+		expect(
+			slotsFor(entry('armor-light', { location: 'worn', quantity: 3 }), items.get('armor-light'))
+		).toBe(3);
+		// armor-steel: wornBeltSlots 3, slots 3 → 3 + 1*3 = 6 at quantity 2
+		expect(
+			slotsFor(entry('armor-steel', { location: 'worn', quantity: 2 }), items.get('armor-steel'))
+		).toBe(6);
+	});
+
+	it('leaves worn clothing free no matter the quantity', () => {
+		expect(
+			slotsFor(entry('clothes-common', { location: 'worn', quantity: 5 }), items.get('clothes-common'))
+		).toBe(0);
+	});
 });
 
 describe('loadSummary', () => {

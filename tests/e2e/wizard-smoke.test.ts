@@ -37,6 +37,20 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 
 	await expect(page.getByRole('heading', { name: 'The Omphalic Market' })).toBeVisible();
 	await page.getByRole('checkbox').first().click();
+	// That first pick landed on the first item in the Luxurious section (no
+	// required items are in play here) — the tier's allowance is spent by a
+	// single pick, so it should immediately disable further luxurious picks:
+	// its own "+" control, and every other luxurious item's card.
+	const luxuriousSection = page
+		.locator('section')
+		.filter({ has: page.getByRole('heading', { name: /^Luxurious/ }) });
+	await expect(
+		luxuriousSection.locator('.item.sel').getByRole('button', { name: /^Add another/ })
+	).toBeDisabled();
+	await expect(
+		luxuriousSection.locator('.item.disabled').first().getByRole('checkbox')
+	).toHaveAttribute('aria-label', /unavailable because the tier limit is reached/);
+
 	// Rope is impoverished, so it is never capped — take a second length.
 	await page.getByRole('checkbox', { name: 'Rope', exact: true }).click();
 	await page.getByRole('button', { name: 'Add another Rope' }).click();

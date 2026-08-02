@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { wizard, WIZARD_STEPS } from '$lib/stores/wizard';
 	import { ITEM_TIERS, type ItemTier } from '$lib/types/common';
@@ -7,7 +8,6 @@
 		cartFromEntries,
 		cartToEntries,
 		stepCart,
-		stepSize,
 		tierPicks,
 		type MarketCart
 	} from '$lib/engine/market-cart';
@@ -69,9 +69,19 @@
 		if (cap === null || requiredItemIds.has(itemId)) return false;
 		return countInTier(tier) >= cap;
 	}
-	function step(itemId: string, delta: 1 | -1) {
+	// .pick button elements, keyed by item id — so removing the last unit can
+	// return focus to the card instead of dropping it to <body> when the .qty
+	// block (which held the focused button) unmounts.
+	let pickButtons: Record<string, HTMLButtonElement | undefined> = {};
+
+	async function step(itemId: string, delta: 1 | -1) {
 		detailItemId = itemId;
+		const hadItem = cart.has(itemId);
 		cart = stepCart(cart, itemId, itemIndex.get(itemId), delta);
+		if (hadItem && !cart.has(itemId)) {
+			await tick();
+			pickButtons[itemId]?.focus();
+		}
 	}
 	/** Clicking the card body takes one; at the tier cap it only shows details. */
 	function chooseItem(itemId: string, unavailable = false) {
@@ -133,6 +143,7 @@
 						class="pick"
 						role="checkbox"
 						aria-checked={taken}
+						bind:this={pickButtons[item.id]}
 						onclick={() => chooseItem(item.id)}
 					>
 						<span class="check" aria-hidden="true">{taken ? '☑' : '☐'}</span>
@@ -176,7 +187,8 @@
 						class="pick"
 						role="checkbox"
 						aria-checked={taken}
-						aria-label={`${item.name}${full && !taken ? ', unavailable because the tier limit is reached; show details' : ''}`}
+						aria-label={`${item.name}${taken ? `, ×${cart.get(item.id) ?? 0}` : ''}${full && !taken ? ', unavailable because the tier limit is reached; show details' : ''}`}
+						bind:this={pickButtons[item.id]}
 						onclick={() => chooseItem(item.id, full && !taken)}
 					>
 						<span class="check" aria-hidden="true">{taken ? '☑' : '☐'}</span>

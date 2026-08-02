@@ -1,9 +1,12 @@
 /**
  * Slot-based encumbrance. Capacities come from the content pack
  * (hands 2 / belt 4 / pack 21). Worn armor consumes its wornBeltSlots from the
- * BELT capacity; other worn things (clothes, helms) take no slots. Oversized
- * gear (carry: 'belt-only') can never ride in the backpack. Stackables share a
- * slot per their stack rule (arrows 12/slot, lockpicks 6/slot…). Pure.
+ * BELT capacity; a second (and further) worn suit of the same armor bills its
+ * full base slots per spare, since only one suit is ever actually worn — the
+ * rest just rides along on the same entry. Other worn things (clothes, helms)
+ * take no slots regardless of quantity. Oversized gear (carry: 'belt-only')
+ * can never ride in the backpack. Stackables share a slot per their stack
+ * rule (arrows 12/slot, lockpicks 6/slot…). Pure.
  */
 
 import type { EquipmentEntry, CarryLocation } from '$lib/types/character';
@@ -19,8 +22,12 @@ export function indexItems(items: ItemDefinition[]): ItemIndex {
 export function slotsFor(entry: EquipmentEntry, def: ItemDefinition | undefined): number {
 	const baseSlots = def?.slots ?? entry.packSpace ?? 1;
 	if (entry.location === 'worn') {
-		// Worn armor bills its belt slots; other worn gear is free.
-		return def?.wornBeltSlots ?? 0;
+		// Worn armor bills its belt slots for the one suit actually worn, plus
+		// its base slots for each spare riding along on the same entry.
+		// Clothing and helms (no wornBeltSlots) stay free no matter the quantity.
+		if (def?.wornBeltSlots == null) return 0;
+		const spares = Math.max(0, entry.quantity - 1);
+		return def.wornBeltSlots + spares * baseSlots;
 	}
 	const qty = Math.max(1, entry.quantity);
 	const per = def?.stack?.per;

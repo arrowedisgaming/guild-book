@@ -40,8 +40,10 @@
 	}
 	function stepQty(i: number, delta: number) {
 		const e = char.equipment[i];
-		const step = stepSize(defFor(e.itemId));
-		char.equipment[i] = { ...e, quantity: Math.max(step, e.quantity + delta * step) };
+		// The sheet is the play surface — step by ONE unit at a time ("I shot
+		// three arrows"), never by the market stack size. Use the ✕ button to
+		// remove an item outright.
+		char.equipment[i] = { ...e, quantity: Math.max(1, e.quantity + delta) };
 		onChange();
 	}
 	function stepNotch(i: number, delta: number) {
@@ -65,7 +67,9 @@
 				tier: def.tier,
 				packSpace: def.slots ?? 1,
 				location: 'pack',
-				quantity: 1,
+				// Acquiring gear gives you a full stack, matching the market
+				// (12 arrows, not 1).
+				quantity: stepSize(def),
 				notchesTaken: 0
 			}
 		];
@@ -105,14 +109,14 @@
 			</select>
 			<span class="ctrl">
 				qty {e.quantity}
-				<button type="button" onclick={() => stepQty(i, -1)} aria-label="Remove one">−</button>
-				<button type="button" onclick={() => stepQty(i, 1)} aria-label="Add one">+</button>
+				<button type="button" onclick={() => stepQty(i, -1)} aria-label={`Remove one ${displayName(e)}`}>−</button>
+				<button type="button" onclick={() => stepQty(i, 1)} aria-label={`Add one ${displayName(e)}`}>+</button>
 			</span>
 			{#if dur !== null}
 				<span class="ctrl">
 					notches {e.notchesTaken}/{dur}
-					<button type="button" onclick={() => stepNotch(i, -1)}>−</button>
-					<button type="button" onclick={() => stepNotch(i, 1)}>+</button>
+					<button type="button" onclick={() => stepNotch(i, -1)} aria-label={`Repair one notch on ${displayName(e)}`}>−</button>
+					<button type="button" onclick={() => stepNotch(i, 1)} aria-label={`Notch ${displayName(e)}`}>+</button>
 				</span>
 			{/if}
 			<button type="button" class="remove" onclick={() => remove(i)} aria-label="Remove item">✕</button>

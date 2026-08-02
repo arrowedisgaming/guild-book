@@ -57,6 +57,13 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await expect(page).toHaveURL(/\/characters$/);
 	await expect(page.getByText('Mara of the Lantern')).toBeVisible();
 	expect(await page.evaluate(() => localStorage.getItem('guildbook-wizard-state'))).toBeNull();
+
+	// Confirm the multiple actually survived the save (not just pre-save client state):
+	// open the roster link into the saved sheet, which loads in read mode by default
+	// and renders gear via CharacterSheet.svelte's `{e.name} ×{e.quantity}` format.
+	await page.getByRole('link', { name: 'Mara of the Lantern' }).click();
+	await expect(page).toHaveURL(/\/sheet\/[^/]+$/);
+	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
 });
 
 test('wizard assigns unique attributes and exposes standard theme controls', async ({ page }) => {

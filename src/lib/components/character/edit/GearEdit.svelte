@@ -2,6 +2,7 @@
 	import type { GuildBookCharacterData, CarryLocation } from '$lib/types/character';
 	import type { ItemDefinition, EncumbranceConfig } from '$lib/types/content-pack';
 	import { indexItems, loadSummary, autoPlace } from '$lib/engine/encumbrance';
+	import { stepSize } from '$lib/engine/market-cart';
 
 	interface Props {
 		char: GuildBookCharacterData;
@@ -39,7 +40,8 @@
 	}
 	function stepQty(i: number, delta: number) {
 		const e = char.equipment[i];
-		char.equipment[i] = { ...e, quantity: Math.max(1, e.quantity + delta) };
+		const step = stepSize(defFor(e.itemId));
+		char.equipment[i] = { ...e, quantity: Math.max(step, e.quantity + delta * step) };
 		onChange();
 	}
 	function stepNotch(i: number, delta: number) {
@@ -101,13 +103,11 @@
 					<option value={l.id}>{l.label}</option>
 				{/each}
 			</select>
-			{#if defFor(e.itemId)?.stack}
-				<span class="ctrl">
-					qty
-					<button type="button" onclick={() => stepQty(i, -1)}>−</button>
-					<button type="button" onclick={() => stepQty(i, 1)}>+</button>
-				</span>
-			{/if}
+			<span class="ctrl">
+				qty {e.quantity}
+				<button type="button" onclick={() => stepQty(i, -1)} aria-label="Remove one">−</button>
+				<button type="button" onclick={() => stepQty(i, 1)} aria-label="Add one">+</button>
+			</span>
 			{#if dur !== null}
 				<span class="ctrl">
 					notches {e.notchesTaken}/{dur}

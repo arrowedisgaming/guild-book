@@ -98,7 +98,7 @@
 {#if char.motifs.length}<section><h2>Motifs</h2><p>{char.motifs.join(' · ')}</p></section>{/if}
 {#if char.equipment.length}
 	<section><h2>Gear</h2>
-		<ul class="inline">{#each char.equipment as e}<li>{itemName(e.itemId)}</li>{/each}</ul>
+		<ul class="inline">{#each char.equipment as e}<li>{itemName(e.itemId)}{e.quantity > 1 ? ` ×${e.quantity}` : ''}</li>{/each}</ul>
 	</section>
 {/if}
 

@@ -147,7 +147,6 @@ export const load: PageServerLoad = async (event) => {
 		usersHasNext: usersPage * PAGE_SIZE < totalUsers,
 		charactersHasNext: charactersPage * PAGE_SIZE < totalCharacters,
 		userSort,
-		characterSort,
-		pageSize: PAGE_SIZE
+		characterSort
 	};
 };

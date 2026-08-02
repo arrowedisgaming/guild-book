@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shared-table privacy suite now asserts this at the network level.
 - Environments without built artwork keep working: the app detects the absent
   manifest and falls back to the previous glyph rendering.
+- Internal tidying from the #15 and #16 reviews: the admin page's server load no
+  longer returns a page-size field nothing reads, and the 320px zoom check
+  documents why polling `scrollWidth` is sound there.
 
 ### Fixed
 

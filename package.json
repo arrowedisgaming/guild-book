@@ -39,7 +39,7 @@
 		"test:e2e:ci": "node scripts/e2e/run-ci.mjs",
 		"test:e2e:stress": "playwright test --config=playwright.stress.config.ts",
 		"release:validate": "node scripts/release/validate-tag.mjs",
-		"release:verify": "npm run release:validate && CONTENT_BASE_REF=origin/main npm run content:verify:ci && npm run check && npm run test && ADAPTER=cloudflare AUTH_SECRET=release-build-validation-only npm run build && npx wrangler deploy --dry-run --env '' && npx wrangler deploy --dry-run --env staging && npm run test:e2e && npm run content:verify",
+		"release:verify": "npm run release:validate && CONTENT_BASE_REF=origin/main npm run content:verify:ci && npm run tarot-art:verify && npm run check && npm run test && ADAPTER=cloudflare AUTH_SECRET=release-build-validation-only npm run build && npx wrangler deploy --dry-run --env '' && npx wrangler deploy --dry-run --env staging && npm run test:e2e && npm run content:verify",
 		"content:build": "node scripts/content-import/md-inject.mjs && node scripts/content-import/md-rules.mjs && node scripts/content-import/md-spells.mjs && node scripts/content-import/md-procedures.mjs",
 		"content:verify": "node scripts/content-import/md-inject.mjs --check && node scripts/content-import/md-rules.mjs --check && node scripts/content-import/md-spells.mjs --check && node scripts/content-import/md-procedures.mjs --check && node scripts/content-import/verify-pack-version.mjs",
 		"content:inject": "node scripts/content-import/md-inject.mjs",
@@ -53,7 +53,9 @@
 		"content:procedures": "node scripts/content-import/md-procedures.mjs",
 		"db:auth:preflight:d1:local": "npx wrangler d1 execute guild-book-db --local --file=scripts/auth-account-preflight.sql",
 		"db:auth:preflight:d1:remote": "npx wrangler d1 execute guild-book-db --remote --file=scripts/auth-account-preflight.sql",
-		"db:migrate:d1:staging": "npx wrangler d1 migrations apply guild-book-staging-db --remote --env staging"
+		"db:migrate:d1:staging": "npx wrangler d1 migrations apply guild-book-staging-db --remote --env staging",
+		"tarot-art:build": "node scripts/tarot-art/build.mjs",
+		"tarot-art:verify": "node scripts/tarot-art/verify.mjs"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.59.1",
@@ -64,6 +66,7 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"@vitest/coverage-v8": "^4.1.10",
 		"miniflare": "^4.20260630.0",
+		"sharp": "0.35.3",
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
 		"typescript": "^6.0.2",

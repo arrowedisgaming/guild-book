@@ -74,6 +74,15 @@ test.describe('shared table privacy', () => {
 			page.on('console', (message) => consoleTexts.push(message.text()));
 		}
 
+		// Issue #10: with artwork enabled, a hidden card's identity could leak a
+		// new way — through the URL of a face image request. Capture every
+		// request URL per client so the canary checks below can assert the
+		// artwork pipeline never even *asks* for a face it is not entitled to.
+		const requestUrls = { gm: [] as string[], playerA: [] as string[], playerB: [] as string[] };
+		gmPage.on('request', (request) => requestUrls.gm.push(request.url()));
+		playerAPage.on('request', (request) => requestUrls.playerA.push(request.url()));
+		playerBPage.on('request', (request) => requestUrls.playerB.push(request.url()));
+
 		await signInAs(gmPage, 'Privacy GM');
 		await signInAs(playerAPage, 'Privacy Player A');
 		await signInAs(playerBPage, 'Privacy Player B');
@@ -185,6 +194,24 @@ test.describe('shared table privacy', () => {
 		);
 		expect(leaked).toBe(false);
 
+		// --- Artwork canary (issue #10): the network never asks for a hidden
+		// face. Each drawn card is face-up ONLY to its owner, so its stable id
+		// must not appear in any face-image URL requested by the other two
+		// clients — not preloaded, not prefetched, not rendered. ---
+		const canaryIdA = await ownCardA.getAttribute('data-card-id');
+		const canaryIdB = await ownCardB.getAttribute('data-card-id');
+		const canaryIdGm = await ownCardGm.getAttribute('data-card-id');
+		expect(canaryIdA).toBeTruthy();
+		expect(canaryIdB).toBeTruthy();
+		expect(canaryIdGm).toBeTruthy();
+		const facePath = (cardId: string) => `/tarot/rwsa/faces/${cardId}-`;
+		expect(requestUrls.gm.filter((url) => url.includes(facePath(canaryIdA as string)))).toEqual([]);
+		expect(requestUrls.gm.filter((url) => url.includes(facePath(canaryIdB as string)))).toEqual([]);
+		expect(requestUrls.playerA.filter((url) => url.includes(facePath(canaryIdB as string)))).toEqual([]);
+		expect(requestUrls.playerA.filter((url) => url.includes(facePath(canaryIdGm as string)))).toEqual([]);
+		expect(requestUrls.playerB.filter((url) => url.includes(facePath(canaryIdA as string)))).toEqual([]);
+		expect(requestUrls.playerB.filter((url) => url.includes(facePath(canaryIdGm as string)))).toEqual([]);
+
 		await gm.close();
 		await playerA.close();
 		await playerB.close();
@@ -210,6 +237,12 @@ test.describe('shared table privacy', () => {
 		captureSyncDiagnostics(gmPage, test.info(), 'gm');
 		captureSyncDiagnostics(playerAPage, test.info(), 'player-a');
 		captureSyncDiagnostics(playerBPage, test.info(), 'player-b');
+
+		// Issue #10 artwork canary: capture request URLs so the face-down flow
+		// below can prove the hidden card's face image is never fetched.
+		const observerRequestUrls = { gm: [] as string[], playerB: [] as string[] };
+		gmPage.on('request', (request) => observerRequestUrls.gm.push(request.url()));
+		playerBPage.on('request', (request) => observerRequestUrls.playerB.push(request.url()));
 
 		await signInAs(gmPage, 'Actions GM');
 		await signInAs(playerAPage, 'Actions Player A');
@@ -275,6 +308,12 @@ test.describe('shared table privacy', () => {
 			const content = await page.content();
 			expect(containsCardToken(content, facedownCardId as string), 'face-down card id leaked').toBe(false);
 		}
+
+		// Artwork canary (issue #10): the observers rendered that face-down card
+		// as a back — their clients must never have requested its face image.
+		const hiddenFacePath = `/tarot/rwsa/faces/${facedownCardId}-`;
+		expect(observerRequestUrls.gm.filter((url) => url.includes(hiddenFacePath))).toEqual([]);
+		expect(observerRequestUrls.playerB.filter((url) => url.includes(hiddenFacePath))).toEqual([]);
 
 		// --- Reveal: the one command whose entire purpose is disclosure — the
 		// card id must now reach every client's event log ---

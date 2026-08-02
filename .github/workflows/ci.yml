@@ -24,6 +24,11 @@ jobs:
         run: npm run content:verify:ci
         env:
           CONTENT_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+      # Hashes the committed derivatives against the committed manifest. The
+      # default (source-independent) mode needs no ignored source scans, so it
+      # runs here and in the clean release suite; it takes seconds.
+      - name: Verify committed tarot artwork
+        run: npm run tarot-art:verify
       - run: npm run check
       - run: npm run test
       - name: Build Cloudflare production bundle

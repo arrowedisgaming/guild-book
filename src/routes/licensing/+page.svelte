@@ -37,6 +37,12 @@
 		<li>This is not an official product and is not endorsed by or affiliated with the publisher.</li>
 	</ul>
 
+	<p>
+		The full rules text of chapters 1–9 — including worked examples, sidebars, and chapter
+		epigraphs — is reproduced with the direct permission of Joshua McCrowell, in addition to the
+		open licence's terms. No book artwork, logos, or trade dress is reproduced.
+	</p>
+
 	<h2>Application source</h2>
 	<p>
 		The Guild Book application code is released under the

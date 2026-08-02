@@ -1,0 +1,4498 @@
+{
+	"schemaVersion": 1,
+	"collectionId": "rwsa",
+	"title": "Rider–Waite–Smith tarot",
+	"sourceSet": "Locally supplied authorized 80-image set",
+	"permissionBasis": "Project owner confirmed permission for this set",
+	"backProvenance": "Both backs composed at build time from the committed Adherent of the Worm third-party logo (per the maintainer decision on issue #10 replacing the scanned backs); the template’s terms state the logo is \"allowed and encouraged\" for third-party works",
+	"processing": "Uncropped responsive AVIF/WebP derivatives",
+	"generator": {
+		"platform": "darwin-arm64",
+		"sharp": "0.35.3",
+		"libvips": "8.18.3"
+	},
+	"faces": {
+		"chariot": {
+			"source": "RWSa-T-07.png",
+			"sourceSha256": "61ed158907043d7182614bdf60701980397d206b367487bee096966892714ba7",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 27119,
+					"sha256": "ad7684be38391a81990df4de98727a2b31d7a8edc13b14598ff9ad224f3d363b",
+					"path": "/tarot/rwsa/faces/chariot-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 86928,
+					"sha256": "2e8be451db7790fc309f27a430e62ff56db22845b6c421d14f8db7abfdb024e0",
+					"path": "/tarot/rwsa/faces/chariot-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 242043,
+					"sha256": "e03e14ef92fdf4f5c1ae0e9c34bc9a5125d161a6fa78adf43fe8bef56443d12c",
+					"path": "/tarot/rwsa/faces/chariot-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 35810,
+					"sha256": "15ab87caf161fa2d69a0391dd63f2a09646374741bb546c7160e6ce6e96c6f13",
+					"path": "/tarot/rwsa/faces/chariot-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 118814,
+					"sha256": "6a2881d1b348cbd83be424d41585dad551925313e0f7f5162f5041681bea6741",
+					"path": "/tarot/rwsa/faces/chariot-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 339286,
+					"sha256": "572bdb2f99a235f0958fe9d163b43b7a71adaecd5e3fc79855fecfad52f2b3b0",
+					"path": "/tarot/rwsa/faces/chariot-960.webp"
+				}
+			]
+		},
+		"cups-i": {
+			"source": "RWSa-C-0A.png",
+			"sourceSha256": "7302df3ad21eb33957b2c811d40b5304a5e75638f8d3eda64e280e1d7d8f0eef",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18048,
+					"sha256": "307f2693beb2bda3cfc48b1340e8ced619f5ce7a2c7d54a004014b6b893af9d0",
+					"path": "/tarot/rwsa/faces/cups-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 65964,
+					"sha256": "ea1d6962f79928019578b7daa4eee6616c116d390ebac2c8572af3b6dd21af56",
+					"path": "/tarot/rwsa/faces/cups-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 205975,
+					"sha256": "445f37a506bbc07d5a632af69e8e33f5ec53f7d4bdab10ce9b3b0553f2a0d5f5",
+					"path": "/tarot/rwsa/faces/cups-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 24590,
+					"sha256": "ab51a7cee5e06badc974f3b887cf79fe1d3d0470ddec9a0590ff7a82bcf8d91d",
+					"path": "/tarot/rwsa/faces/cups-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 117232,
+					"sha256": "63c8ddddb2ffc7ad2f66c656e2c317783f58f1602eb0bce8dee81b228909390f",
+					"path": "/tarot/rwsa/faces/cups-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 354638,
+					"sha256": "edd79218d0eb0ef4a62afd588ecf5d2578266632e834dd6b04d74d4f1e30cd83",
+					"path": "/tarot/rwsa/faces/cups-i-960.webp"
+				}
+			]
+		},
+		"cups-ii": {
+			"source": "RWSa-C-02.png",
+			"sourceSha256": "d985614c1083443043c11bd4af83f6194ca64e8e590737f990f4f457ce968d16",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18541,
+					"sha256": "af8c2f07eeba7ccfbb78f732aeaa11d2108d2a65ec20373f7744df6d61ff99cf",
+					"path": "/tarot/rwsa/faces/cups-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 73003,
+					"sha256": "5788110149b6dd19dfe0b9f974ab05205e63c72b673b58a32f52492b224ac5fb",
+					"path": "/tarot/rwsa/faces/cups-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 219184,
+					"sha256": "16a754f4d51179333255bc9576278bf81a36c1f190bc5c6d29f866b7e2a92150",
+					"path": "/tarot/rwsa/faces/cups-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26008,
+					"sha256": "5245a2227b7ceced6df7a9136ca9405857e3d3b5154405dfb4d856abf119bba0",
+					"path": "/tarot/rwsa/faces/cups-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 120040,
+					"sha256": "c7a9853317cabb514128cd2aed8216b623963f3f68879f7844df334a372e5c66",
+					"path": "/tarot/rwsa/faces/cups-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 374876,
+					"sha256": "5dbb4211c230342c900149361b5796456604d3923e800e05ee887d04997584c8",
+					"path": "/tarot/rwsa/faces/cups-ii-960.webp"
+				}
+			]
+		},
+		"cups-iii": {
+			"source": "RWSa-C-03.png",
+			"sourceSha256": "1fad56a18ca1e0e772e3f73515ebf431e42f608f6acc36a57bbe0377e71f170e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 22062,
+					"sha256": "6e70eee6df8b465a0ca701c7935767d8e3c2c0a823c13a6d526c1e8fa04c5219",
+					"path": "/tarot/rwsa/faces/cups-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 79882,
+					"sha256": "612ad79a20fc4678b3200af21c09d450f465b765a280661e67ad9fcf392cc42a",
+					"path": "/tarot/rwsa/faces/cups-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 222714,
+					"sha256": "029db8192fbd7d9b071fae279c476736b81768bdb3e24c2e18604e8dd029781a",
+					"path": "/tarot/rwsa/faces/cups-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 31420,
+					"sha256": "ad4561ab00fe6d5d66735781832a69466657e4876bd035bba676e6c035d43c2f",
+					"path": "/tarot/rwsa/faces/cups-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 110808,
+					"sha256": "15a3d6c177298dbfb0498b81f90d526e2fc472740df4895307757a5f761d4f05",
+					"path": "/tarot/rwsa/faces/cups-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 320168,
+					"sha256": "716a98841ecc28f74d8bf4c684eb6b003fec23a14e65edb501a03f586e6d2a09",
+					"path": "/tarot/rwsa/faces/cups-iii-960.webp"
+				}
+			]
+		},
+		"cups-iv": {
+			"source": "RWSa-C-04.png",
+			"sourceSha256": "189ef7c0db33c403bfde29630006d0ca78842240ef40cf961594d916dc02123e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18866,
+					"sha256": "024e3e610829d247eaaf402923eb96429d6d570fa0deee690820c10666459a19",
+					"path": "/tarot/rwsa/faces/cups-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 67733,
+					"sha256": "af464fc449b0645faac6518c88b80d5ec5eff216957e3fdbb360445bd58585c2",
+					"path": "/tarot/rwsa/faces/cups-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 195635,
+					"sha256": "8690f2f814ecd49d4dc7a4ecd5ea090ebdfd6cae25b2faf537d858132a31788d",
+					"path": "/tarot/rwsa/faces/cups-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26368,
+					"sha256": "0c3149ea19f467d079c97451158e7fb0d9304e47631d2767cf29d5da844bf7fb",
+					"path": "/tarot/rwsa/faces/cups-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 96448,
+					"sha256": "0282f216593136243528fe4aa2ec5826b5f6bd4a9e55fc885c4178456ae73221",
+					"path": "/tarot/rwsa/faces/cups-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 285722,
+					"sha256": "9b719c5b3a0c7e14b2a0721fc0d51a83da9dfd49548a46cee5bef951b9b66b27",
+					"path": "/tarot/rwsa/faces/cups-iv-960.webp"
+				}
+			]
+		},
+		"cups-ix": {
+			"source": "RWSa-C-09.png",
+			"sourceSha256": "106eef01dac84c9caeabe154049bb1bf6d073469a2155637f8c3c6be2afadbcd",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23198,
+					"sha256": "85ece51f427a73c4b91552684820b53f43bf8860080e7794148b00c763cb7804",
+					"path": "/tarot/rwsa/faces/cups-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 80376,
+					"sha256": "ad3cea139398341e41969f03a04db459ca9abf57d27de6e3a81a9186ce649f0b",
+					"path": "/tarot/rwsa/faces/cups-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 229987,
+					"sha256": "1c9fdc60d5d773e1827497b714aff100f5d313bfe65c2ccddc336e7d7ea95349",
+					"path": "/tarot/rwsa/faces/cups-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 32434,
+					"sha256": "d57e557ba3d97d80efb80810215281ccf4a157da34d299c9d8c6efa9a5e1dc49",
+					"path": "/tarot/rwsa/faces/cups-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 108628,
+					"sha256": "60a67412a8f5b7eb84da8e7c5ba73fbb60b37e361782c9248fed8af1dd569d73",
+					"path": "/tarot/rwsa/faces/cups-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 311150,
+					"sha256": "dff8a20477e6361c3cb78d099a35162a8b93c1f7686842e8270cfa623f0e705e",
+					"path": "/tarot/rwsa/faces/cups-ix-960.webp"
+				}
+			]
+		},
+		"cups-king": {
+			"source": "RWSa-C-KI.png",
+			"sourceSha256": "389bb374a5e8f0f5a655bb1069954e5f0113667756eda39b7115b05cda6c2df9",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 21019,
+					"sha256": "8edf326dfd7c108b9c4f41ae09fe5c14327bfd407653e53f711733032750f44f",
+					"path": "/tarot/rwsa/faces/cups-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 75011,
+					"sha256": "e3ddd034ad8ef5a52274ef28ece43e1bafbb7da652c6f6092abde3f39878f53c",
+					"path": "/tarot/rwsa/faces/cups-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 220183,
+					"sha256": "dd7c21855b777e8e6efbe403b75f76b9d9a3b50f9a6a5570b6dace7f7b1efa99",
+					"path": "/tarot/rwsa/faces/cups-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 28546,
+					"sha256": "eecd78700f5e09de982ce5c087480c2b2fae8aa652e5bf9419dba67323eea4b6",
+					"path": "/tarot/rwsa/faces/cups-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 122622,
+					"sha256": "c4a4c4110133d0842f37d97b8015378393a5ecd8a97ede94224050d7f7fe25ac",
+					"path": "/tarot/rwsa/faces/cups-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 357324,
+					"sha256": "c5007dd0bf3d9c00bf2e7ef4535c4b85ce3f64787d001879e45ac084b6d9024f",
+					"path": "/tarot/rwsa/faces/cups-king-960.webp"
+				}
+			]
+		},
+		"cups-knight": {
+			"source": "RWSa-C-J2.png",
+			"sourceSha256": "d1b352ab25eb3877369d23d86ceb529cae6e8a8a51c60224d38d3eedbb76e88e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19911,
+					"sha256": "46b3c79e61f5f98c63861c3b3fc83a39757a1e4af322c868e64636fce2a6e12c",
+					"path": "/tarot/rwsa/faces/cups-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 79191,
+					"sha256": "60f9dbfc3cba6e9828192fb8b3ce02c65ed52bc44fbd5828ccbf3f9ffecce936",
+					"path": "/tarot/rwsa/faces/cups-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 231183,
+					"sha256": "b28feeaa24b1c1f5fd2e5525faadba161a3246c5c724681da0e462c57d3bec5c",
+					"path": "/tarot/rwsa/faces/cups-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 27104,
+					"sha256": "a24b0af9b945a06700adb9a0808a7ae8e069112fbaf9df956e4419b7dd410ed4",
+					"path": "/tarot/rwsa/faces/cups-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 130164,
+					"sha256": "f2fe7324594bc127d31c9dbcf12e8c09e5d76e48f0b38ad610467922fc7ad213",
+					"path": "/tarot/rwsa/faces/cups-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 420704,
+					"sha256": "b00fe063665112deebd9defdf595f753fd84f5bd1f453b92ea499b3507439453",
+					"path": "/tarot/rwsa/faces/cups-knight-960.webp"
+				}
+			]
+		},
+		"cups-page": {
+			"source": "RWSa-C-J1.png",
+			"sourceSha256": "1000d8fe7eb86a5e0c820274a86f5b0b5b0cedb04dadaa672e8797481947bd3c",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 16603,
+					"sha256": "1d709ec8c87deaf0a45b25e3d1200f7b1c6a89b351e4ea9c0248897b2afb0522",
+					"path": "/tarot/rwsa/faces/cups-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 70144,
+					"sha256": "d31249d8a022f1836113d60227b90f8f15603d577d093989e73d6d8c5fc57249",
+					"path": "/tarot/rwsa/faces/cups-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 230490,
+					"sha256": "9778d10c89980bbd164c8ee2ef6551ad3e34fd730a8938de4fa5b7287790209b",
+					"path": "/tarot/rwsa/faces/cups-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 22866,
+					"sha256": "0d527fd329f106308276fe4428901026036c3a715361fa571ede50fd5c3c56d3",
+					"path": "/tarot/rwsa/faces/cups-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 127942,
+					"sha256": "2c6c24d1af79218f7ed54f1e7bec4198b1466f94fb7ae914d3a5dd4bd2d90291",
+					"path": "/tarot/rwsa/faces/cups-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 400356,
+					"sha256": "7dbd80bc40b42e14955876047dfdaa7a93e73b154bc70d9a2c7a2b03fa874d6f",
+					"path": "/tarot/rwsa/faces/cups-page-960.webp"
+				}
+			]
+		},
+		"cups-queen": {
+			"source": "RWSa-C-QU.png",
+			"sourceSha256": "ee6368037e29f1aa20eb46e932c7124b5c809c8bee6a14374b6e8948bf422255",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23455,
+					"sha256": "894f7241183249886fd2e4df9f848fde04e297f3c7e837f7af99b7ca19ff787d",
+					"path": "/tarot/rwsa/faces/cups-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 80466,
+					"sha256": "e1285b85b30531213bd0153bbc9b8ce556522fd0833e80f5dc878322948ed6d3",
+					"path": "/tarot/rwsa/faces/cups-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 222237,
+					"sha256": "8d86d62f1faa41a5a1ea02081a5a4e57f821d36c1be1d3fdf633190a623d2236",
+					"path": "/tarot/rwsa/faces/cups-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 32172,
+					"sha256": "e55aed4ba5db18402240a35ffaf263f0177ef1aafda1494de0f1434da0c15bfe",
+					"path": "/tarot/rwsa/faces/cups-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 110136,
+					"sha256": "d49bed6658ca42b619af32de3bdc6070cf0d55dfa1146b7892396f7710694a6c",
+					"path": "/tarot/rwsa/faces/cups-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 318974,
+					"sha256": "7f1556178543c42986e9f631558de965dba01ba753a7274e24076173fceb4541",
+					"path": "/tarot/rwsa/faces/cups-queen-960.webp"
+				}
+			]
+		},
+		"cups-v": {
+			"source": "RWSa-C-05.png",
+			"sourceSha256": "3beba094aa1f8e92cc2abe193cbd90f5cc7e7825f28a51b1296f8f8f490726b7",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 11481,
+					"sha256": "381f43fcbc2c0e7e4e640d190ec7c9be21b8a0c9ccce30e93cc633945fc6e396",
+					"path": "/tarot/rwsa/faces/cups-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 38237,
+					"sha256": "1d75543a8ac44561c1e0e729cb7aaa1b7fee4fc94eee975ff5435ceaecdbb8ea",
+					"path": "/tarot/rwsa/faces/cups-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 114106,
+					"sha256": "48ff61834c0c029d2a3414614c59c1f9adfe5bad00f254b133f8ffbe216f1cec",
+					"path": "/tarot/rwsa/faces/cups-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 15518,
+					"sha256": "ce31f7e832bcfad4bd7eae21ffe631f76e3b29cc8a5f99a5b52b08e33fd14572",
+					"path": "/tarot/rwsa/faces/cups-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 55050,
+					"sha256": "20e36b29bd3326231731b9206a8844a4552581467abc640a20085e2ea492ded0",
+					"path": "/tarot/rwsa/faces/cups-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 159432,
+					"sha256": "f4f2d0f352ab6ec59730b43c26727b8bf73e524bb44dddbddfbc72fdf5266185",
+					"path": "/tarot/rwsa/faces/cups-v-960.webp"
+				}
+			]
+		},
+		"cups-vi": {
+			"source": "RWSa-C-06.png",
+			"sourceSha256": "56f4b1a92875ec3af50b38a5fc97786468c78bd08b76a026b6b6299551fe832a",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 26766,
+					"sha256": "7019c8d9098f179ad659162b2ff8b7ff47427881f79e24738ed29e6b930ab8f1",
+					"path": "/tarot/rwsa/faces/cups-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 92661,
+					"sha256": "25143d951024bdcec55b7ddd9a58d4e1fb9a4f876193e12e6a14bb8b9bbd80d1",
+					"path": "/tarot/rwsa/faces/cups-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 267388,
+					"sha256": "fad22b130de9a0cefe4258e9cbcec52e143e8cefbf97da83cddbf340f2ae58a3",
+					"path": "/tarot/rwsa/faces/cups-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 35606,
+					"sha256": "94fb79bbe2ea74e7d19040e3c8096bd1f2968e501ecbd137b9195953bca9c0e4",
+					"path": "/tarot/rwsa/faces/cups-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 144872,
+					"sha256": "35c51507138be0c628c2af7c95ed017488d2fb772872f7eea4c5020b2e2ce87b",
+					"path": "/tarot/rwsa/faces/cups-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 437444,
+					"sha256": "3a27a863a2aea30394bae26e6d7415795baee0ffc0dc7f7ffb42e4ac2aa9b93e",
+					"path": "/tarot/rwsa/faces/cups-vi-960.webp"
+				}
+			]
+		},
+		"cups-vii": {
+			"source": "RWSa-C-07.png",
+			"sourceSha256": "3644e36ccf07ba67e9db16769c072cf56937c3bcc132e175a0d23740d160c8fc",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23313,
+					"sha256": "4cdaf2d605f918377e5e2f7df9068309becd37bce0f854ee276971abea07d64e",
+					"path": "/tarot/rwsa/faces/cups-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 68246,
+					"sha256": "d33ce0b05594610b52fc3d725dcfd0e831fe162d865e28ceaf6e564d8f3ce906",
+					"path": "/tarot/rwsa/faces/cups-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 180534,
+					"sha256": "7c2a56a3fc3e3dc8d1ce26a97a4217360f48c82dde6937a682046c973bab6bf2",
+					"path": "/tarot/rwsa/faces/cups-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 30326,
+					"sha256": "4f5d0dfdbd39a63c161fb00ea870f5b445bf338c7e4460e75dd005e3db40e619",
+					"path": "/tarot/rwsa/faces/cups-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 92796,
+					"sha256": "0ff37de14386e425918734582e44d8c84d9187a57ac52a162f8d18dcafa4aa52",
+					"path": "/tarot/rwsa/faces/cups-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 252778,
+					"sha256": "42c5cb83ef6391ff55d1deb6219acd23d36a2953eac7d66e15de55efdc4418a9",
+					"path": "/tarot/rwsa/faces/cups-vii-960.webp"
+				}
+			]
+		},
+		"cups-viii": {
+			"source": "RWSa-C-08.png",
+			"sourceSha256": "f259231bc27c6d901a96c21ed52c2df8835a6c160d19a47c61af19a310f1115a",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 14723,
+					"sha256": "faff2becd937667c2b3933a17dcc91d2a771eb46bc7601cc8d9228dafaaf8438",
+					"path": "/tarot/rwsa/faces/cups-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 55201,
+					"sha256": "a124c9173abb0cfa2f39748cb9a6a7f3a4e55968ca94a540b7f4952e4a5e2360",
+					"path": "/tarot/rwsa/faces/cups-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 183698,
+					"sha256": "92889460d9fc49069764f92632a1adcd1afd1a672160e4f22edbda8810757e7f",
+					"path": "/tarot/rwsa/faces/cups-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21330,
+					"sha256": "87e3fc3cf20165f8af8f6f1fb5929a3692cf621d0f916e69a13914173570f493",
+					"path": "/tarot/rwsa/faces/cups-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 103512,
+					"sha256": "e02205c528ab1e7317d0b211bd1286f7e043b6eca407447ec90a5399cdb9f07d",
+					"path": "/tarot/rwsa/faces/cups-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 310918,
+					"sha256": "79043dcc44170b72b2cafa49cc1bb2b40b30f4cfdd5b4674a6c450219c08c202",
+					"path": "/tarot/rwsa/faces/cups-viii-960.webp"
+				}
+			]
+		},
+		"cups-x": {
+			"source": "RWSa-C-10.png",
+			"sourceSha256": "70284798e0e27415115f55453dfd33a85d8bc517aab6fdf7957475ad6e1ab068",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19272,
+					"sha256": "a9cf4dc86e50f0d2548f218e53772fa798d08bd418958faeaecb05a7bd95b485",
+					"path": "/tarot/rwsa/faces/cups-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 82393,
+					"sha256": "9e2227eb60745cfe337c198c7a73332848a23fcd4e3c5e241ca1f88f561f5e32",
+					"path": "/tarot/rwsa/faces/cups-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 254249,
+					"sha256": "2fbf66684298fb32faf0d1b6c3489ca7798469c29c2e22c456807af19458e7b7",
+					"path": "/tarot/rwsa/faces/cups-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25738,
+					"sha256": "00af24c1fabfbe25f72a3cc91c051e5cc644bbf1a1251d78c2b07c3115ae4bef",
+					"path": "/tarot/rwsa/faces/cups-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 132946,
+					"sha256": "c75ec1ce8f1649d3f9c29077e77134a994f5a186991ce6025ebb26e48fcb47b0",
+					"path": "/tarot/rwsa/faces/cups-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 435684,
+					"sha256": "3d91b7d33c7ec8353f0786970b33c0afe072d88a9a697d2df2d4122ca241897a",
+					"path": "/tarot/rwsa/faces/cups-x-960.webp"
+				}
+			]
+		},
+		"death": {
+			"source": "RWSa-T-13.png",
+			"sourceSha256": "dc2bf74a0d97c0b4e3235710c0f8c114695f1279e727e8417a9f192eb2228325",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 27242,
+					"sha256": "79898627a07141778fac95c7749f11289b07a30c013a4d7d2c8e580979c2ef12",
+					"path": "/tarot/rwsa/faces/death-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 94580,
+					"sha256": "690198f6486bdd54f6867d7a664894df9ae4cd285ce358a7ed830906706510c7",
+					"path": "/tarot/rwsa/faces/death-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 252373,
+					"sha256": "52c193f6f9186a0d993536f5b2e5c7ecc2e312bc0a129cb2da34d332daea605e",
+					"path": "/tarot/rwsa/faces/death-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 36516,
+					"sha256": "c17d0663deb220f328695faf9b8a721444bdc8c809d9b8ea265f974456ee38c4",
+					"path": "/tarot/rwsa/faces/death-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 136882,
+					"sha256": "5aed45853e45e6d973957cf85f7064af282abd2d202fd3baa25a0e80c65a6614",
+					"path": "/tarot/rwsa/faces/death-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 390478,
+					"sha256": "11193624d05ab93473269037185af1fd615723f5984a73c3cf1c7fb1ea77a7e5",
+					"path": "/tarot/rwsa/faces/death-960.webp"
+				}
+			]
+		},
+		"devil": {
+			"source": "RWSa-T-15.png",
+			"sourceSha256": "9f53ce1c4f33b0e78d1e0c3a40d57a11674d1cb81c09670c3eac9867e272ce35",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18729,
+					"sha256": "9c6637c46781a9a8c9f7714051fc1a6a65f5465c253ff878404c75ab2ce703e3",
+					"path": "/tarot/rwsa/faces/devil-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 62761,
+					"sha256": "6118215e44a6d6f667d6f72f1cce83f1a7833a551f247961a8f850d78f0c5505",
+					"path": "/tarot/rwsa/faces/devil-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 180279,
+					"sha256": "d8f0ef0f9c07c0d58db58f91b0cee8598977b9652f6e012b9fb07ef33ac0a904",
+					"path": "/tarot/rwsa/faces/devil-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26440,
+					"sha256": "9877c1f878e7c793ec74bc34aa1bc648b64aaa8f4c85562c4962b3f9964d6ab1",
+					"path": "/tarot/rwsa/faces/devil-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 90772,
+					"sha256": "79e992b93c05652267522fc7a36d5101e4fd4e2400e80c55f90bf401e346ab1b",
+					"path": "/tarot/rwsa/faces/devil-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 260146,
+					"sha256": "00902c40e4df8b70131de4921cb56d26181dc71a3962a4c7b28a8d40d4615c2b",
+					"path": "/tarot/rwsa/faces/devil-960.webp"
+				}
+			]
+		},
+		"emperor": {
+			"source": "RWSa-T-04.png",
+			"sourceSha256": "90e3f1c3d621c09fd240380a8f6ffd1b9c88fea6f6d411919eb63a4948286b39",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 25953,
+					"sha256": "b44f23d026c6a5effc5eeeb4440fc20c6071bd736a62acf158a292f9e2fbf1db",
+					"path": "/tarot/rwsa/faces/emperor-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 88611,
+					"sha256": "ef4765f05e02ddc7a66bd423aa7a8cee51614628b86842b80c3dabc44021597d",
+					"path": "/tarot/rwsa/faces/emperor-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 246457,
+					"sha256": "40a72a0a17429d2d89e3b6d7a5405716b8ebe87e4f31b5c2b06cd648d86d55b6",
+					"path": "/tarot/rwsa/faces/emperor-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 36698,
+					"sha256": "6b5cb6d17fd3715b40a47c7949383fcafa0e040e58754269ff2459f8ff411f50",
+					"path": "/tarot/rwsa/faces/emperor-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 136414,
+					"sha256": "e09cf7b1a02ea12110b1e26941b6b7afaf2dd819d6be8301d8178610647e9919",
+					"path": "/tarot/rwsa/faces/emperor-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 392584,
+					"sha256": "f68ab2e6fe9ba0cf107657bbd99ce711aa5e0d596a10641b632e66d8186b893f",
+					"path": "/tarot/rwsa/faces/emperor-960.webp"
+				}
+			]
+		},
+		"empress": {
+			"source": "RWSa-T-03.png",
+			"sourceSha256": "79462efaebfa666a77847db2f1213aa40c8a77f1aaa737c1e19ba329f6e1aab9",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 30605,
+					"sha256": "a9c1d5f46aa62c14d20327da5f883b6591048e32e449b7f984065fe5ed3e20b1",
+					"path": "/tarot/rwsa/faces/empress-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 100489,
+					"sha256": "c6e9e9a83a33680519fc32d8493e4158534286cc0b845b03475dfa150ee87a8a",
+					"path": "/tarot/rwsa/faces/empress-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 254925,
+					"sha256": "d44a2b2e40eff57951cbf27ad7bf20799b418c06303a1182cae9cfc4c5d8004f",
+					"path": "/tarot/rwsa/faces/empress-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 41082,
+					"sha256": "94a70bf82a8ac722f76f9926843a94f95c42f99bf85a89a8203f78286595bacd",
+					"path": "/tarot/rwsa/faces/empress-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 138456,
+					"sha256": "5442af5e3492a859f53058f965e95ef08e9fe92c2904a6d8225bb945f0177dea",
+					"path": "/tarot/rwsa/faces/empress-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 371794,
+					"sha256": "126e66a0f2a5d47e74a6697ef101f272506cb9bf514b32c4c064246815bcbf60",
+					"path": "/tarot/rwsa/faces/empress-960.webp"
+				}
+			]
+		},
+		"fool": {
+			"source": "RWSa-T-00.png",
+			"sourceSha256": "5d2f2246ba78bb0797ae9f8a4d98f44b4e45942eac4d7bf9de7c0ba5f8e867db",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 21737,
+					"sha256": "de7b6efd74956633e5830e70cbabe1913aa574614e6d7e13e668b6b3c49636e1",
+					"path": "/tarot/rwsa/faces/fool-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 75774,
+					"sha256": "c0793c2003714b5a9f6305ecb96ff485017e66931eddcbe4cc13488c6647aa93",
+					"path": "/tarot/rwsa/faces/fool-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 215792,
+					"sha256": "5e619b903849f1b64d3c0a93d227e3ed857165a2e39a210e51b5ce8afccf0346",
+					"path": "/tarot/rwsa/faces/fool-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 28554,
+					"sha256": "d66f71b12845c346356548b19d78cb628878c532fc878dd8033b79c1bb3973b0",
+					"path": "/tarot/rwsa/faces/fool-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 98642,
+					"sha256": "6cbd610187eb1949916409e46eded174c009a4fa43148cbd9206b9f77d48500c",
+					"path": "/tarot/rwsa/faces/fool-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 286692,
+					"sha256": "2b87f39330ad3b1188bedfb4220e3ebcc7fe29fa34450a5e9eb9a61fe096b133",
+					"path": "/tarot/rwsa/faces/fool-960.webp"
+				}
+			]
+		},
+		"hanged-man": {
+			"source": "RWSa-T-12.png",
+			"sourceSha256": "5ffac041d7500423daae087611b2e58831471af2defd601ce1c88106bd399e3d",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15269,
+					"sha256": "5d5a62931384c3ad025f3660fb08b4066475f1146ff5457780e58d849d6a6396",
+					"path": "/tarot/rwsa/faces/hanged-man-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 62923,
+					"sha256": "28f1efa5417a3816ce8c5babf2da280b3e922537f4a049d7a38b364efd41d51f",
+					"path": "/tarot/rwsa/faces/hanged-man-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 206843,
+					"sha256": "8fbd43a1c42e79b41e827ac7f6698cb8b8ee6213c63f0aba509a6bb7ea902ae2",
+					"path": "/tarot/rwsa/faces/hanged-man-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21082,
+					"sha256": "7c74bc0304bad9f25e0762d1442b6bafab9e0dd46bc5e44c742152dc5897a218",
+					"path": "/tarot/rwsa/faces/hanged-man-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 115366,
+					"sha256": "98859de3a92197eb3839b08046a0361ac7dbf621082966faf40bae68952ce1a0",
+					"path": "/tarot/rwsa/faces/hanged-man-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 360192,
+					"sha256": "3c4e9dd73a184fa0d361753a75a9e073971f570cea48b22c13de4c3bc2ea190b",
+					"path": "/tarot/rwsa/faces/hanged-man-960.webp"
+				}
+			]
+		},
+		"hermit": {
+			"source": "RWSa-T-09.png",
+			"sourceSha256": "196020eab0ab7b0961033227d4801c050607e1dcb5e47001b5a2414b73bf91e6",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 13256,
+					"sha256": "7a32307d67b3f181c18a5c5a7bb8bbe5951a9524df748c798d3ae899b4e966c4",
+					"path": "/tarot/rwsa/faces/hermit-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 41497,
+					"sha256": "5c7f606f3f40706a299d53eb6bfc6863e9cd1981609c0de5324747fa465ef182",
+					"path": "/tarot/rwsa/faces/hermit-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 124428,
+					"sha256": "f307fb3b73f83562506ce7574ef778b96e498ef2aec9fbd966854f78dfbcc2cd",
+					"path": "/tarot/rwsa/faces/hermit-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 17910,
+					"sha256": "fcd4f31c501cab82473305e5be4fbc3c972b9b29a0bda70ba577c4ed57e9cc15",
+					"path": "/tarot/rwsa/faces/hermit-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 53662,
+					"sha256": "e6bf5370588724954a832e8b288dad7c172ea13916ea16566fbd3f5aff5e551c",
+					"path": "/tarot/rwsa/faces/hermit-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 155396,
+					"sha256": "61416a4798eb72515287c2872365f55c13aae80ec3d845decc07ccfe0e5896ab",
+					"path": "/tarot/rwsa/faces/hermit-960.webp"
+				}
+			]
+		},
+		"hierophant": {
+			"source": "RWSa-T-05.png",
+			"sourceSha256": "a840311409085bec3a360f4d2d211b277f24928bd52cea686df22f334c0feaec",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 27632,
+					"sha256": "9024fc4243c5a222dcc32353cbd51afea4883516ada3eb29bd6e09279c0587ea",
+					"path": "/tarot/rwsa/faces/hierophant-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 88419,
+					"sha256": "666dc1f4111de033ae9ceec1da570d91fac9c181a0114d9961974a0fb711c8ac",
+					"path": "/tarot/rwsa/faces/hierophant-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 218719,
+					"sha256": "253f143bfb3ae26c2186bc97f0d3a6724d5026083c0f9497c1a5b294115e8960",
+					"path": "/tarot/rwsa/faces/hierophant-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 38272,
+					"sha256": "d43a3a2a059b5dd3d579252f95c8621de19353fffe48630317a283b2c1fec0ad",
+					"path": "/tarot/rwsa/faces/hierophant-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 129624,
+					"sha256": "8468fa1e459d7da49029fea5d5687332d6598fab451797dfecce29c34d5e7a6a",
+					"path": "/tarot/rwsa/faces/hierophant-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 339796,
+					"sha256": "61083f5907bc5645c1f29e58dec65ea251dd44b101cc4a3b1849ef0b41d33805",
+					"path": "/tarot/rwsa/faces/hierophant-960.webp"
+				}
+			]
+		},
+		"high-priestess": {
+			"source": "RWSa-T-02.png",
+			"sourceSha256": "9d38e6847631f8fe54d8fe599c3b83cb7ccc6a3559d4380fcd519cde922cf8fa",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23983,
+					"sha256": "53df2e9b4c73d946a16b0979547daefb7ff85838e33d127bc71e5d96328081e0",
+					"path": "/tarot/rwsa/faces/high-priestess-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 76408,
+					"sha256": "9f25424d930461d42e324e442a25a019b0c580caf4e77933f9203bf56808661b",
+					"path": "/tarot/rwsa/faces/high-priestess-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 216017,
+					"sha256": "b573a5b92b7e3fec8e7b699514e79df0aae70dca7e6ed75f8f6c5dde1ae0b520",
+					"path": "/tarot/rwsa/faces/high-priestess-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 32980,
+					"sha256": "292036ad893997d536b0d5e88afd8f07981ba4d29b4fa47df0f41529052bffe7",
+					"path": "/tarot/rwsa/faces/high-priestess-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 113352,
+					"sha256": "2e1a8f5ad51ea15ff80c05b9f8f868f0af3127039b7b8d4d5773987d2679507c",
+					"path": "/tarot/rwsa/faces/high-priestess-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 325874,
+					"sha256": "99066705a80de098800f1426403912f86bc631cc6c1926c805c0e293ec19ce6c",
+					"path": "/tarot/rwsa/faces/high-priestess-960.webp"
+				}
+			]
+		},
+		"judgement": {
+			"source": "RWSa-T-20.png",
+			"sourceSha256": "83507cb49ec38ce46e88f0ebbb6a438e2f9ba6ab4dcf0c5836b74291d7cf5417",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 26900,
+					"sha256": "18551f3eabf0bdb11d6d11010bfacf574bc5cdf8f9526552a460ea1027398191",
+					"path": "/tarot/rwsa/faces/judgement-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 92813,
+					"sha256": "35ba3c6589b8cb527312c7606c3510a1f259bf155d414f91c6cde50087140db7",
+					"path": "/tarot/rwsa/faces/judgement-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 252895,
+					"sha256": "c0cffe905e64df882ac1fb1e05a04fb2b6580bdc4634cfd6e99cfa9f27cf721b",
+					"path": "/tarot/rwsa/faces/judgement-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 36422,
+					"sha256": "162fda0edc1e795a95e3a7d6a1a1001564606458f6151f2cd6d55fb4cd673b40",
+					"path": "/tarot/rwsa/faces/judgement-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 130208,
+					"sha256": "366288298476a84c56c3004cd5ed3cfd9ecbc1301e76e2e712bed78e4e7f7b71",
+					"path": "/tarot/rwsa/faces/judgement-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 373252,
+					"sha256": "84b4f60bc8d5e23c6ade6f248ff3cf6be667cbfe319db90c44fc5eac55872264",
+					"path": "/tarot/rwsa/faces/judgement-960.webp"
+				}
+			]
+		},
+		"justice": {
+			"source": "RWSa-T-11.png",
+			"sourceSha256": "f9dfc2234e9bf124a40315d169d44b31417d51d4b325cbc1a00753686c604c9d",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 25111,
+					"sha256": "9a0c51f477c50008f13a69c48c8af101b18069454c375e822e04ed961ff48037",
+					"path": "/tarot/rwsa/faces/justice-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 82493,
+					"sha256": "c79724fa10ea4e1fbdd958eb0d491e65204d91bfab0a858c0df6a05d9afbbbbd",
+					"path": "/tarot/rwsa/faces/justice-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 217734,
+					"sha256": "1c25976ce8518dfbc00d151422773c910a7947287c1f73be30ed3754f20db43e",
+					"path": "/tarot/rwsa/faces/justice-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 36144,
+					"sha256": "037b88179a6cdc2e04f3c0987759d45ae7a16a77aeb80b23e923a593448c7e06",
+					"path": "/tarot/rwsa/faces/justice-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 123438,
+					"sha256": "c19aba30c2b899ced0491dd86f6ccea3c08105ed85aff39a880c4781b6743456",
+					"path": "/tarot/rwsa/faces/justice-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 335764,
+					"sha256": "4abe48c79478a6585445e8eb7e31f2c2a72d065490a9f6695a1fc0faf1d78523",
+					"path": "/tarot/rwsa/faces/justice-960.webp"
+				}
+			]
+		},
+		"lovers": {
+			"source": "RWSa-T-06.png",
+			"sourceSha256": "79d01b48ac19bbd6409936983e71521e266d832d4e71c964ac30131b4ac0dc3e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 28389,
+					"sha256": "33cca8aabea624dfae698a409c11491b509d8c7d9afbe29c0e31b11294ac5b0c",
+					"path": "/tarot/rwsa/faces/lovers-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 102926,
+					"sha256": "bf592e1a3316d3a422306ba1ae858110bb8d8e375b1bf4f3df3434ae23dc62a8",
+					"path": "/tarot/rwsa/faces/lovers-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 279501,
+					"sha256": "9e9bf2341dc93e50200a01451c0f25c3302965f391d71292f855e4caeff031b9",
+					"path": "/tarot/rwsa/faces/lovers-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 39338,
+					"sha256": "a6173a57e5671cd2afa2fa9b2d4da3d3dd40d0b5403c5555480790027695278c",
+					"path": "/tarot/rwsa/faces/lovers-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 145408,
+					"sha256": "0516ac72b44e10a42ba229134142b0ea8e24813060fee469871af16f667cf7e6",
+					"path": "/tarot/rwsa/faces/lovers-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 426382,
+					"sha256": "9942b85b224680a4bd58a3e76435a7036d164e6f42d0746f4b88b1e785cf23d4",
+					"path": "/tarot/rwsa/faces/lovers-960.webp"
+				}
+			]
+		},
+		"magician": {
+			"source": "RWSa-T-01.png",
+			"sourceSha256": "dc84cbfa41ede147501cd7ea43eb91bff7080a9c3ca07834d3807c443fb71c8a",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 22964,
+					"sha256": "d9f551e82bc73e50b7f143e792a86e7625870bff90c006b265fde722fbb8632b",
+					"path": "/tarot/rwsa/faces/magician-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 76349,
+					"sha256": "2d1048355cfccb1d6de0835454345e60bd19ca0028c9f521ffa157cf6b053efc",
+					"path": "/tarot/rwsa/faces/magician-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 218756,
+					"sha256": "41d07716e6b9b7bbea13aff483106f6a1e64e5b8c40a45577ea9d0f16fa3199a",
+					"path": "/tarot/rwsa/faces/magician-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 29630,
+					"sha256": "7ab22175613c9c9782bc48c0c6f418af2f3cd9c3361a7c9a453c59f86f89dbf2",
+					"path": "/tarot/rwsa/faces/magician-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 97840,
+					"sha256": "3ca7c44bfe9f5a80f740c6ccc7e439a17c06a192691cae902eef43cabce55a49",
+					"path": "/tarot/rwsa/faces/magician-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 285784,
+					"sha256": "e52c022d1c9458be97e2d835ff4f6275c5aaa109b43a66bef220db76f98d8c43",
+					"path": "/tarot/rwsa/faces/magician-960.webp"
+				}
+			]
+		},
+		"moon": {
+			"source": "RWSa-T-18.png",
+			"sourceSha256": "2c14800dc6a5e6883c8c7fbc40a9b644a79f7e8bccf6b0343ff174a9c923b6ee",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23856,
+					"sha256": "c70207abc2056e6b9f731cc1ab65cd98e303aa61ec417008a17da8e13d76e9c0",
+					"path": "/tarot/rwsa/faces/moon-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 78235,
+					"sha256": "fa32216383a75c9d3fac6f3c49085866d625965ec5aa064e99a16cbffc4029aa",
+					"path": "/tarot/rwsa/faces/moon-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 222370,
+					"sha256": "a50b55298c8bb96e92205cd59a83ecf06e0bfbbbb7677fe6b84d10f69ac2223e",
+					"path": "/tarot/rwsa/faces/moon-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 32532,
+					"sha256": "5edf2175e2c150f7199b83990772b79a3a383f692b6a3d420d92644370e3f778",
+					"path": "/tarot/rwsa/faces/moon-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 110888,
+					"sha256": "7336b0cf7cf643d92c1bd86f40f048e9b6378003cece4814b812532fb42ed8b4",
+					"path": "/tarot/rwsa/faces/moon-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 338182,
+					"sha256": "f463ec32c674b23920b4473b1f6dbedfbbea47f6cc6d8b3ae32abbd7eb78d8b1",
+					"path": "/tarot/rwsa/faces/moon-960.webp"
+				}
+			]
+		},
+		"pentacles-i": {
+			"source": "RWSa-P-0A.png",
+			"sourceSha256": "17029f1d47f13f652517cf8cb69ae7ab6bf0afeb1218dba6b911786aaefb7696",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 16141,
+					"sha256": "fe6fae6eae7fa6d480805ce9bac544217cd5bd66b5cda5ccfa05eca43904e3ce",
+					"path": "/tarot/rwsa/faces/pentacles-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 60553,
+					"sha256": "e20085e09d07b5dc3589546db44be0ac9ba072f2cd669f25e381ee327086d741",
+					"path": "/tarot/rwsa/faces/pentacles-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 192318,
+					"sha256": "f684aa08f16ebac6239c85086929894823594e825eea2361f5c2230b1f0837d8",
+					"path": "/tarot/rwsa/faces/pentacles-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21980,
+					"sha256": "18590f7643628ed83ce02b74a41885da3a26b97de0bf5e42f5db168e68d2e51a",
+					"path": "/tarot/rwsa/faces/pentacles-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 107732,
+					"sha256": "10ce526138501ba8d4de9a9d0925c4221ad0c93e775b05dc8fd342922e635897",
+					"path": "/tarot/rwsa/faces/pentacles-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 322276,
+					"sha256": "01bb76f44b5d8975008044b631e3e11dd1f85c5f38a784331a4f1b57c9f06e9b",
+					"path": "/tarot/rwsa/faces/pentacles-i-960.webp"
+				}
+			]
+		},
+		"pentacles-ii": {
+			"source": "RWSa-P-02.png",
+			"sourceSha256": "e21f4ab9a7ab8876787e9e19c324ce4cb0b3d0d04516991c50d258d268e0af99",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15044,
+					"sha256": "2a35ae1e999688cf7fb04d7e2d162607ff2dc7bb9d5a5cb33451661c3b131e6f",
+					"path": "/tarot/rwsa/faces/pentacles-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 63864,
+					"sha256": "2b4b1a290cd324b254dfb53184867cd3c3e8fc0acdc1d0cd9d8a48c18ea1ca87",
+					"path": "/tarot/rwsa/faces/pentacles-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 206695,
+					"sha256": "a03969453b87f5fd64bb9c9c33d4d695ccc79d2b831d54243699f51da83e7188",
+					"path": "/tarot/rwsa/faces/pentacles-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21036,
+					"sha256": "135590dbe8d1f41fceebc4a030fdda9c91408370ee2104c714f70f6eb78cd499",
+					"path": "/tarot/rwsa/faces/pentacles-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 113004,
+					"sha256": "91ab532a2059b213fa9f4fdad5b78b6cbe4408554a46e13cdbecb4e12f65e7b1",
+					"path": "/tarot/rwsa/faces/pentacles-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 365886,
+					"sha256": "fe3ab66658e534062c9eb7ddfa672d51323b60c3ab30fc807dfb7723b2cff344",
+					"path": "/tarot/rwsa/faces/pentacles-ii-960.webp"
+				}
+			]
+		},
+		"pentacles-iii": {
+			"source": "RWSa-P-03.png",
+			"sourceSha256": "16c968114cf3625bc6ecdde4e0fbbf359ec6f10b8106cb7c8c4178f59056a539",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23551,
+					"sha256": "6feeffef091b4223e0b1eaa4453307936ccd8bae2456a7435ccc44522184be79",
+					"path": "/tarot/rwsa/faces/pentacles-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 81082,
+					"sha256": "287092402ac525ca2bd12824750e8d87285d30f2bfca5428e262e9ad149f8acf",
+					"path": "/tarot/rwsa/faces/pentacles-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 219905,
+					"sha256": "25cf3c7210fb07c6cf08d5b9ef4eaa347c1c8a562aa9563606f0b651965ad0a3",
+					"path": "/tarot/rwsa/faces/pentacles-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 33720,
+					"sha256": "fac7b148bc47adc5fe70409902b5d562e6ed20bb7111d2ca2347ec65893bd783",
+					"path": "/tarot/rwsa/faces/pentacles-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 117344,
+					"sha256": "7a2e54cb58ec35825d6ae866b52a5604f9f19c0f5a54e4656c640eac73a1f25a",
+					"path": "/tarot/rwsa/faces/pentacles-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 332536,
+					"sha256": "edf7724179c083b2383f7bea413c29d7ffb319cd2e31186ea29cb8b85864dd24",
+					"path": "/tarot/rwsa/faces/pentacles-iii-960.webp"
+				}
+			]
+		},
+		"pentacles-iv": {
+			"source": "RWSa-P-04.png",
+			"sourceSha256": "8e3052cd87ed5acb07c4b8e26fb0bab35d27126602b7aa99a399a84ddbedcee5",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 11675,
+					"sha256": "618dc70036ba9e3ca75e113adcd3265fc26d2503f32818354e920f1a802519a9",
+					"path": "/tarot/rwsa/faces/pentacles-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 51219,
+					"sha256": "690b1263d0083bf6f09e2a0dcfd2b07ca1f95657d596f2433e823ee420cb79f8",
+					"path": "/tarot/rwsa/faces/pentacles-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 183705,
+					"sha256": "efd3472d069b1d1be0a269bb9b70d6805363f424997a6ccd667f04324c136a12",
+					"path": "/tarot/rwsa/faces/pentacles-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 15630,
+					"sha256": "a7b2e14455fddd045aecd7ab57b87f081cae5cbf205a4bb1d72c51654b9dcbd3",
+					"path": "/tarot/rwsa/faces/pentacles-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 101594,
+					"sha256": "87262201b9a47ae2035a1fff0087ae03e1d8ccbe052655b6146075313f4a43b2",
+					"path": "/tarot/rwsa/faces/pentacles-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 318500,
+					"sha256": "0edb3c3feab6aabf07fa36eec51ca9ca756a48084ff2d43bfda7055848421824",
+					"path": "/tarot/rwsa/faces/pentacles-iv-960.webp"
+				}
+			]
+		},
+		"pentacles-ix": {
+			"source": "RWSa-P-09.png",
+			"sourceSha256": "1fd141b448d2ec9fe553e4a7529d03aac35d49fe5ff079d568c4af3a391a868b",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23839,
+					"sha256": "710c909895b75582937bae75940431103064c2e7f5407887926bc137d566e38c",
+					"path": "/tarot/rwsa/faces/pentacles-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 79859,
+					"sha256": "ff29a67e9b0d924f6a6b4a04d7d24b106ae8b1725446f687a0f338790e793aac",
+					"path": "/tarot/rwsa/faces/pentacles-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 235492,
+					"sha256": "a0e484000da5b930c4f794dda27c2407eb7944031ed7a1a3bd4efc5f1bbb27cc",
+					"path": "/tarot/rwsa/faces/pentacles-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 32654,
+					"sha256": "24c1a8c8fdd17fdb963ba43200d3ef8cc172628c1604eae29da207f3bfea0e3d",
+					"path": "/tarot/rwsa/faces/pentacles-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 110256,
+					"sha256": "dbe761eacf76cc77477354e28834f6f6725af18577a6c19df34b4cc17bceac53",
+					"path": "/tarot/rwsa/faces/pentacles-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 323610,
+					"sha256": "290ed8a3ca6fd8aeec4f234f2a3ce42adad8d701c37f683773d6da23dac74bed",
+					"path": "/tarot/rwsa/faces/pentacles-ix-960.webp"
+				}
+			]
+		},
+		"pentacles-king": {
+			"source": "RWSa-P-KI.png",
+			"sourceSha256": "f340a6bb7cb5f142525fbd5c7ce4327b0262538bfa063eefa36459a7829c79b0",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 26235,
+					"sha256": "4003960537d8b74bd5078446f28533dc8de071ae94138d56dadc4deb9539fb02",
+					"path": "/tarot/rwsa/faces/pentacles-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 83991,
+					"sha256": "b2440d821890f589ceeca2ef5503605a3623d7ea37540a34db43e52bbd6c89f9",
+					"path": "/tarot/rwsa/faces/pentacles-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 219814,
+					"sha256": "e98cc9e256c823663d4c87b99a21b69f9ae7449eb574ddb5785a1c8e296155d1",
+					"path": "/tarot/rwsa/faces/pentacles-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 34138,
+					"sha256": "7af725de39ef04a523009bd0854b3bf02ad35e2b76804b11f6f475a456c03733",
+					"path": "/tarot/rwsa/faces/pentacles-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 110358,
+					"sha256": "c3d245dc2f5ff8d69e4675e2bcefddcfee481f30b030255fd0bdf58cf881e511",
+					"path": "/tarot/rwsa/faces/pentacles-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 301480,
+					"sha256": "dfd9fdd6759dfda1e0f365e0bab7ad345980dce8caa2b582d21f876c8facede9",
+					"path": "/tarot/rwsa/faces/pentacles-king-960.webp"
+				}
+			]
+		},
+		"pentacles-knight": {
+			"source": "RWSa-P-J2.png",
+			"sourceSha256": "5f19b0a7d91d0fe5fd3aea56533e2249b2d74494475555def720fec429248dd8",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17224,
+					"sha256": "595763a9b479efd16bdff9668518d40d45f571517067b2c24d313c8d3fd8abf3",
+					"path": "/tarot/rwsa/faces/pentacles-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 62338,
+					"sha256": "ebc99d622c008b9b29b15b1fb2b7300e29da586f9b6e5161594824168ba84919",
+					"path": "/tarot/rwsa/faces/pentacles-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 193953,
+					"sha256": "d258d8511eae8c23251f9d6486b5943eaf07cd8f91bb9f01106606340b5c0e8c",
+					"path": "/tarot/rwsa/faces/pentacles-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 22608,
+					"sha256": "f182e326483982f1ff6e36ce4fbfab961fb6c79a4d842bd23678c2a534bb455d",
+					"path": "/tarot/rwsa/faces/pentacles-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 80126,
+					"sha256": "dc302058adc771d1869252269c3879e2e298f86759c019b04066e146d8386a6d",
+					"path": "/tarot/rwsa/faces/pentacles-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 236262,
+					"sha256": "515bedbb4d058dd004704479565f16c969b15f805c427a86f922e751a76c4871",
+					"path": "/tarot/rwsa/faces/pentacles-knight-960.webp"
+				}
+			]
+		},
+		"pentacles-page": {
+			"source": "RWSa-P-J1.png",
+			"sourceSha256": "b80fdc0e593aa497a952f5b523c4c44b440559df90020b213d97aaf78ae2a459",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17123,
+					"sha256": "c86ff160d630a7c11e379eb5eb3b46b1b5cc0dc149a8c3ade47fc0e3e43bbfc9",
+					"path": "/tarot/rwsa/faces/pentacles-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 62853,
+					"sha256": "03e949e8f4793af2c20125fee771317d4ffca28cb59c3b5690611df1e0b10ec5",
+					"path": "/tarot/rwsa/faces/pentacles-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 202242,
+					"sha256": "49fa368209b96ebcddfefe0abb3b25275f50cdfd004b417cae2506b05b91cf7e",
+					"path": "/tarot/rwsa/faces/pentacles-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 22808,
+					"sha256": "7b77e7e1626be2e7ece10b91ffdd607133af1f870e8900f03556e96eea03d7e4",
+					"path": "/tarot/rwsa/faces/pentacles-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 83140,
+					"sha256": "92e99ede1946c65020f4f09e9d2c6620b794ecae7a03621ace43cf7fce2a702e",
+					"path": "/tarot/rwsa/faces/pentacles-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 259524,
+					"sha256": "fcb8288eaa4f34c475dc7a2f44397f9bf98a5c8934709585c9f0fe87675480ff",
+					"path": "/tarot/rwsa/faces/pentacles-page-960.webp"
+				}
+			]
+		},
+		"pentacles-queen": {
+			"source": "RWSa-P-QU.png",
+			"sourceSha256": "81f069f4a06d5f1ca6e0d041be89f08f48f9aaba7707c44878e365b6177ba76e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 30686,
+					"sha256": "6e128fc3847a29273d921622f1cc9cfbf2213411e3c2a83ce071ade6e6eb55e3",
+					"path": "/tarot/rwsa/faces/pentacles-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 102186,
+					"sha256": "001dac9447725d2c55aab10d40b02c54c804ecb4160ad2bc5f865ba2f91e82a6",
+					"path": "/tarot/rwsa/faces/pentacles-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 274817,
+					"sha256": "138697d2551c7611ae0e584ba3989064a36b3b8ba3195f77336bc7d9627787b5",
+					"path": "/tarot/rwsa/faces/pentacles-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 42876,
+					"sha256": "5b5afe8856d83c8233b839360a5bbd4a44d368e0aea7818e05056d30846cb53f",
+					"path": "/tarot/rwsa/faces/pentacles-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 138540,
+					"sha256": "4cb4c0dce39c859ae135e7332c3f19d876b8a884a4c908404484d7d6892ea7c8",
+					"path": "/tarot/rwsa/faces/pentacles-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 378646,
+					"sha256": "1a1b30687a860dc50db9de0c7068e6957dae85dd6dc4369111e7fe1013dcdd7f",
+					"path": "/tarot/rwsa/faces/pentacles-queen-960.webp"
+				}
+			]
+		},
+		"pentacles-v": {
+			"source": "RWSa-P-05.png",
+			"sourceSha256": "e7c43334b09227f34955ac4be9f2f0c5cea0ac73953538333808e9931d5a92f2",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 29892,
+					"sha256": "8cf8c34d0c7b8e920c9f9767788e10eb7988717f7a6c65e278ab4a56f79edf7d",
+					"path": "/tarot/rwsa/faces/pentacles-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 88907,
+					"sha256": "f031976f1550c9f8665565213cdd647e5262853a40c45a3934a05c6b0e191696",
+					"path": "/tarot/rwsa/faces/pentacles-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 220156,
+					"sha256": "4bfd907ddc6c82acfc3882d0f1614bc1a03e4d357d0542b64aaa15dc54cbb07a",
+					"path": "/tarot/rwsa/faces/pentacles-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 40682,
+					"sha256": "8f5993ae71fe46c94f4cf167ce7d12198c68e88c3ed96f4dadbac7c40198ede0",
+					"path": "/tarot/rwsa/faces/pentacles-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 123028,
+					"sha256": "7d80d579a3d72a6971fbb38a50f883ccb1ee07d1a30b3cecc0853a3913903d37",
+					"path": "/tarot/rwsa/faces/pentacles-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 314806,
+					"sha256": "0658b6917046a25383bc27f255d7c3b92112024f03f836ae7a21130098e2fc59",
+					"path": "/tarot/rwsa/faces/pentacles-v-960.webp"
+				}
+			]
+		},
+		"pentacles-vi": {
+			"source": "RWSa-P-06.png",
+			"sourceSha256": "1da31037347063cff58225f02148913b93af5a8bfc426167645401aa9d64ef27",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17564,
+					"sha256": "190dea310a4d6be7bdb621fcee097a68c424c6a5482d18cba4dd7cebf2e56ee6",
+					"path": "/tarot/rwsa/faces/pentacles-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 68561,
+					"sha256": "d8370bf2dcd60af4845d12fa4a9525d053093574c332e07a2ce96d1929f1f5b7",
+					"path": "/tarot/rwsa/faces/pentacles-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 204582,
+					"sha256": "77781d2b2c2e05a87d32dfedd0c1284e3ab2883e49f42d45fd43b0bfb949d5fd",
+					"path": "/tarot/rwsa/faces/pentacles-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25140,
+					"sha256": "7e6de1bdbc17fe452d63fef5f58a7b33c0b7f33b1f10d8ebb6e0e9cd0eb4150d",
+					"path": "/tarot/rwsa/faces/pentacles-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 115856,
+					"sha256": "ee295f6c95b7416c65b63a473a1365cd875f487cbb4586bd2b38f67018de276a",
+					"path": "/tarot/rwsa/faces/pentacles-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 348382,
+					"sha256": "ab99d584ec27f6a27c79c8ae0a380046607b876ed13eed8b096f809507b550d4",
+					"path": "/tarot/rwsa/faces/pentacles-vi-960.webp"
+				}
+			]
+		},
+		"pentacles-vii": {
+			"source": "RWSa-P-07.png",
+			"sourceSha256": "b4366f0875300804f9d4bad52bd0c0adc4383483bd206ee8733b59c6869f145a",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19180,
+					"sha256": "6541fd9077f48076fc92e61079053e910d68cf5973d59096aba3e75d6e85ecae",
+					"path": "/tarot/rwsa/faces/pentacles-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 73234,
+					"sha256": "9698e2d832a768e0acd541a6b213f82e43a991e71a941a8ed1c975eb6a2e200b",
+					"path": "/tarot/rwsa/faces/pentacles-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 220975,
+					"sha256": "0e6e9426a0294d1adbb35986903855f9ec7a510b1f1a95370077f4dc09b4ee08",
+					"path": "/tarot/rwsa/faces/pentacles-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26418,
+					"sha256": "d319952346f385176b7b13eefadcc8b18b95b2f1130ebd0fba0d7a806f1d248f",
+					"path": "/tarot/rwsa/faces/pentacles-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 125612,
+					"sha256": "4b490e516b83c7eb9189bee265b426357fca4f470c66ddd20b6e89ac51b73919",
+					"path": "/tarot/rwsa/faces/pentacles-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 375556,
+					"sha256": "8c82333df94432c6fd8536e364d27a99ea3b4d7cd0d15cc06dc4726f8ff1d757",
+					"path": "/tarot/rwsa/faces/pentacles-vii-960.webp"
+				}
+			]
+		},
+		"pentacles-viii": {
+			"source": "RWSa-P-08.png",
+			"sourceSha256": "e65e03b9dbeaaecc54543b64fb913f2ffa4d9d3e7c4dfaa01dd45b4eaaabc911",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 14561,
+					"sha256": "f819a31e42858adcb2963883a867319af359d6dc0ebd9820d815c94a70e847af",
+					"path": "/tarot/rwsa/faces/pentacles-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 56395,
+					"sha256": "e420586835888ede94a210b2bf15c36bf29abf98a70329d3082d8f796b440061",
+					"path": "/tarot/rwsa/faces/pentacles-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 177354,
+					"sha256": "867502f6e570946b3edfec8b03bbf6ae8681476a90c317901d7ff154cc089596",
+					"path": "/tarot/rwsa/faces/pentacles-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21074,
+					"sha256": "ef669fb214ef9444cb6a29cc87ed6d74fd8e946c935a7545e41e01615e174590",
+					"path": "/tarot/rwsa/faces/pentacles-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 102140,
+					"sha256": "16575aa2c86cd444d4baaedab2ad6b5b53569cc9fc90b93aa88ca9379c759bef",
+					"path": "/tarot/rwsa/faces/pentacles-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 297200,
+					"sha256": "1cdc5247f81b42f0fe367f4ced1ed094949680a4cbbbe838e1429bf40e01573d",
+					"path": "/tarot/rwsa/faces/pentacles-viii-960.webp"
+				}
+			]
+		},
+		"pentacles-x": {
+			"source": "RWSa-P-10.png",
+			"sourceSha256": "bfa6f54ceed5116c02e2a00441f9d045ab40517d9cd31d8a808ce3c7812cb4a1",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 28782,
+					"sha256": "094a378db9b18d65bd22c16bad55a842139223542b87da74ff9d5499e0971d30",
+					"path": "/tarot/rwsa/faces/pentacles-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 94441,
+					"sha256": "3f758e840199af07d794e17df1c839b8fd01da754de4a8704a8698d53917056d",
+					"path": "/tarot/rwsa/faces/pentacles-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 254704,
+					"sha256": "974a653eaea3bb1c000aefcc0b677380a321ee0ff984f25bad01db7eb5e47ab1",
+					"path": "/tarot/rwsa/faces/pentacles-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 39894,
+					"sha256": "df216d5d2237bbd8f60b00db25df88be3fd822ea0285d3705b62e1d175f50c2c",
+					"path": "/tarot/rwsa/faces/pentacles-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 138800,
+					"sha256": "597641532f6cc54bfcfb6877a1607ddd4f64150690d86ecf52bdb2be9235534e",
+					"path": "/tarot/rwsa/faces/pentacles-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 389132,
+					"sha256": "4c52a3e827c88774b1c0f99bed500ee9df75f055e23e9ec65841abf76c7827af",
+					"path": "/tarot/rwsa/faces/pentacles-x-960.webp"
+				}
+			]
+		},
+		"star": {
+			"source": "RWSa-T-17.png",
+			"sourceSha256": "670a34ba8875cc00492248a0f4a966822e9fcb5c506d7732706e459a811f6728",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 22396,
+					"sha256": "455e801deca4135769be046f2464a32952a5e1196c47bc710a19dc1b98f1a912",
+					"path": "/tarot/rwsa/faces/star-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 74881,
+					"sha256": "4bd6f0b503926ba9eeb55635d9dde93601a9190b3cecb8ada9687fb580060200",
+					"path": "/tarot/rwsa/faces/star-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 224169,
+					"sha256": "17b478a9192f1257923b930a32d2e515633b3e0b5ab0e1165b9edbb900508e6d",
+					"path": "/tarot/rwsa/faces/star-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 31362,
+					"sha256": "d7ab386205880ab88abba7d5ab3fa60258499e10d5e64c4675ef62189a3e72fa",
+					"path": "/tarot/rwsa/faces/star-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 111678,
+					"sha256": "eb136a817be03a71b97ab8b1009250c545246dd7a8927c1764186c81d571dd08",
+					"path": "/tarot/rwsa/faces/star-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 341488,
+					"sha256": "b72c5f964157413543d95d60b074e60827c2f2b7e23833015aa4c6bc59f2bc9e",
+					"path": "/tarot/rwsa/faces/star-960.webp"
+				}
+			]
+		},
+		"strength": {
+			"source": "RWSa-T-08.png",
+			"sourceSha256": "9a8ef53a04c74897e4e1174af3f34c25c315bba6eaa6b5a232af7936a9603034",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19328,
+					"sha256": "4924f23a81eab898041081ca24f96969fcd62ef4b0f3229fc66f7f4fd57ad7f1",
+					"path": "/tarot/rwsa/faces/strength-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 72148,
+					"sha256": "22100f0d6989a0c6f24052cc8b8d9f005b7ea85ae45f73158c06bb62e95e3a22",
+					"path": "/tarot/rwsa/faces/strength-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 225334,
+					"sha256": "523103046639205cb48276500851384a4e89d44977fd6434b920907e23f9bc76",
+					"path": "/tarot/rwsa/faces/strength-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25156,
+					"sha256": "ea25874de7e359457ff5a569b84b8c874f91e9726db2268abc77bac63f0c0fa8",
+					"path": "/tarot/rwsa/faces/strength-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 94974,
+					"sha256": "1e0009fa58a9545a9830a794f4c7a29bd82b0cc90e8b11fcc816db22c29e3dbc",
+					"path": "/tarot/rwsa/faces/strength-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 301804,
+					"sha256": "8d7470f35695771c025d049b973bb031160b5649f850b5774735e20a898a01f7",
+					"path": "/tarot/rwsa/faces/strength-960.webp"
+				}
+			]
+		},
+		"sun": {
+			"source": "RWSa-T-19.png",
+			"sourceSha256": "02d4ba312f59235503f7b673214706d7d97b937569d420101f4f99ad160cdfc0",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 28102,
+					"sha256": "0479e40214742cbaae65bb0d941e06f18270f4af29481277df3cbb7c64e63e05",
+					"path": "/tarot/rwsa/faces/sun-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 92479,
+					"sha256": "3f429a40a127bc793d9a1872b2dd2a80bc6ec0c1456e0d62284e748e1ad4b35e",
+					"path": "/tarot/rwsa/faces/sun-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 243868,
+					"sha256": "c3423306692942134866046c9426dbf55e9b7746f381111df5011c7c14cdc522",
+					"path": "/tarot/rwsa/faces/sun-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 39080,
+					"sha256": "10f474e4026d9f0c057782286ba25ae7cdbab8a6d7c3e46c934a36bf3168efd1",
+					"path": "/tarot/rwsa/faces/sun-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 133132,
+					"sha256": "ef34bf7b7b3a55bbde7489486ef8954b50e96459a0dd1d7c61450eec37365cea",
+					"path": "/tarot/rwsa/faces/sun-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 368036,
+					"sha256": "3cef7c6ebba933df69895e5bedb31e43ad2b1b694fe50cd6f4a618a0aa15fc54",
+					"path": "/tarot/rwsa/faces/sun-960.webp"
+				}
+			]
+		},
+		"swords-i": {
+			"source": "RWSa-S-0A.png",
+			"sourceSha256": "8c5cc75991eabc136261d963d25e668fa2e290a7f5835493aef30b9b9f157944",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 14781,
+					"sha256": "9166a3c69db92c881bfb057ad388b408d6986f542ee255d307907c5e01c77815",
+					"path": "/tarot/rwsa/faces/swords-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 57418,
+					"sha256": "569afab7454e21d0e3bc4002d2b2db849d426956ab4ce12d65680917afae720e",
+					"path": "/tarot/rwsa/faces/swords-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 190300,
+					"sha256": "114a60a47ff39b6f481cd5a58acbb1b39ba430f7a4e87b04f442f61d2bc518bf",
+					"path": "/tarot/rwsa/faces/swords-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 19784,
+					"sha256": "6dce5c654cb00edcb585247c1ab123465aa103c2df16b06556ef2b9264273cc3",
+					"path": "/tarot/rwsa/faces/swords-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 105580,
+					"sha256": "43c1a0012f538eadebe0a0a854161009a7c2dfabf629bd0d9075b93ec4133c07",
+					"path": "/tarot/rwsa/faces/swords-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 322718,
+					"sha256": "3b34345356c83ebf2a900f8c410771c517f21fd3b49dd813f438f72b429bbc60",
+					"path": "/tarot/rwsa/faces/swords-i-960.webp"
+				}
+			]
+		},
+		"swords-ii": {
+			"source": "RWSa-S-02.png",
+			"sourceSha256": "589b4fd60987d992f6028fc264ca6670d0cf3582dc6b94d96e989cb1d9285046",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 13658,
+					"sha256": "44f76d0de9b07e721e28e518447e436c4b276577a3107c534accf3535c5ff392",
+					"path": "/tarot/rwsa/faces/swords-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 50315,
+					"sha256": "ed253d0eb1ffeb059fa8915f223dac6b2d6fe6836b2dcb5f75266220fffeeb1b",
+					"path": "/tarot/rwsa/faces/swords-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 161024,
+					"sha256": "de7f6f8beeaf2a69770abca90648d4b223d58770b78ca6c559118c233afccdaf",
+					"path": "/tarot/rwsa/faces/swords-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 18486,
+					"sha256": "ddb174df4e91c148b87ba9504907706a03acf1fcc131234158fc0a42bc18657a",
+					"path": "/tarot/rwsa/faces/swords-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 91872,
+					"sha256": "7e64d8510656223c8c8f41064c50a1ea3e7b304f06bc63a6bfaa946bf3b60c11",
+					"path": "/tarot/rwsa/faces/swords-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 280656,
+					"sha256": "8fc6a5b9f6b9fb493dd4906f96e5a2da2e93846a601e0a68d1ca0c485ae591ec",
+					"path": "/tarot/rwsa/faces/swords-ii-960.webp"
+				}
+			]
+		},
+		"swords-iii": {
+			"source": "RWSa-S-03.png",
+			"sourceSha256": "2e6f9b93c1a1f0b2bb91b7f2fe71e6412432378960605846adf8d335d441650c",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 11178,
+					"sha256": "92c82d076203acf9880a7d89ecfb010489eabab127070f131e428e7600d27bb0",
+					"path": "/tarot/rwsa/faces/swords-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 39004,
+					"sha256": "9892f968f7ef1c46ea7a85402ea2dd0af2b94f9d76b3a830335ece11e8351c41",
+					"path": "/tarot/rwsa/faces/swords-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 122156,
+					"sha256": "d99e18833441fda2b6ad8988668338929dea8a46cbce8c9847a66b7a14da2108",
+					"path": "/tarot/rwsa/faces/swords-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 17058,
+					"sha256": "6ba473525721f754d5fd65e7675284494e6b1459efc60137734a9d107e333a61",
+					"path": "/tarot/rwsa/faces/swords-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 64824,
+					"sha256": "68b56ee403a96dfed76230f26af5e54e7f07caccae6967c15ef547332a03f339",
+					"path": "/tarot/rwsa/faces/swords-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 184304,
+					"sha256": "7f3df40c4fc5ed61de9f65ab70504f561e463c622122b1d268d0fefa3d491c60",
+					"path": "/tarot/rwsa/faces/swords-iii-960.webp"
+				}
+			]
+		},
+		"swords-iv": {
+			"source": "RWSa-S-04.png",
+			"sourceSha256": "197787ea1415f8cee51ecf27108accb97885e42b4e5f154c3c6ef0992f919d0c",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15617,
+					"sha256": "f0628776e1b6c3bb1119ec60c020d7d822029d0760459923cd56346e6b1a852a",
+					"path": "/tarot/rwsa/faces/swords-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 57946,
+					"sha256": "4d8c1334871b8766a7a8b454dd311f4a11508559e164733e0fa4e21442efcaa9",
+					"path": "/tarot/rwsa/faces/swords-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 188515,
+					"sha256": "ed7071072daf9cbe5751a2127104ccb988f94b1c5ef3e170579c24f499cfeb1f",
+					"path": "/tarot/rwsa/faces/swords-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 23300,
+					"sha256": "37178654dbf755d270af7f76e66df9ab44722719d2e003007217bb06f0ae0ae5",
+					"path": "/tarot/rwsa/faces/swords-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 97992,
+					"sha256": "b37b07767272bf7ab8b30e28df03023ac804867e09d7247104f7ec50fe73d918",
+					"path": "/tarot/rwsa/faces/swords-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 296174,
+					"sha256": "e450e2f7c268bfd1bc0a45196c5d4ec1158042c6cce6e420f794079405d220b0",
+					"path": "/tarot/rwsa/faces/swords-iv-960.webp"
+				}
+			]
+		},
+		"swords-ix": {
+			"source": "RWSa-S-09.png",
+			"sourceSha256": "79f38b7263d5ca8229bbe9da9d9b5a215082397e762c7a9a5ffb9609e63e4920",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18162,
+					"sha256": "8ed2487b3c1385f9341845e9a73cebf8fbfceecf6ae8c0a8898d112644e8c189",
+					"path": "/tarot/rwsa/faces/swords-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 61269,
+					"sha256": "2b61d84acb66307325d108e31317d37fecede5ff9f0f0ec385c5cc7cb4402ee3",
+					"path": "/tarot/rwsa/faces/swords-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 178371,
+					"sha256": "e004dd095ed5742ce5e510ee28e7f925c758173537a849c91169c68aa1f6067e",
+					"path": "/tarot/rwsa/faces/swords-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25730,
+					"sha256": "853bac1843a3283ea63627a53af9bf994242164d4a661f0493ef1bdd357b3873",
+					"path": "/tarot/rwsa/faces/swords-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 86924,
+					"sha256": "91d12884bab923fca0147f616e5c396e12d77eb6fafaa30c87b7c77a155294db",
+					"path": "/tarot/rwsa/faces/swords-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 248308,
+					"sha256": "fc61a859b6f469aee97a5a9e6fb0b14cb94ed60e73bee9a2453dc1353109d671",
+					"path": "/tarot/rwsa/faces/swords-ix-960.webp"
+				}
+			]
+		},
+		"swords-king": {
+			"source": "RWSa-S-KI.png",
+			"sourceSha256": "d940beaa2acd73ef808be68cb8314270e96f15432725c87a8e7dca82b6829571",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 20783,
+					"sha256": "82282a9fe1131a80b2325482e0f82f4c27f1c01945fb20fa1fe217f17307f4a7",
+					"path": "/tarot/rwsa/faces/swords-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 79646,
+					"sha256": "400140cf286a5a4c361db0c9ee5708647334206c27a5a7c102fad7fc4ab89c02",
+					"path": "/tarot/rwsa/faces/swords-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 233443,
+					"sha256": "36107ea474c199ea5212c606b4df466af952ec8e49f650518f85d5376e89b8a7",
+					"path": "/tarot/rwsa/faces/swords-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 29560,
+					"sha256": "74e60e7b21e330d510a2acd83450e505c0f84b3e864d2ed486b52019b14f7895",
+					"path": "/tarot/rwsa/faces/swords-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 129684,
+					"sha256": "d8d82dba3c7ffa5490f1d2a2687645950452119bc6b79d34a961d375a2e07bd3",
+					"path": "/tarot/rwsa/faces/swords-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 392708,
+					"sha256": "35b94358cf0e14ac2123ed9ccdb9411c6089fbc68b390e454b1f6e270ab1d641",
+					"path": "/tarot/rwsa/faces/swords-king-960.webp"
+				}
+			]
+		},
+		"swords-knight": {
+			"source": "RWSa-S-J2.png",
+			"sourceSha256": "39f25f5cdca3cbecceeba8245f469033a4bd713ba35104e5c07c06790cfa9e75",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 22211,
+					"sha256": "9ca6e0778c33bb99159dc9cb6adb8490ebea254df9d35590de6fe6a9e20edef4",
+					"path": "/tarot/rwsa/faces/swords-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 73494,
+					"sha256": "a2e2196c5431ada3b7d081ac47a3e66217ed8a2dfc77d1886a49d0b342d9e813",
+					"path": "/tarot/rwsa/faces/swords-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 206842,
+					"sha256": "24516256b356ec802e5a46cb4325abb59efc979671af11752ddd6a3d927aeb1d",
+					"path": "/tarot/rwsa/faces/swords-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 31086,
+					"sha256": "4f7cc2af3c94b1f1d0b77178321bf84978ea3bdf6a388bc528cc88433ee489f2",
+					"path": "/tarot/rwsa/faces/swords-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 104888,
+					"sha256": "e6a009dfc796d93713078ea78c4f8e6609948212f721de455638830dd136cebc",
+					"path": "/tarot/rwsa/faces/swords-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 306276,
+					"sha256": "c94ca303df2615b2cb409ce850adbf5036ee3a64ae40f85d44afba5f7c3e15e2",
+					"path": "/tarot/rwsa/faces/swords-knight-960.webp"
+				}
+			]
+		},
+		"swords-page": {
+			"source": "RWSa-S-J1.png",
+			"sourceSha256": "e6e7d51123382e7dd901bb3084ac9c2de9a96c3a125fa0a464b128863c878993",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19403,
+					"sha256": "c954c05326395300c9e8a99e234edb74105cb47e8137d8f5023ca52332a9c2c1",
+					"path": "/tarot/rwsa/faces/swords-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 72024,
+					"sha256": "9584f79aa11c6d4d5ddeb9e4100591a4fb704e8e8ae2369343f232a619ecb7ee",
+					"path": "/tarot/rwsa/faces/swords-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 215042,
+					"sha256": "a2f26de85c148bb4709735bd235684bf75f02a98d9311234e04d613e515d37fb",
+					"path": "/tarot/rwsa/faces/swords-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 27172,
+					"sha256": "7d871d2d8a6e9b58ca3e15f3016013d8f95f94f87b1c18bb6d4b23f311904999",
+					"path": "/tarot/rwsa/faces/swords-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 103448,
+					"sha256": "68e80cd252688551101a55775fa730c526f77dc6f1ec3b91f98d29d0ece23c14",
+					"path": "/tarot/rwsa/faces/swords-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 324414,
+					"sha256": "da2515af40e2b33c813fbc2b005f4809d050fa987049f81976d22d86c7bcd958",
+					"path": "/tarot/rwsa/faces/swords-page-960.webp"
+				}
+			]
+		},
+		"swords-queen": {
+			"source": "RWSa-S-QU.png",
+			"sourceSha256": "f4b8c2c31cf5b91b78905a49f7f834bf6cd176ddfa13c469ca3fc639c75cc86c",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 20947,
+					"sha256": "13e731e8a935e880d2add2ef184f5ce6f973ad4e4204aa6269a86ec9e9a1269a",
+					"path": "/tarot/rwsa/faces/swords-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 72526,
+					"sha256": "39f94a3a5f182b5a56c7657859dd91afd2cb9ae5284071cfe4be98de5b2bef09",
+					"path": "/tarot/rwsa/faces/swords-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 211359,
+					"sha256": "2afb0987792e6c4b4ba8630a96c1b104f6bfc9d6efcb8147f0d905d9c9842350",
+					"path": "/tarot/rwsa/faces/swords-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26800,
+					"sha256": "1c2a6ec8db0d78ca2067f68706c89424a19b12d0b26ef08991ccf603e5b61768",
+					"path": "/tarot/rwsa/faces/swords-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 101504,
+					"sha256": "f8cf542dcd25b78cceff5da666da5792fbc06517aeb0b824b7ace8d26637c033",
+					"path": "/tarot/rwsa/faces/swords-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 307084,
+					"sha256": "0ca56b9d87da223b61e078e34db4c70b49df9c8f9a6d427a64269256a849e5ca",
+					"path": "/tarot/rwsa/faces/swords-queen-960.webp"
+				}
+			]
+		},
+		"swords-v": {
+			"source": "RWSa-S-05.png",
+			"sourceSha256": "cf13b9fe5fa774ccfa9ea6282e7307dfe2f05cbd96f77c3f42437ae3a1eabea8",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19669,
+					"sha256": "90e1554519ade82a5790b3ea2060175c5c63d80623b7596b547b64c07bef8f2c",
+					"path": "/tarot/rwsa/faces/swords-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 72574,
+					"sha256": "851b4f95e4514cce671d554626b8465fbbe357d6702da7d76c1dd558b660ce7b",
+					"path": "/tarot/rwsa/faces/swords-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 215533,
+					"sha256": "c0d990e006de402921153887efd6fbb8c3b7c9d8a3955004920e26ac2996b3cb",
+					"path": "/tarot/rwsa/faces/swords-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 28688,
+					"sha256": "16cdca01dcd2c3d99df63e3af46c0ae482a7ff42527ca680a1d1cade4d938688",
+					"path": "/tarot/rwsa/faces/swords-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 114252,
+					"sha256": "b4c4d1fd5c46ba1d98f9329862d93951daab6d9f5760982e8685fad1be006287",
+					"path": "/tarot/rwsa/faces/swords-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 346804,
+					"sha256": "7b9d8b33b83b4e1e9264103a63aa7bd2963afcd11f7aae758fad633ca19bab76",
+					"path": "/tarot/rwsa/faces/swords-v-960.webp"
+				}
+			]
+		},
+		"swords-vi": {
+			"source": "RWSa-S-06.png",
+			"sourceSha256": "6b92ca25fabbaea0a35fa634bd43ef290ac8c238e5c05ef40d19fa5639dc102f",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 16651,
+					"sha256": "128cf92636ae08a3f3dba2d69a95d528ada6fa2feb355d6b47043e65efc028ce",
+					"path": "/tarot/rwsa/faces/swords-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 71987,
+					"sha256": "3664aa8bbf9c14362ce7f8369e55622870ff7bc68f5e39df07eb9a210f988460",
+					"path": "/tarot/rwsa/faces/swords-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 236411,
+					"sha256": "5e958e5c994da651deb29671bac2edc233894b97f2082bfacc57b5930aec0882",
+					"path": "/tarot/rwsa/faces/swords-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 24390,
+					"sha256": "fcdcbd1fc54ce3ca5c516c38de86940fed52217df87bd8255adaf2dcafe155dd",
+					"path": "/tarot/rwsa/faces/swords-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 125134,
+					"sha256": "ba0487a2857e0649f90337bac3f1ca9c7553cad16c4e6624904b3598b2eae1d7",
+					"path": "/tarot/rwsa/faces/swords-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 400660,
+					"sha256": "8e9d875c5b1428c8c6ce8c23f7e1df18ff9cff8d259132246ffad79234fe2c2f",
+					"path": "/tarot/rwsa/faces/swords-vi-960.webp"
+				}
+			]
+		},
+		"swords-vii": {
+			"source": "RWSa-S-07.png",
+			"sourceSha256": "db3a245f81185c6b497301d928f66616248bfcf70000f46a401b5df4607cfe88",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18300,
+					"sha256": "a787175dad70d1bde664787a306ecb543008596c9aad1d5d305474d3919ac2f0",
+					"path": "/tarot/rwsa/faces/swords-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 68170,
+					"sha256": "eb7d8ff7e633441310cda12692fed5a9ec78bf062eee9db8440e935ed73efa5f",
+					"path": "/tarot/rwsa/faces/swords-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 220652,
+					"sha256": "bf151356e3446b8e81a7c2ecbf28ed65bf361b429cfaababcd10ef6c06a70b0a",
+					"path": "/tarot/rwsa/faces/swords-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 23946,
+					"sha256": "1c415762c64364623d90ebe9f0d9f75287f65de244370505ba91d09ca55bc0c9",
+					"path": "/tarot/rwsa/faces/swords-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 93804,
+					"sha256": "e283150f765fca452779356fe2f4a33110296a644859bba8dacdc11ebcbd13d6",
+					"path": "/tarot/rwsa/faces/swords-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 302944,
+					"sha256": "c213f1646fefa6be65c9c32ab447e38f4440c15ba967e504b088333de3f110b3",
+					"path": "/tarot/rwsa/faces/swords-vii-960.webp"
+				}
+			]
+		},
+		"swords-viii": {
+			"source": "RWSa-S-08.png",
+			"sourceSha256": "4539d4d25b6a32bb9d1c96ae5523856b48a466e83a529c6cce771b69bbae62ac",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19102,
+					"sha256": "d8b9a5f2e12118a21c927273a131e4a9d654377f4c37a7d02ea0710ae1b4a356",
+					"path": "/tarot/rwsa/faces/swords-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 70799,
+					"sha256": "6a10b08c8139700e5c5792fba6a8d1f0902149bd473feaf5bbb4b1de99ddd589",
+					"path": "/tarot/rwsa/faces/swords-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 213692,
+					"sha256": "a665b67d58b157416236547b589907e2a8aae53834d6f8e5f3ad7ee3bfd0077e",
+					"path": "/tarot/rwsa/faces/swords-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26744,
+					"sha256": "e9b41b0837d53fd66f3a6c38ba36305ebb74e60412e374f7e91d2054f1e139ca",
+					"path": "/tarot/rwsa/faces/swords-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 121562,
+					"sha256": "7935c6a222d7dcf9acabcd61b2c82c79ae5194345d3cede03932ae4491030eef",
+					"path": "/tarot/rwsa/faces/swords-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 366016,
+					"sha256": "aa8a3d308cc83da648d41713b6b5e157d5a77cff954f8d283f9afb6802423b39",
+					"path": "/tarot/rwsa/faces/swords-viii-960.webp"
+				}
+			]
+		},
+		"swords-x": {
+			"source": "RWSa-S-10.png",
+			"sourceSha256": "1df7fb5430e049d4d21cb369407d2fc9c1992b1c1b6bcc4fed5f60a9532b0416",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17066,
+					"sha256": "8874be2552e3dda9d7a6e8bf693f67ba202137c1a0817cb82cd15e55d92f28b4",
+					"path": "/tarot/rwsa/faces/swords-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 51858,
+					"sha256": "cacb40fcda16d0eb0b0f7406cabd8939057b8a1fffd190331848a06d01c6ec72",
+					"path": "/tarot/rwsa/faces/swords-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 148487,
+					"sha256": "971bed1c8d8f299b7b8c8c143c00b434ac49a1208f724684a80b01f538dc73cf",
+					"path": "/tarot/rwsa/faces/swords-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 24444,
+					"sha256": "69d838220a0114398d61fa19c5086a21cb66db6f75d802fee75d3c253e37adce",
+					"path": "/tarot/rwsa/faces/swords-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 80002,
+					"sha256": "ca0e7d4e5d42df49c0e854996a8081f0fd050eb27712120141e35d93dccbfe9f",
+					"path": "/tarot/rwsa/faces/swords-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 222126,
+					"sha256": "ce3f40a6be5dce61dfd48bf6bec0a28e6cbc981961e95905fbcee2230f80eff8",
+					"path": "/tarot/rwsa/faces/swords-x-960.webp"
+				}
+			]
+		},
+		"temperance": {
+			"source": "RWSa-T-14.png",
+			"sourceSha256": "64d83623898d114bb69ddc25d3f56c43eb8e0ea216de98ba3f4bb748aadbdd0e",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 27462,
+					"sha256": "947d434f87df9584f4367447c4de0aac13f756dc7ddc5bcb45f853ca0469036a",
+					"path": "/tarot/rwsa/faces/temperance-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 98843,
+					"sha256": "d6d47e6fd89e6e016d08893b48301b25102757cae15e2f240d7a410f135c3711",
+					"path": "/tarot/rwsa/faces/temperance-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 270429,
+					"sha256": "768e46bda2d458c4900add11c7e1687e1e5e2e84c234d901c9189a03114dd5ee",
+					"path": "/tarot/rwsa/faces/temperance-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 37764,
+					"sha256": "e9c9cfad00db9c1ecf17301b3d21c165ab5a09b298c85a615f518ddcce9ed6fa",
+					"path": "/tarot/rwsa/faces/temperance-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 146256,
+					"sha256": "dade34751f6bbdbe26010ed78073fe862d64cabed02daf21f7aeec1a9403c278",
+					"path": "/tarot/rwsa/faces/temperance-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 425018,
+					"sha256": "b5153186212b0399816152dd742f2d7ade56ddd48b9a061f8771105cd99003ea",
+					"path": "/tarot/rwsa/faces/temperance-960.webp"
+				}
+			]
+		},
+		"tower": {
+			"source": "RWSa-T-16.png",
+			"sourceSha256": "8e6a47fff3109b0e895a9d8aad2bcbd99a3a551f2e06d247a6c5acada4a50d83",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18510,
+					"sha256": "43c1c6c2585314297f8c24f1cc4c0d237202355edbc74c76e12d47cec1c3f0e3",
+					"path": "/tarot/rwsa/faces/tower-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 54937,
+					"sha256": "23f1f352b1a897b4aaa4915d13fad33d8e0e7e013b38d4d912f9334a15326bda",
+					"path": "/tarot/rwsa/faces/tower-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 159075,
+					"sha256": "27635e5a9a9fc5e34c64d33060b14e6ddbfb51da9691f113421a405dafbc9c2c",
+					"path": "/tarot/rwsa/faces/tower-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25782,
+					"sha256": "0b63a63b36b8b6a3a62a917d8438baffb94a044b89b016965969bd3099324ab6",
+					"path": "/tarot/rwsa/faces/tower-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 80384,
+					"sha256": "3ac709832de24955417725157f87ef4ae4fc2aa7b21a486ad67ae921d76ff509",
+					"path": "/tarot/rwsa/faces/tower-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 219400,
+					"sha256": "156d0a34e129a23086e875d5035c9d59cfc75a55ef4967c192feb13f72fb62c8",
+					"path": "/tarot/rwsa/faces/tower-960.webp"
+				}
+			]
+		},
+		"wands-i": {
+			"source": "RWSa-W-0A.png",
+			"sourceSha256": "d15a55f055b722dbdd73c46df581243a75f41f59bb768c991e8c1292eb49e3ab",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15047,
+					"sha256": "9669db05e9224a8e59fb12373da04790249ff33b98e64b4e10244d6e745697ce",
+					"path": "/tarot/rwsa/faces/wands-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 59538,
+					"sha256": "c55747626ed72b5d9ff2e32d2dc60cb1c8869c33833ea01e9622b3ee2eb947b8",
+					"path": "/tarot/rwsa/faces/wands-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 202608,
+					"sha256": "65abb70c88faa7ff564a77b68633f771378564cce5fce35cfccbc53c1c743a4e",
+					"path": "/tarot/rwsa/faces/wands-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 19546,
+					"sha256": "aa39c3750854a62727a6b1521e096e44f7102ede2cb0472b1486746050cacad9",
+					"path": "/tarot/rwsa/faces/wands-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 106184,
+					"sha256": "112aae55f2da36a70688f03ab05984d627dd318b6e939db016b50930952149d0",
+					"path": "/tarot/rwsa/faces/wands-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 337370,
+					"sha256": "cb0e1ac6d65cbfd671a6b8c957ac43db5c250f2ede346b7993684baad9dd59f8",
+					"path": "/tarot/rwsa/faces/wands-i-960.webp"
+				}
+			]
+		},
+		"wands-ii": {
+			"source": "RWSa-W-02.png",
+			"sourceSha256": "848fc5e2bd66079ca374ce7203215ccca486027947de16f398485567a124c71b",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15803,
+					"sha256": "a2f1d3facd28b397460e4a9876fd3e40bc7c3ff3b4678f47c64a515ca531e252",
+					"path": "/tarot/rwsa/faces/wands-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 61539,
+					"sha256": "75011c47a5870415a06f5d1521465a04334fee33b4eeb4671b2444adc1f0cff5",
+					"path": "/tarot/rwsa/faces/wands-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 192895,
+					"sha256": "ac5d1fa64c0ad9ae6a5303b5e40b2fb8b4795767d78ad020a76c19190f71028c",
+					"path": "/tarot/rwsa/faces/wands-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 21990,
+					"sha256": "3e785aa6a9a2e3247d34fa6c4752d88ac7dea8cdd7d2662829214fed6e303a24",
+					"path": "/tarot/rwsa/faces/wands-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 103530,
+					"sha256": "cc93e3800a2e0d4ed6d3fb0b71806ae7f1925cdff845d08bb9e61e788c23d5e9",
+					"path": "/tarot/rwsa/faces/wands-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 308336,
+					"sha256": "fa186a039706305803246f8f09f8fbc47123ab437f163965805b4c6630fe5546",
+					"path": "/tarot/rwsa/faces/wands-ii-960.webp"
+				}
+			]
+		},
+		"wands-iii": {
+			"source": "RWSa-W-03.png",
+			"sourceSha256": "39834ac0acc0451c192a6f97b69924c7cb0a6141fae7963730f511f4613d9163",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 15796,
+					"sha256": "beef52bf708303fecdd3a9a163238adaa76580da85c02ef1c96c13fdaa3c4e76",
+					"path": "/tarot/rwsa/faces/wands-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 65694,
+					"sha256": "19bd747e46c2ee0337bcd8229821c3da9f600fb6a28c78b116eaaf977a07fd80",
+					"path": "/tarot/rwsa/faces/wands-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 220410,
+					"sha256": "e769f5caa21b1baab26250260b3f50882d200a8d1e01d9e10f89bb7c4f65d0b5",
+					"path": "/tarot/rwsa/faces/wands-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 23198,
+					"sha256": "746e51585f3ddb626d1c0913ae74cefc5d9767737c22df82344676db4135cb99",
+					"path": "/tarot/rwsa/faces/wands-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 98388,
+					"sha256": "925948f283acb2f87dffc7fe895af8a569773d42d09fb20070c701517a2dfc0b",
+					"path": "/tarot/rwsa/faces/wands-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 302970,
+					"sha256": "8fa10262b855f702dab5abe7dba6cb60b5be12e015cae19c26eeb77906ccf661",
+					"path": "/tarot/rwsa/faces/wands-iii-960.webp"
+				}
+			]
+		},
+		"wands-iv": {
+			"source": "RWSa-W-04.png",
+			"sourceSha256": "55fe6e81713d0a017fb41ac18e57d568f5eae1131e8941c9c08f7b6798da53a9",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18430,
+					"sha256": "b04f2b57b23b6ccca451baa629abb0090b7c09004383e7f2f207f6d4cacb2475",
+					"path": "/tarot/rwsa/faces/wands-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 67564,
+					"sha256": "08238f07ebac0020243dd099015a267294c84d1f3b2ce6aa2e217bbade66a2dc",
+					"path": "/tarot/rwsa/faces/wands-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 214176,
+					"sha256": "c605ea7b5cd628bcc9a8613e22a0d0c4b97b0926c4f48d6bab0e831bf54e1916",
+					"path": "/tarot/rwsa/faces/wands-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25280,
+					"sha256": "b3567b4b7f406dcffe1f7e383f8578d3d08dbf52430ea1e7cfb39ee3385a60ba",
+					"path": "/tarot/rwsa/faces/wands-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 92978,
+					"sha256": "64b932459ebc99d6e46d376f4c91572364f62ff3321f0f6eb48e983a3ec09ea8",
+					"path": "/tarot/rwsa/faces/wands-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 282610,
+					"sha256": "ee284d2b9ecc3faa204465426141d123774272fd71c412386b5502cfb7f97656",
+					"path": "/tarot/rwsa/faces/wands-iv-960.webp"
+				}
+			]
+		},
+		"wands-ix": {
+			"source": "RWSa-W-09.png",
+			"sourceSha256": "1b30bee849ed61c662b735e6e1222be74f477cc61354670c9d8b66ac19a20d07",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 20527,
+					"sha256": "35bf39aac6ce0c70b0ed3022c456fb16097e5a91a66dfb2a3280ffce7cd15fe0",
+					"path": "/tarot/rwsa/faces/wands-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 78668,
+					"sha256": "48c66b90ddd50bd29c2c5927728901e0a85248122ff0f1586b55bc24822157ab",
+					"path": "/tarot/rwsa/faces/wands-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 247780,
+					"sha256": "23c47f4f5fff3370058ec33680f015bcee1439a62a72bfabcc963ffa9f5f04bc",
+					"path": "/tarot/rwsa/faces/wands-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 28868,
+					"sha256": "fcb2c551110821ceb0cf427ef7f7dd2c42b5f6948ef576b18cf0202fd7484de9",
+					"path": "/tarot/rwsa/faces/wands-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 116250,
+					"sha256": "43f7d95e45a2f4b708a9f78eb3334b9e1b2c74d7dece86ab0591386a53b31dc8",
+					"path": "/tarot/rwsa/faces/wands-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 368866,
+					"sha256": "652889caee426a317685572fd0aed8646fddc922c619bd2e7826c23e939009ee",
+					"path": "/tarot/rwsa/faces/wands-ix-960.webp"
+				}
+			]
+		},
+		"wands-king": {
+			"source": "RWSa-W-KI.png",
+			"sourceSha256": "8112a3874cff006a420582b292586beb72742a75662b154da169418bb0276055",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 23376,
+					"sha256": "00d7a92bab70340b7ba3a9a433056bc5c2abce1a6cc98b19a3c3a061030c4930",
+					"path": "/tarot/rwsa/faces/wands-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 94945,
+					"sha256": "378ab023b6905ef338bcf1ef09ac4fa929fae027a108f433b9c7d1d0ff8ca7a2",
+					"path": "/tarot/rwsa/faces/wands-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 270753,
+					"sha256": "906908207c958ef6979e6ccd4b10c3274fe588222c326054f142f8776ed14bd2",
+					"path": "/tarot/rwsa/faces/wands-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 33124,
+					"sha256": "f24546d6a812b7fbb60459c5c4e24be7b66b3b40569d5042d350e317efe0c310",
+					"path": "/tarot/rwsa/faces/wands-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 146092,
+					"sha256": "b20152e93726b927ac2de0d1cd777af1e488dd5b7db90192983f51c6c277fa64",
+					"path": "/tarot/rwsa/faces/wands-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 448390,
+					"sha256": "a3334991b189e4a2b5e1fcb76cb42caa111257bbc5a7cee386319248924d6bd3",
+					"path": "/tarot/rwsa/faces/wands-king-960.webp"
+				}
+			]
+		},
+		"wands-knight": {
+			"source": "RWSa-W-J2.png",
+			"sourceSha256": "0b89168e1b7299132df77af0505c586ece2b572f5f6ad8c2d5a221e91d214a08",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 21722,
+					"sha256": "f5f2b0d5f48b8cd90d5c71625285157e767ea79f041985e34c0e682cd46edb53",
+					"path": "/tarot/rwsa/faces/wands-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 88832,
+					"sha256": "b74c4d066accf799f0e17ba69262b1b283fbbed961117984159c3822f4e1111e",
+					"path": "/tarot/rwsa/faces/wands-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 257535,
+					"sha256": "1ef4487665d971f2c86c5bcc1f56a63992a08b1a0209981f8e2641715b633f3d",
+					"path": "/tarot/rwsa/faces/wands-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 30132,
+					"sha256": "5e08f30b0943260fea365234f61cd30f4cad6dfabf7b04774b367566dfb348da",
+					"path": "/tarot/rwsa/faces/wands-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 140310,
+					"sha256": "f37ff89e631b8ea2349131926217f7245d11118c3e137c95b8db4d50660b4aa1",
+					"path": "/tarot/rwsa/faces/wands-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 444396,
+					"sha256": "85daa1a54f1a893fc7e3db63248ad32d828d4d34cba2b625490f19f2f82b053e",
+					"path": "/tarot/rwsa/faces/wands-knight-960.webp"
+				}
+			]
+		},
+		"wands-page": {
+			"source": "RWSa-W-J1.png",
+			"sourceSha256": "f08516eae4d492d647ebe876dd3cecf26a2b0e6d5fd9a194df672d3bd835db0d",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17326,
+					"sha256": "0d067690d8143f926e1cae70481d69c0856ccd80a63d0818cf2c3f95d78153dd",
+					"path": "/tarot/rwsa/faces/wands-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 73513,
+					"sha256": "1587af1d43d73008c2fef4a62f83683d5d54a5128fa8009451aec8306a96487a",
+					"path": "/tarot/rwsa/faces/wands-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 225162,
+					"sha256": "5cdebf4f25d1539975a4588b7ce329c1e0dad3152fdcbc53d4fd4430286e8ff3",
+					"path": "/tarot/rwsa/faces/wands-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 25134,
+					"sha256": "5c9d374adea651935095a3cb63564bcac6db7c2967c1f0adfb6ae7ad240c5665",
+					"path": "/tarot/rwsa/faces/wands-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 125254,
+					"sha256": "84bf3f80e68b71023b356929a40aae21e61c5ef6006baab2b902f1eab2717fbb",
+					"path": "/tarot/rwsa/faces/wands-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 392544,
+					"sha256": "0dae12a4fb37a34b7c4152cdec76f9ade03a4b632274c3205e8c1c5de377effe",
+					"path": "/tarot/rwsa/faces/wands-page-960.webp"
+				}
+			]
+		},
+		"wands-queen": {
+			"source": "RWSa-W-QU.png",
+			"sourceSha256": "c92bf142a4cf054d95afe4630e3c7b12f2e3f4ddc8ca476da5195a43e19723fa",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 26401,
+					"sha256": "298a078a8d9e93b593820fdda3b4e074122e77b668779113b6e85ac78bc4c747",
+					"path": "/tarot/rwsa/faces/wands-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 94406,
+					"sha256": "e1042a355a9c3e7d51b065e3fa5ef6297d0e956ca38877ce8c5e5931372fc567",
+					"path": "/tarot/rwsa/faces/wands-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 259203,
+					"sha256": "5b3c46d2e9709823bc5b8d9003512dc20e52637421545ad11b49ac1c81fd209b",
+					"path": "/tarot/rwsa/faces/wands-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 35258,
+					"sha256": "51a390ba4f9e02bc6515ad9b23555f6fab29f05e2159535ec99dc6728735be84",
+					"path": "/tarot/rwsa/faces/wands-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 143270,
+					"sha256": "91a67aa2a3fd54635980fc76e0836897c64f0c393bf604b18777023992219b5b",
+					"path": "/tarot/rwsa/faces/wands-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 418914,
+					"sha256": "81cce9a670f294d560dcf4d19924ae21ebecdd7dea1a746e371d9842ca777491",
+					"path": "/tarot/rwsa/faces/wands-queen-960.webp"
+				}
+			]
+		},
+		"wands-v": {
+			"source": "RWSa-W-05.png",
+			"sourceSha256": "17bb2f3a745760b58dfc289f89af2d5b288747a83bb962b5a68cdbbbb164295c",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19986,
+					"sha256": "841dfd52b24e6c950ccf821c8b6140a6e24451c564c712627c6f96a59c4fd845",
+					"path": "/tarot/rwsa/faces/wands-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 68191,
+					"sha256": "a85210b952b31e94cba7873444e13085e1c8b4894576a66d1f2663fd0c2e20ec",
+					"path": "/tarot/rwsa/faces/wands-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 195708,
+					"sha256": "f6241cf31f1ada46a730fd06deb21947d74fbca7c19ddb4851c79b1acb2a7df4",
+					"path": "/tarot/rwsa/faces/wands-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 27660,
+					"sha256": "15b878da3549341df620c13ac77d85cad129069377ecd2f95ae2234f3efced49",
+					"path": "/tarot/rwsa/faces/wands-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 96564,
+					"sha256": "43b7b75c9ba8418faefdc1c47e5dbcd77e3982113cf0b4cee294464a8b6b5556",
+					"path": "/tarot/rwsa/faces/wands-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 277090,
+					"sha256": "1f231db6531351131e53ab53f601f629e89a2a9f7ee20f00d7156b47060fc607",
+					"path": "/tarot/rwsa/faces/wands-v-960.webp"
+				}
+			]
+		},
+		"wands-vi": {
+			"source": "RWSa-W-06.png",
+			"sourceSha256": "585654d17b3d73b4f38faab178ad9adcb9e8c122fdaca2a7949c407f9d59ca42",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18858,
+					"sha256": "d9bf110d887ab8f77e4cb016968274c13caaf67b593ba6be4d832c2d758bc79c",
+					"path": "/tarot/rwsa/faces/wands-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 68570,
+					"sha256": "e7b10ff4e6bfd49b022a0f283b2b2300d266e39b02029f6b4a524373ed8f5651",
+					"path": "/tarot/rwsa/faces/wands-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 203710,
+					"sha256": "db17470ad0b5f3a7cdb01e2007c36bd34c3c50f23a4ffd665b15104e98a8565b",
+					"path": "/tarot/rwsa/faces/wands-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 27096,
+					"sha256": "83c2452a9fc18c6d15a50cd59d991a0683e50324d91d54e58d14bf6d76bb5eca",
+					"path": "/tarot/rwsa/faces/wands-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 103382,
+					"sha256": "c5691afa61086cb8da1802ca981b96ad66a6c145beeb09889d7a89a42bda55b9",
+					"path": "/tarot/rwsa/faces/wands-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 306822,
+					"sha256": "101d2f2cbdd73a0fe2094e2336f20891507815f834e8298736e6cb14804a9dd3",
+					"path": "/tarot/rwsa/faces/wands-vi-960.webp"
+				}
+			]
+		},
+		"wands-vii": {
+			"source": "RWSa-W-07.png",
+			"sourceSha256": "d8d5e335c66990e8e8298eb89509cd20655932973d6f840619f73a4bdf64538f",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 18047,
+					"sha256": "ab27d45d758fd3225c4af36ef469cfdbaed6098ad624244215a9063d3c2233be",
+					"path": "/tarot/rwsa/faces/wands-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 64350,
+					"sha256": "b84891e15f49a08cd2fc9af626f233278cebd257988de22ea4a145f321276d2c",
+					"path": "/tarot/rwsa/faces/wands-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 203030,
+					"sha256": "58c2cec7fd7680d9dbcd11f9f63a3d5e40ee6b491630ab1b78ef1adb41051496",
+					"path": "/tarot/rwsa/faces/wands-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 23236,
+					"sha256": "eee3abf2ab27b13a3e2be012cb07782fcb80e3f1099c75546b84068216f88d0d",
+					"path": "/tarot/rwsa/faces/wands-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 87678,
+					"sha256": "6202e202052ae08713672ce82b43247081c8091b3749044f2bec6cd20fc9ef8e",
+					"path": "/tarot/rwsa/faces/wands-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 278828,
+					"sha256": "0efd3c0a764e9a86ce80aaca306697b8d20550265c48890283cd6ddcab76e9b7",
+					"path": "/tarot/rwsa/faces/wands-vii-960.webp"
+				}
+			]
+		},
+		"wands-viii": {
+			"source": "RWSa-W-08.png",
+			"sourceSha256": "83ac2b550e677139a8e62c040e1d8f6288bcd56dd170ea4c844481ed99ec4205",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 17525,
+					"sha256": "b572821c211e12f99f86dedba6862b1ce74a104a0ba70531ca0af7a435354297",
+					"path": "/tarot/rwsa/faces/wands-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 60142,
+					"sha256": "d49ae317c605bebb405faaad33517c8c0aba302b1513010fa0a385fe21c06abd",
+					"path": "/tarot/rwsa/faces/wands-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 189270,
+					"sha256": "0fdd9eb09d5f592b636c4ffa7708e1aa7f4c63b0bff1844626f7d7b8047e9b91",
+					"path": "/tarot/rwsa/faces/wands-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 22816,
+					"sha256": "f6d5b8e4b96ec6865687cd7e762e57d0c318b5ecd6095ae539932f80d456d3d3",
+					"path": "/tarot/rwsa/faces/wands-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 81130,
+					"sha256": "c1d9f3060a61469768c4d74b714ab35f21df430a5365e0922be747b27453719a",
+					"path": "/tarot/rwsa/faces/wands-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 259630,
+					"sha256": "8510d30b7c024bfc65dc6f98dd2811f0fe99b45d3439c1a062f163f07decfc93",
+					"path": "/tarot/rwsa/faces/wands-viii-960.webp"
+				}
+			]
+		},
+		"wands-x": {
+			"source": "RWSa-W-10.png",
+			"sourceSha256": "e878773e6675f07a1c14d8a08d5080e7f9347d0dcc024ea0e0b3eec0badb04dd",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 19160,
+					"sha256": "ef1725568f0fabafc3189fa8bc371549ce78aaddc448a430283695c7a3cb5200",
+					"path": "/tarot/rwsa/faces/wands-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 73681,
+					"sha256": "7903ca199baa7825a814719aab755b9b3b0fcc87e2b8d37f37dd9edb4c110b7f",
+					"path": "/tarot/rwsa/faces/wands-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 227124,
+					"sha256": "600fd41806067e609af4b160a7cd01fa7c198f02ba1e9509674a65572247d4ef",
+					"path": "/tarot/rwsa/faces/wands-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 26294,
+					"sha256": "16afa1b9cef3e8578af68a3b20cb853c09a321546623171b4663313263fd6419",
+					"path": "/tarot/rwsa/faces/wands-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 106142,
+					"sha256": "d97065ef25b9a24ee17dfe8abfe23ff8fb6f00a158c36ee5a191c4356a81df2d",
+					"path": "/tarot/rwsa/faces/wands-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 337144,
+					"sha256": "695ad4667c4a6b77220df795487bbf7ff4b7709818632bbb7d7112726921b882",
+					"path": "/tarot/rwsa/faces/wands-x-960.webp"
+				}
+			]
+		},
+		"wheel-of-fortune": {
+			"source": "RWSa-T-10.png",
+			"sourceSha256": "9c6f2f5f092ac525c813340b45b2ea0ee02fd01dfe2b3ce9dfb9fa7fbc9b77dc",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 24527,
+					"sha256": "8909bf759cfb0f8742265ac3db0332d7cd508cea70251172ac2f26d2ad9a4b97",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 85797,
+					"sha256": "2a92e57aa19b067d4503e8c9665890a66ee033246cb00175b1c3a18f5f5cdb47",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 224142,
+					"sha256": "7712e36275876b5014971250ca1fc111568b3c5b5a469c66a4c9234c1901b33f",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 33870,
+					"sha256": "a0d83074d1549c334ebae10929f3b990679b51ea14834d30d45b57b8e9bbf7c6",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 125992,
+					"sha256": "c4faf94847a90814af0b0473f12f0ee5ea1987cb83e624d86d139dfbe9f1f373",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 353514,
+					"sha256": "b9737fd164a6c07895c74f53bec4c3ed990546492661c478468c45285f70cb7d",
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-960.webp"
+				}
+			]
+		},
+		"world": {
+			"source": "RWSa-T-21.png",
+			"sourceSha256": "37a16311056f32e85b6fd04763d4c6896eda8f7192ef9823ecf5230f9306b413",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 26657,
+					"sha256": "2b9f5d4d729ab85d026c3032892e0e3ceb5e01d6339266ba94b758d8011f6b80",
+					"path": "/tarot/rwsa/faces/world-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 89775,
+					"sha256": "92156f8ff1be724cee8acda718c11efd400fa46cb22c24e542e6fb21bedb787c",
+					"path": "/tarot/rwsa/faces/world-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 235120,
+					"sha256": "d14ed1615b746022811ccd23ec75456e20f53b979521e4367871e995ecd7388a",
+					"path": "/tarot/rwsa/faces/world-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 35974,
+					"sha256": "3361758fda97dac21c51cafed27ad4008d45153940d57bf0b71753d2d1caf125",
+					"path": "/tarot/rwsa/faces/world-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 123632,
+					"sha256": "46d62e4f8ba89cea777b3fd2276595af9e49ede5a585e8206584f62e8a6b3fb3",
+					"path": "/tarot/rwsa/faces/world-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 352740,
+					"sha256": "f0af35a8e91945ffc21d3b237b108d8e6480d84d33fd9b7327b7c991c8aeb65f",
+					"path": "/tarot/rwsa/faces/world-960.webp"
+				}
+			]
+		}
+	},
+	"backs": {
+		"adherent-dark": {
+			"source": "adherent-logo.png",
+			"sourceSha256": "363eefaeaf020ef6d2d71f990f8e39924d68ad682f88f4954d94a9412d7cb977",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 5713,
+					"sha256": "ab06204fb06064d1fb583dbd7e04457581b7ece9c999d1ef65fa8b463fb8e57c",
+					"path": "/tarot/rwsa/backs/adherent-dark-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 13071,
+					"sha256": "c50ac0cc0552097258d81f51847cb64c257aac5222a494b0160d709a93cb62b5",
+					"path": "/tarot/rwsa/backs/adherent-dark-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 26103,
+					"sha256": "8ef09715c721095b9b2a9443c60f7d31c0587a8b03865c959a28807a58d7edea",
+					"path": "/tarot/rwsa/backs/adherent-dark-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 6660,
+					"sha256": "f399094f2834d9f5718ad215de69aa92fdc3f639697c838c954ca22c6a16bf44",
+					"path": "/tarot/rwsa/backs/adherent-dark-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 16342,
+					"sha256": "e23506c58e619ed94bbdd2c6c73113e9ede2d6e7411dd60c76c83dd2d4223ab7",
+					"path": "/tarot/rwsa/backs/adherent-dark-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 35972,
+					"sha256": "263436a5df5f682a3f0aca4e6444315fed0cdf2502b0c4a7a323536965584e97",
+					"path": "/tarot/rwsa/backs/adherent-dark-960.webp"
+				}
+			]
+		},
+		"adherent-parchment": {
+			"source": "adherent-logo.png",
+			"sourceSha256": "363eefaeaf020ef6d2d71f990f8e39924d68ad682f88f4954d94a9412d7cb977",
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"bytes": 5938,
+					"sha256": "c714b14fb32ba878a5357a87e2f4f35077a5ce185fce7a9162d5743876456e47",
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"bytes": 13614,
+					"sha256": "085481ad817bd2053a811977bb90eb684a66bda0092f750c2aa7152b427c65cc",
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"bytes": 27583,
+					"sha256": "194e0fae6867202dee355a2b9f5f870fbc3aeefcf4c6c3cdd8b01cdbce387d3e",
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"bytes": 7126,
+					"sha256": "22ac3ade8c2cc09459afe9f803cdca6921052352335d4cda4fae850ad41623df",
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"bytes": 17666,
+					"sha256": "8380129fda3d4ece25ce6d1a144f93541ae473673a788007ed021396a10c2f9c",
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"bytes": 39338,
+					"sha256": "bc8445e9431fa71fd562fbfd0f94942de6daabdb1b348e135e4b974b97c6fddd",
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.webp"
+				}
+			]
+		}
+	}
+}

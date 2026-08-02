@@ -37,6 +37,10 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 
 	await expect(page.getByRole('heading', { name: 'The Omphalic Market' })).toBeVisible();
 	await page.getByRole('checkbox').first().click();
+	// Rope is impoverished, so it is never capped — take a second length.
+	await page.getByRole('checkbox', { name: 'Rope', exact: true }).click();
+	await page.getByRole('button', { name: 'Add another Rope' }).click();
+	await expect(page.getByText('×2', { exact: true })).toBeVisible();
 	await page.getByRole('button', { name: 'Continue' }).click();
 
 	await expect(page).toHaveURL(/\/create\/hmtw\/review$/);
@@ -46,6 +50,7 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await expect(page.getByRole('listitem').filter({ hasText: 'Ambusher' })).toBeVisible();
 	await expect(page.getByText('Recover the bell beneath the drowned abbey.')).toBeVisible();
 	await expect(page.getByText('Disgraced Soldier')).toBeVisible();
+	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Save adventurer' })).toBeEnabled();
 
 	await page.getByRole('button', { name: 'Save adventurer' }).click();

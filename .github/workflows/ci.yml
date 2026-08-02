@@ -1,11 +1,31 @@
 name: CI
 
+# No `push: branches: [main]` trigger, deliberately. The "Protect main through
+# pull requests" ruleset requires `check` and `e2e` on every pull request with
+# `strict_required_status_checks_policy` on and an empty `bypass_actors` list, so
+# a branch cannot reach main unless both jobs already passed on the exact merge
+# result — a post-merge run re-tested a byte-identical tree and never once had a
+# way to disagree with the run that let the merge through.
+#
+# What that duplicate genuinely did not cover is drift, because `npm ci` is
+# lockfile-pinned: a runner image or browser build can change underneath a tree
+# that has not. The nightly schedule below covers exactly that, on main.
 on:
   workflow_call:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # 04:23 UTC daily, offset from the Tuesday e2e-stress cron so the two do not
+    # contend for runners.
+    - cron: '23 4 * * *'
+
+# Supersede a pull request's own in-flight run when the branch is pushed again;
+# those results are already answering a stale question. Scoped to pull requests
+# on purpose: `workflow_call` runs this file as the release workflow's `verify`
+# gate, and cancelling that would abort a release mid-verification.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:

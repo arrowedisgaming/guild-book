@@ -45,7 +45,7 @@ The build command is identical to the old Pages one.
 
 The workflow intentionally has read-only repository permissions. Cloudflare
 credentials are available only to the protected deployment job; pull requests,
-ordinary `main` builds, metadata validation, and browser tests cannot read them.
+the nightly `main` run, metadata validation, and browser tests cannot read them.
 
 ### Cut a release
 
@@ -64,6 +64,16 @@ ordinary `main` builds, metadata validation, and browser tests cannot read them.
    the content-pack comparison only detects a missing pack-version bump while
    `origin/main` does not yet contain the change. Pull request CI enforces the
    same comparison against the PR base commit.
+
+   This gate deliberately stops short of the browser suite. `npm run test:e2e`
+   is the slowest half of it and is owned by CI, which runs it on the release
+   pull request and again on the tagged commit through the release workflow's
+   `verify` job — so running it a third time locally delays the release without
+   being able to reach a different verdict. What stays local is what CI cannot
+   do: `content:verify` re-extracts from the gitignored Markdown vault, and the
+   `origin/main` content comparison needs the pre-merge vantage point. Run
+   `npm run test:e2e` by hand when a change actually touches browser behaviour
+   and you want the answer before pushing.
 
 3. Merge that exact commit to `main`. Apply any required production D1
    migrations and preflights before approving deployment; the workflow never

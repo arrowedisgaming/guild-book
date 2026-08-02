@@ -18,7 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The project now spells "license" the way the author does on his own site,
   rather than using the British "licence", in the licensing page, the READMEs,
-  the contributing and deploy guides, and the content pack metadata.
+  the contributing and deploy guides, and other documentation. The content
+  pack's own metadata (`static/content-packs/hmtw/index.json`) is unchanged —
+  it is covered by a tamper-evidence digest, and a cosmetic spelling edit
+  there is not worth the pack version bump regenerating that digest would
+  force.
 
 ## [0.11.0] - 2026-08-01
 

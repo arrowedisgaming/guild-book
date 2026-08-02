@@ -68,8 +68,12 @@ the nightly `main` run, metadata validation, and browser tests cannot read them.
    This gate deliberately stops short of the browser suite. `npm run test:e2e`
    is the slowest half of it and is owned by CI, which runs it on the release
    pull request and again on the tagged commit through the release workflow's
-   `verify` job — so running it a third time locally delays the release without
-   being able to reach a different verdict. What stays local is what CI cannot
+   `verify` job — so running it a third time locally mostly delays the release.
+   Note that the browser suite fails on flake by design (`failOnFlakyTests`), so
+   a red `e2e` is not always a real regression. A passing re-run is evidence, not
+   proof: it cannot tell an infrastructure flake from an intermittent
+   application bug. Read the uploaded `playwright-failure-*` artifact before
+   concluding it was either. What stays local is what CI cannot
    do: `content:verify` re-extracts from the gitignored Markdown vault, and the
    `origin/main` content comparison needs the pre-merge vantage point. Run
    `npm run test:e2e` by hand when a change actually touches browser behaviour

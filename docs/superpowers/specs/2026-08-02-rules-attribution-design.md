@@ -136,11 +136,22 @@ In scope:
 - `README.md`, `CONTRIBUTING.md`, `DEPLOY.md`
 - `package.json` — the `description` field
 - `static/content-packs/hmtw/README.md`
-- `static/content-packs/hmtw/index.json` — the `description` field
 
 Out of scope, deliberately: historical `CHANGELOG.md` entries and dated files
 under `docs/superpowers/`. Those are records of what was written at the time;
 rewriting them adds churn and obscures history.
+
+**Amended during implementation — do not edit
+`static/content-packs/hmtw/index.json`.** This spec originally listed that
+file's `description` field as in scope. It is not, and must not be: the file
+is covered by the content-pack tamper-evidence digest
+(`scripts/content-import/verify-pack-version.mjs`), which the required CI
+`check` job enforces through `npm run content:verify:ci`. Editing even a
+prose string there fails CI, and the only clean way to satisfy the digest is
+to bump the pack `version` — which invalidates session-pinned pack versions
+and the `?v=` cache key for the rules-search artifact
+(`src/lib/search/rules-search.ts`). That is a real cost for a cosmetic change
+to a metadata string no user reads. The file keeps the British spelling.
 
 Note that `licensing`, `licensed`, and the `/licensing` route are spelled the
 same either way and need no change. The GPL-3.0 reference on `/licensing` is a

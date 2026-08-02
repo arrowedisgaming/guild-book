@@ -84,7 +84,9 @@ export function loadSummary(
 
 /**
  * Deterministic rules-driven placement:
- *  1. Armor (has wornBeltSlots) is worn — billed against the belt.
+ *  1. Armor (has wornBeltSlots) is worn — billed against the belt. Only ONE
+ *     suit can be worn, so a multi-quantity armor entry is split: one worn,
+ *     the spares packed.
  *  2. Helms and clothing are worn (free).
  *  3. Oversized (belt-only) gear goes to the belt.
  *  4. Hand-carried gear (weapons/shields) fills the hands, then the belt,
@@ -102,13 +104,21 @@ export function autoPlace(
 	let beltUsed = 0;
 	let wornArmor = false;
 
-	return entries.map((entry) => {
+	return entries.flatMap((entry): EquipmentEntry[] => {
 		const def = entry.itemId ? items.get(entry.itemId) : undefined;
-		const place = (location: CarryLocation): EquipmentEntry => ({ ...entry, location });
+		const place = (location: CarryLocation): EquipmentEntry[] => [{ ...entry, location }];
 
 		if (def?.wornBeltSlots && !wornArmor) {
 			wornArmor = true; // wear the first suit of armor; spares travel in the pack
 			beltUsed += def.wornBeltSlots;
+			if (entry.quantity > 1) {
+				// You can only wear one suit. Split so the belt is billed once and
+				// the spares are honestly carried rather than silently free.
+				return [
+					{ ...entry, location: 'worn', quantity: 1 },
+					{ ...entry, location: 'pack', quantity: entry.quantity - 1 }
+				];
+			}
 			return place('worn');
 		}
 		if (def && (def.category === 'clothing' || (def.category === 'armor' && !def.wornBeltSlots))) {

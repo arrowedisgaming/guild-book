@@ -113,4 +113,32 @@ describe('autoPlace', () => {
 		expect(placed[0].location).toBe('worn');
 		expect(placed[1].location).toBe('pack');
 	});
+
+	describe('autoPlace with multiple suits of armor', () => {
+		it('wears one suit and packs the spare', () => {
+			const placed = autoPlace([entry('armor-light', { quantity: 2 })], items, caps);
+			expect(placed).toHaveLength(2);
+			expect(placed[0]).toMatchObject({ itemId: 'armor-light', location: 'worn', quantity: 1 });
+			expect(placed[1]).toMatchObject({ itemId: 'armor-light', location: 'pack', quantity: 1 });
+		});
+
+		it('bills only the worn suit against the belt', () => {
+			const placed = autoPlace([entry('armor-light', { quantity: 2 })], items, caps);
+			const load = loadSummary(placed, items, caps);
+			expect(load.belt.used).toBe(1); // one suit's wornBeltSlots, not two
+			expect(load.pack.used).toBe(1); // the spare, at its 1 base slot
+		});
+
+		it('leaves a single suit as one worn entry', () => {
+			const placed = autoPlace([entry('armor-light')], items, caps);
+			expect(placed).toHaveLength(1);
+			expect(placed[0]).toMatchObject({ location: 'worn', quantity: 1 });
+		});
+
+		it('still packs non-armor multiples as one entry', () => {
+			const placed = autoPlace([entry('rations', { quantity: 3 })], items, caps);
+			expect(placed).toHaveLength(1);
+			expect(placed[0]).toMatchObject({ location: 'pack', quantity: 3 });
+		});
+	});
 });

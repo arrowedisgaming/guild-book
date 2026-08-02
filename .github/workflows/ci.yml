@@ -1,11 +1,36 @@
 name: CI
 
+# No `push: branches: [main]` trigger, deliberately. The "Protect main through
+# pull requests" ruleset requires `check` and `e2e` on every pull request with
+# `strict_required_status_checks_policy` on and an empty `bypass_actors` list, so
+# a branch cannot reach main unless both jobs already passed on the exact merge
+# result — the merge commit's tree is the tree the pull request tested. The
+# post-merge run was a redundant gate on that same tree, not an independent one.
+#
+# It could still land differently: a flaky test or a drifting runner can flip a
+# verdict on unchanged code. That argues for re-running deliberately, not on
+# every merge. Drift is what the nightly schedule below covers — `npm ci` is
+# lockfile-pinned, so nothing in the pull-request path can see a runner image or
+# browser build change underneath a tree that has not.
 on:
   workflow_call:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # 04:23 UTC daily, offset from the Tuesday e2e-stress cron so the two do not
+    # contend for runners.
+    - cron: '23 4 * * *'
+
+# Supersede a pull request's own in-flight run when the branch is pushed again;
+# those results are already answering a stale question. Scoped to pull requests
+# on purpose: `workflow_call` runs this file as the release workflow's `verify`
+# gate, and cancelling that would abort a release mid-verification. This is not
+# the only concurrency in the release path — `release.yml` serialises on
+# `production-release`, where a queued release can still be dropped if a third
+# tag arrives while one is running and another is already waiting.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:

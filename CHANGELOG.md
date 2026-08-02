@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-02
+
+### Changed
+
+- CI no longer re-runs the full suite on every push to `main`. The branch
+  ruleset already requires `check` and `e2e` to pass on the exact merge result
+  and allows no bypass, so the post-merge run was a redundant gate on a
+  byte-identical tree rather than an independent one. A nightly run on `main`
+  replaces it, and is better positioned to surface drift in the runner image or
+  browser build underneath a lockfile-pinned tree.
+- A pull request's in-flight CI run is now superseded when the branch is pushed
+  again, instead of running to completion against a stale commit. The release
+  path is excluded from this, though `release.yml`'s own `production-release`
+  group can still drop a queued release when tags are pushed close together.
+- `npm run release:verify` no longer runs the browser suite. CI runs it on the
+  release pull request and again on the tagged commit, so the local repeat only
+  added minutes to a release without asking a new question.
+  `content:verify` and the `origin/main` content comparison stay local, because
+  they need the gitignored Markdown vault and the pre-merge vantage point.
+
 ## [0.12.0] - 2026-08-02
 
 ### Added

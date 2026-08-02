@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-02
+
 ### Changed
 
 - CI no longer re-runs the full suite on every push to `main`. The branch

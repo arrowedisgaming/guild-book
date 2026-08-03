@@ -40,7 +40,10 @@ const SCHEMA_VERSION = 2;
 function assertSourceResolves(source, label) {
 	if (source.anchor) {
 		const raw = readFileSync(join(MD_DIR, source.file), 'utf8');
-		if (!raw.split('\n').some((l) => l.trimStart().startsWith(source.anchor))) {
+		// Emphasis-insensitive, matching md-lib's extractTable anchor lookup:
+		// vault bold-recovery passes move ** around bullet labels.
+		const key = source.anchor.replace(/\*\*/g, '');
+		if (!raw.split('\n').some((l) => l.trimStart().replace(/\*\*/g, '').startsWith(key))) {
 			throw new Error(`[${label}] anchor not found in ${source.file}: ${JSON.stringify(source.anchor)}`);
 		}
 		return;

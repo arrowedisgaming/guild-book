@@ -47,13 +47,34 @@ function extractListItems(file, heading, until, after) {
 
 /** Slice a normalized section body between anchors. `from` is inclusive,
  * `fromAfter` exclusive (starts just past the anchor — e.g. a "Stage 1:" label). */
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Find a literal anchor in `body`, tolerating **bold** markers hugging its
+ * tokens — the vault's bold-recovery passes wrap labels like "Stage 1:" and
+ * "Rags", and an emphasis-free manifest anchor must survive that. The match
+ * consumes any adjacent markers so slices start/end clean. */
+function anchorMatch(body, anchor, fromIndex = 0) {
+	const pat = anchor
+		.trim()
+		.split(/\s+/)
+		.map((tok) => `(?:\\*\\*)?${escapeRe(tok)}(?:\\*\\*)?`)
+		.join('\\s+');
+	const re = new RegExp(pat, 'g');
+	re.lastIndex = fromIndex;
+	const m = re.exec(body);
+	return m ? { start: m.index, end: m.index + m[0].length } : null;
+}
+
 function sliceBody(body, { from, fromAfter, to }) {
 	const anchor = fromAfter ?? from;
-	let start = anchor ? body.indexOf(anchor) : 0;
-	if (start === -1) throw new Error(`start anchor not found: ${JSON.stringify(anchor)}`);
-	if (fromAfter) start += fromAfter.length;
-	const rest = to ? body.indexOf(to, start) : -1;
-	const end = rest === -1 ? body.length : rest;
+	let start = 0;
+	if (anchor) {
+		const m = anchorMatch(body, anchor);
+		if (!m) throw new Error(`start anchor not found: ${JSON.stringify(anchor)}`);
+		start = fromAfter ? m.end : m.start;
+	}
+	const mTo = to ? anchorMatch(body, to, start) : null;
+	const end = mTo ? mTo.start : body.length;
 	return body.slice(start, end).trim();
 }
 

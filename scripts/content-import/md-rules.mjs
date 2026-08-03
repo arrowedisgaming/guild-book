@@ -74,11 +74,23 @@ function lintBody(body, entry) {
 	if (/\bpage\s+\d+/i.test(body)) problems.push('page cross-reference');
 	if (/\b(?:SWORDS|DISKS|BATONS)\b/.test(body)) problems.push('leftover suit-glyph token');
 	if (/[^\n][ \t]+#{2,6}\s/.test(body)) problems.push('inline heading marker');
+	// Belt over the normalize-time strip: if a vault image ever arrives in a
+	// shape the strip regexes don't match (nested parens in the path), fail
+	// loudly here rather than shipping a vault-only path into the pack.
+	if (body.includes('![')) problems.push('image embed leaked');
+	// Sentinels are emphasis-insensitive (like headingKey): the vault's
+	// bold-recovery passes move ** through rule sentences, and a sentinel
+	// should assert the words survived, not the markup.
+	const plain = body.replace(/\*\*/g, '');
 	for (const expected of entry.mustContain ?? []) {
-		if (!body.includes(expected)) problems.push(`missing sentinel ${JSON.stringify(expected)}`);
+		if (!plain.includes(expected.replace(/\*\*/g, '')) && !body.includes(expected)) {
+			problems.push(`missing sentinel ${JSON.stringify(expected)}`);
+		}
 	}
 	for (const forbidden of entry.mustNotContain ?? []) {
-		if (body.includes(forbidden)) problems.push(`forbidden corrupt fragment ${JSON.stringify(forbidden)}`);
+		if (plain.includes(forbidden.replace(/\*\*/g, '')) || body.includes(forbidden)) {
+			problems.push(`forbidden corrupt fragment ${JSON.stringify(forbidden)}`);
+		}
 	}
 	return problems;
 }

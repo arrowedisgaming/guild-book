@@ -19,7 +19,7 @@ const SPELLS_JSON = join(PACK_DIR, 'spells.json');
 
 /** "# Spells of the <realm>" heading -> tradition id (matches the four "Magic of the …" talents). */
 const TRADITION_BY_CHAPTER = {
-	'spells of the waste': 'wastes',
+	'spells of the wastes': 'wastes',
 	'spells of the weald': 'weald',
 	'spells of the weird': 'weird',
 	'spells of the welkin': 'welkin'
@@ -75,7 +75,12 @@ function splitComponent(bodyLines) {
 		.slice(j, k)
 		.map((line) => line.trim())
 		.join(' ');
-	const component = componentRaw.replace(/^[*_]+|[*_]+$/g, '').trim();
+	// Strip ALL emphasis markers, not just the edges: the vault sets whole
+	// component lines in italics AND bolds words inside them, so an edge trim
+	// eats the closing half of a trailing `**speech**_` cluster and ships an
+	// unbalanced `**` opener. The field's contract is plain text (matching
+	// every committed component); emphasis here is book typography, not data.
+	const component = componentRaw.replace(/[*_]/g, '').replace(/\s{2,}/g, ' ').trim();
 
 	// description = everything except the Component heading + complete component block
 	const descriptionLines = [...bodyLines.slice(0, i), ...bodyLines.slice(k)];

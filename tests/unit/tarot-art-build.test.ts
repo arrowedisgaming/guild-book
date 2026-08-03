@@ -6,6 +6,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FACE_SOURCE_MAP, BACK_COMPOSITIONS, COLLECTION } from '../../scripts/tarot-art/source-map.mjs';
 import { manifestRelativePath } from '../../scripts/tarot-art/verify.mjs';
+import {
+	RUNTIME_MANIFEST_BASENAME,
+	projectRuntimeManifest,
+	serializeManifest
+} from '../../scripts/tarot-art/runtime-projection.mjs';
+import { tarotArtManifestSchema } from '$lib/schemas/tarot-art.schema';
+import { tarotArtRuntimeManifestSchema } from '$lib/schemas/tarot-art-runtime.schema';
 
 /**
  * Task 2's committed-output contract: these tests read the COMMITTED manifest
@@ -133,25 +140,30 @@ describe('tarot artwork manifest', () => {
 				const bytes = readFileSync(decoy);
 				const link = join(outDir, 'faces', 'fool-240.avif');
 				symlinkSync(decoy, link);
+				const doctored = {
+					faces: {
+						fool: {
+							variants: [
+								{
+									format: 'avif',
+									width: 240,
+									height: 400,
+									bytes: bytes.byteLength,
+									sha256: createHash('sha256').update(bytes).digest('hex'),
+									path: `${COLLECTION.publicPathPrefix}/faces/fool-240.avif`
+								}
+							]
+						}
+					},
+					backs: {}
+				};
+				writeFileSync(join(outDir, 'tarot-art.json'), JSON.stringify(doctored));
+				// A consistent runtime projection rides along so the symlink stays
+				// this fixture's ONLY defect — the run must fail on the link, not
+				// on projection drift.
 				writeFileSync(
-					join(outDir, 'tarot-art.json'),
-					JSON.stringify({
-						faces: {
-							fool: {
-								variants: [
-									{
-										format: 'avif',
-										width: 240,
-										height: 400,
-										bytes: bytes.byteLength,
-										sha256: createHash('sha256').update(bytes).digest('hex'),
-										path: `${COLLECTION.publicPathPrefix}/faces/fool-240.avif`
-									}
-								]
-							}
-						},
-						backs: {}
-					})
+					join(outDir, RUNTIME_MANIFEST_BASENAME),
+					serializeManifest(projectRuntimeManifest(doctored as never))
 				);
 
 				const result = spawnSync(
@@ -163,9 +175,67 @@ describe('tarot artwork manifest', () => {
 				// only the regular-file check can reject this.
 				expect(result.status).toBe(1);
 				expect(result.stderr).toMatch(/not a regular file/);
+				expect(result.stderr).not.toMatch(/runtime projection/);
 			} finally {
 				rmSync(fixture, { recursive: true, force: true });
 			}
+		});
+	});
+
+	/**
+	 * Issue #32's contract: the app imports `tarot-art.runtime.json`, not the
+	 * full manifest, so the committed projection must be provably derived from
+	 * the committed manifest and must carry none of the provenance the split
+	 * exists to keep out of the client bundle.
+	 */
+	describe('runtime projection', () => {
+		const runtimeRaw = readFileSync(`${COLLECTION.outputDir}/${RUNTIME_MANIFEST_BASENAME}`, 'utf8');
+		const manifestRaw = readFileSync(`${COLLECTION.outputDir}/tarot-art.json`, 'utf8');
+
+		it('is byte-for-byte the projection of the committed manifest', () => {
+			expect(runtimeRaw).toBe(serializeManifest(projectRuntimeManifest(JSON.parse(manifestRaw))));
+		});
+
+		it('parses under its strict schema, as the full manifest does under its own', () => {
+			// Both schemas are .strict(): this is the drift alarm for an emitter
+			// that grows a field without the schemas keeping up — and it is the
+			// full schema's remaining consumer now that the app no longer parses
+			// that file.
+			expect(() => tarotArtManifestSchema.parse(JSON.parse(manifestRaw))).not.toThrow();
+			const runtime = tarotArtRuntimeManifestSchema.parse(JSON.parse(runtimeRaw));
+			expect(Object.keys(runtime.faces).sort()).toEqual(Object.keys(FACE_SOURCE_MAP).sort());
+			expect(Object.keys(runtime.backs).sort()).toEqual(Object.keys(BACK_COMPOSITIONS).sort());
+		});
+
+		it('carries no build-time provenance', () => {
+			for (const key of ['"sha256":', '"sourceSha256":', '"bytes":', '"source":', '"generator":', '"permissionBasis":', '"backProvenance":', '"sourceSet":']) {
+				expect(runtimeRaw).not.toContain(key);
+			}
+		});
+
+		it('projects only the resolver-read fields, dropping anything else', () => {
+			const projected = projectRuntimeManifest({
+				schemaVersion: 1,
+				collectionId: 'x',
+				faces: {
+					fool: {
+						source: 'a.png',
+						sourceSha256: 'f'.repeat(64),
+						width: 1086,
+						height: 1810,
+						surprise: 'dropped',
+						variants: [
+							{ format: 'avif', width: 240, height: 400, bytes: 9, sha256: 'f'.repeat(64), path: '/x/fool-240.avif', extra: 'dropped' }
+						]
+					}
+				},
+				backs: {}
+			} as never);
+			expect(projected.faces.fool).toEqual({
+				width: 1086,
+				height: 1810,
+				variants: [{ format: 'avif', width: 240, height: 400, path: '/x/fool-240.avif' }]
+			});
 		});
 	});
 

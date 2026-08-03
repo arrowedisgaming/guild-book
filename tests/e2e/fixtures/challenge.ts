@@ -17,26 +17,70 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * same seat is still active, and then have the real response land mid
  * re-interaction — tearing down the `turn-controls` section out
  * from under an in-flight Playwright action ("element was detached from the
- * DOM, retrying"). `clickCommand` below waits for the actual
- * `/challenge-commands` response before returning, so every helper here
- * only ever inspects state AFTER the command it triggered has genuinely
- * landed — a real signal, never an arbitrary `waitForTimeout`.
+ * DOM, retrying"). `clickCommand` below waits for both the actual
+ * `/challenge-commands` response and the sender's completed UI lifecycle,
+ * so every helper here only inspects state after the command it triggered
+ * has genuinely landed — a real signal, never an arbitrary `waitForTimeout`.
  */
 
-/** Clicks `locator` and waits for the `/challenge-commands` POST it
- * triggers to actually resolve before returning — the one synchronization
- * primitive every helper below is built on. Throws with the response body
- * if the command was rejected, so a genuine product regression fails loudly
- * here instead of manifesting later as a confusing UI-state mismatch. */
+/**
+ * Completes one Challenge interaction in three diagnostic phases: the target
+ * becomes actionable and receives a click, the server returns a successful
+ * JSON outcome, and the sending page finishes applying that response.
+ */
 export async function clickCommand(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
-	const [response] = await Promise.all([
-		page.waitForResponse((res) => res.url().includes('/challenge-commands') && res.request().method() === 'POST', { timeout: timeoutMs }),
-		locator.click()
-	]);
-	if (!response.ok()) {
-		const body = await response.text().catch(() => '<unreadable response body>');
-		throw new Error(`challenge command via ${locator} failed (HTTP ${response.status()}): ${body}`);
+	const responseResultPromise = page
+		.waitForResponse(
+			(response) => response.url().includes('/challenge-commands') && response.request().method() === 'POST',
+			{ timeout: timeoutMs * 2 }
+		)
+		.then(
+			(response) => ({ ok: true as const, response }),
+			(cause: unknown) => ({ ok: false as const, cause })
+		);
+
+	await locator.click({ timeout: timeoutMs });
+
+	const responseResult = await responseResultPromise;
+	if (!responseResult.ok) throw responseResult.cause;
+	const { response } = responseResult;
+
+	let responseText: string;
+	try {
+		responseText = await response.text();
+	} catch (cause) {
+		throw new Error(`challenge command via ${locator} returned an unreadable body (HTTP ${response.status()})`, { cause });
 	}
+
+	let body: unknown;
+	try {
+		body = JSON.parse(responseText);
+	} catch (cause) {
+		if (!response.ok()) {
+			throw new Error(`challenge command via ${locator} failed (HTTP ${response.status()}): ${responseText}`, { cause });
+		}
+		throw new Error(`challenge command via ${locator} returned invalid JSON (HTTP ${response.status()}): ${responseText}`, { cause });
+	}
+
+	const outcome =
+		typeof body === 'object' && body !== null && 'outcome' in body && typeof body.outcome === 'object' && body.outcome !== null
+			? body.outcome
+			: null;
+	const code = outcome && 'code' in outcome && typeof outcome.code === 'string' ? outcome.code : null;
+	const message = outcome && 'message' in outcome && typeof outcome.message === 'string' ? outcome.message : null;
+	const detail = [code ? ` (${code})` : '', message ? `: ${message}` : ''].join('');
+
+	if (!response.ok()) {
+		throw new Error(`challenge command via ${locator} failed (HTTP ${response.status()})${detail}`);
+	}
+	if (!outcome || !('ok' in outcome) || outcome.ok !== true) {
+		throw new Error(`challenge command via ${locator} was rejected${detail}`);
+	}
+
+	// `pending = true` is set synchronously by the click handler. Svelte's
+	// microtask flush therefore renders busy=true before the later network task
+	// can deliver this response, so this cannot false-pass on pre-click "false".
+	await expect(page.getByTestId('challenge-controls')).toHaveAttribute('aria-busy', 'false', { timeout: timeoutMs });
 }
 
 export async function createCampaignAndReadInvite(page: Page, name: string): Promise<string> {

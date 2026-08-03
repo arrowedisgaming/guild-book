@@ -27,12 +27,14 @@ In scope:
 - Render no Correction dialog for a player in either layout.
 - Preserve the mobile table-first DOM order and the existing 320 CSS-pixel and
   200%-zoom overflow guarantees.
+- Define the shared procedure sequence once as an in-file Svelte 5 snippet so
+  desktop and mobile cannot drift independently again.
 - Make browser tests enforce component uniqueness rather than selecting the
   first matching duplicate.
 
 Out of scope:
 
-- Refactoring the procedure panels into a new shared wrapper component.
+- Extracting the procedure panels into a new shared component file.
 - Changing `MobileTableDrawers` or moving procedure controls into a drawer.
 - Changing procedure visibility, authorization, command dispatch, or
   `matchMedia` behavior.
@@ -41,47 +43,53 @@ Out of scope:
 
 ## Architecture
 
-Keep `TableShell.svelte` as the composition boundary. In the desktop
-`.table-column`, retain one contiguous procedure stack in the existing order:
-Challenge, Test of Fate, Group Test, Camp, Crawl, Oracle, then the GM-only
-Correction dialog. Remove the earlier malformed duplicate block.
+Keep `TableShell.svelte` as the composition boundary. Define one in-file Svelte
+5 `{#snippet procedureStack()}` after the component script. The snippet closes
+over the shell's existing props and derived state, so it needs no parameters or
+prop-forwarding boundary. It renders one contiguous sequence in the existing
+order: Challenge, Test of Fate, Group Test, Camp, Crawl, Oracle, then the
+GM-only Correction dialog.
 
-In `.mobile-layout`, add Crawl, Oracle, and the GM-only Correction dialog after
-the existing Camp panel and before `MobileTableDrawers`. This mirrors the
-desktop procedure order while preserving the required mobile sequence:
-`PublicTable` remains the first child, procedure controls remain in the primary
-flow, auxiliary phase/log content remains in drawers, and the private hand
-remains below them.
+Replace the hand-maintained procedure markup in both responsive branches with
+`{@render procedureStack()}`. In the desktop `.table-column`, render the snippet
+after `PublicTable` and before `PrivateHand`. In `.mobile-layout`, render it
+after `PublicTable` and before `MobileTableDrawers`. This preserves the required
+mobile sequence: `PublicTable` remains the first child, procedure controls
+remain in the primary flow, auxiliary phase/log content remains in drawers,
+and the private hand remains below them.
 
-Do not create a shared procedure-stack component. The desktop and mobile
-branches intentionally compose different surrounding elements, and extracting
-all common panels would introduce a large prop-forwarding boundary to remove a
-small amount of declarative markup.
+Do not create a shared procedure-stack component file. The in-file snippet
+removes the duplicated maintenance surface without introducing a new public
+component interface or forwarding the shell's command callbacks and session
+data through another boundary. `PrivateHand` and `PrivateFacedown` remain
+outside the snippet because their mobile variants require `layout="mobile"`;
+the procedure stack itself is identical across layouts.
 
 ## Data and Command Flow
 
-Each retained or added component receives the same props already used on
+Each component in `procedureStack()` receives the same props already used on
 desktop:
 
 - `CrawlProcedurePanel` and `OraclePanel` receive `role`, `userId`, `session`,
-  `challengeRoster`, `procedureTitles`, and `onSendFiniteCommand`.
+  `roster={challengeRoster}`, `procedureTitles`, and `onSendFiniteCommand`.
 - `CorrectionDialog` receives `session`, `events`, and
   `onSendCorrectionCommand`, and remains inside `role === 'gm'`.
 
-No component owns new state and no new command path is introduced. Every action
+The snippet owns no state and introduces no command path. Every child action
 continues through the callback supplied by the route-level campaign session
-store. Responsive branches are mutually exclusive, so exactly one live copy of
-each applicable surface exists at a time.
+store. Responsive branches are mutually exclusive, and both render the same
+single snippet definition, so exactly one live copy of each applicable surface
+exists at a time.
 
 ## Error Handling and Privacy
 
 Existing panel-level pending and error behavior remains unchanged. The shell
 continues to surface rejected commands through the existing callback results.
 
-The correction surface stays GM-only in the template, and finite procedure
+The correction surface stays GM-only inside the snippet, and finite procedure
 panels continue to render exclusively from the role-specific session
-projection and legal-command set. No private data is moved into shared markup,
-attributes, or a new component boundary.
+projection and legal-command set. No private data is moved into attributes or
+a new component boundary.
 
 ## Testing
 
@@ -105,6 +113,12 @@ Update `tests/e2e/exploration-tarot.spec.ts` and
 panel and correction locators. Playwright strictness will then fail those
 functional workflows if duplicate mounts return.
 
+Keep `.first()` on the `/^Play/` and `/^Discard/` button locators because one
+button legitimately exists per card. Leave the `finite-outcome-*` `.first()`
+locators unchanged: they select result content rather than establish the shell
+composition invariant, which is enforced by strict parent-panel locators and
+the explicit responsive count assertions.
+
 The focused verification gate is:
 
 ```bash
@@ -124,6 +138,8 @@ unit/integration regressions.
 - A GM has one correction control on desktop and mobile; a player has none.
 - Existing finite-procedure and correction workflows pass without `.first()`
   masking duplicate DOM nodes.
+- The shared procedure sequence has one source definition in
+  `TableShell.svelte`; responsive branches only render that snippet.
 - The existing mobile DOM-order, keyboard, horizontal-overflow, and zoom checks
   remain green.
 - No engine, schema, server, content-pack, or database files change.

@@ -193,32 +193,38 @@
 			</p>
 		{/if}
 
-		{#if challenge}
-			<TurnControls {role} genericProjection={session.projection as SessionPlayerProjection | SessionGmProjection} {challenge} {legalCommands} {actionRunner} />
-		{/if}
+		<div
+			class="challenge-controls"
+			data-testid="challenge-controls"
+			aria-busy={actionRunner.pending ? 'true' : 'false'}
+		>
+			{#if challenge}
+				<TurnControls {role} genericProjection={session.projection as SessionPlayerProjection | SessionGmProjection} {challenge} {legalCommands} {actionRunner} />
+			{/if}
 
-		{#if role === 'gm'}
-			<GmChallengeControls
-				genericProjection={session.projection as SessionGmProjection}
-				challenge={challenge as ChallengeGmProjection | null}
-				{legalCommands}
-				roster={challengeRoster}
-				{enemyThreatOptions}
-				{actionRunner}
-			/>
-		{/if}
+			{#if role === 'gm'}
+				<GmChallengeControls
+					genericProjection={session.projection as SessionGmProjection}
+					challenge={challenge as ChallengeGmProjection | null}
+					{legalCommands}
+					roster={challengeRoster}
+					{enemyThreatOptions}
+					{actionRunner}
+				/>
+			{/if}
 
-		{#if challenge}
-			<ModifierControls
-				{role}
-				{userId}
-				genericProjection={session.projection as SessionPlayerProjection | SessionGmProjection}
-				{challenge}
-				{legalCommands}
-				roster={challengeRoster}
-				{actionRunner}
-			/>
-		{/if}
+			{#if challenge}
+				<ModifierControls
+					{role}
+					{userId}
+					genericProjection={session.projection as SessionPlayerProjection | SessionGmProjection}
+					{challenge}
+					{legalCommands}
+					roster={challengeRoster}
+					{actionRunner}
+				/>
+			{/if}
+		</div>
 	</section>
 {/if}
 
@@ -229,6 +235,11 @@
 		gap: 0.9rem;
 		padding: 1rem;
 		border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
+	}
+	.challenge-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
 	}
 	.challenge-header {
 		display: flex;

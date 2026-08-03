@@ -83,6 +83,12 @@ test.describe('guided Challenge table', () => {
 			count: '1'
 		});
 		await waitForStage([gmPage, playerAPage, playerBPage], 'Dealing Challenge cards');
+		for (const page of [gmPage, playerAPage, playerBPage]) {
+			const controls = page.getByTestId('challenge-controls');
+			await expect(controls).toHaveAttribute('aria-busy', 'false');
+			await expect(controls.getByTestId('challenge-announcement')).toHaveCount(0);
+			await expect(page.getByTestId('challenge-announcement')).toHaveCount(1);
+		}
 
 		// --- Deal ---
 		await dealRound(gmPage, [playerAPage, playerBPage]);

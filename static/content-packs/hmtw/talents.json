@@ -15,13 +15,13 @@
 		"id": "keen-senses",
 		"name": "Keen Senses",
 		"source": "kin",
-		"description": "Wood elves have the eyes of a hawk and the nose of a wolf. A wood elf’s senses can grow so acute that they can hear the chatter of living stone, the gossip of growing roots, or the rumors of passing insects. Bid lore to temporarily sharpen one of your senses beyond normal limits and ask the GM a question based on these heightened senses. Example questions might include:\n\n- “If I focus my sight, can I read their lips from here?”\n\n- “If I listen very closely, can I tell if anybody is invisible here? Like, do I hear anybody breathing or any heartbeats or anything?”\n\n- “I take a tiny taste and spit it back out. Can I tell if it’s poisoned?”\n\n- “Based on their scent, can I tell which path the thief went down?”\n\nThis ability only lasts a moment. As normal, if the GM does not give you any new information, you do not expend a lore bid."
+		"description": "Wood elves have the eyes of a hawk and the nose of a wolf. A wood elf’s senses can grow so acute that they can hear the chatter of living stone, the gossip of growing roots, or the rumors of passing insects. Bid lore to temporarily sharpen one of your senses beyond normal limits and ask the GM a question based on these heightened senses. Example questions might include:\n\n- “**If** I focus my sight, can I read their lips from here?”\n\n- “**If** I listen very closely, can I tell if anybody is invisible here? Like, do I hear anybody breathing or any heartbeats or anything?”\n\n- “I take a tiny taste and spit it back out. Can I tell if it’s poisoned?”\n\n- “Based on their scent, can I tell which path the thief went down?”\n\nThis ability only lasts a moment. As normal, if the GM does not give you any new information, you do not expend a lore bid."
 	},
 	{
 		"id": "foretell",
 		"name": "Foretell",
 		"source": "kin",
-		"description": "Bid lore to ask the GM: “If I do X, will Y happen?” You receive a “yes” or “no” answer in the form of a prophetic hunch."
+		"description": "Bid lore to ask the GM: “**If** I do X, will Y happen?” You receive a “yes” or “no” answer in the form of a prophetic hunch."
 	},
 	{
 		"id": "weird-wise-ancient",
@@ -45,7 +45,7 @@
 		"id": "giants-strength",
 		"name": "Giant's Strength",
 		"source": "kin",
-		"description": "You automatically win contests related to raw strength (arm wrestling, lifting contests, etc.) against other nontroll kin."
+		"description": "You automatically win contests related to raw strength (arm wrestling, lifting contests, etc.) against other non-troll kin."
 	},
 	{
 		"id": "quicksilver-blood",
@@ -93,7 +93,7 @@
 		"id": "spout-doom",
 		"name": "Spout Doom",
 		"source": "arete",
-		"description": "Spend a Resolve to ask the GM: “If I do X, what will happen?” The GM provides a prophecy, which pours unbidden out of your mouth."
+		"description": "Spend a Resolve to ask the GM: “**If** I do X, what will happen?” The GM provides a prophecy, which pours unbidden out of your mouth."
 	},
 	{
 		"id": "uncanny-knowledge",
@@ -132,7 +132,7 @@
 		"requiredItemIds": [
 			"shield-light"
 		],
-		"description": "If you are carrying an intact shield and would suffer an effect from a physical source (an attack, a trap, etc.), you may elect to Notch your shield instead of taking the effect."
+		"description": "If you are carrying an intact shield and would suffer an effect from a physical source (an attack, a trap, etc.), you may elect to **Notch your shield instead of taking the effect**."
 	},
 	{
 		"id": "doom-eye",
@@ -141,7 +141,7 @@
 		"requiredItemIds": [
 			"weapon-bow"
 		],
-		"description": "When wielding a missile weapon during a Challenge, you may spend a Sword card on your turn to perform a perfect shot. This Attack automatically hits, regardless of the target’s Initiative."
+		"description": "When wielding a missile weapon during a Challenge, you may **spend a Sword card on your turn to perform** a **perfect shot**. This Attack automatically hits, regardless of the target’s Initiative."
 	},
 	{
 		"id": "heavy-metal-machine",
@@ -150,19 +150,19 @@
 		"requiredItemIds": [
 			"armor-iron"
 		],
-		"description": "During Challenges, if you are wearing iron or steel armor, you may use a miscellaneous action (discarding any card) to add your Swords to your Initiative as an interrupt against a single action. You may only use this talent once per round."
+		"description": "During Challenges, if you are wearing iron or steel armor, you may use a **miscellaneous action** (discarding any card) to add your **Swords to your Initiative** as an **interrupt** against a single action. You may only use this talent once per round."
 	},
 	{
 		"id": "monster-hunter",
 		"name": "Monster Hunter",
 		"source": "path",
-		"description": "When you master or train this talent, choose both a hated foe and a specialization of that enemy.\n\n- You gain a motif called “[Foe] Hunter.” You can use this motif to bid lore about these creatures or to gain favor in tests of fate related to them, as normal.\n\n- You make Attacks with favor against foes of your specialization.\n\nChoose a foe and a specialization from the following list—you can change your foe as a City Action if some new type of creature really gives you reason to be pissed off."
+		"description": "When you master or train this talent, choose both a hated foe and a specialization of that enemy.\n\n- You gain a **motif** called “[Foe] Hunter.” You can use this motif to bid lore about these creatures or to gain favor in tests of fate related to them, as normal.\n\n- You make Attacks with favor against foes of your specialization.\n\nChoose a foe and a specialization from the following list—you can change your foe as a City Action if some new type of creature really gives you reason to be pissed off."
 	},
 	{
 		"id": "reaver",
 		"name": "Reaver",
 		"source": "path",
-		"description": "When you Attack during Challenges, you may also move one zone as you charge towards your foe."
+		"description": "When you Attack during Challenges, you may also move one zone as **you charge towards your foe**."
 	},
 	{
 		"id": "two-handed-focus",
@@ -174,49 +174,49 @@
 		"id": "war-stories",
 		"name": "War Stories",
 		"source": "path",
-		"description": "As a Camp Action, tell your guild the story of some of your past adventures. Maybe this was an adventure you've played out in-character, or maybe one in your backstory. You—and everyone who listens and role-plays with you a little— gets to choose one of the following benefits:\n\n- They may charge an uncharged Bond.\n\n- They gain an extra point of Resolve; this can bring their Resolve up to 5."
+		"description": "As a Camp Action, tell your guild the story of some of your past adventures. Maybe this was an adventure you've played out in-character, or maybe one in your backstory. You—and everyone who listens and role-plays with you a little— **gets to choose one of the following benefits:**\n\n- **They may charge an uncharged Bond**.\n\n- They gain an extra point of Resolve; this can bring their Resolve up to 5."
 	},
 	{
 		"id": "acrobat",
 		"name": "Acrobat",
 		"source": "path",
-		"description": "You no longer need to test fate to climb sheer surfaces or walk across narrow ledges or tightropes. You climb and scamper along difficult or vertical terrain as easily as walking. During Challenges, you may move this way as a miscellaneous action, as easily as walking to a new zone.\n\nAdditionally, if you are prepared, you may treat a fall as if it were 20’ shorter. If you are not prepared for a fall, you may spend a Resolve to treat it as if it were 20’ shorter."
+		"description": "You no longer need to test fate to **climb sheer surfaces** or walk across narrow ledges or tightropes. You climb and scamper along difficult or vertical terrain as easily as walking. During Challenges, you may move this way as a miscellaneous action, as easily as walking to a new zone.\n\nAdditionally, if you are prepared, you may **treat a fall** as if it **were** 20’ **shorter**. If you are not prepared for a fall, you may spend a Resolve to treat it as if it were 20’ shorter."
 	},
 	{
 		"id": "ambusher",
 		"name": "Ambusher",
 		"source": "path",
-		"description": "In the first round of a Challenge, whenever you would deal damage, you deal 2 Wounds instead of 1.\n\nSpend a Resolve to resist being ambushed. You raise a hue and cry to warn your guild of the threat beforehand."
+		"description": "In the **first round** of a Challenge, whenever you would deal damage, you **deal 2 Wounds** instead of 1.\n\nSpend a Resolve to resist being ambushed. You raise a hue and cry to warn your guild of the threat beforehand."
 	},
 	{
 		"id": "con-artist",
 		"name": "Con Artist",
 		"source": "path",
-		"description": "If you spend a few minutes observing a person in conversation or talking to them, you may bid lore to ask the GM to reveal either one of their likes or their dislikes (your choice)."
+		"description": "If you spend a few minutes observing a person in conversation or talking to them, you may **bid lore** to ask the GM to **reveal** either one of their **likes** or their **dislikes** (your choice)."
 	},
 	{
 		"id": "fight-dirty",
 		"name": "Fight Dirty",
 		"source": "path",
-		"description": "During Challenges, you may Roughhouse as a minor action with *either* a Pentacles or Swords card. Additionally, you gain several new Roughhouse options:\n\n- Exhaust\n- Notch\n- Silence"
+		"description": "During Challenges, you may Roughhouse as a **minor action** with *either* a **Pentacles or Swords card**. Additionally, you gain several **new Roughhouse options:**\n\n- Exhaust\n- Notch\n- Silence"
 	},
 	{
 		"id": "quick",
 		"name": "Quick!",
 		"source": "path",
-		"description": "During Challenges, if you are wearing light or no armor, you may treat Pentacles actions as interrupts."
+		"description": "During Challenges, if you are wearing light or no armor, you may **treat Pentacles actions as interrupts**."
 	},
 	{
 		"id": "sneak",
 		"name": "Sneak",
 		"source": "path",
-		"description": "At any point, you may declare that you go sneaking. This allows you to go dramatically off-stage.\n\nLater, if you are not present in a scene and it’s at least somewhat plausible that you could have snuck there, spend a Resolve to arrive on the scene dramatically. If a Challenge has yet to begin, this arrival counts as an ambush. If combat has already begun, nobody is surprised because everybody is on edge—simply join the flow of combat per usual.\n\nIf you go sneaking and all tension evaporates, you may rejoin the scene by slinking out of the shadows. This does not cost a Resolve.\n\nThis talent also gives you a new Camp Action: Infiltrate. When you Infiltrate, you investigate a specific location that you know of in your current dungeon level. Thereafter, you may bid lore to ask the GM a specific yes or no question about something you’d know having infiltrated that location, e.g., “Is this door trapped?”, “Is this room guarded?”, “Is the wizard’s bedroom on this level?”, “Do the bandits have bows?”, “Were the orcs green-skinned?”"
+		"description": "At any point, you may declare that you go **sneaking**. This allows you to go dramatically off-stage.\n\nLater, if you are not present in a scene and it’s at least somewhat plausible that you could have snuck there, spend a Resolve to arrive on the scene dramatically. If a Challenge has yet to begin, this arrival counts as an ambush. If combat has already begun, nobody is surprised because everybody is on edge—simply join the flow of combat per usual.\n\nIf you go sneaking and all tension evaporates, you may rejoin the scene by slinking out of the shadows. This does not cost a Resolve.\n\nThis talent also gives you a new Camp Action: **Infiltrate**. When you Infiltrate, you investigate a specific location that you know of in your current dungeon level. Thereafter, you may bid lore to ask the GM a specific yes or no question about something you’d know having infiltrated that location, e.g., “Is this door trapped?”, “Is this room guarded?”, “Is the wizard’s bedroom on this level?”, “Do the bandits have bows?”, “Were the orcs green-skinned?”"
 	},
 	{
 		"id": "up-my-sleeve",
 		"name": "Up My Sleeve",
 		"source": "path",
-		"description": "You may declare that you have had a common, one-slot item with you the whole time. Twice per Crawl (one for each sleeve), spend a Resolve and declare that you had a [blank] up your sleeve. This can include a lockpick, a dagger, a handkerchief, an empty vial, a length of wire, or anything else that the GM generally finds viable."
+		"description": "You may declare that you have had a common, one-slot item with you the whole time. Twice per Crawl (one for each sleeve), spend a **Resolve and declare that you had** a [blank] up your sleeve. This can include a lockpick, a dagger, a handkerchief, an empty vial, a length of wire, or anything else that the GM generally finds viable."
 	},
 	{
 		"id": "alchemy",
@@ -226,19 +226,19 @@
 			"alchemy-kit",
 			"hermetic-bottle"
 		],
-		"description": "This talent gives you a new Camp Action: Brew Alchemy. When you Brew Alchemy, you use an alchemy kit to turn any number of reagents you have into alchemical substances. Reagents are harvested from the bodies of Underworld monsters. Alchemical substances are kept in hermetic bottles and divided into three categories: potions, oils, and bombs."
+		"description": "This talent gives you a new Camp Action: **Brew Alchemy**. When you Brew Alchemy, you use an alchemy kit to turn any number of **reagents** you have into **alchemical substances**. Reagents are harvested from the bodies of **Underworld** monsters. Alchemical substances are kept in hermetic bottles and divided into three categories: **potions**, oils, and **bombs**."
 	},
 	{
 		"id": "beast-master",
 		"name": "Beast Master",
 		"source": "path",
-		"description": "This talent allows you to train and issue commands to your animal companions. As a Camp Action, you may teach one animal companion one command. Normal trained animals may learn up to three commands. It is possible to retrain an animal with a new command, replacing one of their previously mastered commands.\n\nPick from this list of commands (or new ones that the GM approves):\n\n- Sic ‘Em\n- Hunt\n- Get Help\n- Do a Tric\n- Heel\n- Guard\n- Fetch\n- Stay\n- Track\n\nIf you have mastered this talent, one animal you own is considered your familiar. Familiars can learn five different commands. Furthermore, if your familiar would take a Wound that would kill them, you may spend a Resolve to declare that they’re only at Death’s Door and not actually dead."
+		"description": "This talent allows you to train and issue commands to your animal companions. As a Camp Action, you may **teach one animal companion one command**. Normal trained animals may learn up to three **commands**. It is possible to retrain an animal with a new command, replacing one of their previously mastered commands.\n\nPick from this list of commands (or new ones that the GM approves):\n\n- Sic ‘Em\n- Hunt\n- Get Help\n- Do a Trick\n- Heel\n- Guard\n- Fetch\n- Stay\n- Track\n\nIf you have mastered this talent, one animal you own is considered your **familiar**. Familiars can learn **five different commands**. Furthermore, if your familiar would take a Wound that would kill them, you may spend a Resolve to declare that they’re only at Death’s Door and not actually dead."
 	},
 	{
 		"id": "bookworm",
 		"name": "Bookworm",
 		"source": "path",
-		"description": "You have an almost encyclopedic knowledge of everything you have read. Once you have used the Read a Book Camp Action, you may thereafter bid lore to ask a question about the subject of that text. Keep a list of books that you’ve read. These are treated like motifs for the purpose of bidding lore, but don’t aid you in tests of fate."
+		"description": "You have an almost encyclopedic knowledge of everything you have read. Once you have used the Read a Book Camp Action, you may thereafter **bid lore** to **ask a question about the subject of that text**. Keep a list of books that you’ve read. These are treated like motifs for the purpose of bidding lore, but don’t aid you in tests of fate."
 	},
 	{
 		"id": "chirurgeon",
@@ -247,19 +247,19 @@
 		"requiredItemIds": [
 			"poultice"
 		],
-		"description": "You may provide healing to your companions. You can expend a poultice to Heal someone. This effect cannot be used to clear the Stressed condition.\n\nAdditionally, this talent gives you a new Camp Action: Chirurgery. When you use Chirurgery on a non-Stressed guild-mate using the Rest and Recover Camp Action, you may Heal all of their Wounds."
+		"description": "You may provide healing to your companions. You can **expend a poultice to Heal someone**. This effect cannot be used to clear the Stressed condition.\n\nAdditionally, this talent gives you a new Camp Action: **Chirurgery**. When you use Chirurgery on a non-Stressed guild-mate using the Rest and Recover Camp Action, you may Heal all of their Wounds."
 	},
 	{
 		"id": "counsel",
 		"name": "Counsel",
 		"source": "path",
-		"description": "Any time during a Challenge, you may yell advice to another adventurer and hand the player a card from your hand. The card’s suit must match the action you counsel them to take. The other player may play that card as long as they use it to take your advice. In all other ways, it is treated as a normal Challenge card.\n\nIf you spend a Resolve when you use this talent, the other player may play this card as an interrupt. Otherwise, the standard one-card-per-turn rule remains in effect.\n\nYou may use this talent once per round."
+		"description": "Any time during a Challenge, you may **yell advice** to another adventurer and **hand the player a card from your hand**. The card’s suit must match the action you counsel them to take. The other player may play that card as long as they use it to take your advice. In all other ways, it is treated as a normal Challenge card.\n\nIf you spend a Resolve when you use this talent, the other player may play this card as an interrupt. Otherwise, the standard one-card-per-turn rule remains in effect.\n\nYou may use this talent once per round."
 	},
 	{
 		"id": "high-chant",
 		"name": "High Chant",
 		"source": "path",
-		"description": "This talent gives you a new Camp Action: Perform the High Chant. When you Perform the High Chant, speak at least two stanzas of epic poetry for the table. If you do so, you may select a number of cards from the minor arcana discard pile equal to your Cups. These are called inspiration cards. Distribute the cards to other players— you may keep one for yourself. No player can ever have more than one inspiration card. Inspiration cards may be spent as actions during a Challenge. Alternatively, you may spend your inspiration card instead of drawing from the deck when you test fate or push fate. Inspiration cards last until used or until the end of the session, whichever comes first."
+		"description": "This talent gives you a new Camp Action: **Perform the High Chant**. When you Perform the High Chant, speak at least two stanzas of epic poetry for the table. If you do so, you may select a number of cards from the minor arcana discard pile equal to your Cups. These are called **inspiration cards**. Distribute the cards to other players—you may keep one for yourself. No player can ever have more than one inspiration card. Inspiration cards may be spent as actions during a Challenge. Alternatively, you may spend your inspiration card instead of drawing from the deck when you test fate or push fate. Inspiration cards last until used or until the end of the session, whichever comes first."
 	},
 	{
 		"id": "loremaster",
@@ -271,13 +271,13 @@
 		"id": "counter-spell",
 		"name": "Counter-spell",
 		"source": "path",
-		"description": "You can counter the effects of sorcery with an effort of will. There are two applications for this talent:\n\n- You can stop enemy sorcerers from casting spells in battle. During Challenges, if you can perceive a sorcerer casting a spell, you may spend a Resolve to Speak Incantations as an interrupt.\n\n- If your Speak Incantations value is greater than the enemy sorcerer’s total value, their spell fizzles out.\n\n- If your Speak Incantations value is equal to or less than the enemy’s total value, the spell fizzles out but you must draw on the maleficence table as the magic goes awry.\n\n- You can negate a spell already in play. You may spend a Resolve to immediately end the ongoing effects of a spell."
+		"description": "You can counter the effects of sorcery with an effort of will. There are two applications for this talent:\n\n- You can stop enemy sorcerers from casting spells in battle. During Challenges, if you can perceive a sorcerer casting a spell, you may **spend a Resolve** to **Speak Incantations** as an **interrupt**.\n\n- If your Speak Incantations value is greater than the enemy sorcerer’s total value, their spell fizzles out.\n\n- If your Speak Incantations value is equal to or less than the enemy’s total value, the spell fizzles out but you must **draw** on the maleficence table as the magic goes awry.\n\n- You can negate a spell already in play. You may spend a Resolve to immediately end the ongoing effects of a spell."
 	},
 	{
 		"id": "dwimmercraft",
 		"name": "Dwimmercraft",
 		"source": "path",
-		"description": "Suffused with the arcane arts, you can perform small (but meaningful) expressions of magic. You may perform the following minor effects:\n\n- You may levitate an object in your zone that weighs about 10 lbs. and that fits comfortably in one hand. You have no fine motor control over this effect, but can bring things to you, lift them up, or push them away.\n\n- You may conjure a showy, harmless, and obviously magical illusion—a shower of sparks, a colorful rainbow stretched between your hands, a flickering image of your first love.\n\n- You conjure a simple illusion of something that you can hold in one hand. Anybody that tries to interact with this object will realize it’s an illusion, but the sight of it is fairly convincing.\n\nAdditionally, by spending a Resolve, you can focus your second sight for a watch. Second sight allows you to see invisible and Shrouded things. You can perceive the true form of any illusion. You can automatically tell when things are magical or under enchantment. You can also tell if somebody else is a sorcerer.\n\nUsing this talent during a Challenge counts as a miscellaneous action."
+		"description": "Suffused with the arcane arts, you can perform small (but meaningful) expressions of magic. You may perform the following **minor effects:**\n\n- You may levitate an object in your zone that weighs about 10 lbs. and that fits comfortably in one hand. You have no fine motor control over this effect, but can bring things to you, lift them up, or push them away.\n\n- You may conjure a showy, harmless, and obviously magical illusion—a shower of sparks, a colorful rainbow stretched between your hands, a flickering image of your first love.\n\n- You conjure a simple illusion of something that you can hold in one hand. Anybody that tries to interact with this object will realize it’s an illusion, but the sight of it is fairly convincing.\n\nAdditionally, by spending a Resolve, you can focus your **second sight** for a watch. Second sight allows you to see invisible and Shrouded things. You can perceive the true form of any illusion. You can automatically tell when things are magical or under enchantment. You can also tell if somebody else is a sorcerer.\n\nUsing this talent during a Challenge counts as a miscellaneous action."
 	},
 	{
 		"id": "gramarye",
@@ -286,7 +286,7 @@
 		"requiredItemIds": [
 			"archwood-wand"
 		],
-		"description": "You have learned how to draw on the energies of the far realms. Using this talent, you can release a blast of magical energy up to one zone away through an archwood wand, doing damage as a weapon. During Challenges, Attacks with your wand count as Wands actions.\n\nAdditionally, you gain a new Camp Action: Make a Pact. When you Make a Pact, choose to observe one or more pacts from the facing page."
+		"description": "You have learned how to draw on the energies of the far realms. Using this talent, you can release a blast of magical energy up to one zone away through an **archwood wand**, doing damage as a weapon. **During** Challenges, Attacks with your wand count as Wands actions.\n\nAdditionally, you gain a new Camp Action: **Make a Pact**. When you Make a Pact, choose to observe one or more pacts from the facing page."
 	},
 	{
 		"id": "magic-of-the-wastes",

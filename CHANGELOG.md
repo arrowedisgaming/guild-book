@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The rules reference now reflects the corrected source manuscript (content
+  pack 4.1.0): the book's bold and italics verified against the PDF
+  throughout, glued-word and spelling fixes ("arcarna", "halfcentury"),
+  chapter lead-ins and pull-quotes restored with their attributions, a
+  duplicated paragraph under the Wands attribute removed, and passages the
+  previous draft missed restored — including two sidebars recovered by
+  cross-checking against the author's own manuscript files ("The City is
+  social", "What is an animal?"). Two headings now match the printed book
+  ("Noteworthy Deeds and Fame", "Health and Defense: Tracking enemy
+  damage"), and "War pigs" is a subsection of Animal Companions and
+  Familiars, matching the book's own structure, rather than a standalone
+  entry.
+- The content importers are hardened against the source vault's editorial
+  conventions: anchors and sentinels match through bold markers,
+  vault-only syntax never reaches the pack (Obsidian block anchors, and
+  image embeds — the book's interior art is not covered by the text's
+  permission), chapter lede and epigraph callouts import as the body prose
+  they are, spell components stay plain text, and every sub-heading is
+  guaranteed its own block so none renders as literal `###`.
+
 ## [0.15.0] - 2026-08-02
 
 ### Added

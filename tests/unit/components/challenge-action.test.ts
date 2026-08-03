@@ -3,6 +3,14 @@ import { createChallengeAction } from '$lib/components/campaign/table/challenge/
 import type { ChallengeCommand } from '$lib/engine/session/procedures/challenge/command';
 import type { SendCommandResult } from '$lib/stores/campaign-session.svelte';
 
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((done) => {
+		resolve = done;
+	});
+	return { promise, resolve };
+}
+
 /**
  * Review round finding: `lastCommandId` was previously cleared only on
  * success, so after ANY rejected command the runner's NEXT `run` call — even
@@ -15,6 +23,31 @@ import type { SendCommandResult } from '$lib/stores/campaign-session.svelte';
  * inherit another command's id.
  */
 describe('createChallengeAction', () => {
+	it('stays pending until a successful send settles', async () => {
+		const result = deferred<SendCommandResult>();
+		const runner = createChallengeAction(() => result.promise);
+
+		const run = runner.run({ type: 'end-turn' });
+		expect(runner.pending).toBe(true);
+
+		result.resolve({ ok: true });
+		await run;
+		expect(runner.pending).toBe(false);
+	});
+
+	it('clears pending after a rejected command outcome', async () => {
+		const result = deferred<SendCommandResult>();
+		const runner = createChallengeAction(() => result.promise);
+
+		const run = runner.run({ type: 'end-turn' });
+		expect(runner.pending).toBe(true);
+
+		result.resolve({ ok: false, message: 'not legal' });
+		await run;
+		expect(runner.pending).toBe(false);
+		expect(runner.error).toBe('not legal');
+	});
+
 	it('reuses the same commandId when the SAME command is retried after a rejection', async () => {
 		const seenCommandIds: (string | undefined)[] = [];
 		let callCount = 0;

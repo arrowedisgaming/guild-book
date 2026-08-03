@@ -1,6 +1,13 @@
 /**
  * Typed runtime artwork resolver (issue #10 Task 3).
  *
+ * Since issue #32 this imports the slim runtime projection
+ * (`tarot-art.runtime.json`) rather than the full manifest: the resolver only
+ * reads paths, formats, and dimensions, and the full manifest's hashes and
+ * provenance were ~175 KB of client bundle the browser never touched.
+ * `tarot-art:verify` proves the committed projection byte-matches the full
+ * manifest's.
+ *
  * Amendment 4 requires the app to keep working — glyph rendering — in any
  * environment without built artwork, so the manifest CANNOT be a bare static
  * import: importing an absent file is a build error. Instead this uses the
@@ -20,19 +27,23 @@
  * `hasTarotArt` first.
  */
 
-import { tarotArtManifestSchema, type TarotArtAsset, type TarotArtManifest } from '$lib/schemas/tarot-art.schema';
+import {
+	tarotArtRuntimeManifestSchema,
+	type TarotArtRuntimeAsset,
+	type TarotArtRuntimeManifest
+} from '$lib/schemas/tarot-art-runtime.schema';
 import type { TarotArtTier, TarotBackId, TarotImageSources } from '$lib/types/tarot-art';
 
-const manifestModules = import.meta.glob<{ default: unknown }>('../../../static/tarot/rwsa/tarot-art.json', {
+const manifestModules = import.meta.glob<{ default: unknown }>('../../../static/tarot/rwsa/tarot-art.runtime.json', {
 	eager: true
 });
 
 const manifestModule = Object.values(manifestModules)[0];
 
-/** Parsed once at import; an invalid COMMITTED manifest fails loudly here
+/** Parsed once at import; an invalid COMMITTED projection fails loudly here
  * rather than resolving garbage per card. */
-const manifest: TarotArtManifest | null = manifestModule
-	? tarotArtManifestSchema.parse(manifestModule.default)
+const manifest: TarotArtRuntimeManifest | null = manifestModule
+	? tarotArtRuntimeManifestSchema.parse(manifestModule.default)
 	: null;
 
 /** True when the built artwork manifest is present — the Amendment 4 switch
@@ -45,7 +56,7 @@ export const hasTarotArt = manifest !== null;
  * srcset expresses a preference; a one-candidate srcset is a requirement,
  * which is what the enlargement dialog's 960 rule is.
  */
-function toSources(asset: TarotArtAsset, tier?: TarotArtTier): TarotImageSources {
+function toSources(asset: TarotArtRuntimeAsset, tier?: TarotArtTier): TarotImageSources {
 	const byFormat = (format: 'avif' | 'webp') =>
 		asset.variants
 			.filter((variant) => variant.format === format && (tier === undefined || variant.width === tier))

@@ -1,9 +1,15 @@
 import { z } from 'zod';
 
-/** Schema for `static/tarot/rwsa/tarot-art.json` (issue #10 Task 2's build
- * output), validated once at import by `$lib/tarot/art.ts`. Strict: an
- * unknown field in the committed manifest is a build-script drift worth
- * failing on, not tolerating. */
+/** Schemas for issue #10 Task 2's build outputs. Strict throughout: an
+ * unknown field in a committed artifact is a build-script drift worth
+ * failing on, not tolerating.
+ *
+ * This is the FULL manifest's schema (`static/tarot/rwsa/tarot-art.json`),
+ * with hashes and provenance. Since issue #32 the app no longer imports that
+ * file — `$lib/tarot/art.ts` reads the slim runtime projection instead
+ * (`tarot-art-runtime.schema.ts`, a separate module so this one's schemas
+ * cannot ride into the client bundle). This schema's consumers are the unit
+ * tests, which parse the committed manifest with it. */
 
 const sha256Hex = z.string().regex(/^[a-f0-9]{64}$/);
 

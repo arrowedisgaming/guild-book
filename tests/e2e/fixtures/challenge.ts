@@ -260,13 +260,26 @@ async function findActingPage(pages: Page[], timeoutMs: number): Promise<Page | 
  * revealed" for the whole round). `findActingPage` above polls for a page
  * with real cards for a real budget (letting the active client's own poll
  * catch up) before this function ever falls back to ending whichever bare
- * `turn-controls` is visible at all. */
-export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promise<void>): Promise<void> {
+ * `turn-controls` is visible at all.
+ *
+ * Returns the seat log (issue #26): for each turn performed, the acting
+ * section's `data-turn-seat` — a player's tenure id, or `gm` — read BEFORE
+ * the turn is ended, since on a player's page ending the turn unmounts the
+ * section (the GM's stays mounted for their standing override). This is what
+ * makes silent actor substitution visible: the fallback path above always
+ * reaches the GM's oversight override first (the GM page is first in every
+ * caller's `pages` and shows `turn-controls` for ANY active turn — bare
+ * during a player's), so a player client stalled past the budget would have
+ * its turn logged as `gm` — previously indistinguishable from the player
+ * path having run. */
+export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promise<void>): Promise<string[]> {
+	const seats: string[] = [];
 	while (await anyPageShowsTurnControls(pages, 15000)) {
 		let acted = false;
 		const actingPage = await findActingPage(pages, 15000);
 
 		if (actingPage) {
+			const seat = await actingPage.getByTestId('turn-controls').getAttribute('data-turn-seat');
 			const handCards = actingPage.getByTestId('turn-hand-card');
 			const foolCard = handCards.locator('[data-card-id="fool"]');
 			if ((await foolCard.count()) > 0 && (await actingPage.getByTestId('play-fool-toggle').count()) > 0) {
@@ -280,6 +293,7 @@ export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promi
 				if (await playButton.isVisible().catch(() => false)) await clickCommand(actingPage, playButton);
 				await clickCommand(actingPage, actingPage.getByTestId('end-turn-button'));
 			}
+			seats.push(seat ?? 'unknown');
 			acted = true;
 		} else {
 			// No page showed real cards within budget — a genuinely
@@ -289,7 +303,9 @@ export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promi
 			for (const page of pages) {
 				if (!(await page.getByTestId('turn-controls').isVisible().catch(() => false))) continue;
 				if (await page.getByTestId('end-turn-button').isVisible().catch(() => false)) {
+					const seat = await page.getByTestId('turn-controls').getAttribute('data-turn-seat');
 					await clickCommand(page, page.getByTestId('end-turn-button'));
+					seats.push(seat ?? 'unknown');
 					acted = true;
 				}
 				break;
@@ -298,6 +314,7 @@ export async function playAllTurns(pages: Page[], onFool?: (page: Page) => Promi
 
 		if (!acted) break;
 	}
+	return seats;
 }
 
 export async function endRound(gmPage: Page, otherPages: Page[]): Promise<void> {

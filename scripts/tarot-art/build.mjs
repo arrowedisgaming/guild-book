@@ -4,7 +4,8 @@
  * Reads the ignored source scans, validates the inventory strictly against
  * `source-map.mjs` (missing, duplicate, unexpected, or case-mismatched
  * basenames fail the build), and emits uncropped 240/480/960 AVIF+WebP
- * derivatives plus a hash/dimension/licence manifest.
+ * derivatives plus a hash/dimension/licence manifest and the slim runtime
+ * projection of it that the app imports (issue #32, `runtime-projection.mjs`).
  *
  * Determinism: no timestamps, sorted keys, sorted variants. Output bytes are
  * deterministic for a given Sharp/libvips build on one platform; they are NOT
@@ -21,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import sharp from 'sharp';
 import { BACK_COMPOSITIONS, BACK_LOGO_FILE, COLLECTION, FACE_SOURCE_MAP, KNOWN_UNUSED_SOURCES } from './source-map.mjs';
+import { RUNTIME_MANIFEST_BASENAME, projectRuntimeManifest, serializeManifest } from './runtime-projection.mjs';
 
 const TIERS = Object.freeze([240, 480, 960]);
 const FORMATS = Object.freeze(/** @type {const} */ (['avif', 'webp']));
@@ -239,7 +241,10 @@ export async function buildCollection({ outputRoot = COLLECTION.outputDir, concu
 		backs: sortedShallow(backs)
 	};
 	await mkdir(outputRoot, { recursive: true });
-	await writeFile(path.join(outputRoot, 'tarot-art.json'), `${JSON.stringify(manifest, null, '\t')}\n`);
+	await writeFile(path.join(outputRoot, 'tarot-art.json'), serializeManifest(manifest));
+	// The slim projection the app imports (issue #32); the full manifest above
+	// stays as the artifact `verify.mjs` hashes against.
+	await writeFile(path.join(outputRoot, RUNTIME_MANIFEST_BASENAME), serializeManifest(projectRuntimeManifest(manifest)));
 	return manifest;
 }
 

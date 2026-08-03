@@ -11,17 +11,6 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 	return { promise, resolve };
 }
 
-/**
- * Review round finding: `lastCommandId` was previously cleared only on
- * success, so after ANY rejected command the runner's NEXT `run` call — even
- * for a totally different control's command — reused the stale id. The
- * server would find the persisted row under a different `requestHash` and
- * reject with `command-id-reused` (itself a failure), so the id was
- * retained again: every subsequent Challenge action failed until reload.
- * These two tests are the discriminating pair O1 calls for: retry-safety
- * for the SAME intent must survive, but a DIFFERENT intent must never
- * inherit another command's id.
- */
 describe('createChallengeAction', () => {
 	it('stays pending until a successful send settles', async () => {
 		const result = deferred<SendCommandResult>();
@@ -48,6 +37,17 @@ describe('createChallengeAction', () => {
 		expect(runner.error).toBe('not legal');
 	});
 
+	/**
+	 * Review round finding: `lastCommandId` was previously cleared only on
+	 * success, so after ANY rejected command the runner's NEXT `run` call —
+	 * even for a totally different control's command — reused the stale id.
+	 * The server would find the persisted row under a different
+	 * `requestHash` and reject with `command-id-reused` (itself a failure),
+	 * so the id was retained again: every subsequent Challenge action failed
+	 * until reload. The next two tests are the discriminating pair O1 calls
+	 * for: retry-safety for the SAME intent must survive, but a DIFFERENT
+	 * intent must never inherit another command's id.
+	 */
 	it('reuses the same commandId when the SAME command is retried after a rejection', async () => {
 		const seenCommandIds: (string | undefined)[] = [];
 		let callCount = 0;

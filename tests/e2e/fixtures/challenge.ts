@@ -29,6 +29,11 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * JSON outcome, and the sending page finishes applying that response.
  */
 export async function clickCommand(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
+	// `timeoutMs * 2`, not the file's uniform `timeoutMs`: this observer is
+	// registered BEFORE the click (so a fast request can't be missed), which
+	// means the click's own `timeoutMs` actionability budget overlaps the
+	// first half of this window. A click that lands at the end of its budget
+	// still leaves one full `timeoutMs` for the response itself.
 	const responseResultPromise = page
 		.waitForResponse(
 			(response) => response.url().includes('/challenge-commands') && response.request().method() === 'POST',

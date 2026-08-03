@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The deck playground and the campaign table download a much smaller artwork
+  index. The browser previously received the artwork build's full manifest —
+  hashes and provenance it never reads — inlined into those pages' code; it
+  now receives only the image paths and dimensions it renders with. The
+  affected script shrinks from 50 KB to 23 KB compressed. The full manifest
+  still exists for `tarot-art:verify`, which now also proves the slim copy
+  matches it byte for byte.
+
 ## [0.15.0] - 2026-08-02
 
 ### Added

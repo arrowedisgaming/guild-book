@@ -8,8 +8,11 @@
  * committed output matches the committed manifest. Checks:
  *   1. every variant the manifest lists exists with matching SHA-256 and size;
  *   2. the output directory contains exactly the manifest's files plus the
- *      manifest itself — no strays;
- *   3. no PNG anywhere in the committed output.
+ *      manifest itself and its runtime projection — no strays;
+ *   3. no PNG anywhere in the committed output;
+ *   4. the committed runtime projection (`tarot-art.runtime.json`, the file
+ *      the app imports — issue #32) is byte-for-byte the projection of the
+ *      committed full manifest, so the two artifacts cannot disagree.
  *
  * `--from-source` additionally rebuilds everything from the ignored sources
  * into a temporary directory and compares — a local convenience proving
@@ -27,6 +30,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import { COLLECTION } from './source-map.mjs';
+import { RUNTIME_MANIFEST_BASENAME, projectRuntimeManifest, serializeManifest } from './runtime-projection.mjs';
 
 /** @param {Buffer | Uint8Array} data */
 function sha256(data) {
@@ -102,7 +106,7 @@ async function verifyCommitted(problems) {
 		problems.push(`PNG in committed output: ${name}`);
 	}
 	for (const name of committed) {
-		if (name === 'tarot-art.json') continue;
+		if (name === 'tarot-art.json' || name === RUNTIME_MANIFEST_BASENAME) continue;
 		if (!expected.has(name)) problems.push(`file not listed in manifest: ${name}`);
 	}
 	for (const [name, want] of expected) {
@@ -126,6 +130,20 @@ async function verifyCommitted(problems) {
 		} catch {
 			problems.push(`manifest lists a missing file: ${name}`);
 		}
+	}
+
+	// The runtime projection is what the app actually imports, so a stale or
+	// hand-edited copy is exactly the "committed output disagrees with the
+	// committed manifest" failure this script exists to catch. Byte-for-byte,
+	// not structural: both files are emitted by the same serializer, so any
+	// difference at all is drift.
+	try {
+		const committedRuntime = await readFile(path.join(root, RUNTIME_MANIFEST_BASENAME), 'utf8');
+		if (committedRuntime !== serializeManifest(projectRuntimeManifest(manifest))) {
+			problems.push(`runtime projection drifted from the manifest: ${RUNTIME_MANIFEST_BASENAME}`);
+		}
+	} catch {
+		problems.push(`runtime projection missing: ${RUNTIME_MANIFEST_BASENAME}`);
 	}
 	return expected.size;
 }

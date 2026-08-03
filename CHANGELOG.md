@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Challenge controls now report when they are processing an action to assistive
+  technology, without delaying the Challenge's live turn announcements.
+
 ## [0.14.0] - 2026-08-02
 
 ### Added

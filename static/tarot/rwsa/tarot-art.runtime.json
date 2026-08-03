@@ -1,0 +1,3368 @@
+{
+	"schemaVersion": 1,
+	"collectionId": "rwsa",
+	"faces": {
+		"chariot": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/chariot-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/chariot-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/chariot-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/chariot-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/chariot-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/chariot-960.webp"
+				}
+			]
+		},
+		"cups-i": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-i-960.webp"
+				}
+			]
+		},
+		"cups-ii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-ii-960.webp"
+				}
+			]
+		},
+		"cups-iii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-iii-960.webp"
+				}
+			]
+		},
+		"cups-iv": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-iv-960.webp"
+				}
+			]
+		},
+		"cups-ix": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-ix-960.webp"
+				}
+			]
+		},
+		"cups-king": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-king-960.webp"
+				}
+			]
+		},
+		"cups-knight": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-knight-960.webp"
+				}
+			]
+		},
+		"cups-page": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-page-960.webp"
+				}
+			]
+		},
+		"cups-queen": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-queen-960.webp"
+				}
+			]
+		},
+		"cups-v": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-v-960.webp"
+				}
+			]
+		},
+		"cups-vi": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-vi-960.webp"
+				}
+			]
+		},
+		"cups-vii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-vii-960.webp"
+				}
+			]
+		},
+		"cups-viii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-viii-960.webp"
+				}
+			]
+		},
+		"cups-x": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/cups-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/cups-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/cups-x-960.webp"
+				}
+			]
+		},
+		"death": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/death-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/death-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/death-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/death-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/death-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/death-960.webp"
+				}
+			]
+		},
+		"devil": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/devil-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/devil-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/devil-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/devil-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/devil-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/devil-960.webp"
+				}
+			]
+		},
+		"emperor": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/emperor-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/emperor-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/emperor-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/emperor-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/emperor-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/emperor-960.webp"
+				}
+			]
+		},
+		"empress": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/empress-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/empress-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/empress-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/empress-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/empress-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/empress-960.webp"
+				}
+			]
+		},
+		"fool": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/fool-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/fool-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/fool-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/fool-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/fool-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/fool-960.webp"
+				}
+			]
+		},
+		"hanged-man": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hanged-man-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hanged-man-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hanged-man-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hanged-man-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hanged-man-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hanged-man-960.webp"
+				}
+			]
+		},
+		"hermit": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hermit-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hermit-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hermit-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hermit-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hermit-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hermit-960.webp"
+				}
+			]
+		},
+		"hierophant": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hierophant-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hierophant-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hierophant-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/hierophant-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/hierophant-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/hierophant-960.webp"
+				}
+			]
+		},
+		"high-priestess": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/high-priestess-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/high-priestess-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/high-priestess-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/high-priestess-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/high-priestess-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/high-priestess-960.webp"
+				}
+			]
+		},
+		"judgement": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/judgement-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/judgement-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/judgement-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/judgement-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/judgement-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/judgement-960.webp"
+				}
+			]
+		},
+		"justice": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/justice-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/justice-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/justice-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/justice-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/justice-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/justice-960.webp"
+				}
+			]
+		},
+		"lovers": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/lovers-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/lovers-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/lovers-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/lovers-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/lovers-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/lovers-960.webp"
+				}
+			]
+		},
+		"magician": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/magician-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/magician-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/magician-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/magician-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/magician-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/magician-960.webp"
+				}
+			]
+		},
+		"moon": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/moon-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/moon-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/moon-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/moon-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/moon-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/moon-960.webp"
+				}
+			]
+		},
+		"pentacles-i": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-i-960.webp"
+				}
+			]
+		},
+		"pentacles-ii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-ii-960.webp"
+				}
+			]
+		},
+		"pentacles-iii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-iii-960.webp"
+				}
+			]
+		},
+		"pentacles-iv": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-iv-960.webp"
+				}
+			]
+		},
+		"pentacles-ix": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-ix-960.webp"
+				}
+			]
+		},
+		"pentacles-king": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-king-960.webp"
+				}
+			]
+		},
+		"pentacles-knight": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-knight-960.webp"
+				}
+			]
+		},
+		"pentacles-page": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-page-960.webp"
+				}
+			]
+		},
+		"pentacles-queen": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-queen-960.webp"
+				}
+			]
+		},
+		"pentacles-v": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-v-960.webp"
+				}
+			]
+		},
+		"pentacles-vi": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-vi-960.webp"
+				}
+			]
+		},
+		"pentacles-vii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-vii-960.webp"
+				}
+			]
+		},
+		"pentacles-viii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-viii-960.webp"
+				}
+			]
+		},
+		"pentacles-x": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/pentacles-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/pentacles-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/pentacles-x-960.webp"
+				}
+			]
+		},
+		"star": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/star-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/star-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/star-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/star-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/star-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/star-960.webp"
+				}
+			]
+		},
+		"strength": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/strength-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/strength-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/strength-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/strength-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/strength-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/strength-960.webp"
+				}
+			]
+		},
+		"sun": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/sun-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/sun-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/sun-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/sun-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/sun-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/sun-960.webp"
+				}
+			]
+		},
+		"swords-i": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-i-960.webp"
+				}
+			]
+		},
+		"swords-ii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-ii-960.webp"
+				}
+			]
+		},
+		"swords-iii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-iii-960.webp"
+				}
+			]
+		},
+		"swords-iv": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-iv-960.webp"
+				}
+			]
+		},
+		"swords-ix": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-ix-960.webp"
+				}
+			]
+		},
+		"swords-king": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-king-960.webp"
+				}
+			]
+		},
+		"swords-knight": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-knight-960.webp"
+				}
+			]
+		},
+		"swords-page": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-page-960.webp"
+				}
+			]
+		},
+		"swords-queen": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-queen-960.webp"
+				}
+			]
+		},
+		"swords-v": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-v-960.webp"
+				}
+			]
+		},
+		"swords-vi": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-vi-960.webp"
+				}
+			]
+		},
+		"swords-vii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-vii-960.webp"
+				}
+			]
+		},
+		"swords-viii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-viii-960.webp"
+				}
+			]
+		},
+		"swords-x": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/swords-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/swords-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/swords-x-960.webp"
+				}
+			]
+		},
+		"temperance": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/temperance-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/temperance-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/temperance-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/temperance-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/temperance-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/temperance-960.webp"
+				}
+			]
+		},
+		"tower": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/tower-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/tower-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/tower-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/tower-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/tower-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/tower-960.webp"
+				}
+			]
+		},
+		"wands-i": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-i-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-i-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-i-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-i-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-i-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-i-960.webp"
+				}
+			]
+		},
+		"wands-ii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-ii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-ii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-ii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-ii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-ii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-ii-960.webp"
+				}
+			]
+		},
+		"wands-iii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-iii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-iii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-iii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-iii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-iii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-iii-960.webp"
+				}
+			]
+		},
+		"wands-iv": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-iv-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-iv-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-iv-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-iv-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-iv-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-iv-960.webp"
+				}
+			]
+		},
+		"wands-ix": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-ix-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-ix-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-ix-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-ix-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-ix-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-ix-960.webp"
+				}
+			]
+		},
+		"wands-king": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-king-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-king-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-king-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-king-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-king-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-king-960.webp"
+				}
+			]
+		},
+		"wands-knight": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-knight-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-knight-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-knight-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-knight-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-knight-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-knight-960.webp"
+				}
+			]
+		},
+		"wands-page": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-page-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-page-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-page-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-page-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-page-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-page-960.webp"
+				}
+			]
+		},
+		"wands-queen": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-queen-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-queen-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-queen-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-queen-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-queen-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-queen-960.webp"
+				}
+			]
+		},
+		"wands-v": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-v-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-v-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-v-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-v-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-v-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-v-960.webp"
+				}
+			]
+		},
+		"wands-vi": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-vi-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-vi-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-vi-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-vi-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-vi-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-vi-960.webp"
+				}
+			]
+		},
+		"wands-vii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-vii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-vii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-vii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-vii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-vii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-vii-960.webp"
+				}
+			]
+		},
+		"wands-viii": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-viii-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-viii-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-viii-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-viii-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-viii-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-viii-960.webp"
+				}
+			]
+		},
+		"wands-x": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-x-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-x-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-x-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wands-x-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wands-x-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wands-x-960.webp"
+				}
+			]
+		},
+		"wheel-of-fortune": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/wheel-of-fortune-960.webp"
+				}
+			]
+		},
+		"world": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/world-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/world-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/world-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/faces/world-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/faces/world-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/faces/world-960.webp"
+				}
+			]
+		}
+	},
+	"backs": {
+		"adherent-dark": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/backs/adherent-dark-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/backs/adherent-dark-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/backs/adherent-dark-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/backs/adherent-dark-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/backs/adherent-dark-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/backs/adherent-dark-960.webp"
+				}
+			]
+		},
+		"adherent-parchment": {
+			"width": 1086,
+			"height": 1810,
+			"variants": [
+				{
+					"format": "avif",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.avif"
+				},
+				{
+					"format": "avif",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.avif"
+				},
+				{
+					"format": "avif",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.avif"
+				},
+				{
+					"format": "webp",
+					"width": 240,
+					"height": 400,
+					"path": "/tarot/rwsa/backs/adherent-parchment-240.webp"
+				},
+				{
+					"format": "webp",
+					"width": 480,
+					"height": 800,
+					"path": "/tarot/rwsa/backs/adherent-parchment-480.webp"
+				},
+				{
+					"format": "webp",
+					"width": 960,
+					"height": 1600,
+					"path": "/tarot/rwsa/backs/adherent-parchment-960.webp"
+				}
+			]
+		}
+	}
+}

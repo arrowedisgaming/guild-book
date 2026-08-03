@@ -11,6 +11,12 @@
 	 * `play-fool`, `end-turn`. Card identities come from the OWN per-zone
 	 * Challenge hand (O2: `privateHandsByZoneId`, never the merged
 	 * `privateHand`) or, for the GM, the ordinary `gmHand`.
+	 *
+	 * The turn section carries `data-turn-seat` — the seat these controls act
+	 * AS (the player's own tenure id, or `gm` for the GM's enemy seat and
+	 * oversight override) — so the Challenge e2e fixture can record which seat
+	 * actually performed each turn (issue #26). Identity only, no legality:
+	 * what the seat may DO is still entirely `legalCommands`.
 	 */
 	import { renderableCard } from '$lib/stores/campaign-session.svelte';
 	import TarotCard from '$lib/components/tarot/TarotCard.svelte';
@@ -145,7 +151,12 @@
 {/if}
 
 {#if showTurnSection}
-	<section class="turn-controls" data-testid="turn-controls" aria-label="Your turn">
+	<section
+		class="turn-controls"
+		data-testid="turn-controls"
+		data-turn-seat={role === 'gm' ? 'gm' : actingTenureId}
+		aria-label="Your turn"
+	>
 		{#if canPlayFool}
 			<button
 				type="button"

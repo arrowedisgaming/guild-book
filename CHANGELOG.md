@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Challenge browser test now records which seat performed each turn — via
+  a new inert `data-turn-seat` attribute on the turn controls — and fails if
+  the GM's oversight override silently substitutes for a stalled player
+  client, instead of passing without ever exercising the player path (#26).
+
 ## [0.15.0] - 2026-08-02
 
 ### Added

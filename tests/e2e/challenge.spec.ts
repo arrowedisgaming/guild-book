@@ -108,9 +108,23 @@ test.describe('guided Challenge table', () => {
 		// `turn-controls` surface every other seat uses. Pairs the Fool
 		// immediately if it happens to be dealt this round. ---
 		let foolPaired = false;
-		await playAllTurns([gmPage, playerAPage, playerBPage], async () => {
+		const seats = await playAllTurns([gmPage, playerAPage, playerBPage], async () => {
 			foolPaired = true;
 		});
+
+		// Issue #26: the seat log makes silent actor substitution visible.
+		// Three Initiative seats were revealed above, so the enemy's turn must
+		// be the ONLY one performed from the GM's seat, and both players must
+		// have acted under their own, distinct seats. Had either player's
+		// client stalled past the fixture's budget, the GM's oversight
+		// override would have ended that turn instead — logging a second `gm`
+		// and one player seat short, failing both checks. Counts, not exact
+		// length: a round-1 Fool pairing legitimately schedules an extra turn
+		// for that player's own seat.
+		expect(seats.filter((seat) => seat === 'gm')).toHaveLength(1);
+		const playerSeats = seats.filter((seat) => seat !== 'gm');
+		expect(new Set(playerSeats).size).toBe(2);
+		expect(playerSeats).not.toContain('unknown');
 
 		// --- The GM discards a Doom from their hand (available any time during
 		// turns, independent of whose turn is active) ---

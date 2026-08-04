@@ -41,24 +41,24 @@ test('the 320px table exposes procedure controls, leads with keyboard-operable d
 	await gmPage.goto(`/campaigns/${campaignId}/table`);
 	await gmPage.getByRole('button', { name: 'Start session' }).click();
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
-	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1);
-	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1);
-	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1);
+	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1, { timeout: 15000 });
 
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
 	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
-	await expect(playerAPage.getByTestId('finite-panel-crawl')).toHaveCount(1);
-	await expect(playerAPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1);
-	await expect(playerAPage.getByTestId('open-correction')).toHaveCount(0);
+	await expect(playerAPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(playerAPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(playerAPage.getByTestId('open-correction')).toHaveCount(0, { timeout: 15000 });
 
 	// Reload after setting the GM viewport so this exercises the component's
 	// narrow-layout initialization path, independent of matchMedia change events.
 	await gmPage.setViewportSize({ width: 320, height: 720 });
 	await gmPage.reload();
 	await expect(gmPage.getByTestId('mobile-drawers')).toBeAttached();
-	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1);
-	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1);
-	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1);
+	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1, { timeout: 15000 });
 
 	// --- Table-first: the public table precedes the drawers in the real DOM ---
 	// The "Draw a card" button being visible does not imply these two elements

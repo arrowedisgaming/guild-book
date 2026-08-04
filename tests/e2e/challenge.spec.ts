@@ -38,7 +38,10 @@ test.describe('guided Challenge table', () => {
 	test('the full journey: begin with an enemy, deal, place, reveal, GM Doom play/discard, a Fool paired play, and a round transition', async ({
 		browser
 	}) => {
-		test.setTimeout(180_000);
+		// 300s, not 180: the Fool hunt runs up to 15 full rounds, and the stress
+		// profile (8 workers, repeat-each 3) slows each round enough that 180s
+		// expired mid-hunt on the profile's first scheduled run.
+		test.setTimeout(300_000);
 
 		const gm = await browser.newContext();
 		const playerA = await browser.newContext();

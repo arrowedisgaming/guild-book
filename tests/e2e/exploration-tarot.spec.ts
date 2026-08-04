@@ -56,21 +56,30 @@ test.describe('exploration and oracle procedures', () => {
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
-		// Seed the minor discard: the twist reads its top card.
+		// Seed the minor discard: the twist reads its top card. The player deck
+		// is the 56 minors plus the Fool (Ch1), and the gm-twist table has no
+		// Fool row — so if the draw came up the Fool (~1 in 57), draw once more
+		// and discard a minor instead. The Fool stays in hand, which is the
+		// rules' own resting place for a drawn Fool ("put it in your hand as
+		// normal"), so the seeded state matches table play.
 		await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
-		const discard = playerAPage.getByRole('button', { name: /^Discard/ }).first();
+		await expect(playerAPage.getByRole('button', { name: /^Discard/ }).first()).toBeVisible({ timeout: 15000 });
+		if ((await playerAPage.getByRole('button', { name: 'Discard The Fool' }).count()) > 0) {
+			await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+		}
+		const discard = playerAPage.getByRole('button', { name: /^Discard(?! The Fool)/i }).first();
 		await expect(discard).toBeVisible({ timeout: 15000 });
 		await clickGeneric(playerAPage, discard);
 
 		// --- GM twist through the oracle panel ---
-		const oraclePicker = gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-procedure-picker');
+		const oraclePicker = gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-procedure-picker');
 		await expect(oraclePicker).toBeVisible({ timeout: 15000 });
 		await oraclePicker.selectOption('gm-twist');
-		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-begin'));
+		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-begin'));
 
 		// The consult is the GM's; the player has no advance control.
 		await expect(playerAPage.getByTestId('finite-advance')).toHaveCount(0);
-		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-advance'));
+		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-advance'));
 
 		// The resolved twist text reaches both contexts, with the GM's reminder
 		// that the app supplies rule text only.
@@ -79,16 +88,16 @@ test.describe('exploration and oracle procedures', () => {
 			await expect(page.getByTestId('finite-outcome-consult-discard-top').first()).toContainText('The GM adjudicates the consequence');
 		}
 
-		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-complete'));
+		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-complete'));
 		await expect(gmPage.getByTestId('finite-outcome-consult-discard-top').first()).toHaveCount(0, { timeout: 15000 });
 
 		// --- Random Totem: the GM names the actor, the PLAYER draws ---
 		await oraclePicker.selectOption('oracle-random-totem');
-		await gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-actor-picker').selectOption({ label: 'Seer Adalyn' });
-		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-begin'));
+		await gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-actor-picker').selectOption({ label: 'Seer Adalyn' });
+		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-begin'));
 
 		await expect(gmPage.getByTestId('finite-advance')).toHaveCount(0);
-		const playerAdvance = playerAPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-advance');
+		const playerAdvance = playerAPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-advance');
 		await expect(playerAdvance).toBeVisible({ timeout: 15000 });
 		await clickFinite(playerAPage, playerAdvance);
 
@@ -97,14 +106,14 @@ test.describe('exploration and oracle procedures', () => {
 			await expect(page.getByTestId('finite-outcome-draw-totem').first()).toBeVisible({ timeout: 15000 });
 		}
 
-		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').first().getByTestId('finite-complete'));
+		await clickFinite(gmPage, gmPage.getByTestId('finite-panel-cross-phase').getByTestId('finite-complete'));
 
 		// --- Maleficence: the mode and realm must actually reach the server ---
 		// Review finding: the panel never sent `mode`/`realmTableId`, so both
 		// mode-gated steps were inapplicable and the procedure completed having
 		// drawn nothing.
 		await oraclePicker.selectOption('oracle-maleficence');
-		const panel = gmPage.getByTestId('finite-panel-cross-phase').first();
+		const panel = gmPage.getByTestId('finite-panel-cross-phase');
 		await expect(panel.getByTestId('finite-mode-picker')).toBeVisible({ timeout: 15000 });
 		await panel.getByTestId('finite-mode-picker').selectOption('appropriate-realm');
 		await panel.getByTestId('finite-realm-picker').selectOption('maleficence-weald');
@@ -142,7 +151,7 @@ test.describe('exploration and oracle procedures', () => {
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
-		const panel = gmPage.getByTestId('finite-panel-cross-phase').first();
+		const panel = gmPage.getByTestId('finite-panel-cross-phase');
 		await panel.getByTestId('finite-procedure-picker').selectOption('test-augury');
 		await panel.getByTestId('finite-actor-picker').selectOption({ label: 'Augur Rell' });
 		await clickFinite(gmPage, panel.getByTestId('finite-begin'));
@@ -156,7 +165,7 @@ test.describe('exploration and oracle procedures', () => {
 		await clickFinite(gmPage, panel.getByTestId('finite-advance'));
 
 		// The player's choice, answered NO.
-		const playerPanel = playerAPage.getByTestId('finite-panel-cross-phase').first();
+		const playerPanel = playerAPage.getByTestId('finite-panel-cross-phase');
 		await expect(playerPanel.getByTestId('finite-decline')).toBeVisible({ timeout: 15000 });
 		await clickFinite(playerAPage, playerPanel.getByTestId('finite-decline'));
 

@@ -25,8 +25,14 @@ import {
  * OTHER client's collected network responses and rendered DOM until the
  * moment the rule itself says it becomes public — then, and only then, it
  * may appear.
+ *
+ * The budget is a poll ceiling, not a latency assertion: the privacy claims
+ * are the point-in-time ABSENT checks, which it does not bound. 2s lost to
+ * machine load on the stress profile's first scheduled run (8 workers,
+ * repeat-each 3), so it now matches the 15s ceiling every fixture helper
+ * uses.
  */
-const CROSS_CLIENT_BUDGET_MS = 2000;
+const CROSS_CLIENT_BUDGET_MS = 15_000;
 
 /** Collects every response body text from Challenge-related requests
  * (`/sync`, `/challenge-commands`) for later canary scanning — attach BEFORE
@@ -139,7 +145,11 @@ test.describe('guided Challenge table privacy', () => {
 	test('unique hand-card canaries never leak before their rule-defined disclosure point, at initiative reveal, a private transfer, Stun, and a Fool paired play', async ({
 		browser
 	}) => {
-		test.setTimeout(180_000);
+		// 300s, not 180: the Fool hunt below runs up to 15 full rounds, and the
+		// stress profile (8 workers, repeat-each 3) slows each round enough that
+		// challenge.spec.ts's same hunt blew its 180s cap on the profile's first
+		// scheduled run — this test needs the same headroom.
+		test.setTimeout(300_000);
 
 		const gm = await browser.newContext();
 		const playerA = await browser.newContext();

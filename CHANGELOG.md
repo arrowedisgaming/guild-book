@@ -30,6 +30,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   they are, spell components stay plain text, and every sub-heading is
   guaranteed its own block so none renders as literal `###`.
 
+## [0.17.2] - 2026-08-04
+
+### Fixed
+
+- The browser test suites no longer flake under CI load: the two long
+  Challenge journeys get timeout headroom matched to their worst-case Fool
+  hunt, the cross-client privacy budget now matches the fixture-standard 15s
+  poll ceiling, and the exploration oracle test no longer seeds the twist's
+  discard pile with the Fool — a ~1-in-57 blind draw the twist table has no
+  row for (#48).
+
+## [0.17.1] - 2026-08-04
+
+### Fixed
+
+- Campaign tables now show Crawl, Oracle, and GM correction controls once on
+  desktop and make the same controls available on mobile. Their shared
+  procedure stack now has one source definition so the responsive layouts
+  cannot drift independently again (#44).
+
 ## [0.17.0] - 2026-08-03
 
 ### Changed

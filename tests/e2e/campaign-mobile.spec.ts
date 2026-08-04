@@ -4,9 +4,10 @@ import { attachAdventurer, campaignIdFromUrl, createCampaignAndReadInvite, joinC
 
 /**
  * Increment 4 Task 7 — mobile behavior at 320 CSS pixels and the 200%-zoom
- * overflow rule: the table leads (real DOM order, not CSS order), the drawers
- * are keyboard-operable, the private hand scrolls inside its own scroller,
- * and there is no two-dimensional page overflow outside that scroller.
+ * overflow rule: every procedure surface remains available, the table leads
+ * (real DOM order, not CSS order), the drawers are keyboard-operable, the
+ * private hand scrolls inside its own scroller, and there is no two-dimensional
+ * page overflow outside that scroller.
  */
 
 async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Promise<void> {
@@ -20,7 +21,7 @@ async function clickGeneric(page: Page, locator: Locator, timeoutMs = 15000): Pr
 	if (!response.ok()) throw new Error(`generic command failed (HTTP ${response.status()})`);
 }
 
-test('the 320px table leads with keyboard-operable drawers and no page-level horizontal overflow', async ({ browser }) => {
+test('the 320px table exposes procedure controls, leads with keyboard-operable drawers, and avoids horizontal overflow', async ({ browser }) => {
 	test.setTimeout(180_000);
 
 	const gm = await browser.newContext();
@@ -40,9 +41,24 @@ test('the 320px table leads with keyboard-operable drawers and no page-level hor
 	await gmPage.goto(`/campaigns/${campaignId}/table`);
 	await gmPage.getByRole('button', { name: 'Start session' }).click();
 	await expect(gmPage.getByRole('button', { name: 'Draw a card' })).toBeVisible();
+	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1, { timeout: 15000 });
 
 	await playerAPage.goto(`/campaigns/${campaignId}/table`);
 	await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
+	await expect(playerAPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(playerAPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(playerAPage.getByTestId('open-correction')).toHaveCount(0, { timeout: 15000 });
+
+	// Reload after setting the GM viewport so this exercises the component's
+	// narrow-layout initialization path, independent of matchMedia change events.
+	await gmPage.setViewportSize({ width: 320, height: 720 });
+	await gmPage.reload();
+	await expect(gmPage.getByTestId('mobile-drawers')).toBeAttached();
+	await expect(gmPage.getByTestId('finite-panel-crawl')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('finite-panel-cross-phase')).toHaveCount(1, { timeout: 15000 });
+	await expect(gmPage.getByTestId('open-correction')).toHaveCount(1, { timeout: 15000 });
 
 	// --- Table-first: the public table precedes the drawers in the real DOM ---
 	// The "Draw a card" button being visible does not imply these two elements

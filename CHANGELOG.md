@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-08-04
+
+### Fixed
+
+- The browser test suites no longer flake under CI load: the two long
+  Challenge journeys get timeout headroom matched to their worst-case Fool
+  hunt, the cross-client privacy budget now matches the fixture-standard 15s
+  poll ceiling, and the exploration oracle test no longer seeds the twist's
+  discard pile with the Fool — a ~1-in-57 blind draw the twist table has no
+  row for (#48).
+
 ## [0.17.1] - 2026-08-04
 
 ### Fixed

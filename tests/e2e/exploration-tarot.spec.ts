@@ -56,9 +56,18 @@ test.describe('exploration and oracle procedures', () => {
 		await playerAPage.goto(`/campaigns/${campaignId}/table`);
 		await expect(playerAPage.getByRole('button', { name: 'Draw a card' })).toBeVisible({ timeout: 15000 });
 
-		// Seed the minor discard: the twist reads its top card.
+		// Seed the minor discard: the twist reads its top card. The player deck
+		// is the 56 minors plus the Fool (Ch1), and the gm-twist table has no
+		// Fool row — so if the draw came up the Fool (~1 in 57), draw once more
+		// and discard a minor instead. The Fool stays in hand, which is the
+		// rules' own resting place for a drawn Fool ("put it in your hand as
+		// normal"), so the seeded state matches table play.
 		await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
-		const discard = playerAPage.getByRole('button', { name: /^Discard/ }).first();
+		await expect(playerAPage.getByRole('button', { name: /^Discard/ }).first()).toBeVisible({ timeout: 15000 });
+		if ((await playerAPage.getByRole('button', { name: 'Discard The Fool' }).count()) > 0) {
+			await clickGeneric(playerAPage, playerAPage.getByRole('button', { name: 'Draw a card' }));
+		}
+		const discard = playerAPage.getByRole('button', { name: /^Discard(?! The Fool)/i }).first();
 		await expect(discard).toBeVisible({ timeout: 15000 });
 		await clickGeneric(playerAPage, discard);
 

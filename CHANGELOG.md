@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-08-04
+
+### Fixed
+
+- Campaign tables now show Crawl, Oracle, and GM correction controls once on
+  desktop and make the same controls available on mobile. Their shared
+  procedure stack now has one source definition so the responsive layouts
+  cannot drift independently again (#44).
+
 ## [0.17.0] - 2026-08-03
 
 ### Changed

@@ -56,11 +56,11 @@ test('a GM correction is audited and completed history is member-gated', async (
 
 	// --- The correction dialog is the GM's alone ---
 	await expect(playerAPage.getByTestId('open-correction')).toHaveCount(0);
-	const openCorrection = gmPage.getByTestId('open-correction').first();
+	const openCorrection = gmPage.getByTestId('open-correction');
 	await expect(openCorrection).toBeVisible({ timeout: 15000 });
 	await openCorrection.click();
 
-	const dialog = gmPage.getByTestId('correction-dialog').first();
+	const dialog = gmPage.getByTestId('correction-dialog');
 	await expect(dialog).toBeVisible();
 	// Compensate for the most recent event: move the played card to the major
 	// discard with a stated reason.

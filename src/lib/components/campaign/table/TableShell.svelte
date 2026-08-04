@@ -274,6 +274,40 @@
 	});
 </script>
 
+{#snippet procedureStack()}
+	<ChallengePanel
+		{role}
+		{userId}
+		{session}
+		{events}
+		{challengeRoster}
+		{enemyThreatOptions}
+		onSendChallengeCommand={onSendChallengeCommand}
+	/>
+	<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+	<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
+	<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
+	<CrawlProcedurePanel
+		{role}
+		{userId}
+		{session}
+		roster={challengeRoster}
+		{procedureTitles}
+		{onSendFiniteCommand}
+	/>
+	<OraclePanel
+		{role}
+		{userId}
+		{session}
+		roster={challengeRoster}
+		{procedureTitles}
+		{onSendFiniteCommand}
+	/>
+	{#if role === 'gm'}
+		<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
+	{/if}
+{/snippet}
+
 <div class="table-shell" data-testid="table-shell">
 	{#if sessionStatus === 'frozen'}
 		<p class="frozen-banner" role="status" data-testid="frozen-banner">
@@ -302,20 +336,7 @@
 			/>
 			<div class="table-column">
 				<PublicTable publicProjection={session.projection.public} {otherHands} />
-				<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
-				<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
-				<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
-				<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
-			<CrawlProcedurePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-			<OraclePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-			{#if role === 'gm'}
-				<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
-			{/if}
-				<CrawlProcedurePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-				<OraclePanel {role} {userId} {session} roster={challengeRoster} {procedureTitles} {onSendFiniteCommand} />
-				{#if role === 'gm'}
-					<CorrectionDialog {session} {events} {onSendCorrectionCommand} />
-				{/if}
+				{@render procedureStack()}
 				<PrivateHand
 					cards={ownCards}
 					heading={role === 'gm' ? "GM's hand" : 'Your hand'}
@@ -342,10 +363,7 @@
 			     `order` — PublicTable must precede the drawers/hand so the table
 			     genuinely leads on mobile, not just visually. -->
 			<PublicTable publicProjection={session.projection.public} {otherHands} />
-			<ChallengePanel {role} {userId} {session} {events} {challengeRoster} {enemyThreatOptions} onSendChallengeCommand={onSendChallengeCommand} />
-			<TestOfFatePanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
-			<GroupTestPanel {role} {session} roster={challengeRoster} {onSendGuidedTestCommand} />
-			<CampProcedurePanel {role} {session} roster={challengeRoster} {onSendCampCommand} />
+			{@render procedureStack()}
 			<MobileTableDrawers
 				publicProjection={session.projection.public}
 				{role}

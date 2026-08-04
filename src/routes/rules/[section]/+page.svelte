@@ -18,8 +18,11 @@
 		clearPhraseHighlights();
 		const id = location.hash.slice(1);
 		if (!id) return;
-		const target = document.getElementById(id);
-		if (!(target instanceof HTMLElement)) return;
+		const anchor = document.getElementById(id);
+		if (!(anchor instanceof HTMLElement)) return;
+		// A retired-id alias anchor is an empty span inside its absorbing
+		// article; focus/flash/highlight belong to the article either way.
+		const target = anchor.closest<HTMLElement>('.rule') ?? anchor;
 		target.focus({ preventScroll: true });
 		// When the search result matched a literal phrase (?hl=…), scroll to the
 		// phrase itself, highlighted in place; otherwise land at the article top.

@@ -975,7 +975,7 @@
 				"occurrence": 1,
 				"level": 2,
 				"disposition": "emitted",
-				"id": "challenge-phase-health-and-defense-tracking-enemy-damage"
+				"id": "challenge-phase-tracking-enemy-damage"
 			},
 			{
 				"locator": "Death’s Door",

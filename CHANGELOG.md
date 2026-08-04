@@ -29,6 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   permission), chapter lede and epigraph callouts import as the body prose
   they are, spell components stay plain text, and every sub-heading is
   guaranteed its own block so none renders as literal `###`.
+- Rule ids stay permanent URLs across the refresh: the corrected
+  "Health and Defense: Tracking enemy damage" heading keeps its original
+  `challenge-phase-tracking-enemy-damage` id, and the retired
+  `adventurer-war-pigs` id ships as an anchor alias on Animal companions
+  and familiars, so existing deep links keep landing on the surviving
+  entries. A pack test now locks every previously shipped id as resolvable.
+- The image-embed licensing boundary is a build invariant shared by every
+  importer: normalization itself fails the build if an embed survives
+  stripping (for example a parenthesized path the strip regex skips), and
+  the tarot-procedure catalog — whose table text reaches the pack without
+  normalization — runs the same guard over its serialized output.
 
 ## [0.17.2] - 2026-08-04
 

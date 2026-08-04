@@ -1298,7 +1298,7 @@
 		"body": "There are two types of attacks that have special rules: Piercing damage and Critical damage. Creatures in Appendix C: Dungeon Denizens occasionally have abilities that deal one or both types of damage.\nCritical\nWhen struck by Critical damage, mark Injured. If already Injured, mark Death’s Door. If you are already at Death’s Door and take Critical damage, you die.\nCritical damage towards enemies reduces their Health to 0. They are at Death’s Door.\nPiercing\nPiercing damage cannot be absorbed by armor, shield or helm. A successful Piercing attack always causes a Wound.\nWe fragile things\nAlmost all weapons and enemies deal 1 Wound. A knife can kill you just as dead as a battle axe. Assuming that everybody in the combat is a competent fighter struggling hard against each other, every real weapon in the battle will deal equally-deadly damage. If not everyone is a competent fighter, why are you bothering with a Challenge? Just have the adventurers put down the non-combatant.\nThe GM should use their discretion to frame the impact of different weapon types. For example, some enemies (like skeletons) might be completely immune to sharp weapons like daggers; the adventurers would need something like a mace to bash the skeletons to dislocate their bones.\nPiercing damage toward enemies bypass their Defense and directly reduce their Health (see below)."
 	},
 	{
-		"id": "challenge-phase-health-and-defense-tracking-enemy-damage",
+		"id": "challenge-phase-tracking-enemy-damage",
 		"section": "challenge-phase",
 		"title": "Health and Defense: Tracking enemy damage",
 		"headings": [

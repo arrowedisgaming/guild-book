@@ -365,7 +365,9 @@ export const ruleEntrySchema = z.object({
 	section: z.string(),
 	title: z.string(),
 	body: z.string(),
-	tags: z.array(z.string())
+	tags: z.array(z.string()),
+	/** Retired ids this entry absorbed — permanent-URL anchors, see RuleEntry. */
+	aliases: z.array(z.string().min(1)).optional()
 });
 
 export const ruleSearchDocSchema = z.object({

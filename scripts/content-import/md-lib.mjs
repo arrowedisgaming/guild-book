@@ -389,7 +389,29 @@ export function normalizeMarkdown(lines, opts = {}) {
 
 	// Collapse 3+ blank lines and trim.
 	text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+	// Licensing invariant, enforced at the choke point every normalizing
+	// importer shares — see assertNoImageEmbeds. The strip regexes above
+	// intentionally match only plain destinations; an exotic one (e.g. a path
+	// containing parentheses) must fail the build here, not ship.
+	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	return text;
+}
+
+/**
+ * Licensing guard: the book's interior art is NOT covered by the text's
+ * open-content permission, so no image embed may reach ANY generated pack
+ * output. Normalizing importers inherit this via normalizeMarkdown; an
+ * importer that emits vault text through another path (e.g. the procedure
+ * catalog's table cells) must call it on its serialized output before
+ * writing.
+ */
+export function assertNoImageEmbeds(text, context) {
+	if (!text.includes('![')) return;
+	const leaked = text.slice(text.indexOf('![')).split('\n', 1)[0].slice(0, 120);
+	throw new Error(
+		`[${context}] image embed survived into generated output (interior art is not licensed for the pack): ${JSON.stringify(leaked)}`
+	);
 }
 
 /**

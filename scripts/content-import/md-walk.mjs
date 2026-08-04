@@ -145,6 +145,12 @@ export function defaultSlug(text) {
  * `${section}-${defaultSlug(text)}`. Collisions and unmatched or
  * non-bijective alias maps are build errors — never auto-suffixed, because
  * suffixes are insertion-order-dependent and these ids are permanent URLs.
+ *
+ * anchorAliases[locator] is the mechanism for an id that RETIRED — an entry
+ * absorbed into another (the retired id lists on its absorber). Each alias
+ * ships on the entry as `aliases`, rendered as extra in-page anchors so the
+ * old permanent URL keeps landing on the surviving entry. An alias must not
+ * collide with any live id or other alias, and must be a non-empty string.
  */
 export function resolveEntries(candidates, config) {
 	const byLocator = (map, kind) => {
@@ -178,10 +184,13 @@ export function resolveEntries(candidates, config) {
 		throw new Error(`idAliases must be bijective; duplicate alias target in ${JSON.stringify(aliasValues)}`);
 	}
 
+	const anchors = byLocator(config.anchorAliases, 'anchorAliases');
+
 	const entries = candidates.map((c) => ({
 		...c,
 		id: aliases.get(c) ?? explicit.get(c) ?? deeperIds.get(c) ?? `${config.section}-${defaultSlug(c.text)}`,
-		title: cleanTitle(c.text)
+		title: cleanTitle(c.text),
+		aliases: anchors.get(c)
 	}));
 
 	const seen = new Map();
@@ -193,6 +202,25 @@ export function resolveEntries(candidates, config) {
 			);
 		}
 		seen.set(e.id, e);
+	}
+
+	const anchorSeen = new Set();
+	for (const e of entries) {
+		if (e.aliases !== undefined && !Array.isArray(e.aliases)) {
+			throw new Error(`anchorAliases for ${JSON.stringify(e.locator)} must be an array of retired ids`);
+		}
+		for (const alias of e.aliases ?? []) {
+			if (typeof alias !== 'string' || alias === '') {
+				throw new Error(`anchorAliases for ${JSON.stringify(e.locator)} contains a non-string or empty alias`);
+			}
+			if (seen.has(alias)) {
+				throw new Error(`anchor alias "${alias}" collides with a live entry id — an alias must be a retired id`);
+			}
+			if (anchorSeen.has(alias)) {
+				throw new Error(`anchor alias "${alias}" is claimed by two entries`);
+			}
+			anchorSeen.add(alias);
+		}
 	}
 	return entries;
 }
@@ -217,7 +245,14 @@ export function buildWalk(markdown, walkCfg, deps) {
 		const body = omitRange(walkRuleBody(e.bodyLines), ov.omitRange);
 		const problems = lintBody(body, ov);
 		if (problems.length) throw new Error(`[rules#${e.id}] ${problems.join('; ')}`);
-		return { id: e.id, section: walkCfg.section, title: ov.title ?? e.title, body, tags: ov.tags ?? [] };
+		return {
+			id: e.id,
+			section: walkCfg.section,
+			title: ov.title ?? e.title,
+			body,
+			tags: ov.tags ?? [],
+			...(e.aliases?.length ? { aliases: [...e.aliases] } : {})
+		};
 	});
 
 	const idByLocator = new Map(resolved.map((e) => [`${e.locator.toLowerCase()}#${e.occurrence}`, e.id]));

@@ -27,4 +27,18 @@ describe('generated session content', () => {
 		expect(index.files.rules).toBe('rules.json');
 		expect(index.files.rulesSearch).toBe('rules-search.json');
 	});
+
+	/**
+	 * Rule ids are documented as permanent URLs. Once shipped, an id must keep
+	 * resolving forever — as a live entry id, or as an alias on the entry that
+	 * absorbed it. Add to this list whenever an import retires or renames an
+	 * id; never remove from it.
+	 */
+	it('keeps every shipped rule id resolvable (permanent URLs)', () => {
+		const rules = JSON.parse(readFileSync('static/content-packs/hmtw/rules.json', 'utf8'));
+		const resolvable = new Set(rules.flatMap((r: { id: string; aliases?: string[] }) => [r.id, ...(r.aliases ?? [])]));
+		for (const shipped of ['adventurer-war-pigs', 'challenge-phase-tracking-enemy-damage']) {
+			expect(resolvable, `retired/renamed id "${shipped}" must stay resolvable`).toContain(shipped);
+		}
+	});
 });

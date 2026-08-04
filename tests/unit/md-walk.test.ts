@@ -208,9 +208,61 @@ describe('resolveEntries', () => {
 		});
 		expect(out[0]).toMatchObject({ id: 'kith-area-sense', title: 'Area Sense' });
 	});
+
+	it('attaches anchorAliases (retired ids) to the absorbing entry', () => {
+		const out = resolveEntries([cand('13. Animal companions and familiars', '13. Animal companions and familiars')], {
+			section: 'adventurer',
+			anchorAliases: { '13. Animal companions and familiars': ['adventurer-war-pigs'] }
+		});
+		expect(out[0]).toMatchObject({
+			id: 'adventurer-animal-companions-and-familiars',
+			aliases: ['adventurer-war-pigs']
+		});
+	});
+
+	it('throws when an anchor alias collides with a live entry id', () => {
+		expect(() =>
+			resolveEntries([cand('A/X', 'X'), cand('A/Y', 'Y')], {
+				section: 's',
+				anchorAliases: { 'A/X': ['s-y'] }
+			})
+		).toThrow(/retired/i);
+	});
+
+	it('throws when two entries claim the same anchor alias', () => {
+		expect(() =>
+			resolveEntries([cand('A/X', 'X'), cand('A/Y', 'Y')], {
+				section: 's',
+				anchorAliases: { 'A/X': ['old-id'], 'A/Y': ['old-id'] }
+			})
+		).toThrow(/two entries/i);
+	});
 });
 
-import { walkRuleBody, extractRuleBody } from '../../scripts/content-import/md-lib.mjs';
+import { walkRuleBody, extractRuleBody, normalizeMarkdown, assertNoImageEmbeds } from '../../scripts/content-import/md-lib.mjs';
+
+describe('image-embed licensing guard', () => {
+	it('normalizeMarkdown silently strips a well-formed vault image embed', () => {
+		const out = normalizeMarkdown(['Prose before.', '', '![](images/pageart/plain.png)', '', 'Prose after.']);
+		expect(out).toBe('Prose before.\n\nProse after.');
+	});
+
+	it('normalizeMarkdown fails the build on an embed the strip regexes do not recognize (paren path)', () => {
+		// The strip regex destination is [^()]+, so a parenthesized path survives
+		// stripping — the shared post-normalization guard must catch it in EVERY
+		// importer, not just the rules lint.
+		expect(() => normalizeMarkdown(['Prose.', '', '![](images/pageart/foo(bar).png)'])).toThrow(
+			/image embed survived.*not licensed/i
+		);
+	});
+
+	it('assertNoImageEmbeds names the calling importer and quotes the leak', () => {
+		expect(() => assertNoImageEmbeds('cell text ![](images/pageart/foo(bar).png)', 'tarot-procedures.json')).toThrow(
+			/\[tarot-procedures\.json\].*foo\(bar\)\.png/
+		);
+		expect(() => assertNoImageEmbeds('clean prose', 'anywhere')).not.toThrow();
+	});
+});
 
 describe('walkRuleBody (full-preservation mode)', () => {
 	it('keeps worked-example subsections', () => {

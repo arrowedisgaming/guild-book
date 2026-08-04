@@ -123,8 +123,11 @@ function build() {
 		if (problems.length) throw new Error(`[rules#${entry.id}] ${problems.join('; ')}`);
 		rules.push({ id: entry.id, section: entry.section, title: entry.title, body, tags: entry.tags });
 	}
-	const dupes = rules.map((r) => r.id).filter((id, i, all) => all.indexOf(id) !== i);
-	if (dupes.length) throw new Error(`duplicate rule ids across manifest: ${[...new Set(dupes)].join(', ')}`);
+	// Ids and retired-id aliases share one namespace: every one of them is a
+	// permanent URL fragment, so a collision anywhere breaks a bookmark.
+	const claimed = rules.flatMap((r) => [r.id, ...(r.aliases ?? [])]);
+	const dupes = claimed.filter((id, i, all) => all.indexOf(id) !== i);
+	if (dupes.length) throw new Error(`duplicate rule ids/aliases across manifest: ${[...new Set(dupes)].join(', ')}`);
 	return { rules, ledgers };
 }
 

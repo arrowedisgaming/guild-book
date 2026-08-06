@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
-const index = JSON.parse(readFileSync('static/content-packs/hmtw/index.json', 'utf8'));
+const PACK_DIR = 'static/content-packs/hmtw';
+const packFiles = () => readdirSync(PACK_DIR).filter((f) => f.endsWith('.json'));
+
+const index = JSON.parse(readFileSync(`${PACK_DIR}/index.json`, 'utf8'));
 
 describe('generated session content', () => {
 	/**
@@ -39,6 +42,39 @@ describe('generated session content', () => {
 		const resolvable = new Set(rules.flatMap((r: { id: string; aliases?: string[] }) => [r.id, ...(r.aliases ?? [])]));
 		for (const shipped of ['adventurer-war-pigs', 'challenge-phase-tracking-enemy-damage']) {
 			expect(resolvable, `retired/renamed id "${shipped}" must stay resolvable`).toContain(shipped);
+		}
+	});
+
+	/**
+	 * Licensing invariant, enforced on the committed artifacts themselves: the
+	 * book's interior art is not covered by the text's open-content permission,
+	 * so no image-embed syntax may ship in any pack file. The importer-side
+	 * guards (assertNoImageEmbeds) enforce this at build time, but only on a
+	 * machine with the vault; this scan runs anywhere — CI without the vault,
+	 * and against hand-edited packs a build never touched.
+	 */
+	it('ships no image-embed syntax in any committed pack file', () => {
+		for (const file of packFiles()) {
+			expect(readFileSync(`${PACK_DIR}/${file}`, 'utf8'), `${file} contains "!["`).not.toContain('![');
+		}
+	});
+
+	/**
+	 * The app's renderer converts `*` emphasis only, so an `_underscore_` span
+	 * that survives import prints its underscores verbatim on the page. Runs
+	 * of 3+ underscores are exempt — the guild charter's fill-in blank
+	 * ("the Guild, named: __________") is legitimate book text.
+	 */
+	it('ships no underscore emphasis in any committed pack file', () => {
+		for (const file of packFiles()) {
+			const offenders: string[] = [];
+			JSON.parse(readFileSync(`${PACK_DIR}/${file}`, 'utf8'), (key, value) => {
+				for (const s of typeof value === 'string' ? [key, value] : [key]) {
+					if (s.replace(/_{3,}/g, '').includes('_')) offenders.push(s.slice(0, 80));
+				}
+				return value;
+			});
+			expect(offenders, `${file}: underscore outside a fill-in blank`).toEqual([]);
 		}
 	});
 });

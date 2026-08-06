@@ -264,6 +264,35 @@ describe('image-embed licensing guard', () => {
 	});
 });
 
+describe('underscore emphasis normalization', () => {
+	it('converts a single-line _italic_ span', () => {
+		expect(normalizeMarkdown(['A _quiet_ word.'])).toBe('A *quiet* word.');
+	});
+
+	it('converts a span that opens and closes on different soft-wrapped lines', () => {
+		// The pre-reflow conversion is line-bounded, so this pair survives it;
+		// reflow then joins the wrap. Without the post-reflow pass the span
+		// ships as literal underscores, which the app renderer prints verbatim
+		// (it converts `*` emphasis only).
+		expect(normalizeMarkdown(['_The GM looks at their notes', 'and nods._'])).toBe(
+			'*The GM looks at their notes and nods.*'
+		);
+	});
+
+	it('leaves fill-in blanks (pure underscore runs) alone', () => {
+		expect(normalizeMarkdown(['the Guild, named: __________'])).toBe('the Guild, named: __________');
+	});
+
+	it('does not pair the tails of adjacent fill-in blanks', () => {
+		// Without the lookarounds, the closing run of one blank and the opening
+		// run of the next read as an emphasis pair, shipping corrupted text like
+		// "Signed: _________* Date: *_________".
+		expect(normalizeMarkdown(['Signed: __________ Date: __________'])).toBe('Signed: __________ Date: __________');
+		// …including when reflow joins two soft-wrapped blank lines into one.
+		expect(normalizeMarkdown(['Signed: __________', 'Date: __________'])).toBe('Signed: __________ Date: __________');
+	});
+});
+
 describe('walkRuleBody (full-preservation mode)', () => {
 	it('keeps worked-example subsections', () => {
 		const body = walkRuleBody(['Rule text.', '', '### Example test of fate', '', 'Franz draws a card.']);

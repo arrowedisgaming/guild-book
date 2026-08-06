@@ -7,17 +7,21 @@
 //   node scripts/content-import/md-spells.mjs --check    # verify committed == fresh
 //   node scripts/content-import/md-spells.mjs --dry-run  # preview, write nothing
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, realpathSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MD_DIR, stripCallouts, normalizeMarkdown } from './md-lib.mjs';
+import { MD_DIR, stripCallouts, normalizeMarkdown, assertNoImageEmbeds } from './md-lib.mjs';
 import { PACK_DIR } from './pack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SORCERY_FILE = join(MD_DIR, '11 - Appendix A - Sorcery.md');
 const SPELLS_JSON = join(PACK_DIR, 'spells.json');
 
-/** "# Spells of the <realm>" heading -> tradition id (matches the four "Magic of the …" talents). */
+/** @typedef {{name: string, tradition: string, lines: string[]}} RawSpell */
+/** @typedef {{id: string, name: string, tradition: string, component: string, description: string}} Spell */
+
+/** "# Spells of the <realm>" heading -> tradition id (matches the four "Magic of the …" talents).
+ * @type {Record<string, string>} */
 const TRADITION_BY_CHAPTER = {
 	'spells of the wastes': 'wastes',
 	'spells of the weald': 'weald',
@@ -25,6 +29,7 @@ const TRADITION_BY_CHAPTER = {
 	'spells of the welkin': 'welkin'
 };
 
+/** @param {string} name */
 function slugify(name) {
 	return name
 		.toLowerCase()
@@ -32,11 +37,15 @@ function slugify(name) {
 		.replace(/^-|-$/g, '');
 }
 
-/** Parses the appendix into raw per-spell records: { name, tradition, lines }. */
+/** Parses the appendix into raw per-spell records: { name, tradition, lines }.
+ * @returns {RawSpell[]} */
 function collectSpells() {
 	const lines = readFileSync(SORCERY_FILE, 'utf8').split('\n');
+	/** @type {RawSpell[]} */
 	const spells = [];
+	/** @type {string | null} */
 	let tradition = null;
+	/** @type {RawSpell | null} */
 	let current = null;
 
 	for (const line of lines) {
@@ -58,8 +67,9 @@ function collectSpells() {
 	return spells;
 }
 
-/** Splits a spell's body lines into { component, descriptionLines }, dropping the "Component:" heading. */
-function splitComponent(bodyLines) {
+/** Splits a spell's body lines into { component, descriptionLines }, dropping the "Component:" heading.
+ * @param {string[]} bodyLines */
+export function splitComponent(bodyLines) {
 	let i = 0;
 	// find "### Component:"
 	while (i < bodyLines.length && !/^###\s+Component:?/i.test(bodyLines[i])) i++;
@@ -87,11 +97,12 @@ function splitComponent(bodyLines) {
 	return { component, descriptionLines };
 }
 
-function build() {
-	if (!existsSync(SORCERY_FILE)) {
-		throw new Error(`Sorcery appendix not found at ${SORCERY_FILE} (gitignored Markdown vault).`);
-	}
-	const raw = collectSpells();
+/** Map raw per-spell records into pack entries and enforce the licensing
+ * guard. The component field reaches the pack without normalizeMarkdown —
+ * splitComponent strips emphasis markers only — so the image-embed invariant
+ * is enforced here on the serialized output, for write and --check alike.
+ * @param {RawSpell[]} raw @returns {Spell[]} */
+export function assembleSpells(raw) {
 	const spells = raw.map((s) => {
 		const { component, descriptionLines } = splitComponent(s.lines);
 		const description = normalizeMarkdown(stripCallouts(descriptionLines));
@@ -102,7 +113,15 @@ function build() {
 		if (problems.length) throw new Error(`[spell ${s.name}] ${problems.join('; ')}`);
 		return { id: slugify(s.name), name: s.name, tradition: s.tradition, component, description };
 	});
+	assertNoImageEmbeds(JSON.stringify(spells), 'spells.json');
 	return spells;
+}
+
+function build() {
+	if (!existsSync(SORCERY_FILE)) {
+		throw new Error(`Sorcery appendix not found at ${SORCERY_FILE} (gitignored Markdown vault).`);
+	}
+	return assembleSpells(collectSpells());
 }
 
 function main() {
@@ -110,6 +129,7 @@ function main() {
 	const spells = build();
 
 	if (args.includes('--check')) {
+		/** @type {Spell[]} */
 		const committed = JSON.parse(readFileSync(SPELLS_JSON, 'utf8'));
 		let drift = 0;
 		for (const fresh of spells) {
@@ -128,6 +148,7 @@ function main() {
 		return;
 	}
 
+	/** @type {Record<string, number>} */
 	const byTradition = {};
 	for (const s of spells) byTradition[s.tradition] = (byTradition[s.tradition] ?? 0) + 1;
 	console.log(`${spells.length} spells:`, byTradition);
@@ -143,4 +164,8 @@ function main() {
 	}
 }
 
-main();
+// Importable for tests (splitComponent, assembleSpells); run as a script only.
+// argv[1] is realpathed so a symlinked invocation still runs main() — a missed
+// match here would make --check exit green without checking anything.
+if (process.argv[1] && existsSync(process.argv[1]) && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url))
+	main();

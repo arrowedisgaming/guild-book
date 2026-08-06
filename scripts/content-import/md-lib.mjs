@@ -355,7 +355,11 @@ export function normalizeMarkdown(lines, opts = {}) {
 	text = text.replace(/(^#{1,6}[ \t][^\n]*)\n(?![ \t]*\r?\n|#|$)/gm, '$1\n\n');
 	text = text.replace(/([^\n])\n(#{1,6}[ \t])/g, '$1\n\n$2');
 	text = text.replace(SUIT_GLYPHS, '');
-	text = text.replace(/_([^_\n]+)_/g, '*$1*'); // _italic_ -> *italic*
+	// _italic_ -> *italic*. The lookarounds keep the match from starting or
+	// ending inside an `____` fill-in run (the guild charter's blank), where a
+	// run's last underscore would otherwise pair with the NEXT run's first and
+	// italicize the prose between two blanks.
+	text = text.replace(/(?<!_)_([^_\n]+)_(?!_)/g, '*$1*');
 	// A running page header was embedded at the end of one exported table row.
 	text = text.replace(/[ \t]*APPENDIX A\s*\|\s*SORCERY\s*\|[ \t]*$/gim, ' |');
 
@@ -386,6 +390,14 @@ export function normalizeMarkdown(lines, opts = {}) {
 			return structured ? block : lines.map((l) => l.trim()).filter(Boolean).join(' ');
 		})
 		.join('\n\n');
+
+	// The `_italic_` → `*italic*` pass above is line-bounded, so a span that
+	// opens on one soft-wrapped line and closes on the next survives it — and
+	// the reflow that just joined those lines would ship the pair as literal
+	// underscores, which the app renderer prints verbatim (it converts `*`
+	// emphasis only). Re-run the conversion now that paragraphs are one line,
+	// with the same fill-in-run lookarounds as the first pass.
+	text = text.replace(/(?<!_)_([^_\n]+)_(?!_)/g, '*$1*');
 
 	// Collapse 3+ blank lines and trim.
 	text = text.replace(/\n{3,}/g, '\n\n').trim();

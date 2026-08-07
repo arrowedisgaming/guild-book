@@ -317,6 +317,18 @@ export function normalizeMarkdown(lines, opts = {}) {
 
 	let text = processed.join('\n');
 
+	// Image embeds reference files that live only in the vault — and the book's
+	// interior art is NOT covered by the text's open-content permission. Strip
+	// recognized Markdown and Obsidian forms before wikilink flattening;
+	// otherwise `![[path]]` becomes `!path`, erasing the marker the licensing
+	// guard relies on and allowing a vault-only image path into the pack.
+	text = text.replace(/!\[\[[^\]]*\]\]/g, '');
+	text = text.replace(/^[ \t]*!\[[^\]]*\]\([^()]+\)[ \t]*\r?$/gm, '');
+	text = text.replace(/!\[[^\]]*\]\([^()]+\)/g, '');
+	// Fail before another normalization step can erase the identifying syntax
+	// of an unrecognized image form. The final guard below remains defense in
+	// depth over the complete normalized result.
+	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	text = opts.preserve === 'full' ? stripWikilinksGentle(text) : stripWikilinks(text);
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
@@ -341,12 +353,6 @@ export function normalizeMarkdown(lines, opts = {}) {
 	// caret inside prose is never touched.
 	text = text.replace(/[ \t]+\^[A-Za-z0-9-]+(?=\r?$)/gm, '');
 	text = text.replace(/^\^[A-Za-z0-9-]+\r?$/gm, '');
-	// Image embeds (`![](images/pageart/…)`) reference files that live only in
-	// the vault — and the book's interior art is NOT covered by the text's
-	// open-content permission, so the pack must never carry these paths. The
-	// text stands alone; drop the embed, not the paragraph around it.
-	text = text.replace(/^[ \t]*!\[[^\]]*\]\([^()]+\)[ \t]*\r?$/gm, '');
-	text = text.replace(/!\[[^\]]*\]\([^()]+\)/g, '');
 	// `renderMarkdown` only treats a LONE `##`–`######` block as a heading
 	// (renderHeadingBlock bails when the block spans lines), so a heading glued
 	// to its next or previous line ships as a literal-`###` paragraph. The
@@ -578,9 +584,16 @@ function slugify(text) {
  *   discard-top bracket convention. When false, brackets are left as prose —
  *   City Events' `[Curiosity]` is a category label, not a selector.
  */
-function parseCellText(raw, bracketsAreTokens) {
+export function parseCellText(raw, bracketsAreTokens) {
+	// Same licensing boundary as normalizeMarkdown, and the same ordering trap:
+	// the wikilink flattening below would turn `![[path]]` into `!path`, erasing
+	// the `![` marker that assertNoImageEmbeds (and md-procedures' serialized
+	// check) depend on. Strip recognized embed forms first, then fail loudly on
+	// any unrecognized one while its marker still exists.
+	let text = raw.replace(/!\[\[[^\]]*\]\]/g, '').replace(/!\[[^\]]*\]\([^()]+\)/g, '');
+	assertNoImageEmbeds(text, 'parseCellText');
 	const references = [];
-	let text = raw.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
+	text = text.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
 		const [target, label] = inner.split('|');
 		const shown = (label ?? target).trim();
 		const hash = target.indexOf('#');

@@ -247,6 +247,17 @@ describe('image-embed licensing guard', () => {
 		expect(out).toBe('Prose before.\n\nProse after.');
 	});
 
+	it.each([
+		['curated', undefined],
+		['full-preservation', { preserve: 'full' as const }]
+	])('normalizeMarkdown strips an Obsidian image embed in %s mode before flattening wikilinks', (_label, options) => {
+		const out = normalizeMarkdown(
+			['Prose before.', '', '![[images/pageart/plain.png]]', '', 'Prose after.'],
+			options
+		);
+		expect(out).toBe('Prose before.\n\nProse after.');
+	});
+
 	it('normalizeMarkdown fails the build on an embed the strip regexes do not recognize (paren path)', () => {
 		// The strip regex destination is [^()]+, so a parenthesized path survives
 		// stripping — the shared post-normalization guard must catch it in EVERY

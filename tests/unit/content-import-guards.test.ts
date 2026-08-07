@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { tableColumnCells, guardInjectedValue } from '../../scripts/content-import/md-inject.mjs';
 import { splitComponent, assembleSpells } from '../../scripts/content-import/md-spells.mjs';
+import { parseCellText } from '../../scripts/content-import/md-lib.mjs';
 
 /**
  * Regression coverage for the two importer paths that emit vault text WITHOUT
@@ -34,6 +35,23 @@ describe('md-inject licensing guard (tableColumns bypass)', () => {
 			'Stoic',
 			'Gravedigger'
 		]);
+	});
+});
+
+describe('md-lib parseCellText licensing guard (oracle-table bypass)', () => {
+	it('strips an Obsidian image embed before wikilink flattening can erase its marker', () => {
+		const { text, references } = parseCellText('Ape ![[images/pageart/plain.png]]', false);
+		expect(text).toBe('Ape');
+		expect(references).toEqual([]);
+	});
+
+	it('strips a Markdown image embed from a cell', () => {
+		const { text } = parseCellText('Ape ![](images/pageart/plain.png)', false);
+		expect(text).toBe('Ape');
+	});
+
+	it('fails the build on an embed the strip regexes do not recognize (paren path)', () => {
+		expect(() => parseCellText(`Ape ${EMBED}`, false)).toThrow(/\[parseCellText\].*foo\(bar\)\.png/);
 	});
 });
 

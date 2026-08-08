@@ -433,6 +433,23 @@ export function assertNoImageEmbeds(text, context) {
 }
 
 /**
+ * Companion to {@link assertNoImageEmbeds} for the paths that never strip the
+ * vault's inline HTML (md-inject's raw table cells, md-spells' component):
+ * an `<img>`/`<picture>`/`<source>` tag carries the same vault-only art path
+ * as a markdown embed. Not called from normalizeMarkdown or parseCellText —
+ * those strip HTML wholesale, and their inputs legitimately contain the
+ * suit-icon `<img>` markup this would reject.
+ */
+export function assertNoHtmlImages(text, context) {
+	const m = /<\s*(?:img|picture|source)\b/i.exec(text);
+	if (!m) return;
+	const leaked = text.slice(m.index).split('\n', 1)[0].slice(0, 120);
+	throw new Error(
+		`[${context}] HTML image tag survived into generated output (interior art is not licensed for the pack): ${JSON.stringify(leaked)}`
+	);
+}
+
+/**
  * Full pipeline: extract a section and return clean body markdown for a rule entry.
  *
  * @param {object} [options]

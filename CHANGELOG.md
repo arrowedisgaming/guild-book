@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-08-08
+
 ### Changed
 
 - The rules reference now reflects the corrected source manuscript (content
@@ -39,7 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   importer: normalization itself fails the build if an embed survives
   stripping (for example a parenthesized path the strip regex skips), and
   the tarot-procedure catalog — whose table text reaches the pack without
-  normalization — runs the same guard over its serialized output.
+  normalization — runs the same guard over its serialized output. Raw HTML
+  image tags are rejected on the paths that never strip inline HTML, and CI
+  scans the committed packs for both the markdown and HTML forms.
 
 ## [0.17.2] - 2026-08-04
 

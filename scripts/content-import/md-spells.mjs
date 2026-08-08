@@ -10,7 +10,7 @@
 import { existsSync, readFileSync, writeFileSync, realpathSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MD_DIR, stripCallouts, normalizeMarkdown, assertNoImageEmbeds } from './md-lib.mjs';
+import { MD_DIR, stripCallouts, normalizeMarkdown, assertNoImageEmbeds, assertNoHtmlImages } from './md-lib.mjs';
 import { PACK_DIR } from './pack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -114,6 +114,7 @@ export function assembleSpells(raw) {
 		return { id: slugify(s.name), name: s.name, tradition: s.tradition, component, description };
 	});
 	assertNoImageEmbeds(JSON.stringify(spells), 'spells.json');
+	assertNoHtmlImages(JSON.stringify(spells), 'spells.json');
 	return spells;
 }
 

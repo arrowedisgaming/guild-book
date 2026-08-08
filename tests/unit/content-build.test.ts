@@ -34,14 +34,23 @@ describe('generated session content', () => {
 	/**
 	 * Rule ids are documented as permanent URLs. Once shipped, an id must keep
 	 * resolving forever — as a live entry id, or as an alias on the entry that
-	 * absorbed it. Add to this list whenever an import retires or renames an
-	 * id; never remove from it.
+	 * absorbed it. The ledger fixture lists every id any release has shipped;
+	 * ids are appended when a release introduces them and never removed. The
+	 * completeness pass below is what keeps that append honest: a new id fails
+	 * the build until it is added, so every id is in the ledger before it can
+	 * ever be retired.
 	 */
 	it('keeps every shipped rule id resolvable (permanent URLs)', () => {
 		const rules = JSON.parse(readFileSync('static/content-packs/hmtw/rules.json', 'utf8'));
 		const resolvable = new Set(rules.flatMap((r: { id: string; aliases?: string[] }) => [r.id, ...(r.aliases ?? [])]));
-		for (const shipped of ['adventurer-war-pigs', 'challenge-phase-tracking-enemy-damage']) {
-			expect(resolvable, `retired/renamed id "${shipped}" must stay resolvable`).toContain(shipped);
+		const shipped: string[] = JSON.parse(readFileSync('tests/fixtures/shipped-rule-ids.json', 'utf8'));
+		for (const id of shipped) {
+			expect(resolvable, `shipped id "${id}" must stay resolvable`).toContain(id);
+		}
+		for (const rule of rules as { id: string }[]) {
+			expect(shipped, `id "${rule.id}" ships in this pack — append it to shipped-rule-ids.json`).toContain(
+				rule.id
+			);
 		}
 	});
 
@@ -55,7 +64,10 @@ describe('generated session content', () => {
 	 */
 	it('ships no image-embed syntax in any committed pack file', () => {
 		for (const file of packFiles()) {
-			expect(readFileSync(`${PACK_DIR}/${file}`, 'utf8'), `${file} contains "!["`).not.toContain('![');
+			const text = readFileSync(`${PACK_DIR}/${file}`, 'utf8');
+			expect(text, `${file} contains "!["`).not.toContain('![');
+			// HTML forms carry the same vault-only art paths as markdown embeds.
+			expect(text, `${file} contains an HTML image tag`).not.toMatch(/<\s*(?:img|picture|source)\b/i);
 		}
 	});
 

@@ -364,6 +364,12 @@ export interface RuleEntry {
 	/** Markdown body. */
 	body: string;
 	tags: string[];
+	/**
+	 * Retired ids this entry absorbed. Rule ids are permanent URLs, so when an
+	 * entry folds into another (War pigs → Animal companions and familiars),
+	 * the retired id ships here and renders as an extra in-page anchor.
+	 */
+	aliases?: string[];
 }
 
 /** One searchable rules document in rules-search.json: plain-text body for

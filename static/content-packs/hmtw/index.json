@@ -1,7 +1,7 @@
 {
 	"id": "hmtw",
 	"name": "His Majesty the Worm",
-	"version": "4.0.0",
+	"version": "4.1.0",
 	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the full Omphalic Market, conditions, afflictions, languages, and dungeon denizens. Game text reproduced verbatim from the core rulebook under the Adherent of the Worm open licence.",
 	"system": "hmtw",
 	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license): \"the mechanics and game text of His Majesty the Worm may be reused freely.\" His Majesty the Worm is copyright Joshua McCrowell. Game text reproduced verbatim; no book artwork, logos, or trade dress reproduced.",
@@ -29,7 +29,7 @@
 			"id": "swords",
 			"name": "Swords",
 			"suit": "swords",
-			"description": "Swords represents strength and skill with weapons. Test Swords to bend the bars of your cell or tip over a heavy bookshelf onto an unsuspecting goblin.",
+			"description": "Swords represents strength and skill with weapons. Test Swords to bend the bars of your cell or **tip** over a heavy bookshelf onto an unsuspecting goblin.",
 			"archetype": "warrior",
 			"min": 1,
 			"max": 4
@@ -275,22 +275,22 @@
 				{
 					"id": "great-success",
 					"label": "Great success",
-					"description": "If the total value is 14+ *and* the player drew the suit being tested on the initial draw (not from pushing fate or another source), the result is a great success. Not only does the adventurer succeed, but they succeed extremely well, going above and beyond what was expected.\n\nThe GM should invite the player to embellish how *impressive*, how *effortless*, how *quick*, or how *thorough* their success was."
+					"description": "If the total value is **14**+ *and* the player drew the suit being tested on the initial draw (not from pushing fate or another source), the result is a **great success**. Not only does the adventurer succeed, but they succeed extremely well, going above and beyond what was expected.\n\nThe GM should invite the player to embellish how *impressive*, how *effortless*, how *quick*, or how *thorough* their success was."
 				},
 				{
 					"id": "success",
 					"label": "Success",
-					"description": "If the total value is 14+, the result is a success. The GM describes how the adventurer succeeds in their stated goal."
+					"description": "If the total value is **14**+, the result is a success. The GM describes how the adventurer succeeds in their stated goal."
 				},
 				{
 					"id": "failure",
 					"label": "Failure",
-					"description": "If the total value is 13 or less, the result is a failure. The GM describes how the adventurer fails and asks what they want to do next."
+					"description": "If the total value is 13 or less, the result is a **failure**. The GM describes how the adventurer fails and asks what they want to do next."
 				},
 				{
 					"id": "great-failure",
 					"label": "Great failure",
-					"description": "If the player pushes fate *and* the total value is still 13 or less, the test is a great failure. The GM describes a *new* significant setback, bad situation, or harmful repercussion as a result. See “Pushing Fate.”"
+					"description": "If the player pushes fate *and* the total value is still 13 or less, the test is a **great failure**. The GM describes a *new* significant setback, bad situation, or harmful repercussion as a result. See “Pushing Fate.”"
 				}
 			],
 			"favorModifier": 3,
@@ -360,5 +360,5 @@
 		"beltSlots": 4,
 		"packSlots": 21
 	},
-	"contentDigest": "f4806069c146557ee475762b1e4ded5a0462573d1ff2c58c50b0b35ead29a4d6"
+	"contentDigest": "de123ba7649ceb3f3031ccd10799364a32a3d9367e50bf45e5425b92b8e691c7"
 }

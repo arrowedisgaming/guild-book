@@ -90,6 +90,13 @@ export function extractSection(file, heading, until, after) {
  */
 const SCAFFOLD_CALLOUTS = new Set(['hmw-nav']);
 
+/** Callout types that carry the book's own prose: the vault wraps chapter
+ * lead-ins and pull-quotes in `[!lede]`/`[!epigraph]` purely for styling, so
+ * their text is body copy, not a flavor sidebar — every import path must keep
+ * it, including the ones that drop callouts wholesale (`stripCallouts`).
+ * Chapter-5 path descriptions are the loud case: the description IS the lede. */
+const PROSE_CALLOUTS = new Set(['lede', 'epigraph']);
+
 /**
  * Converts Obsidian callout blocks into the app's markdown dialect instead of
  * dropping them. Opt-in per manifest entry via `keepCallouts`, because most
@@ -143,19 +150,36 @@ export function convertCallouts(lines) {
 	return out;
 }
 
-/** Drops Obsidian callout blocks (`> [!type] …` and their `>`-quoted continuation). */
+/** Drops Obsidian callout blocks (`> [!type] …` and their `>`-quoted
+ * continuation) — except PROSE_CALLOUTS, whose bodies are unquoted in place:
+ * they are book text wearing callout styling, not sidebars. */
 export function stripCallouts(lines) {
 	const out = [];
 	let inCallout = false;
+	let keepProse = false;
 	for (const line of lines) {
-		if (/^\s*>\s*\[!/.test(line)) {
+		const opener = /^\s*>\s*\[!([\w-]+)\]\s*(.*)$/.exec(line);
+		if (opener) {
 			inCallout = true;
+			keepProse = PROSE_CALLOUTS.has(opener[1].toLowerCase());
+			if (keepProse) {
+				if (out.length && out[out.length - 1].trim() !== '') out.push('');
+				if (opener[2].trim()) out.push(opener[2].trim());
+			}
 			continue;
 		}
 		if (inCallout) {
 			// Callout continues while lines stay blockquote-quoted (or blank between quoted lines).
-			if (/^\s*>/.test(line) || line.trim() === '') continue;
+			if (/^\s*>/.test(line)) {
+				if (keepProse) out.push(line.replace(/^\s*>\s?/, ''));
+				continue;
+			}
+			if (line.trim() === '') {
+				if (keepProse) out.push('');
+				continue;
+			}
 			inCallout = false;
+			keepProse = false;
 		}
 		// A stray blockquote line outside a recognized callout (rare) — drop it too.
 		if (/^\s*>/.test(line)) continue;
@@ -293,6 +317,18 @@ export function normalizeMarkdown(lines, opts = {}) {
 
 	let text = processed.join('\n');
 
+	// Image embeds reference files that live only in the vault — and the book's
+	// interior art is NOT covered by the text's open-content permission. Strip
+	// recognized Markdown and Obsidian forms before wikilink flattening;
+	// otherwise `![[path]]` becomes `!path`, erasing the marker the licensing
+	// guard relies on and allowing a vault-only image path into the pack.
+	text = text.replace(/!\[\[[^\]]*\]\]/g, '');
+	text = text.replace(/^[ \t]*!\[[^\]]*\]\([^()]+\)[ \t]*\r?$/gm, '');
+	text = text.replace(/!\[[^\]]*\]\([^()]+\)/g, '');
+	// Fail before another normalization step can erase the identifying syntax
+	// of an unrecognized image form. The final guard below remains defense in
+	// depth over the complete normalized result.
+	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	text = opts.preserve === 'full' ? stripWikilinksGentle(text) : stripWikilinks(text);
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
@@ -304,13 +340,32 @@ export function normalizeMarkdown(lines, opts = {}) {
 	text = text.replace(/<br\s*\/?>/gi, ' ');
 	text = text.replace(/<[^>]+>/g, '');
 	// A bullet glyph (•) is sometimes typeset directly against the preceding
-	// word or bold-marker with no separating space (e.g. "**• 25 gold**",
-	// "month.** • 1000 gold**") — the same welded-clause hazard as `<br>`
-	// above, just without the tag. Insert the missing space.
-	text = text.replace(/(\S)•/g, '$1 •');
-	text = text.replace(/\\([[\]|])/g, '$1'); // unescape \[ \] \|
+	// word with no separating space — the same welded-clause hazard as `<br>`
+	// above, just without the tag. Insert the missing space. `*` is excluded:
+	// "**• 25 gold**" is a bold marker hugging its run, not a weld, and
+	// rewriting it to "** • 25 gold**" needlessly breaks the pair under
+	// CommonMark parsing.
+	text = text.replace(/([^\s*])•/g, '$1 •');
+	text = text.replace(/\\([[\]|*])/g, '$1'); // unescape \[ \] \| \*
+	// Obsidian block anchors (` ^city-actions` at end of line) are vault-side
+	// link targets, not book text — the vault's cross-linking pass adds them.
+	// End-of-line anchored, whitespace-preceded (or alone on the line), so a
+	// caret inside prose is never touched.
+	text = text.replace(/[ \t]+\^[A-Za-z0-9-]+(?=\r?$)/gm, '');
+	text = text.replace(/^\^[A-Za-z0-9-]+\r?$/gm, '');
+	// `renderMarkdown` only treats a LONE `##`–`######` block as a heading
+	// (renderHeadingBlock bails when the block spans lines), so a heading glued
+	// to its next or previous line ships as a literal-`###` paragraph. The
+	// vault has a few such spots ("### War pigs" runs straight into its text);
+	// guarantee every heading its own block.
+	text = text.replace(/(^#{1,6}[ \t][^\n]*)\n(?![ \t]*\r?\n|#|$)/gm, '$1\n\n');
+	text = text.replace(/([^\n])\n(#{1,6}[ \t])/g, '$1\n\n$2');
 	text = text.replace(SUIT_GLYPHS, '');
-	text = text.replace(/_([^_\n]+)_/g, '*$1*'); // _italic_ -> *italic*
+	// _italic_ -> *italic*. The lookarounds keep the match from starting or
+	// ending inside an `____` fill-in run (the guild charter's blank), where a
+	// run's last underscore would otherwise pair with the NEXT run's first and
+	// italicize the prose between two blanks.
+	text = text.replace(/(?<!_)_([^_\n]+)_(?!_)/g, '*$1*');
 	// A running page header was embedded at the end of one exported table row.
 	text = text.replace(/[ \t]*APPENDIX A\s*\|\s*SORCERY\s*\|[ \t]*$/gim, ' |');
 
@@ -342,9 +397,39 @@ export function normalizeMarkdown(lines, opts = {}) {
 		})
 		.join('\n\n');
 
+	// The `_italic_` → `*italic*` pass above is line-bounded, so a span that
+	// opens on one soft-wrapped line and closes on the next survives it — and
+	// the reflow that just joined those lines would ship the pair as literal
+	// underscores, which the app renderer prints verbatim (it converts `*`
+	// emphasis only). Re-run the conversion now that paragraphs are one line,
+	// with the same fill-in-run lookarounds as the first pass.
+	text = text.replace(/(?<!_)_([^_\n]+)_(?!_)/g, '*$1*');
+
 	// Collapse 3+ blank lines and trim.
 	text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+	// Licensing invariant, enforced at the choke point every normalizing
+	// importer shares — see assertNoImageEmbeds. The strip regexes above
+	// intentionally match only plain destinations; an exotic one (e.g. a path
+	// containing parentheses) must fail the build here, not ship.
+	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	return text;
+}
+
+/**
+ * Licensing guard: the book's interior art is NOT covered by the text's
+ * open-content permission, so no image embed may reach ANY generated pack
+ * output. Normalizing importers inherit this via normalizeMarkdown; an
+ * importer that emits vault text through another path (e.g. the procedure
+ * catalog's table cells) must call it on its serialized output before
+ * writing.
+ */
+export function assertNoImageEmbeds(text, context) {
+	if (!text.includes('![')) return;
+	const leaked = text.slice(text.indexOf('![')).split('\n', 1)[0].slice(0, 120);
+	throw new Error(
+		`[${context}] image embed survived into generated output (interior art is not licensed for the pack): ${JSON.stringify(leaked)}`
+	);
 }
 
 /**
@@ -499,9 +584,16 @@ function slugify(text) {
  *   discard-top bracket convention. When false, brackets are left as prose —
  *   City Events' `[Curiosity]` is a category label, not a selector.
  */
-function parseCellText(raw, bracketsAreTokens) {
+export function parseCellText(raw, bracketsAreTokens) {
+	// Same licensing boundary as normalizeMarkdown, and the same ordering trap:
+	// the wikilink flattening below would turn `![[path]]` into `!path`, erasing
+	// the `![` marker that assertNoImageEmbeds (and md-procedures' serialized
+	// check) depend on. Strip recognized embed forms first, then fail loudly on
+	// any unrecognized one while its marker still exists.
+	let text = raw.replace(/!\[\[[^\]]*\]\]/g, '').replace(/!\[[^\]]*\]\([^()]+\)/g, '');
+	assertNoImageEmbeds(text, 'parseCellText');
 	const references = [];
-	let text = raw.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
+	text = text.replace(/\[\[([^\]]+)\]\]/g, (_, inner) => {
 		const [target, label] = inner.split('|');
 		const shown = (label ?? target).trim();
 		const hash = target.indexOf('#');
@@ -519,7 +611,7 @@ function parseCellText(raw, bracketsAreTokens) {
 		// Dropping it without a space welds the clauses together.
 		.replace(/<br\s*\/?>/gi, ' ')
 		.replace(/<[^>]+>/g, '')
-		.replace(/\\([[\]|])/g, '$1')
+		.replace(/\\([[\]|*])/g, '$1')
 		.replace(/_([^_\n]+)_/g, '*$1*')
 		.replace(/\s+/g, ' ')
 		.trim();
@@ -591,7 +683,10 @@ export function extractTable(file, heading, after, options = {}) {
 	let lines;
 	if (options.anchor) {
 		const raw = readFileSync(join(MD_DIR, file), 'utf8').split('\n');
-		const start = raw.findIndex((l) => l.trimStart().startsWith(options.anchor));
+		// Emphasis-insensitive, like headingKey: the vault's bold-recovery passes
+		// add/move ** on bullet labels, and an anchor must survive that.
+		const key = options.anchor.replace(/\*\*/g, '');
+		const start = raw.findIndex((l) => l.trimStart().replace(/\*\*/g, '').startsWith(key));
 		if (start === -1) {
 			throw new Error(`anchor not found in ${file}: ${JSON.stringify(options.anchor)}`);
 		}

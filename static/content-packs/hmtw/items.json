@@ -27,7 +27,7 @@
 			"Goes out if dropped (can be relit)",
 			"2 flickers of fuel"
 		],
-		"description": "Candles provide bright light for the person carrying them, but don’t provide any light for those nearby. As such, they are used when the guild—as a whole— prefers stealth. Candles can be snuffed out and relit (whereas torches cannot be). Candles go out when dropped. Candles can flicker 2 times before they’re used up."
+		"description": "Candles provide **bright light** for the person carrying them, but don’t provide any light for those nearby. As such, they are used when the guild—as a whole—prefers stealth. Candles can be snuffed out and relit (whereas torches cannot be). Candles go out when dropped. Candles can **flicker 2 times** before they’re used up."
 	},
 	{
 		"id": "chalk",
@@ -43,7 +43,7 @@
 		"tier": "impoverished",
 		"category": "clothing",
 		"slots": 1,
-		"description": "Rags preserve your basic dignity, but make you look like the worst sort of peasant.\n\n-"
+		"description": "**Rags** preserve your basic dignity, but make you look like the worst sort of peasant.\n\n-"
 	},
 	{
 		"id": "firewood",
@@ -91,7 +91,7 @@
 		"properties": [
 			"Camp: draw a card — Cups or Wands counts as 2 charges toward curing an affliction"
 		],
-		"description": "Leeches draw out bad blood and let good yellow phlegm and bile reign in your poisoned body. You can apply leeches to another adventurer with the Use an Item Camp Action. If you do so, draw a card. If you draw a Swords or Pentacles card, nothing happens. If you draw a Cups or Wands card, the leeched adventurer counts as having burned 2 charges to cure an affliction."
+		"description": "Leeches draw out bad blood and let good yellow phlegm and bile reign in your poisoned body. You can apply leeches to another adventurer with the Use an Item Camp Action. If you do so, draw a card. If you draw a Swords or Pentacles card, nothing happens. If you draw a Cups or Wands card, the leeched adventurer counts as having burned 2 **charges to cure an affliction**."
 	},
 	{
 		"id": "pipe-and-pipeweed",
@@ -102,7 +102,7 @@
 		"properties": [
 			"Smoke it all to clear Stressed"
 		],
-		"description": "Pipe and pipeweed are a great way to relax, clear your mind, and make the camp smell nice. Smoking all of your pipeweed clears the Stressed condition."
+		"description": "Pipe and pipeweed are a great way to relax, clear your mind, and make the camp smell nice. Smoking all of your pipeweed **clears the Stressed condition**."
 	},
 	{
 		"id": "pole-10ft",
@@ -122,7 +122,7 @@
 		"properties": [
 			"Expend at Death's Door: test Wands (favor with a medical motif) to save them"
 		],
-		"description": "Poultices are bandages infused with healthful herbs. They have a few different uses:\n\n- You can expend a poultice to try and save a character at Death’s Door. The injured character test Wands; this test has favor if the person applying it has a medical motif. If successful, the Death’s Door condition is cured and the character returns to consciousness. If it is a failure, the character dies. See Death’s Door for the full rules.\n\n- Poultices are also necessary for the use of the Chirurgeon talent."
+		"description": "Poultices are bandages infused with healthful herbs. They have a few different uses:\n\n- You can expend a poultice to try and save a character at **Death’s Door**. The injured character **test Wands**; this test has favor if the person applying it has a medical motif. If successful, the Death’s Door condition is cured and the character returns to consciousness. If it is a failure, the character dies. See Death’s Door for the full rules.\n\n- Poultices are also necessary for the use of the Chirurgeon talent."
 	},
 	{
 		"id": "rations",
@@ -141,7 +141,7 @@
 		"properties": [
 			"Brandish: test Wands to displace one undead or spirit"
 		],
-		"description": "Religious paraphernalia is a catchall term for the icons, amulets, or rosaries used to ward away certain types of undead or spirits. If brandished, test Wands. If successful, Displace one affected creature. During a Challenge, brandishing a religious icon is a Wands action."
+		"description": "Religious paraphernalia is a catchall term for the icons, amulets, or rosaries used to ward away certain types of undead or spirits. If brandished, **test Wands**. If successful, **Displace** one affected creature. During a Challenge, brandishing a religious icon is a Wands action."
 	},
 	{
 		"id": "rope",
@@ -164,7 +164,7 @@
 			"Take-down: downing a foe lets the same Attack value strike another enemy in the zone",
 			"Can be wielded two-handed"
 		],
-		"description": "Axes include all types of chopping weapons, such as battle axes, bardiches, or mattocks. When an axe Attack takes down an enemy, you may use the same Attack value against another opponent in the same zone."
+		"description": "Axes include all types of chopping weapons, such as battle axes, bardiches, or mattocks. When an axe Attack **takes down an enemy**, you may use the same **Attack value** against another opponent in the same zone."
 	},
 	{
 		"id": "weapon-blade",
@@ -178,7 +178,7 @@
 			"Riposte deals 2 Wounds instead of 1",
 			"Can be wielded two-handed"
 		],
-		"description": "Blades include all types of swords, from short swords to longswords. When you successfully Riposte with a blade, you deal 2 Wounds instead of 1 Wound."
+		"description": "Blades include all types of swords, from short swords to longswords. When you successfully **Riposte** with a blade, you **deal 2 Wounds instead** of 1 **Wound**."
 	},
 	{
 		"id": "weapon-bow",
@@ -193,7 +193,7 @@
 			"Aim (Swords): bank a facedown card, reveal on the shot to add its value",
 			"Melee attackers gain favor against you"
 		],
-		"description": "Bows are ranged weapons that use arrows. When wielding a bow, you gain access to the special Aim Challenge Action.\n\n- Aim is a Swords action. Declare who you’re targeting and play your card facedown. When you next Attack with your bow, you may reveal the card and add its value to your total Attack.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
+		"description": "Bows are ranged weapons that use arrows. When wielding a bow, you gain access to the special **Aim** Challenge Action.\n\n- Aim is a Swords action. Declare who you’re targeting and play your card facedown. When you next **Attack with your bow**, you may reveal the card and **add its value to your total Attack**.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
 	},
 	{
 		"id": "weapon-crossbow",
@@ -209,7 +209,7 @@
 			"Reload/crank as a miscellaneous action",
 			"Melee attackers gain favor against you"
 		],
-		"description": "Crossbows are mechanized ranged weapons with a locking mechanism to keep the bowstring taut. All Attacks with a crossbow deal Piercing damage. However, your crossbow must be reloaded and cranked as a miscellaneous action after firing.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
+		"description": "Crossbows are mechanized ranged weapons with a locking mechanism to keep the bowstring taut. **All Attacks with a crossbow deal Piercing damage**. However, your crossbow must be reloaded and cranked as a miscellaneous action after firing.\n\nIf you are attacked with a melee weapon while wielding a missile weapon, the attacker has favor against you."
 	},
 	{
 		"id": "weapon-dagger",
@@ -223,7 +223,7 @@
 			"Piercing vs unarmed, Rooted, or Tripped targets",
 			"Throwable without engaging"
 		],
-		"description": "Daggers are short, bladed weapons that include stilettos, gladiuses, and dirks. Daggers deal Piercing damage against targets who are unarmed, Rooted, or Tripped. Daggers may be thrown to Attack targets in your zone without engaging them."
+		"description": "Daggers are short, bladed weapons that include stilettos, gladiuses, and dirks. Daggers deal **Piercing damage** against targets who are **unarmed, Rooted, or Tripped**. Daggers may be thrown to Attack targets in your zone without engaging them."
 	},
 	{
 		"id": "weapon-flail",
@@ -238,7 +238,7 @@
 			"Always wins Initiative ties",
 			"Can be wielded two-handed"
 		],
-		"description": "Flails include any flexible weapon, such as morning stars or ball-and-chain. Flail Attacks cannot be absorbed by shields and always win ties with Initiative."
+		"description": "Flails include any flexible weapon, such as morning stars or ball-and-chain. Flail Attacks cannot be absorbed by shields and **always win ties with Initiative**."
 	},
 	{
 		"id": "weapon-hammer",
@@ -252,7 +252,7 @@
 			"Attack ≥ 2× the target's Initiative deals 2 Wounds",
 			"Can be wielded two-handed"
 		],
-		"description": "Hammers and maces include any type of smashing weapon. When your Attack value is at least *twice* that of your opponent’s Initiative, your hammer deals 2 Wounds instead of 1 Wound."
+		"description": "Hammers and maces include any type of smashing weapon. When your Attack value is at **least** *twice* that of **your opponent’s Initiative**, your hammer **deals** 2 Wounds instead of 1 Wound."
 	},
 	{
 		"id": "weapon-polearm",
@@ -266,7 +266,7 @@
 			"Ripostes are interrupts",
 			"Two-handed"
 		],
-		"description": "Polearms are long-hafted weapons that include spears, halberds, and quarterstaffs. Ripostes are interrupts when wielding a polearm. (2 slots)"
+		"description": "Polearms are long-hafted weapons that include spears, halberds, and quarterstaffs. **Ripostes are interrupts** when wielding a polearm. (2 slots)"
 	},
 	{
 		"id": "arrows",
@@ -278,7 +278,7 @@
 			"per": 12,
 			"unit": "arrows"
 		},
-		"description": "You must keep track of your arrows and bolts. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
+		"description": "You must keep track of your **arrows** and **bolts**. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
 	},
 	{
 		"id": "bolts",
@@ -290,7 +290,7 @@
 			"per": 12,
 			"unit": "bolts"
 		},
-		"description": "You must keep track of your arrows and bolts. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
+		"description": "You must keep track of your **arrows** and **bolts**. They come in quivers of 12 per slot. Any arrow that hits a target is Destroyed (your opponent breaks off the shaft in combat, the bolt head is blunted on bone, etc.). Any arrow that misses may be recovered after the Challenge. Use the Fletch Arrows Camp Action to replace Destroyed arrows/bolts."
 	},
 	{
 		"id": "armor-light",
@@ -304,7 +304,7 @@
 			"Worn: takes 1 belt slot",
 			"Absorbs 1 Notch"
 		],
-		"description": "Light armor is designed for movement and comfort; it can typically be worn under normal clothes—or may have the appearance of fine garb. Common forms of light armor include leather jerkins, orcish furs, or bone armor. Light armor can absorb 1 Notch.\n\n- Light armor takes up 1 belt slot."
+		"description": "**Light armor** is designed for movement and comfort; it can typically be worn under normal clothes—or may have the appearance of fine garb. Common forms of light armor include leather jerkins, orcish furs, or bone armor. Light armor can **absorb 1 Notch**.\n\n- Light armor takes up 1 belt slot."
 	},
 	{
 		"id": "caltrops",
@@ -336,7 +336,7 @@
 		"tier": "common",
 		"category": "clothing",
 		"slots": 1,
-		"description": "Common clothes won’t make you popular at parties, but they’re serviceable and good for dirty work.\n\n-"
+		"description": "**Common clothes** won’t make you popular at parties, but they’re serviceable and good for dirty work.\n\n-"
 	},
 	{
 		"id": "cooking-gear",
@@ -442,7 +442,7 @@
 		"properties": [
 			"Pick a lock: test Pentacles — failure snaps a pick"
 		],
-		"description": "Lockpicks can be used to pick a lock with a successful test of Pentacles. If you fail, one of your lockpicks breaks. (Stackable 6 per slot)"
+		"description": "Lockpicks can be used to pick a lock with a successful **test of Pentacles**. If you fail, one of your lockpicks breaks. (Stackable 6 per slot)"
 	},
 	{
 		"id": "mirror",
@@ -477,7 +477,7 @@
 		"tier": "common",
 		"category": "gear",
 		"slots": 1,
-		"description": "Quill and ink are necessary tools for the journey into literary fame."
+		"description": "**Quill** and ink are necessary tools for the journey into literary fame."
 	},
 	{
 		"id": "shield-light",
@@ -492,7 +492,7 @@
 			"May swap Initiative for a hand card (miscellaneous action)",
 			"Absorbs 1 Notch"
 		],
-		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. Shields take one of your hand slots.\n\n- Light shields are made from wood. They can absorb 1 Notch.\n\n- Heavy shields are made of metal or similarly sturdy materials and can absorb 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
+		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. **Shields take one of your hand slots**.\n\n- **Light shields** are made from wood. They can absorb 1 Notch.\n\n- **Heavy shields** are made of metal or similarly sturdy materials and can **absorb** 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
 	},
 	{
 		"id": "shovel",
@@ -512,7 +512,7 @@
 		"properties": [
 			"Camp: remove 1 Notch from an item (can't salvage the Destroyed)"
 		],
-		"description": "Tinker’s kits are metal-working tools and scrap metal. You can repair damaged equipment with a tinker’s kit by performing the Use an Item Camp Action to remove 1 Notch. Destroyed equipment cannot be salvaged in this manner. (2 slots)"
+		"description": "Tinker’s kits are metal-working tools and scrap metal. You can repair damaged equipment with a tinker’s kit by performing the Use an Item Camp Action to remove 1 **Notch**. Destroyed equipment cannot be salvaged in this manner. (2 slots)"
 	},
 	{
 		"id": "torch",
@@ -537,7 +537,7 @@
 		"properties": [
 			"Brandish: test Wands to displace wolves and lycanthropes"
 		],
-		"description": "Wolfsbane repels wolves and lycanthropes. If brandished, test Wands. If successful, Displace one affected creature. During a Challenge, brandishing wolfsbane is a Wands action."
+		"description": "**Wolfsbane** repels wolves and lycanthropes. If brandished, **test Wands**. If successful, **Displace** one affected creature. During a Challenge, brandishing **wolfsbane** is a **Wands action**.\n\n“To train with the sword, first master sweeping. When you have mastered sweeping, you must master the way of drawing water. Once you have learned how to draw water, you must split wood. Once you have split wood, you must learn the arts of finding the fine herbs in the forest, the arts of writing, the arts of paper making, and poetry writing. You must become familiar with the awl and the pen in equal measure. When you have mastered all these things you must master building a house. Once your house is built, you have no further need for a sword, since it is an ugly piece of metal and its adherents idiots.”\n\n*– Kill Six Billion Demons, Tom Parkinson-Morgan*"
 	},
 	{
 		"id": "alchemy-kit",
@@ -562,7 +562,7 @@
 			"Spells cannot target the wearer (spell effects still apply)",
 			"No swimming, sneaking, or spellcasting"
 		],
-		"description": "Iron armor consists of a coat of iron mail worn over a padded gambeson. Iron armor can absorb 2 Notches.\n\n- Iron armor is the bane of sorcerers—spells cannot target anyone wearing iron armor; however, you can still be hurt by the effects of spells (e.g., burned by a wall of fire).\n\n- You cannot cast spells if wearing iron armor.\n\n- Iron armor takes up 2 belt slots while worn.\n\n- Due to iron’s weight, it is impossible to swim or sneak while wearing iron armor."
+		"description": "**Iron armor** consists of a coat of iron mail worn over a padded gambeson. Iron armor can **absorb 2 Notches**.\n\n- Iron armor is the bane of sorcerers—spells **cannot target anyone wearing iron armor**; however, you can still be hurt by the effects of spells (e.g., burned by a wall of fire).\n\n- You cannot cast spells if wearing iron armor.\n\n- Iron armor takes up 2 belt slots while worn.\n\n- Due to iron’s weight, it is impossible to swim or sneak while wearing iron armor."
 	},
 	{
 		"id": "armor-steel",
@@ -577,7 +577,7 @@
 			"Absorbs 3 Notches",
 			"No swimming, sneaking, or spellcasting"
 		],
-		"description": "Steel armor is a full set of steel plate. Steel does not provide the same protection against magic as iron, but provides an ideal defense against the blows of sword or mace. Steel armor can absorb 3 Notches.\n\n- Steel armor takes up 3 belt slots while worn.\n\n- Due to steel’s weight, it is impossible to swim or sneak while wearing steel armor.\n\n- Even though steel armor does not cancel targeted spells, you cannot cast while wearing it due to the latent iron content in the metal."
+		"description": "**Steel armor** is a full set of steel plate. Steel does not provide the same protection against magic as iron, but provides an ideal defense against the blows of sword or mace. Steel armor can **absorb 3 Notches**.\n\n- Steel armor takes up 3 belt slots while worn.\n\n- Due to steel’s weight, it is impossible to swim or sneak while wearing steel armor.\n\n- Even though steel armor does not cancel targeted spells, **you cannot** cast **while wearing** it due to the latent iron content in the metal."
 	},
 	{
 		"id": "bezoar",
@@ -588,7 +588,7 @@
 		"properties": [
 			"Swallow: counts as 8 burned charges toward curing an affliction"
 		],
-		"description": "Bezoars are stones composed of hair, vegetable material, and bile found in the stomachs of goats. If swallowed, a bezoar acts as a powerful anti-poison. It counts as 8 burned charges for the purposes of curing an affliction while Resting and Recovering."
+		"description": "Bezoars are stones composed of hair, vegetable material, and bile found in the stomachs of goats. If swallowed, a bezoar acts as a powerful anti-poison. It counts as 8 **burned charges** for the purposes of curing an affliction while Resting and Recovering."
 	},
 	{
 		"id": "blank-book",
@@ -614,7 +614,7 @@
 		"tier": "luxurious",
 		"category": "clothing",
 		"slots": 1,
-		"description": "Finery sets you apart from the general rabble. Be careful, though; adventuring has a tendency to make you dirty and bloody."
+		"description": "**Finery** sets you apart from the general rabble. Be careful, though; adventuring has a tendency to make you dirty and bloody."
 	},
 	{
 		"id": "falconry-gear",
@@ -646,7 +646,7 @@
 			"Belt-tied: shatters (and oils you) if you take a Wound",
 			"Burns oil: 4 flickers per flask"
 		],
-		"description": "Lanterns provide bright light to the person holding them and dim light for everybody else in the guild. Lanterns are lit by oil, which must be carried separately. Lanterns shatter when they are dropped. You can tie a lantern to your belt, but if you take a Wound the lantern shatters and you’re covered in oil. A lantern can flicker 4 times before their oil is used up."
+		"description": "Lanterns provide **bright light** to the person holding them and **dim light** for everybody else in the guild. Lanterns are lit by oil, which must be carried separately. Lanterns shatter when they are dropped. You can tie a lantern to your belt, but if you take a Wound the lantern shatters and you’re covered in oil. A lantern can **flicker** 4 **times** before their oil is used up."
 	},
 	{
 		"id": "manacles",
@@ -682,7 +682,7 @@
 			"May swap Initiative for a hand card (miscellaneous action)",
 			"Absorbs 2 Notches"
 		],
-		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. Shields take one of your hand slots.\n\n- Light shields are made from wood. They can absorb 1 Notch.\n\n- Heavy shields are made of metal or similarly sturdy materials and can absorb 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
+		"description": "Shields come in a variety of styles and methods of construction, but are considered either light or heavy. **Shields take one of your hand slots**.\n\n- **Light shields** are made from wood. They can absorb 1 Notch.\n\n- **Heavy shields** are made of metal or similarly sturdy materials and can **absorb** 2 Notches.\n\nIn a Challenge, ties go to the attacker unless the defender carries a shield.\n\nIf you have a shield, you may replace your Initiative with any card from your hand as a miscellaneous action. Your old Initiative is discarded."
 	},
 	{
 		"id": "spyglass",
@@ -732,6 +732,6 @@
 			"Effective against lycanthropes, spirits, and certain undead",
 			"Soft: absorbs only 1 Notch"
 		],
-		"description": "Weaponry includes any basic arms and ammo listed in the Weapons section on the following page.\n\n- Silver weaponry is expensive, but silver is often useful against lycanthropes, spirits, and certain types of undead. Silver weaponry is soft and easily damaged, however. Silver weapons can only absorb 1 Notch before being Destroyed."
+		"description": "**Weaponry** includes any basic arms and ammo listed in the Weapons section on **the following page**.\n\n- Silver weaponry is expensive, but silver is often useful against lycanthropes, spirits, and certain types of undead. Silver weaponry is soft and easily damaged, however. Silver weapons can only absorb 1 Notch before being Destroyed."
 	}
 ]

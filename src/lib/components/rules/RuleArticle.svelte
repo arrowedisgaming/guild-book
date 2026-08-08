@@ -7,6 +7,10 @@
 </script>
 
 <article id={rule.id} class="rule" tabindex="-1">
+	{#each rule.aliases ?? [] as alias (alias)}
+		<!-- Retired-id anchor: the old permanent URL must keep landing here. -->
+		<span id={alias} aria-hidden="true"></span>
+	{/each}
 	<h3>{rule.title}</h3>
 	<div class="body">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- content is authored + escaped by renderMarkdown -->

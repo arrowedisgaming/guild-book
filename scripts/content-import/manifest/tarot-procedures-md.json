@@ -3,7 +3,7 @@
 	"referenceAliases": {
 		"rules": {
 			"social-encounters-disposition": "crawl-social-encounters-disposition",
-			"7-deeds-and-fame": "guild-deeds-and-fame"
+			"7-noteworthy-deeds-and-fame": "guild-deeds-and-fame"
 		}
 	},
 	"entries": [
@@ -1745,7 +1745,7 @@
 			"scope": "deferred-preparation",
 			"source": {
 				"file": "15 - Appendix E - Underworld Creation.md",
-				"heading": "The Augury"
+				"heading": "XVII \u2013 The Star: The Augury"
 			},
 			"rationale": "GM preparation tooling. Distinct from the Augury spell (test-augury), which is cast during play; this is the Underworld-generation procedure of the same name.",
 			"ruleEntryIds": [],

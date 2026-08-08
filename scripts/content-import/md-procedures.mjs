@@ -26,7 +26,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MD_DIR, extractSection, extractTable } from './md-lib.mjs';
+import { MD_DIR, assertNoImageEmbeds, extractSection, extractTable } from './md-lib.mjs';
 import { PACK_DIR, ROOT } from './pack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,7 +40,10 @@ const SCHEMA_VERSION = 2;
 function assertSourceResolves(source, label) {
 	if (source.anchor) {
 		const raw = readFileSync(join(MD_DIR, source.file), 'utf8');
-		if (!raw.split('\n').some((l) => l.trimStart().startsWith(source.anchor))) {
+		// Emphasis-insensitive, matching md-lib's extractTable anchor lookup:
+		// vault bold-recovery passes move ** around bullet labels.
+		const key = source.anchor.replace(/\*\*/g, '');
+		if (!raw.split('\n').some((l) => l.trimStart().replace(/\*\*/g, '').startsWith(key))) {
 			throw new Error(`[${label}] anchor not found in ${source.file}: ${JSON.stringify(source.anchor)}`);
 		}
 		return;
@@ -270,6 +273,10 @@ function main() {
 	const tables = buildTables(manifest);
 	const content = compileProcedureContent(manifest, tables);
 	const audit = renderAudit(manifest);
+	// This catalog's vault text (table cells, outcome prose) reaches the pack
+	// through extractTable/extractSection, NOT normalizeMarkdown — so the
+	// licensing guard runs on the serialized output, covering every field.
+	assertNoImageEmbeds(serialize(content), 'tarot-procedures.json');
 
 	if (args.includes('--check')) {
 		let drift = 0;

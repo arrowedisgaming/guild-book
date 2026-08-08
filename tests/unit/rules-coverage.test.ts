@@ -128,7 +128,10 @@ describe('rules reference coverage', () => {
 	 */
 	it('never welds two clauses together where the source had a line break', () => {
 		for (const rule of rules) {
-			expect(rule.body, `${rule.id} welded clause`).not.toMatch(/\S•/);
+			// `*` is exempt, mirroring the importer's bullet-space rule: a bold
+			// marker hugging its run ("**• 25 gold**") is markup, not a weld, and
+			// spacing it apart would break the bold.
+			expect(rule.body, `${rule.id} welded clause`).not.toMatch(/[^\s*]•/);
 		}
 		const carouse = byId.get('city-carouse');
 		expect(carouse?.body).toContain('face. • It is:');

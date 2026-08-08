@@ -19,7 +19,7 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { extractRuleBody, extractSection, stripCallouts, normalizeMarkdown, assertNoImageEmbeds, MD_DIR } from './md-lib.mjs';
+import { extractRuleBody, extractSection, stripCallouts, normalizeMarkdown, assertNoImageEmbeds, assertNoHtmlImages, MD_DIR } from './md-lib.mjs';
 import { PACK_DIR, setByFieldPath, readByFieldPath } from './pack.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -134,7 +134,10 @@ function extractTableColumns(file, heading, columns) {
  * @param {Pick<ManifestEntry, 'id' | 'field'>} entry
  * @returns {T} */
 export function guardInjectedValue(value, packFile, entry) {
-	assertNoImageEmbeds(JSON.stringify(value), `${packFile}#${entry.id}.${entry.field}`);
+	const serialized = JSON.stringify(value);
+	const context = `${packFile}#${entry.id}.${entry.field}`;
+	assertNoImageEmbeds(serialized, context);
+	assertNoHtmlImages(serialized, context);
 	return value;
 }
 

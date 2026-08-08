@@ -11,6 +11,7 @@ import { parseCellText } from '../../scripts/content-import/md-lib.mjs';
  * do not recognize, so only the guard stands between the embed and the pack.
  */
 const EMBED = '![](images/pageart/foo(bar).png)';
+const HTML_EMBED = '<img src="images/pageart/foo.png" alt="">';
 
 describe('md-inject licensing guard (tableColumns bypass)', () => {
 	const TABLE = [
@@ -27,6 +28,13 @@ describe('md-inject licensing guard (tableColumns bypass)', () => {
 		expect(() =>
 			guardInjectedValue(tableColumnCells(TABLE, [2]), 'motifs.json', { id: 'motifs', field: 'professions' })
 		).toThrow(/\[motifs\.json#motifs\.professions\].*foo\(bar\)\.png/);
+	});
+
+	it('guardInjectedValue fails the build on a raw HTML image in a cell', () => {
+		const table = ['| Card | Descriptor |', '| --- | --- |', `| I | Stoic ${HTML_EMBED} |`];
+		expect(() =>
+			guardInjectedValue(tableColumnCells(table, [1]), 'motifs.json', { id: 'motifs', field: 'descriptors' })
+		).toThrow(/\[motifs\.json#motifs\.descriptors\].*<img/);
 	});
 
 	it('passes clean cells through unchanged', () => {
@@ -69,6 +77,10 @@ describe('md-spells licensing guard (component bypass)', () => {
 
 	it('assembleSpells fails the build on a component embed', () => {
 		expect(() => assembleSpells([spell(`_Burn a moth. ${EMBED}_`)])).toThrow(/\[spells\.json\].*foo\(bar\)\.png/);
+	});
+
+	it('assembleSpells fails the build on an HTML image in a component', () => {
+		expect(() => assembleSpells([spell(`_Burn a moth. ${HTML_EMBED}_`)])).toThrow(/\[spells\.json\].*<img/);
 	});
 
 	it('assembles a clean spell, stripping component emphasis', () => {

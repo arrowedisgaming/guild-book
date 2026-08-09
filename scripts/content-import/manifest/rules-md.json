@@ -62,6 +62,24 @@
 		"walk": {
 			"file": "02 - Chapter 2 - The Adventurer.md",
 			"section": "adventurer",
+			"splitDeeper": [
+				{
+					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST/Prior to your first session",
+					"id": "adventurer-prior-to-your-first-session"
+				},
+				{
+					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST/At your first session",
+					"id": "adventurer-at-your-first-session"
+				},
+				{
+					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST/Prior to your second session",
+					"id": "adventurer-prior-to-your-second-session"
+				},
+				{
+					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST/At the end of your second session",
+					"id": "adventurer-at-the-end-of-your-second-session"
+				}
+			],
 			"anchorAliases": {
 				"The Call to Adventure/13. Animal companions and familiars": ["adventurer-war-pigs"]
 			},
@@ -69,7 +87,7 @@
 				{
 					"at": "The Call to Adventure/NEW ADVENTURER CHECKLIST",
 					"occurrence": 2,
-					"reason": "duplicate all-caps copy of the New adventurer checklist section"
+					"reason": "checklist frame text; its session sub-sections are rescued via splitDeeper"
 				}
 			]
 		}
@@ -352,7 +370,8 @@
 			"section": "camp-phase",
 			"idAliases": {
 				"The Flow of the Camp Phase/3. No rest for the wicked": "camp-no-rest-for-the-wicked",
-				"Overland Travel": "camp-overland-travel"
+				"Optional Rules: Overland Travel": "camp-overland-travel",
+				"Optional Rules: Overland Travel/Overland actions": "camp-phase-overland-actions"
 			},
 			"splitDeeper": [
 				{
@@ -380,10 +399,17 @@
 			"file": "09 - Chapter 9 - The City Phase.md",
 			"section": "city-phase",
 			"idAliases": {
-				"The Flow of the City Phase/3. City Events": "city-events",
-				"The Flow of the City Phase/Signs and Portents": "city-signs-and-portents"
+				"The Flow of the City Phase/3. City Events": "city-events"
 			},
 			"splitDeeper": [
+				{
+					"at": "The Flow of the City Phase/3. City Events/Example City Events",
+					"id": "city-phase-example-city-events"
+				},
+				{
+					"at": "The Flow of the City Phase/3. City Events/Signs and Portents",
+					"id": "city-signs-and-portents"
+				},
 				{
 					"at": "The Flow of the City Phase/6. City Actions/Beg and Busk",
 					"id": "city-beg-and-busk"

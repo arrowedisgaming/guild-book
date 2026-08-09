@@ -1,25 +1,25 @@
 [
 	{ "id": "human", "field": "description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Humans", "until": "Human kin" },
-	{ "id": "human", "field": "kins[human-noble-house].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Human kin", "until": "House Crowell" },
+	{ "id": "human", "field": "kins[human-noble-house].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Human kin", "until": "House Crowell", "to": "Human characters begin the game with the following talent:" },
 	{ "id": "human", "field": "areteTriggers", "list": true, "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Arête", "after": "Humans" },
 
 	{ "id": "fay", "field": "description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Fay", "until": "Fay kin" },
-	{ "id": "fay", "field": "kins[fay-high-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "High elves" },
-	{ "id": "fay", "field": "kins[fay-wood-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Wood elves" },
-	{ "id": "fay", "field": "kins[fay-dark-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Dark elves" },
-	{ "id": "fay", "field": "kins[fay-gnome].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Gnomes" },
+	{ "id": "fay", "field": "kins[fay-high-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "High elves", "to": "### High elf talent: Read the Past" },
+	{ "id": "fay", "field": "kins[fay-wood-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Wood elves", "to": "### Wood elf talent: Keen Senses" },
+	{ "id": "fay", "field": "kins[fay-dark-elf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Dark elves", "to": "### Dark elf talent: Foretell" },
+	{ "id": "fay", "field": "kins[fay-gnome].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Gnomes", "to": "### Gnome talent: Weird, Wise, Ancient" },
 	{ "id": "fay", "field": "areteTriggers", "list": true, "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Arête", "after": "Fay" },
 
 	{ "id": "underfolk", "field": "description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Underfolk", "until": "Underfolk kin", "to": "### A myth of the underfolk" },
-	{ "id": "underfolk", "field": "kins[underfolk-dwarf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Dwarves" },
-	{ "id": "underfolk", "field": "kins[underfolk-halfling].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Halflings" },
-	{ "id": "underfolk", "field": "kins[underfolk-troll].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Trolls" },
-	{ "id": "underfolk", "field": "areteTriggers", "list": true, "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Arête", "after": "Underfolk" },
+	{ "id": "underfolk", "field": "kins[underfolk-dwarf].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Dwarves", "to": "### Dwarf talent: Labor Unending" },
+	{ "id": "underfolk", "field": "kins[underfolk-halfling].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Halflings", "to": "### Halfling talent: Hale and Hearty" },
+	{ "id": "underfolk", "field": "kins[underfolk-troll].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Trolls", "to": "### Troll talent: Giant’s Strength" },
+	{ "id": "underfolk", "field": "areteTriggers", "list": true, "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Arête", "until": "Dwarf arête talent: Iron Beards", "after": "Underfolk" },
 
 	{ "id": "orc", "field": "description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Orcs", "until": "Orcish kin", "to": "“I am brother to dragons" },
-	{ "id": "orc", "field": "kins[orc-earthblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Earthblooded" },
-	{ "id": "orc", "field": "kins[orc-seablooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Seablooded" },
-	{ "id": "orc", "field": "kins[orc-stormblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Stormblooded" },
-	{ "id": "orc", "field": "kins[orc-fireblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Fireblooded" },
+	{ "id": "orc", "field": "kins[orc-earthblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Earthblooded", "to": "### Earthblooded orc talent: Quicksilver Blood" },
+	{ "id": "orc", "field": "kins[orc-seablooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Seablooded", "to": "### Seablooded orc talent: Poison Blood" },
+	{ "id": "orc", "field": "kins[orc-stormblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Stormblooded", "to": "### Stormblooded orc talent: Blur" },
+	{ "id": "orc", "field": "kins[orc-fireblooded].description", "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Fireblooded", "to": "### Fireblooded orc talent: Berserkergang" },
 	{ "id": "orc", "field": "areteTriggers", "list": true, "file": "04 - Chapter 4 - Kith and Kin.md", "heading": "Arête", "after": "Orcs" }
 ]

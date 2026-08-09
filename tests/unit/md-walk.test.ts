@@ -129,6 +129,40 @@ describe('walkChapter ownership', () => {
 	});
 });
 
+describe('splitDeeper rescue inside a skipped subtree', () => {
+	const md = [
+		'# Chapter',
+		'', '## Keep me', '', 'kept prose', '',
+		'## Skip me', '', 'skipped intro prose', '',
+		'### Rescued child', '', 'rescued prose', '',
+		'### Doomed child', '', 'doomed prose', ''
+	].join('\n');
+	const config = {
+		skip: [{ at: 'Chapter/Skip me', reason: 'test skip' }],
+		splitDeeper: [{ at: 'Chapter/Skip me/Rescued child', id: 'rescued-child' }]
+	};
+
+	it('emits an explicitly named splitDeeper candidate from inside a skip', () => {
+		const { candidates } = walkChapter(md, config);
+		const rescued = candidates.find((c) => c.locator === 'Chapter/Skip me/Rescued child');
+		expect(rescued).toBeDefined();
+		expect(rescued!.bodyLines.join('\n')).toContain('rescued prose');
+	});
+
+	it('still vanishes the rest of the skipped subtree', () => {
+		const { candidates } = walkChapter(md, config);
+		const all = candidates.flatMap((c) => c.bodyLines).join('\n');
+		expect(all).not.toContain('skipped intro prose');
+		expect(all).not.toContain('doomed prose');
+	});
+
+	it('ledgers the skip root as skipped and the rescued child as a candidate', () => {
+		const { ledger } = walkChapter(md, config);
+		expect(ledger.find((l) => l.locator === 'Chapter/Skip me')?.disposition).toBe('skipped');
+		expect(ledger.find((l) => l.locator === 'Chapter/Skip me/Rescued child')?.disposition).toBe('candidate');
+	});
+});
+
 import { cleanTitle, defaultSlug, resolveEntries } from '../../scripts/content-import/md-walk.mjs';
 
 describe('id and title normalization', () => {

@@ -2,7 +2,7 @@
 	{
 		"file": "01 - Chapter 1 - The Basics.md",
 		"section": "basics",
-		"sourceSha256": "9b7c0e4dd22ab958f1b86937c7317f88987699552112ac8dd215dd67062f99a1",
+		"sourceSha256": "509c7d8ddcbfae721f1ed120f33c2ad919a0a8d610ace61204d6adefb1183446",
 		"headings": [
 			{
 				"locator": "Chapter 1: The Basics",
@@ -31,6 +31,20 @@
 				"level": 2,
 				"disposition": "emitted",
 				"id": "basics-the-challenge-phase"
+			},
+			{
+				"locator": "The Four Phases/The Camp Phase",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-the-camp-phase"
+			},
+			{
+				"locator": "The Four Phases/The City Phase",
+				"occurrence": 1,
+				"level": 2,
+				"disposition": "emitted",
+				"id": "basics-the-city-phase"
 			},
 			{
 				"locator": "The Flow of the Play",
@@ -128,7 +142,7 @@
 	{
 		"file": "02 - Chapter 2 - The Adventurer.md",
 		"section": "adventurer",
-		"sourceSha256": "dd298a84252fc56dc651577af716bbf05e220b6c094086db4831ca7162b02f7d",
+		"sourceSha256": "851c7947c7d53dbbb25defe6c38c9dd0deb11dc0164a5559795da9f369b54112",
 		"headings": [
 			{
 				"locator": "Chapter 2: The Adventurer",
@@ -275,33 +289,33 @@
 				"occurrence": 2,
 				"level": 2,
 				"disposition": "skipped",
-				"reason": "duplicate all-caps copy of the New adventurer checklist section"
+				"reason": "checklist frame text; its session sub-sections are rescued via splitDeeper"
 			},
 			{
-				"locator": "The Call to Adventure/Prior to your first session",
+				"locator": "The Call to Adventure/NEW ADVENTURER CHECKLIST/Prior to your first session",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "adventurer-prior-to-your-first-session"
 			},
 			{
-				"locator": "The Call to Adventure/At your first session",
+				"locator": "The Call to Adventure/NEW ADVENTURER CHECKLIST/At your first session",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "adventurer-at-your-first-session"
 			},
 			{
-				"locator": "The Call to Adventure/Prior to your second session",
+				"locator": "The Call to Adventure/NEW ADVENTURER CHECKLIST/Prior to your second session",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "adventurer-prior-to-your-second-session"
 			},
 			{
-				"locator": "The Call to Adventure/At the end of your second session",
+				"locator": "The Call to Adventure/NEW ADVENTURER CHECKLIST/At the end of your second session",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "adventurer-at-the-end-of-your-second-session"
 			}
@@ -310,7 +324,7 @@
 	{
 		"file": "03 - Chapter 3 - The Guild.md",
 		"section": "guild",
-		"sourceSha256": "d75abd8b28ac95ba0d0cefe7f393bbe99b3bba89f33469cb02efadea3d2a8e55",
+		"sourceSha256": "80a8d466bfbb815263cd739f033dbed14ce7531d696e6c5fd24771d734b87ec5",
 		"headings": [
 			{
 				"locator": "Chapter 3: The Guild",
@@ -380,7 +394,7 @@
 	{
 		"file": "04 - Chapter 4 - Kith and Kin.md",
 		"section": "kith-and-kin",
-		"sourceSha256": "8bf4cc0c396aa2344bfab29f8a084ebc3394aea64012da3fd4d6c4b1eacb0e20",
+		"sourceSha256": "ae758d1cfca0268a8db96dc1dcf8289837eb74a3f2aa3736f42ac8149ee8993f",
 		"headings": [
 			{
 				"locator": "Chapter 4: Kith and Kin",
@@ -418,9 +432,9 @@
 				"id": "kith-and-kin-fay-kin"
 			},
 			{
-				"locator": "Fay/Fay kin/Wood elf arête talent: Area Sense",
+				"locator": "Fay/Fay kin/Arête/Wood elf arête talent: Area Sense",
 				"occurrence": 1,
-				"level": 3,
+				"level": 4,
 				"disposition": "emitted",
 				"id": "kith-area-sense"
 			},
@@ -457,7 +471,7 @@
 	{
 		"file": "05 - Chapter 5 - The Four Paths.md",
 		"section": "four-paths",
-		"sourceSha256": "c8c04f81d9384cc092a22397b81e503ade6d832ec6b578c267092933094f532d",
+		"sourceSha256": "17e36284492d9b2e62caf882ee1bfe48087ee88baef9824b6cdf7ea21ce41000",
 		"headings": [
 			{
 				"locator": "Chapter 5: The Four Paths",
@@ -737,7 +751,7 @@
 	{
 		"file": "07 - Chapter 7 - The Challenge Phase.md",
 		"section": "challenge-phase",
-		"sourceSha256": "9501ba4d438aa8a6e71da8e398160f40a0d7071deaa853f89c635acb637c2f6d",
+		"sourceSha256": "5232f0b4f39d3f3072fe2419456af0f5b6e76cd4f088f793f05a61c19c43b77d",
 		"headings": [
 			{
 				"locator": "Chapter 7: The Challenge Phase",
@@ -754,78 +768,78 @@
 				"id": "challenge-sequence"
 			},
 			{
-				"locator": "0. Set the scene",
-				"occurrence": 1,
-				"level": 1,
+				"locator": "The Flow of the Challenge Phase/0. Set the scene",
+				"occurrence": 2,
+				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-set-the-scene"
 			},
 			{
-				"locator": "0. Set the scene/Special rules",
+				"locator": "The Flow of the Challenge Phase/Special rules",
 				"occurrence": 1,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-phase-special-rules"
 			},
 			{
-				"locator": "0. Set the scene/1. Draw Challenge cards",
-				"occurrence": 1,
+				"locator": "The Flow of the Challenge Phase/1. Draw Challenge cards",
+				"occurrence": 2,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-draw-cards"
 			},
 			{
-				"locator": "0. Set the scene/2. Play Initiative",
-				"occurrence": 1,
+				"locator": "The Flow of the Challenge Phase/2. Play Initiative",
+				"occurrence": 2,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-play-initiative"
 			},
 			{
-				"locator": "0. Set the scene/3. Take turns",
-				"occurrence": 1,
+				"locator": "The Flow of the Challenge Phase/3. Take turns",
+				"occurrence": 2,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-take-turns"
 			},
 			{
-				"locator": "0. Set the scene/3. Take turns/Action value",
+				"locator": "The Flow of the Challenge Phase/3. Take turns/Action value",
 				"occurrence": 1,
 				"level": 3,
 				"disposition": "emitted",
 				"id": "challenge-action-value"
 			},
 			{
-				"locator": "0. Set the scene/3. Take turns/Facedown cards",
+				"locator": "The Flow of the Challenge Phase/3. Take turns/Facedown cards",
 				"occurrence": 1,
 				"level": 3,
 				"disposition": "emitted",
 				"id": "challenge-facedown-cards"
 			},
 			{
-				"locator": "0. Set the scene/3. Take turns/Interrupt actions",
+				"locator": "The Flow of the Challenge Phase/3. Take turns/Interrupt actions",
 				"occurrence": 1,
 				"level": 3,
 				"disposition": "emitted",
 				"id": "challenge-interrupt-actions"
 			},
 			{
-				"locator": "0. Set the scene/3. Take turns/The Fool",
+				"locator": "The Flow of the Challenge Phase/3. Take turns/The Fool",
 				"occurrence": 1,
 				"level": 3,
 				"disposition": "emitted",
 				"id": "challenge-the-fool"
 			},
 			{
-				"locator": "0. Set the scene/4. Minor actions",
-				"occurrence": 1,
+				"locator": "The Flow of the Challenge Phase/4. Minor actions",
+				"occurrence": 2,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-minor-actions"
 			},
 			{
-				"locator": "0. Set the scene/5. End the round",
-				"occurrence": 1,
+				"locator": "The Flow of the Challenge Phase/5. End the round",
+				"occurrence": 2,
 				"level": 2,
 				"disposition": "emitted",
 				"id": "challenge-end-the-round"
@@ -1003,7 +1017,7 @@
 	{
 		"file": "08 - Chapter 8 - The Camp Phase.md",
 		"section": "camp-phase",
-		"sourceSha256": "c0b34322c3a9741654cdbbabebebb3be04728c9caa30ae458d73d04d55e42d68",
+		"sourceSha256": "a28363928f6237e5adc38cfe75db54472f7c68c6a00c7ebfb218bc6a5c5440d7",
 		"headings": [
 			{
 				"locator": "Chapter 8: The Camp Phase",
@@ -1062,14 +1076,14 @@
 				"id": "camp-phase-end-of-camp-phase"
 			},
 			{
-				"locator": "Overland Travel",
+				"locator": "Optional Rules: Overland Travel",
 				"occurrence": 1,
 				"level": 1,
 				"disposition": "emitted",
 				"id": "camp-overland-travel"
 			},
 			{
-				"locator": "Overland Travel/Overland actions",
+				"locator": "Optional Rules: Overland Travel/Overland actions",
 				"occurrence": 1,
 				"level": 2,
 				"disposition": "emitted",
@@ -1087,7 +1101,7 @@
 	{
 		"file": "09 - Chapter 9 - The City Phase.md",
 		"section": "city-phase",
-		"sourceSha256": "614df60bff7db6cb29644e5b9d89e633335f22bce6d979d027d5ba27a3fb8ba8",
+		"sourceSha256": "f047e6b0ca966f31537e2015b9c04e616efb198b2021a68797f06e37c362f4f3",
 		"headings": [
 			{
 				"locator": "Chapter 9: The City Phase",
@@ -1125,16 +1139,16 @@
 				"id": "city-events"
 			},
 			{
-				"locator": "The Flow of the City Phase/Example City Events",
+				"locator": "The Flow of the City Phase/3. City Events/Example City Events",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "city-phase-example-city-events"
 			},
 			{
-				"locator": "The Flow of the City Phase/Signs and Portents",
+				"locator": "The Flow of the City Phase/3. City Events/Signs and Portents",
 				"occurrence": 1,
-				"level": 2,
+				"level": 3,
 				"disposition": "emitted",
 				"id": "city-signs-and-portents"
 			},

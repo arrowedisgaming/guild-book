@@ -206,18 +206,19 @@
 			"section": "challenge-phase",
 			"idAliases": {
 				"The Flow of the Challenge Phase": "challenge-sequence",
-				"0. Set the scene/1. Draw Challenge cards": "challenge-draw-cards",
-				"0. Set the scene/2. Play Initiative": "challenge-play-initiative",
-				"0. Set the scene/3. Take turns": "challenge-take-turns",
-				"0. Set the scene/4. Minor actions": "challenge-minor-actions",
-				"0. Set the scene/5. End the round": "challenge-end-the-round",
+				"The Flow of the Challenge Phase/0. Set the scene": "challenge-set-the-scene",
+				"The Flow of the Challenge Phase/Special rules": "challenge-phase-special-rules",
+				"The Flow of the Challenge Phase/1. Draw Challenge cards": "challenge-draw-cards",
+				"The Flow of the Challenge Phase/2. Play Initiative": "challenge-play-initiative",
+				"The Flow of the Challenge Phase/3. Take turns": "challenge-take-turns",
+				"The Flow of the Challenge Phase/4. Minor actions": "challenge-minor-actions",
+				"The Flow of the Challenge Phase/5. End the round": "challenge-end-the-round",
 				"Challenge Actions/Miscellaneous actions (Any Suit)": "challenge-miscellaneous-actions",
 				"GMing the Challenge/1. Draw Challenge cards": "challenge-gm-hand-size",
 				"GMing the Challenge/3. Enemy actions": "challenge-enemy-actions",
 				"Wounds/Health and Defense: Tracking enemy damage": "challenge-phase-tracking-enemy-damage"
 			},
 			"ids": {
-				"0. Set the scene": "challenge-set-the-scene",
 				"GMing the Challenge/0. Set the scene": "challenge-gm-set-the-scene",
 				"GMing the Challenge/2. Play Initiative for each significant enemy": "challenge-gm-play-initiative",
 				"GMing the Challenge/4. Minor actions": "challenge-gm-minor-actions",
@@ -225,19 +226,19 @@
 			},
 			"splitDeeper": [
 				{
-					"at": "0. Set the scene/3. Take turns/Action value",
+					"at": "The Flow of the Challenge Phase/3. Take turns/Action value",
 					"id": "challenge-action-value"
 				},
 				{
-					"at": "0. Set the scene/3. Take turns/Facedown cards",
+					"at": "The Flow of the Challenge Phase/3. Take turns/Facedown cards",
 					"id": "challenge-facedown-cards"
 				},
 				{
-					"at": "0. Set the scene/3. Take turns/Interrupt actions",
+					"at": "The Flow of the Challenge Phase/3. Take turns/Interrupt actions",
 					"id": "challenge-interrupt-actions"
 				},
 				{
-					"at": "0. Set the scene/3. Take turns/The Fool",
+					"at": "The Flow of the Challenge Phase/3. Take turns/The Fool",
 					"id": "challenge-the-fool"
 				},
 				{

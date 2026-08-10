@@ -13,7 +13,7 @@ describe('ledger structure diff', () => {
 
 	it('reports a ledger heading missing from the vault as lost', () => {
 		const { lost, added } = diffChapter(ledgerChapter, '# Alpha\n\nprose\n');
-		expect(lost.map((h) => h.locator)).toEqual(['Alpha/Beta']);
+		expect(lost.map((h: { locator: string }) => h.locator)).toEqual(['Alpha/Beta']);
 		expect(added).toEqual([]);
 	});
 
@@ -28,7 +28,7 @@ describe('ledger structure diff', () => {
 			{ ...ledgerChapter, headings: [{ locator: 'Alpha', occurrence: 2, level: 1, disposition: 'emitted' }] },
 			'# Alpha\n'
 		);
-		expect(lost.map((h) => h.occurrence)).toEqual([2]);
+		expect(lost.map((h: { occurrence: number }) => h.occurrence)).toEqual([2]);
 	});
 });
 

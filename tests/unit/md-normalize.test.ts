@@ -45,3 +45,33 @@ describe('single-column vault layout tables', () => {
 		expect(renderMarkdown(body)).toContain('<table>');
 	});
 });
+
+describe('external Markdown links', () => {
+	it('flattens links to their label — the renderer has no link syntax', () => {
+		const body = normalizeMarkdown(
+			['Download it at [hismajestytheworm.games](https://www.hismajestytheworm.games/#h.abc).'],
+			{ preserve: 'full' }
+		);
+
+		expect(body).toBe('Download it at hismajestytheworm.games.');
+		expect(renderMarkdown(body)).not.toContain('](');
+	});
+
+	it('leaves parenthesized destinations intact so the artifact test catches them', () => {
+		const body = normalizeMarkdown(['See [label](https://example.com/a_(b)).'], {
+			preserve: 'full'
+		});
+
+		expect(body).toBe('See [label](https://example.com/a_(b)).');
+	});
+
+	it('keeps emphasis inside a flattened label', () => {
+		const body = normalizeMarkdown(
+			['See [*hismajestytheworm.games*](https://www.hismajestytheworm.games/) for the sheet.'],
+			{ preserve: 'full' }
+		);
+
+		expect(body).toBe('See *hismajestytheworm.games* for the sheet.');
+		expect(renderMarkdown(body)).toContain('<em>hismajestytheworm.games</em>');
+	});
+});

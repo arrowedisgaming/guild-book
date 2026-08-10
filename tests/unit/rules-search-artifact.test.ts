@@ -28,7 +28,7 @@ describe('rules-search.json artifact', () => {
 		const parsed = z.array(ruleSearchDocSchema).parse(docs);
 		for (const d of parsed) {
 			expect(d.body, d.id).not.toMatch(
-				/^#{1,6}\s|\*\*|\[\[|^\s*-\s|\||^\s*(?::?-{3,}:?)(?:\s+(?::?-{3,}:?))*\s*$/m
+				/^#{1,6}\s|\*\*|\[\[|\]\(|^\s*-\s|\||^\s*(?::?-{3,}:?)(?:\s+(?::?-{3,}:?))*\s*$/m
 			);
 		}
 	});

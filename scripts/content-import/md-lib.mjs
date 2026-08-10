@@ -378,6 +378,14 @@ export function normalizeMarkdown(lines, opts = {}) {
 	// depth over the complete normalized result.
 	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	text = opts.preserve === 'full' ? stripWikilinksGentle(text) : stripWikilinks(text);
+	// Standard Markdown links appear where the book names its own website. The
+	// renderer's dialect has no link syntax (a raw `[label](url)` would ship
+	// literally), so flatten to the label — the label carries the visible
+	// wording, and image embeds were already stripped and asserted above.
+	// Parenthesized destinations are deliberately NOT matched: leaving the raw
+	// markup intact trips the search-artifact test loudly instead of shipping
+	// a silently truncated label.
+	text = text.replace(/\[([^\]]+)\]\((?:https?:\/\/|mailto:)[^\s()]*\)/g, '$1');
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
 	text = text.replace(/<img\b[^>]*>/gi, '');

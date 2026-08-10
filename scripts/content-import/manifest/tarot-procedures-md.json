@@ -652,7 +652,7 @@
 				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Loud noises" },
 				{ "file": "06 - Chapter 6 - The Crawl Phase.md", "heading": "Moving carefully" },
 				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "3. No rest for the wicked", "after": "Use a Talent" },
-				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Overland Travel" },
+				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Optional Rules: Overland Travel" },
 				{ "file": "12 - Appendix B - Alchemy.md", "heading": "Questing beast" }
 			],
 			"ruleEntryIds": [
@@ -1137,10 +1137,10 @@
 			"scope": "supported-v1",
 			"source": {
 				"file": "08 - Chapter 8 - The Camp Phase.md",
-				"heading": "Overland Travel"
+				"heading": "Optional Rules: Overland Travel"
 			},
 			"invokedFrom": [
-				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Overland Travel" },
+				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "Optional Rules: Overland Travel" },
 				{ "file": "08 - Chapter 8 - The Camp Phase.md", "heading": "2. Meatgrinder" }
 			],
 			"ruleEntryIds": [

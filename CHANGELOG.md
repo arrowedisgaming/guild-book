@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Upkeep tiers render as readable bold-headed prose again (content pack
+  4.2.1), rather than an accidental one-column table from the restructured
+  source vault. The rules search artifact now drops Markdown separator rows
+  from all table-derived text instead of indexing them as content.
+
 ### Changed
 
 - The rules reference tracks the re-structured corrected manuscript (content

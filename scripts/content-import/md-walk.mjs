@@ -61,7 +61,8 @@ function findByLocator(headings, loc, kind) {
 /**
  * Walks a chapter into emission candidates (H1s, H2s, and splitDeeper H3s) and
  * a coverage ledger. Ownership: an H1 owns only its pre-first-child prose; an
- * H2 owns its subtree minus splitDeeper H3 subtrees; skipped subtrees vanish.
+ * H2 owns its subtree minus splitDeeper H3 subtrees. Skipped subtrees vanish
+ * except for explicitly named splitDeeper candidates rescued from within them.
  * Every candidate body is a disjoint slice of the source — the exactly-once
  * test in the suite is the guarantee full coverage rests on.
  */

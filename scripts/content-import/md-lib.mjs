@@ -275,6 +275,54 @@ function stripWikilinksGentle(text) {
 }
 
 /**
+ * The vault occasionally uses a one-column GFM table as a visual layout box,
+ * not as tabular data. The rules renderer faithfully turns that syntax into a
+ * `<table>`, so unwrap those boxes into prose blocks while preserving real
+ * multi-column tables. The header is the box label and is redundant with the
+ * surrounding rule title; data rows are the actual content.
+ */
+function flattenSingleColumnLayoutTables(lines) {
+	const out = [];
+	const rowCell = (line) => {
+		const match = /^\s*\|(.*)\|\s*$/.exec(line);
+		return match ? match[1].trim() : null;
+	};
+	const isDelimiter = (cell) => /^:?-{3,}:?$/.test(cell);
+
+	for (let i = 0; i < lines.length; i++) {
+		const header = rowCell(lines[i]);
+		const delimiter = rowCell(lines[i + 1] ?? '');
+		if (header === null || delimiter === null || !isDelimiter(delimiter)) {
+			out.push(lines[i]);
+			continue;
+		}
+
+		let row = i + 2;
+		const cells = [];
+		while (row < lines.length) {
+			const cell = rowCell(lines[row]);
+			if (cell === null) break;
+			cells.push(cell);
+			row++;
+		}
+		if (cells.length === 0) {
+			out.push(lines[i]);
+			continue;
+		}
+
+		for (const cell of cells) {
+			const paragraphs = cell.split(/\s*<br\s*\/?>\s*<br\s*\/?>\s*/gi);
+			for (const paragraph of paragraphs) {
+				if (paragraph.trim()) out.push(paragraph.trim(), '');
+			}
+		}
+		if (out[out.length - 1] === '') out.pop();
+		i = row - 1;
+	}
+	return out;
+}
+
+/**
  * Normalizes a raw Markdown section body into the small dialect the app's
  * renderer understands (paragraphs, `##`/`###` sub-headings, `-` lists,
  * `**bold**`, `*italic*`). Callouts and example sub-sections should already be
@@ -315,7 +363,7 @@ export function normalizeMarkdown(lines, opts = {}) {
 		processed.push(lines[i]);
 	}
 
-	let text = processed.join('\n');
+	let text = flattenSingleColumnLayoutTables(processed).join('\n');
 
 	// Image embeds reference files that live only in the vault — and the book's
 	// interior art is NOT covered by the text's open-content permission. Strip
@@ -330,6 +378,14 @@ export function normalizeMarkdown(lines, opts = {}) {
 	// depth over the complete normalized result.
 	assertNoImageEmbeds(text, 'normalizeMarkdown');
 	text = opts.preserve === 'full' ? stripWikilinksGentle(text) : stripWikilinks(text);
+	// Standard Markdown links appear where the book names its own website. The
+	// renderer's dialect has no link syntax (a raw `[label](url)` would ship
+	// literally), so flatten to the label — the label carries the visible
+	// wording, and image embeds were already stripped and asserted above.
+	// Parenthesized destinations are deliberately NOT matched: leaving the raw
+	// markup intact trips the search-artifact test loudly instead of shipping
+	// a silently truncated label.
+	text = text.replace(/\[([^\]]+)\]\((?:https?:\/\/|mailto:)[^\s()]*\)/g, '$1');
 	// Strip inline HTML. Suit-icon images in tables are followed by their visible
 	// text labels, so retaining the image alt text would duplicate each heading.
 	text = text.replace(/<img\b[^>]*>/gi, '');

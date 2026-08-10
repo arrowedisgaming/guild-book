@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-08-10
+
+### Fixed
+
+- Upkeep tiers render as readable bold-headed prose again (content pack
+  4.2.1), rather than an accidental one-column table from the restructured
+  source vault. The rules search artifact now drops Markdown separator rows
+  from all table-derived text instead of indexing them as content.
+- The vault's external links to hismajestytheworm.games flatten to their
+  visible label at import — the rules renderer has no link syntax, so the
+  raw `[label](url)` markup no longer ships in rule bodies or pollutes the
+  search index.
+
 ### Changed
 
 - The rules reference tracks the re-structured corrected manuscript (content

@@ -27,7 +27,9 @@ describe('rules-search.json artifact', () => {
 	it('contains plain text — no markdown syntax survives', () => {
 		const parsed = z.array(ruleSearchDocSchema).parse(docs);
 		for (const d of parsed) {
-			expect(d.body, d.id).not.toMatch(/^#{1,6}\s|\*\*|\[\[|^\s*-\s|\|/m);
+			expect(d.body, d.id).not.toMatch(
+				/^#{1,6}\s|\*\*|\[\[|\]\(|^\s*-\s|\||^\s*(?::?-{3,}:?)(?:\s+(?::?-{3,}:?))*\s*$/m
+			);
 		}
 	});
 

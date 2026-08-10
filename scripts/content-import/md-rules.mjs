@@ -42,6 +42,9 @@ export function toSearchDoc(rule) {
 			return line;
 		})
 		.join('\n')
+		// A table's delimiter row is structural syntax, never searchable content.
+		// Remove it while the pipes still identify the complete row.
+		.replace(/^\s*\|(?:\s*:?-{3,}:?\s*\|)+\s*$/gm, '')
 		.replace(/\|/g, ' ')
 		.replace(/\*\*|`/g, '')
 		.replace(/(^|[^*])\*(?!\*)([^*\n]+)\*/g, '$1$2')

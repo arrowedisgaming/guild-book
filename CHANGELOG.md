@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The rules reference tracks the re-structured corrected manuscript (content
+  pack 4.2.0): the source vault now carries the book's full sub-heading
+  tree, and every importer manifest was re-pointed at it. All previously
+  shipped rule ids remain permanent URLs — relocated sections keep their
+  ids, including the Challenge-flow sections and the Call to Adventure
+  session-checklist entries at their new positions. The Basics chapter
+  gains The Camp Phase and The City Phase as entries, matching their Crawl
+  and Challenge siblings. Kin descriptions now stop before their nested
+  talent content; corrected source formatting removes stale bolding from
+  Orc and Quill, and Underfolk's arête list is limited to its three actual
+  triggers.
+
 ## [0.18.0] - 2026-08-08
 
 ### Changed

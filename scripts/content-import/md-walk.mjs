@@ -83,13 +83,14 @@ export function walkChapter(markdown, config) {
 		const h = headings[i];
 		const tracked = h.level <= 2 || isDeeper(h);
 		if (!tracked) continue;
-		if (inSkip(h.line)) {
+		if (inSkip(h.line) && !isDeeper(h)) {
 			const skip = skips.find((s) => s.heading === h);
 			// Only the skip root gets a ledger row; descendants are covered by it.
 			if (skip) ledger.push({ locator: h.path, occurrence: h.occurrence, level: h.level, disposition: 'skipped', reason: skip.reason });
 			continue;
 		}
 		const end = subtreeEnd(headings, i, lines.length);
+		const foreignSkip = (line) => skipRanges.some(([a, b]) => line >= a && line < b && !(h.line >= a && h.line < b));
 		// Nested tracked headings inside this subtree own their slices, not us.
 		const carveOuts = [];
 		for (let j = i + 1; j < headings.length && headings[j].line < end; j++) {
@@ -100,7 +101,7 @@ export function walkChapter(markdown, config) {
 		}
 		const owned = [];
 		for (let line = h.line + 1; line < end; line++) {
-			if (inSkip(line)) continue;
+			if (foreignSkip(line)) continue;
 			if (carveOuts.some(([a, b]) => line >= a && line < b)) continue;
 			owned.push(lines[line]);
 		}

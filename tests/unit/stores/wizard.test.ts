@@ -77,6 +77,10 @@ describe('wizard state migration', () => {
 		expect(migrateWizardState(storedState({ currentStep: 8 }))).toBeNull();
 	});
 
+	it('refuses to reinterpret a blob from a newer state version', () => {
+		expect(migrateWizardState(storedState({ version: 3, currentStep: 7 }))).toBeNull();
+	});
+
 	it('rejects blobs without a character or numeric current step', () => {
 		expect(migrateWizardState(null)).toBeNull();
 		expect(migrateWizardState({ currentStep: 0 })).toBeNull();
@@ -184,6 +188,17 @@ describe('wizard store persistence', () => {
 			expect(storage.getItem(STORAGE_KEY)).toBeNull();
 		}
 	);
+
+	it('leaves a newer-version blob in storage untouched and starts clean', () => {
+		const storage = new MemoryStorage();
+		const newer = JSON.stringify(storedState({ version: 3, currentStep: 7 }));
+		storage.values.set(STORAGE_KEY, newer);
+
+		const store = createStore(storage);
+		expect(get(store)).toMatchObject({ active: false, currentStep: 0, completedSteps: [] });
+		expect(storage.getItem(STORAGE_KEY)).toBe(newer);
+		expect(storage.writeCount).toBe(0);
+	});
 
 	it('persists mutations, deduplicates completion, and removes storage on reset', () => {
 		const storage = new MemoryStorage();

@@ -82,6 +82,10 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	const candidate = parsed as Partial<WizardState>;
 	if (!candidate.character || typeof candidate.character !== 'object') return null;
 	if (typeof candidate.currentStep !== 'number') return null;
+	// A blob from a NEWER app version must not be reinterpreted with old rules.
+	if (typeof candidate.version === 'number' && candidate.version > WIZARD_STATE_VERSION) {
+		return null;
+	}
 
 	// v2 inserted the Bonds step at index 6; v1 blobs (or unversioned ones)
 	// carry indices from the old 8-step layout and shift up around it.
@@ -138,6 +142,15 @@ function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
 			parsed = JSON.parse(raw);
 		} catch {
 			storage.removeItem(STORAGE_KEY);
+			return { state: createInitialState(), persistMigration: false };
+		}
+
+		// A rollback scenario: a blob written by a newer app version. Start clean
+		// but leave it in storage for the version that wrote it — a real user
+		// mutation here will still overwrite it.
+		const declaredVersion =
+			parsed && typeof parsed === 'object' ? (parsed as { version?: unknown }).version : undefined;
+		if (typeof declaredVersion === 'number' && declaredVersion > WIZARD_STATE_VERSION) {
 			return { state: createInitialState(), persistMigration: false };
 		}
 

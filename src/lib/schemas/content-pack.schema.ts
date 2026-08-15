@@ -130,7 +130,9 @@ export const contentPackFilesSchema = z.object({
 	languages: z.string().optional(),
 	conditions: z.string().optional(),
 	afflictions: z.string().optional(),
-	bonds: z.string().optional(),
+	// Required, not optional: the loader imports bonds.json unconditionally, and
+	// an unlisted file would silently escape the pack's contentDigest.
+	bonds: z.string(),
 	rules: z.string().optional(),
 	rulesSearch: z.string().optional(),
 	spells: z.string().optional(),
@@ -225,16 +227,26 @@ export const afflictionDefinitionSchema = z.object({
 });
 
 export const bondTypeDefinitionSchema = z.object({
-	id: z.string(),
-	label: z.string(),
+	id: z.string().min(1),
+	label: z.string().min(1),
 	description: z.string(),
 	examples: z.string(),
 	charge: z.array(z.string()).min(1)
 });
 
-/** bonds.json — the book's example Bond types for the creation wizard. */
+/** bonds.json — the book's example Bond types for the creation wizard. The
+ * wizard persists and looks bonds up by label, so labels must be as unique
+ * as ids. */
 export const bondTypesFileSchema = z.object({
-	types: z.array(bondTypeDefinitionSchema).min(1)
+	types: z
+		.array(bondTypeDefinitionSchema)
+		.min(1)
+		.refine((types) => new Set(types.map((t) => t.id)).size === types.length, {
+			message: 'bond type ids must be unique'
+		})
+		.refine((types) => new Set(types.map((t) => t.label)).size === types.length, {
+			message: 'bond type labels must be unique'
+		})
 });
 
 export const motifTablesSchema = z.object({

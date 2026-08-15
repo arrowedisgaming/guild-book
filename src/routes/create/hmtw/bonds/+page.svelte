@@ -8,7 +8,8 @@
 	const STEP = 6;
 	let { data }: { data: PageData } = $props();
 
-	const DEFAULT_TYPE = 'Ally';
+	// The book calls Ally "the default Bond", and the pack ships it first.
+	const DEFAULT_TYPE = $derived(data.bondTypes[0].label);
 
 	interface BondRow {
 		targetName: string;

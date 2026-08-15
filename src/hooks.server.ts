@@ -66,7 +66,7 @@ const appHandle: Handle = async ({ event, resolve }) => {
 		return json({ message: 'Invalid request origin' }, { status: 403 });
 	}
 
-	if (isRateLimited(event.request, event.getClientAddress())) {
+	if (isRateLimited(event.request, () => event.getClientAddress())) {
 		return json({ message: 'Too many requests' }, { status: 429 });
 	}
 
@@ -177,13 +177,22 @@ function isSameOrigin(request: Request): boolean {
  * run. The 300/60s allowance the guided Challenge command routes used to get
  * here now lives in `CAMPAIGN_RATE_LIMIT_POLICIES['session-command']`.
  */
-function isRateLimited(request: Request, clientAddress: string): boolean {
+function isRateLimited(request: Request, getClientAddress: () => string): boolean {
 	if (!request.url.includes('/api/') || !isUnsafeRequest(request)) return false;
 
 	const now = Date.now();
 	const pathname = new URL(request.url).pathname;
 	if (classifyCampaignRequest(pathname, request.method)) return false;
 
+	// Resolved lazily and defensively: only unsafe /api/ writes reach this
+	// point, and the node dev server throws for sockets with no remote address
+	// (e.g. Firefox speculative connections). Cloudflare always provides one.
+	let clientAddress: string;
+	try {
+		clientAddress = getClientAddress();
+	} catch {
+		clientAddress = 'unknown';
+	}
 	const key = `${clientAddress}:${pathname}`;
 	const bucket = writeBuckets.get(key);
 

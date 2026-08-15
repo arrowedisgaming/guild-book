@@ -32,7 +32,9 @@ markdown through `Prose.svelte` (bold, italics, `-` lists, sub-headings).
 - **Transcribed directly (not pipeline-generated):** `denizens.json` (Appendix C:
   the six themes, five threats, and the full bestiary) reproduces the book text
   directly — the author has confirmed the full text is open content under the
-  Adherent of the Worm license, not just the mechanics.
+  Adherent of the Worm license, not just the mechanics. `bonds.json` (the eleven
+  example Bond types for the creation wizard) is extracted verbatim from this
+  pack's own `adventurer-bonds` entry in `rules.json`.
 
 ### The pipeline
 

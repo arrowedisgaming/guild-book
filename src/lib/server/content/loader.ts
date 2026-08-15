@@ -15,6 +15,7 @@ import type {
 	MotifTables,
 	NamedEntry,
 	AfflictionDefinition,
+	BondTypeDefinition,
 	RuleEntry,
 	SpellDefinition,
 	DenizensFile,
@@ -34,6 +35,7 @@ import {
 	languagesFileSchema,
 	conditionsFileSchema,
 	afflictionsFileSchema,
+	bondTypesFileSchema,
 	rulesFileSchema,
 	spellsFileSchema,
 	denizensFileSchema,
@@ -50,6 +52,7 @@ import motifsJson from '../../../../static/content-packs/hmtw/motifs.json';
 import languagesJson from '../../../../static/content-packs/hmtw/languages.json';
 import conditionsJson from '../../../../static/content-packs/hmtw/conditions.json';
 import afflictionsJson from '../../../../static/content-packs/hmtw/afflictions.json';
+import bondsJson from '../../../../static/content-packs/hmtw/bonds.json';
 import rulesJson from '../../../../static/content-packs/hmtw/rules.json';
 import spellsJson from '../../../../static/content-packs/hmtw/spells.json';
 import denizensJson from '../../../../static/content-packs/hmtw/denizens.json';
@@ -65,6 +68,7 @@ let cachedMotifs: MotifTables | null = null;
 let cachedLanguages: NamedEntry[] | null = null;
 let cachedConditions: NamedEntry[] | null = null;
 let cachedAfflictions: AfflictionDefinition[] | null = null;
+let cachedBondTypes: BondTypeDefinition[] | null = null;
 let cachedRules: RuleEntry[] | null = null;
 let cachedSpells: SpellDefinition[] | null = null;
 let cachedDenizens: DenizensFile | null = null;
@@ -112,6 +116,13 @@ export function getConditions(): NamedEntry[] {
 export function getAfflictions(): AfflictionDefinition[] {
 	if (!cachedAfflictions) cachedAfflictions = parseOrThrow(afflictionsFileSchema, afflictionsJson, 'afflictions.json');
 	return cachedAfflictions;
+}
+
+export function getBondTypes(): BondTypeDefinition[] {
+	if (!cachedBondTypes) {
+		cachedBondTypes = parseOrThrow(bondTypesFileSchema, bondsJson, 'bonds.json').types;
+	}
+	return cachedBondTypes;
 }
 
 export function getRules(): RuleEntry[] {
@@ -162,7 +173,8 @@ export function loadWizardData() {
 		motifs: getMotifs(),
 		languages: getLanguages(),
 		conditions: getConditions(),
-		afflictions: getAfflictions()
+		afflictions: getAfflictions(),
+		bondTypes: getBondTypes()
 	};
 }
 

@@ -192,6 +192,19 @@ export interface AfflictionStage {
 	cureCost: number | null;
 }
 
+/** One of the book's example Bond types (bonds.json). */
+export interface BondTypeDefinition {
+	id: string;
+	label: string;
+	description: string;
+	examples: string;
+	charge: string[];
+}
+
+export interface BondTypesFile {
+	types: BondTypeDefinition[];
+}
+
 // ---------------------------------------------------------------------------
 // Dungeon denizens (Appendix C) — themes, threats, bestiary
 // ---------------------------------------------------------------------------

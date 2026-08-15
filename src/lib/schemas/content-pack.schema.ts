@@ -130,6 +130,7 @@ export const contentPackFilesSchema = z.object({
 	languages: z.string().optional(),
 	conditions: z.string().optional(),
 	afflictions: z.string().optional(),
+	bonds: z.string().optional(),
 	rules: z.string().optional(),
 	rulesSearch: z.string().optional(),
 	spells: z.string().optional(),
@@ -221,6 +222,19 @@ export const afflictionDefinitionSchema = z.object({
 	name: z.string(),
 	description: z.string().optional(),
 	stages: z.array(afflictionStageSchema).min(1)
+});
+
+export const bondTypeDefinitionSchema = z.object({
+	id: z.string(),
+	label: z.string(),
+	description: z.string(),
+	examples: z.string(),
+	charge: z.array(z.string()).min(1)
+});
+
+/** bonds.json — the book's example Bond types for the creation wizard. */
+export const bondTypesFileSchema = z.object({
+	types: z.array(bondTypeDefinitionSchema).min(1)
 });
 
 export const motifTablesSchema = z.object({

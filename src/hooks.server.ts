@@ -73,7 +73,9 @@ const appHandle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set('X-Frame-Options', 'DENY');
+	// Deliberately no X-Frame-Options: GMs embed Guild Book in Zoom whiteboards
+	// and VTTs (session-zero request). Auth cookies are SameSite=Lax, so a
+	// framing page cannot ride a signed-in session.
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
 	return response;

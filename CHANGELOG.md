@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bonds step in the creation wizard (after Quest & Motifs): pick a book Bond
+  type and name the guild-mate you share it with. The eleven example Bonds
+  ship verbatim in content pack 4.3.0's new `bonds.json`.
+
+### Fixed
+
+- The identity step's Continue button no longer dead-locks when the browser
+  autofills the name field: the gate now validates the actual field contents
+  at click time and explains itself with an inline message instead of a
+  silently disabled button. Erasing the name still blocks continuing.
+
+### Changed
+
+- Guild Book pages can now be embedded in iframes (Zoom whiteboards, VTTs) —
+  the blanket `X-Frame-Options: DENY` header is gone. Signed-in sessions do
+  not carry into cross-site embeds; embedded views are effectively anonymous.
+
 ## [0.19.0] - 2026-08-10
 
 ### Fixed

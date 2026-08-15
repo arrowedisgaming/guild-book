@@ -38,17 +38,43 @@ function storedState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 describe('wizard state migration', () => {
-	it.each([-1, 8, 1.5, Number.NaN])('rejects an impossible current step (%s)', (currentStep) => {
-		expect(migrateWizardState(storedState({ currentStep }))).toBeNull();
+	it.each([-1, 9, 1.5, Number.NaN])('rejects an impossible current step (%s)', (currentStep) => {
+		expect(migrateWizardState(storedState({ version: 2, currentStep }))).toBeNull();
 	});
 
 	it('keeps only unique valid completed step indexes', () => {
 		const migrated = migrateWizardState({
-			...storedState(),
-			completedSteps: [0, 0, 3, -1, 8, 1.5, '2']
+			...storedState({ version: 2 }),
+			completedSteps: [0, 0, 3, -1, 9, 1.5, '2']
 		});
 
 		expect(migrated?.completedSteps).toEqual([0, 3]);
+	});
+
+	it('remaps v1 gear/review indices around the inserted bonds step', () => {
+		const migrated = migrateWizardState(
+			storedState({ currentStep: 7, completedSteps: [0, 1, 2, 3, 4, 5, 6] })
+		);
+
+		expect(migrated?.version).toBe(2);
+		expect(migrated?.currentStep).toBe(8);
+		expect(migrated?.completedSteps).toEqual([0, 1, 2, 3, 4, 5, 7]);
+	});
+
+	it('leaves pre-bonds v1 indices and v2 blobs untouched', () => {
+		const v1 = migrateWizardState(storedState({ currentStep: 5, completedSteps: [0, 4] }));
+		expect(v1?.currentStep).toBe(5);
+		expect(v1?.completedSteps).toEqual([0, 4]);
+
+		const v2 = migrateWizardState(
+			storedState({ version: 2, currentStep: 6, completedSteps: [0, 6] })
+		);
+		expect(v2?.currentStep).toBe(6);
+		expect(v2?.completedSteps).toEqual([0, 6]);
+	});
+
+	it('rejects a v1 blob whose step index exceeds the legacy layout', () => {
+		expect(migrateWizardState(storedState({ currentStep: 8 }))).toBeNull();
 	});
 
 	it('rejects blobs without a character or numeric current step', () => {
@@ -95,6 +121,7 @@ describe('wizard store persistence', () => {
 			STORAGE_KEY,
 			JSON.stringify(
 				storedState({
+					version: 2,
 					currentStep: 3,
 					completedSteps: [0, 1, 2],
 					character: { ...createBlankCharacter(), name: 'Mara' }
@@ -125,7 +152,10 @@ describe('wizard store persistence', () => {
 
 	it('does not rewrite a current blob solely because its object keys have a different order', () => {
 		const storage = new MemoryStorage();
-		const current = storedState({ character: { ...createBlankCharacter(), name: 'Mara' } });
+		const current = storedState({
+			version: 2,
+			character: { ...createBlankCharacter(), name: 'Mara' }
+		});
 		storage.values.set(
 			STORAGE_KEY,
 			JSON.stringify({

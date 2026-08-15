@@ -15,7 +15,7 @@
 	import Prose from '$lib/components/ui/Prose.svelte';
 	import type { PageData } from './$types';
 
-	const STEP = 6;
+	const STEP = 7;
 	let { data }: { data: PageData } = $props();
 
 	const allowance = $derived(data.contentPack.creation.marketAllowance);

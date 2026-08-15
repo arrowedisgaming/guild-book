@@ -9,7 +9,7 @@ import { createBlankCharacter, type GuildBookCharacterData } from '$lib/types/ch
 import { migrateCharacterData } from '$lib/engine/character-migration';
 
 const STORAGE_KEY = 'guildbook-wizard-state';
-const WIZARD_STATE_VERSION = 1;
+const WIZARD_STATE_VERSION = 2;
 
 export interface WizardState {
 	version: number;
@@ -44,6 +44,7 @@ export const WIZARD_STEPS = [
 	{ id: 'attributes', label: 'Attributes', path: '/create/hmtw/attributes' },
 	{ id: 'talents', label: 'Talents', path: '/create/hmtw/talents' },
 	{ id: 'story', label: 'Quest & Motifs', path: '/create/hmtw/story' },
+	{ id: 'bonds', label: 'Bonds', path: '/create/hmtw/bonds' },
 	{ id: 'equipment', label: 'Gear', path: '/create/hmtw/equipment' },
 	{ id: 'review', label: 'Review', path: '/create/hmtw/review' }
 ] as const;
@@ -81,23 +82,32 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	const candidate = parsed as Partial<WizardState>;
 	if (!candidate.character || typeof candidate.character !== 'object') return null;
 	if (typeof candidate.currentStep !== 'number') return null;
+
+	// v2 inserted the Bonds step at index 6; v1 blobs (or unversioned ones)
+	// carry indices from the old 8-step layout and shift up around it.
+	const version = candidate.version === 2 ? 2 : 1;
+	const stepLimit = version === 2 ? WIZARD_STEPS.length : WIZARD_STEPS.length - 1;
+	const remap = (step: number) => (version === 1 && step >= 6 ? step + 1 : step);
+
 	if (
 		!Number.isInteger(candidate.currentStep) ||
 		candidate.currentStep < 0 ||
-		candidate.currentStep >= WIZARD_STEPS.length
+		candidate.currentStep >= stepLimit
 	) {
 		return null;
 	}
 	const completedSteps = Array.isArray(candidate.completedSteps)
 		? [
 				...new Set(
-					candidate.completedSteps.filter(
-						(step): step is number =>
-							typeof step === 'number' &&
-							Number.isInteger(step) &&
-							step >= 0 &&
-							step < WIZARD_STEPS.length
-					)
+					candidate.completedSteps
+						.filter(
+							(step): step is number =>
+								typeof step === 'number' &&
+								Number.isInteger(step) &&
+								step >= 0 &&
+								step < stepLimit
+						)
+						.map(remap)
 				)
 			]
 		: [];
@@ -105,7 +115,7 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	return {
 		version: WIZARD_STATE_VERSION,
 		active: candidate.active === true,
-		currentStep: candidate.currentStep,
+		currentStep: remap(candidate.currentStep),
 		completedSteps,
 		character: migrateCharacterData(candidate.character),
 		nonce: typeof candidate.nonce === 'number' ? candidate.nonce : 0

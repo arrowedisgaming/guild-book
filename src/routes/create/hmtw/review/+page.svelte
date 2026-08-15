@@ -6,7 +6,7 @@
 	import { SUIT_IDS, SUIT_LABELS } from '$lib/types/common';
 	import type { PageData } from './$types';
 
-	const STEP = 7;
+	const STEP = 8;
 	let { data }: { data: PageData } = $props();
 
 	let char = $derived($wizard.character);

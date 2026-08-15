@@ -35,6 +35,11 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await page.locator('.motifs input').first().fill('Disgraced Soldier');
 	await page.getByRole('button', { name: 'Continue' }).click();
 
+	await expect(page).toHaveURL(/\/create\/hmtw\/bonds$/);
+	await page.getByLabel("Guild-mate's name").first().fill('Grendel');
+	await page.getByLabel('Bond type').first().selectOption('Rival');
+	await page.getByRole('button', { name: 'Continue' }).click();
+
 	await expect(page.getByRole('heading', { name: 'The Omphalic Market' })).toBeVisible();
 	await page.getByRole('checkbox').first().click();
 	// That first pick landed on the first item in the Luxurious section (no
@@ -64,6 +69,7 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await expect(page.getByRole('listitem').filter({ hasText: 'Ambusher' })).toBeVisible();
 	await expect(page.getByText('Recover the bell beneath the drowned abbey.')).toBeVisible();
 	await expect(page.getByText('Disgraced Soldier')).toBeVisible();
+	await expect(page.getByText('Grendel — Rival')).toBeVisible();
 	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Save adventurer' })).toBeEnabled();
 
@@ -78,6 +84,7 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await page.getByRole('link', { name: 'Mara of the Lantern' }).click();
 	await expect(page).toHaveURL(/\/sheet\/[^/]+$/);
 	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
+	await expect(page.getByText('Grendel')).toBeVisible();
 });
 
 test('wizard assigns unique attributes and exposes standard theme controls', async ({ page }) => {

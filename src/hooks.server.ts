@@ -31,6 +31,26 @@ if (devAutoLoginLoader) {
 // dropped — see `metric-sink.ts` for why that went unnoticed until 0.7.0.
 installCampaignMetricSink();
 
+/**
+ * Anonymous, read-only surfaces GMs embed in Zoom whiteboards and VTTs
+ * (session-zero request). Everything else keeps frame protection: SameSite=Lax
+ * blocks cross-SITE frames from riding a session, but not a compromised
+ * sibling origin under the same registrable site, so authed routes (campaign
+ * table, sheets, account) stay unframeable.
+ */
+const EMBEDDABLE_PATHS = [
+	/^\/$/,
+	/^\/rules(\/|$)/,
+	/^\/deck$/,
+	/^\/s\//,
+	/^\/licensing$/,
+	/^\/create(\/|$)/
+];
+
+function isEmbeddablePath(pathname: string): boolean {
+	return EMBEDDABLE_PATHS.some((pattern) => pattern.test(pathname));
+}
+
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_WRITES = 60;
@@ -73,9 +93,10 @@ const appHandle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	// Deliberately no X-Frame-Options: GMs embed Guild Book in Zoom whiteboards
-	// and VTTs (session-zero request). Auth cookies are SameSite=Lax, so a
-	// framing page cannot ride a signed-in session.
+	if (!isEmbeddablePath(event.url.pathname)) {
+		response.headers.set('X-Frame-Options', 'DENY');
+		response.headers.set('Content-Security-Policy', "frame-ancestors 'none'");
+	}
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
 	return response;

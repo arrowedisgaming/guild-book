@@ -29,8 +29,7 @@
 		)
 	);
 
-	const typeDescription = (label: string) =>
-		data.bondTypes.find((t) => t.label === label)?.description ?? '';
+	const bondType = (label: string) => data.bondTypes.find((t) => t.label === label);
 
 	function persist() {
 		wizard.updateCharacter((c) => ({
@@ -90,8 +89,16 @@
 			<button type="button" class="remove" onclick={() => removeRow(i)} aria-label="Remove bond">
 				✕
 			</button>
-			{#if typeDescription(row.type)}
-				<p class="hint">{typeDescription(row.type)}</p>
+			{#if bondType(row.type)}
+				{@const t = bondType(row.type)!}
+				<div class="hint">
+					<p>{t.description}</p>
+					<ul>
+						{#each t.charge as line}
+							<li>{line}</li>
+						{/each}
+					</ul>
+				</div>
 			{/if}
 		</div>
 	{/each}
@@ -125,13 +132,21 @@
 	}
 	.bond-row label span {
 		font-family: var(--font-subhead);
-		font-size: 0.9rem;
+		font-size: 1.05rem;
 	}
 	.bond-row .hint {
 		grid-column: 1 / -1;
 		margin: 0;
 		color: var(--ink-soft);
-		font-size: 0.85rem;
+		font-size: 0.9rem;
+	}
+	.bond-row .hint p {
+		margin: 0 0 0.3rem;
+	}
+	.bond-row .hint ul {
+		margin: 0;
+		padding-left: 1.2rem;
+		list-style: disc;
 	}
 	select,
 	input {
@@ -142,10 +157,13 @@
 		font: inherit;
 	}
 	.remove {
-		padding: 0.45rem 0.7rem;
+		/* Match the text input's vertical metrics so the row reads as one unit. */
+		padding: 0.55rem 0.9rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 		border-radius: 3px;
 		background: transparent;
+		font: inherit;
+		line-height: inherit;
 		cursor: pointer;
 	}
 	.add {

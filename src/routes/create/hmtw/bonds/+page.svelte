@@ -149,7 +149,11 @@
 		list-style: disc;
 	}
 	select,
-	input {
+	input,
+	.remove {
+		/* One explicit height for the whole row: native selects ignore part of
+		 * their vertical padding, so padding alone leaves them shorter. */
+		height: 3.2rem;
 		padding: 0.55rem 0.7rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 		border-radius: 3px;
@@ -157,12 +161,8 @@
 		font: inherit;
 	}
 	.remove {
-		/* Match the text input's vertical metrics so the row reads as one unit. */
 		padding: 0.55rem 0.9rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
-		border-radius: 3px;
 		background: transparent;
-		font: inherit;
 		line-height: inherit;
 		cursor: pointer;
 	}

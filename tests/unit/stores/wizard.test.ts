@@ -212,11 +212,12 @@ describe('wizard store persistence', () => {
 		expect(storage.getItem(STORAGE_KEY)).toBe(newer);
 		expect(storage.writeCount).toBe(0);
 
-		// Real user work may overwrite it.
-		store.updateCharacter((character) => ({ ...character, name: 'Mara' }));
+		// ANY real user work may overwrite it — including fields isPristineDraft
+		// does not track, like pronouns.
+		store.updateCharacter((character) => ({ ...character, pronouns: 'she/her' }));
 		const persisted = JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}');
 		expect(persisted.version).toBe(2);
-		expect(persisted.character.name).toBe('Mara');
+		expect(persisted.character.pronouns).toBe('she/her');
 	});
 
 	it('persists mutations, deduplicates completion, and removes storage on reset', () => {

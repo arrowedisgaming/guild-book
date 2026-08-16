@@ -201,17 +201,14 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 	// A readable subscription fires immediately. Do not rewrite an absent or
 	// invalid blob merely by importing this module; persist only real mutations.
 	let initialized = false;
-	// While a newer-version blob is vaulted, an auto-started PRISTINE draft
-	// (WizardShell's deep-link guard calls start() on any wizard route) must
-	// not clobber it — only real user work may overwrite. reset() is explicit
-	// user intent and clears the key itself.
+	// While a newer-version blob is vaulted, nothing persists over it until the
+	// user does real work — WizardShell's deep-link guard auto-calls start() on
+	// any wizard route, so start() alone must not clobber it. updateCharacter/
+	// completeStep/reset are genuine user actions and lift the vault.
 	let vaultNewerBlob = loaded.vaultNewerBlob === true;
 	subscribe((state) => {
 		if (!initialized) return;
-		if (vaultNewerBlob) {
-			if (isPristineDraft(state)) return;
-			vaultNewerBlob = false;
-		}
+		if (vaultNewerBlob) return;
 		saveToStorage(storage, state);
 	});
 	initialized = true;
@@ -226,11 +223,13 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 
 		/** Mutate the character in-flight. */
 		updateCharacter(updater: (char: GuildBookCharacterData) => GuildBookCharacterData) {
+			vaultNewerBlob = false;
 			update((s) => ({ ...s, character: updater(s.character) }));
 		},
 
 		/** Mark a step complete and advance. */
 		completeStep(stepIndex: number) {
+			vaultNewerBlob = false;
 			update((s) => {
 				const completed = s.completedSteps.includes(stepIndex)
 					? s.completedSteps
@@ -263,6 +262,7 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 		},
 
 		reset() {
+			vaultNewerBlob = false;
 			update((s) => {
 				const state = createInitialState();
 				state.nonce = (s.nonce ?? 0) + 1;

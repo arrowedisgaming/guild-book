@@ -200,6 +200,25 @@ describe('wizard store persistence', () => {
 		expect(storage.writeCount).toBe(0);
 	});
 
+	it('keeps a newer-version blob vaulted through an auto-started pristine draft', () => {
+		const storage = new MemoryStorage();
+		const newer = JSON.stringify(storedState({ version: 3, currentStep: 7 }));
+		storage.values.set(STORAGE_KEY, newer);
+
+		const store = createStore(storage);
+		// WizardShell's deep-link guard auto-starts on any wizard route; the
+		// resulting pristine draft must not overwrite the vaulted blob.
+		store.start();
+		expect(storage.getItem(STORAGE_KEY)).toBe(newer);
+		expect(storage.writeCount).toBe(0);
+
+		// Real user work may overwrite it.
+		store.updateCharacter((character) => ({ ...character, name: 'Mara' }));
+		const persisted = JSON.parse(storage.getItem(STORAGE_KEY) ?? '{}');
+		expect(persisted.version).toBe(2);
+		expect(persisted.character.name).toBe('Mara');
+	});
+
 	it('persists mutations, deduplicates completion, and removes storage on reset', () => {
 		const storage = new MemoryStorage();
 		const store = createStore(storage);

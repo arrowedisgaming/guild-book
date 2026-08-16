@@ -129,6 +129,8 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 interface LoadedWizardState {
 	state: WizardState;
 	persistMigration: boolean;
+	/** True when storage holds a blob from a NEWER app version (rollback). */
+	vaultNewerBlob?: boolean;
 }
 
 function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
@@ -151,7 +153,7 @@ function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
 		const declaredVersion =
 			parsed && typeof parsed === 'object' ? (parsed as { version?: unknown }).version : undefined;
 		if (typeof declaredVersion === 'number' && declaredVersion > WIZARD_STATE_VERSION) {
-			return { state: createInitialState(), persistMigration: false };
+			return { state: createInitialState(), persistMigration: false, vaultNewerBlob: true };
 		}
 
 		const migrated = migrateWizardState(parsed);
@@ -199,8 +201,18 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 	// A readable subscription fires immediately. Do not rewrite an absent or
 	// invalid blob merely by importing this module; persist only real mutations.
 	let initialized = false;
+	// While a newer-version blob is vaulted, an auto-started PRISTINE draft
+	// (WizardShell's deep-link guard calls start() on any wizard route) must
+	// not clobber it — only real user work may overwrite. reset() is explicit
+	// user intent and clears the key itself.
+	let vaultNewerBlob = loaded.vaultNewerBlob === true;
 	subscribe((state) => {
-		if (initialized) saveToStorage(storage, state);
+		if (!initialized) return;
+		if (vaultNewerBlob) {
+			if (isPristineDraft(state)) return;
+			vaultNewerBlob = false;
+		}
+		saveToStorage(storage, state);
 	});
 	initialized = true;
 

@@ -43,6 +43,13 @@
 		open license's terms. No book artwork, logos, or trade dress is reproduced.
 	</p>
 
+	<p>
+		Looking for dungeons to delve? Visit the official His Majesty the Worm dungeons site at
+		<a href="https://dungeons.hismajestytheworm.games/" rel="noopener" target="_blank">
+			dungeons.hismajestytheworm.games</a
+		>.
+	</p>
+
 	<h2>Application source</h2>
 	<p>
 		The Guild Book application code is released under the

@@ -51,6 +51,7 @@
 			His Majesty the Worm is copyright Joshua McCrowell. Guild Book is an independent production by
 			Arrowed and is not affiliated with Joshua McCrowell or Exalted Funeral.
 		</p>
+		<p>Many people contributed to Guild Book.</p>
 		<p><a href="/licensing">Licensing &amp; credits</a></p>
 	</footer>
 </div>

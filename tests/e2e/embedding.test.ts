@@ -19,7 +19,7 @@ test('the home page actually renders inside a plain iframe', async ({ page, base
 });
 
 test('private routes keep frame protection', async ({ request }) => {
-	for (const path of ['/characters', '/campaigns', '/account', '/login']) {
+	for (const path of ['/characters', '/campaigns', '/account', '/login', '/create/hmtw/identity']) {
 		const response = await request.get(path, { maxRedirects: 0 });
 		expect(response.headers()['x-frame-options'], `${path} X-Frame-Options`).toBe('DENY');
 		expect(

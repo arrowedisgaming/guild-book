@@ -23,12 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Guild Book's public pages can now be embedded in iframes (Zoom whiteboards,
-  VTTs): the home page, rules reference, deck, shared-character links,
-  licensing, and the creation wizard. Signed-in sessions do not carry into
-  cross-site embeds; embedded views are effectively anonymous. Private
-  surfaces (campaign tables, sheets, account, login) keep full frame
-  protection.
+- Guild Book's public read-only pages can now be embedded in iframes (Zoom
+  whiteboards, VTTs): the home page, rules reference, deck, shared-character
+  links, and licensing. Signed-in sessions do not carry into cross-site
+  embeds; embedded views are effectively anonymous. Everything that can save
+  or mutate (the creation wizard, campaign tables, sheets, account, login)
+  keeps full frame protection.
 
 ## [0.19.0] - 2026-08-10
 

@@ -35,17 +35,11 @@ installCampaignMetricSink();
  * Anonymous, read-only surfaces GMs embed in Zoom whiteboards and VTTs
  * (session-zero request). Everything else keeps frame protection: SameSite=Lax
  * blocks cross-SITE frames from riding a session, but not a compromised
- * sibling origin under the same registrable site, so authed routes (campaign
- * table, sheets, account) stay unframeable.
+ * sibling origin under the same registrable site, so any route that can issue
+ * authenticated mutations (campaign table, sheets, account, and the wizard's
+ * review save) stays unframeable.
  */
-const EMBEDDABLE_PATHS = [
-	/^\/$/,
-	/^\/rules(\/|$)/,
-	/^\/deck$/,
-	/^\/s\//,
-	/^\/licensing$/,
-	/^\/create(\/|$)/
-];
+const EMBEDDABLE_PATHS = [/^\/$/, /^\/rules(\/|$)/, /^\/deck$/, /^\/s\//, /^\/licensing$/];
 
 function isEmbeddablePath(pathname: string): boolean {
 	return EMBEDDABLE_PATHS.some((pattern) => pattern.test(pathname));

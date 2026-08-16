@@ -226,12 +226,16 @@ export const afflictionDefinitionSchema = z.object({
 	stages: z.array(afflictionStageSchema).min(1)
 });
 
+const nonBlankString = z.string().refine((value) => value.trim().length > 0, {
+	message: 'must not be blank'
+});
+
 export const bondTypeDefinitionSchema = z.object({
-	id: z.string().min(1),
-	label: z.string().min(1),
+	id: nonBlankString,
+	label: nonBlankString,
 	description: z.string(),
 	examples: z.string(),
-	charge: z.array(z.string()).min(1)
+	charge: z.array(nonBlankString).min(1)
 });
 
 /** bonds.json — the book's example Bond types for the creation wizard. The

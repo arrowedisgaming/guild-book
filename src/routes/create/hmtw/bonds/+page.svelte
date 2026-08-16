@@ -60,9 +60,8 @@
 
 <h1>Bonds</h1>
 <p class="lede">
-	Bonds are your relationships with the other members of your guild. Charge them by playing
-	them to the hilt; burn charges at camp to heal Wounds and recover Resolve. Name a guild-mate
-	and pick the Bond you share — or continue and forge them at the table.
+	Bonds are your relationships with the other members of your guild. Name a guild-mate and pick
+	the Bond you share — or continue and forge them at the table.
 </p>
 
 <div class="bonds">

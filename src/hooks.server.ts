@@ -31,6 +31,20 @@ if (devAutoLoginLoader) {
 // dropped — see `metric-sink.ts` for why that went unnoticed until 0.7.0.
 installCampaignMetricSink();
 
+/**
+ * Anonymous, read-only surfaces GMs embed in Zoom whiteboards and VTTs
+ * (session-zero request). Everything else keeps frame protection: SameSite=Lax
+ * blocks cross-SITE frames from riding a session, but not a compromised
+ * sibling origin under the same registrable site, so any route that can issue
+ * authenticated mutations (campaign table, sheets, account, and the wizard's
+ * review save) stays unframeable.
+ */
+const EMBEDDABLE_PATHS = [/^\/$/, /^\/rules(\/|$)/, /^\/deck$/, /^\/s\//, /^\/licensing$/];
+
+function isEmbeddablePath(pathname: string): boolean {
+	return EMBEDDABLE_PATHS.some((pattern) => pattern.test(pathname));
+}
+
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_WRITES = 60;
@@ -46,7 +60,7 @@ const appHandle: Handle = async ({ event, resolve }) => {
 		return json({ message: 'Invalid request origin' }, { status: 403 });
 	}
 
-	if (isRateLimited(event.request, event.getClientAddress())) {
+	if (isRateLimited(event.request, () => event.getClientAddress())) {
 		return json({ message: 'Too many requests' }, { status: 429 });
 	}
 
@@ -73,7 +87,10 @@ const appHandle: Handle = async ({ event, resolve }) => {
 
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set('X-Frame-Options', 'DENY');
+	if (!isEmbeddablePath(event.url.pathname)) {
+		response.headers.set('X-Frame-Options', 'DENY');
+		response.headers.set('Content-Security-Policy', "frame-ancestors 'none'");
+	}
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
 	return response;
@@ -154,13 +171,22 @@ function isSameOrigin(request: Request): boolean {
  * run. The 300/60s allowance the guided Challenge command routes used to get
  * here now lives in `CAMPAIGN_RATE_LIMIT_POLICIES['session-command']`.
  */
-function isRateLimited(request: Request, clientAddress: string): boolean {
+function isRateLimited(request: Request, getClientAddress: () => string): boolean {
 	if (!request.url.includes('/api/') || !isUnsafeRequest(request)) return false;
 
 	const now = Date.now();
 	const pathname = new URL(request.url).pathname;
 	if (classifyCampaignRequest(pathname, request.method)) return false;
 
+	// Resolved lazily and defensively: only unsafe /api/ writes reach this
+	// point, and the node dev server throws for sockets with no remote address
+	// (e.g. Firefox speculative connections). Cloudflare always provides one.
+	let clientAddress: string;
+	try {
+		clientAddress = getClientAddress();
+	} catch {
+		clientAddress = 'unknown';
+	}
 	const key = `${clientAddress}:${pathname}`;
 	const bucket = writeBuckets.get(key);
 

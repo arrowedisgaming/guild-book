@@ -1,0 +1,87 @@
+{
+	"types": [
+		{
+			"id": "ally",
+			"label": "Ally",
+			"description": "Your allies are guild-mates that you are professional and amiable with. This is the default Bond.",
+			"examples": "Wash and Kaylee, Aragorn and Gandalf",
+			"charge": ["Charge this Bond when you make your ally laugh both in and out of character."]
+		},
+		{
+			"id": "adversary",
+			"label": "Adversary",
+			"description": "If you have a significant problem with a guild-mate, you’re probably their adversary. This isn’t an excuse to be an ass to another player, but it’s an opportunity for interesting and fair conflict.",
+			"examples": "Mal and Jayne, Boromir and Aragorn",
+			"charge": ["Charge this Bond when you witness your adversary fail a test of fate."]
+		},
+		{
+			"id": "big-little",
+			"label": "Big/Little",
+			"description": "There's a special relationship between a diminutive halfling and her huge troll “brother.” If one adventurer is bigger than the other and you use this to your advantage, this is the Bond for you.",
+			"examples": "Éowyn and Merry",
+			"charge": ["You both charge this Bond when your big/little aids you in a test of fate with your weakest attribute."]
+		},
+		{
+			"id": "best-friend",
+			"label": "Best Friend",
+			"description": "You wouldn't let your best friend go on an adventure without you. You're there for each other, thick or thin.",
+			"examples": "Mal and Zoe, Merry and Pippin",
+			"charge": ["You both charge this Bond when you reveal a secret to your best friend."]
+		},
+		{
+			"id": "love",
+			"label": "Love",
+			"description": "If both players are cool with it, use this Bond to represent someone you are in a romantic relationship with. If the relationship is one-sided, use the Unrequited Love Bond.",
+			"examples": "Zoe and Wash, Faramir and Éowyn",
+			"charge": ["Charge this Bond when you do something gushy and romantic for your partner, whether it’s writing an in-character love sonnet or risking your neck to pick a bunch of flowers for them."]
+		},
+		{
+			"id": "master-henchman",
+			"label": "Master/Henchman",
+			"description": "Players can be hirelings. When you have a managerial vs. subservient relationship with another guild-mate, this is your Bond.",
+			"examples": "Mal and Wash, Frodo and Sam",
+			"charge": [
+				"Masters charge this Bond when they give their henchman an agreed-upon payment or compensation.",
+				"Henchmen charge this Bond when they use one of their Camp Actions to benefit their master but not themselves."
+			]
+		},
+		{
+			"id": "mentor-mentee",
+			"label": "Mentor/Mentee",
+			"description": "Whether a parent, parent-figure, or merely the guild leader, a mentor guides and shapes the life of a mentee.",
+			"examples": "Shepherd Book and River, Gandalf and Frodo",
+			"charge": [
+				"Mentees charge this Bond when they ask the mentor for advice and it is given.",
+				"Mentors charge this Bond when a mentee follows their advice."
+			]
+		},
+		{
+			"id": "rival",
+			"label": "Rival",
+			"description": "You are in competition with your rival. You might want the same woman, the most kills, or something weirder.",
+			"examples": "Legolas and Gimli",
+			"charge": ["Charge this Bond when you witness your rival succeed on a test of fate."]
+		},
+		{
+			"id": "sibling",
+			"label": "Sibling",
+			"description": "Your first adventures were raiding your mother's cookie jar together. Now, you're guild-mates.",
+			"examples": "Simon and River, Boromir and Faramir",
+			"charge": ["Charge this Bond when you provide aid to your sibling in a test of fate."]
+		},
+		{
+			"id": "unrequited-love",
+			"label": "Unrequited Love",
+			"description": "He’s just not that into you. If both players are cool with it, use this Bond to represent how you feel about a would-be suitor or ex-lover.",
+			"examples": "Simon and Kaylee, Aragorn and Éowyn",
+			"charge": ["Charge this Bond when you do something kind for your love and they rebuff you or turn you down."]
+		},
+		{
+			"id": "ward",
+			"label": "Ward",
+			"description": "You have a guild-mate that you look out for. It’s important they survive.",
+			"examples": "Frodo, River",
+			"charge": ["When your Ward survives an entire Challenge without taking a Wound, charge this Bond."]
+		}
+	]
+}

@@ -9,7 +9,7 @@ import { createBlankCharacter, type GuildBookCharacterData } from '$lib/types/ch
 import { migrateCharacterData } from '$lib/engine/character-migration';
 
 const STORAGE_KEY = 'guildbook-wizard-state';
-const WIZARD_STATE_VERSION = 1;
+const WIZARD_STATE_VERSION = 2;
 
 export interface WizardState {
 	version: number;
@@ -44,6 +44,7 @@ export const WIZARD_STEPS = [
 	{ id: 'attributes', label: 'Attributes', path: '/create/hmtw/attributes' },
 	{ id: 'talents', label: 'Talents', path: '/create/hmtw/talents' },
 	{ id: 'story', label: 'Quest & Motifs', path: '/create/hmtw/story' },
+	{ id: 'bonds', label: 'Bonds', path: '/create/hmtw/bonds' },
 	{ id: 'equipment', label: 'Gear', path: '/create/hmtw/equipment' },
 	{ id: 'review', label: 'Review', path: '/create/hmtw/review' }
 ] as const;
@@ -81,23 +82,36 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	const candidate = parsed as Partial<WizardState>;
 	if (!candidate.character || typeof candidate.character !== 'object') return null;
 	if (typeof candidate.currentStep !== 'number') return null;
+	// A blob from a NEWER app version must not be reinterpreted with old rules.
+	if (typeof candidate.version === 'number' && candidate.version > WIZARD_STATE_VERSION) {
+		return null;
+	}
+
+	// v2 inserted the Bonds step at index 6; v1 blobs (or unversioned ones)
+	// carry indices from the old 8-step layout and shift up around it.
+	const version = candidate.version === 2 ? 2 : 1;
+	const stepLimit = version === 2 ? WIZARD_STEPS.length : WIZARD_STEPS.length - 1;
+	const remap = (step: number) => (version === 1 && step >= 6 ? step + 1 : step);
+
 	if (
 		!Number.isInteger(candidate.currentStep) ||
 		candidate.currentStep < 0 ||
-		candidate.currentStep >= WIZARD_STEPS.length
+		candidate.currentStep >= stepLimit
 	) {
 		return null;
 	}
 	const completedSteps = Array.isArray(candidate.completedSteps)
 		? [
 				...new Set(
-					candidate.completedSteps.filter(
-						(step): step is number =>
-							typeof step === 'number' &&
-							Number.isInteger(step) &&
-							step >= 0 &&
-							step < WIZARD_STEPS.length
-					)
+					candidate.completedSteps
+						.filter(
+							(step): step is number =>
+								typeof step === 'number' &&
+								Number.isInteger(step) &&
+								step >= 0 &&
+								step < stepLimit
+						)
+						.map(remap)
 				)
 			]
 		: [];
@@ -105,7 +119,7 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 	return {
 		version: WIZARD_STATE_VERSION,
 		active: candidate.active === true,
-		currentStep: candidate.currentStep,
+		currentStep: remap(candidate.currentStep),
 		completedSteps,
 		character: migrateCharacterData(candidate.character),
 		nonce: typeof candidate.nonce === 'number' ? candidate.nonce : 0
@@ -115,6 +129,8 @@ export function migrateWizardState(parsed: unknown): WizardState | null {
 interface LoadedWizardState {
 	state: WizardState;
 	persistMigration: boolean;
+	/** True when storage holds a blob from a NEWER app version (rollback). */
+	vaultNewerBlob?: boolean;
 }
 
 function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
@@ -129,6 +145,15 @@ function loadFromStorage(storage: WizardStorage | null): LoadedWizardState {
 		} catch {
 			storage.removeItem(STORAGE_KEY);
 			return { state: createInitialState(), persistMigration: false };
+		}
+
+		// A rollback scenario: a blob written by a newer app version. Start clean
+		// but leave it in storage for the version that wrote it — a real user
+		// mutation here will still overwrite it.
+		const declaredVersion =
+			parsed && typeof parsed === 'object' ? (parsed as { version?: unknown }).version : undefined;
+		if (typeof declaredVersion === 'number' && declaredVersion > WIZARD_STATE_VERSION) {
+			return { state: createInitialState(), persistMigration: false, vaultNewerBlob: true };
 		}
 
 		const migrated = migrateWizardState(parsed);
@@ -176,8 +201,15 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 	// A readable subscription fires immediately. Do not rewrite an absent or
 	// invalid blob merely by importing this module; persist only real mutations.
 	let initialized = false;
+	// While a newer-version blob is vaulted, nothing persists over it until the
+	// user does real work — WizardShell's deep-link guard auto-calls start() on
+	// any wizard route, so start() alone must not clobber it. updateCharacter/
+	// completeStep/reset are genuine user actions and lift the vault.
+	let vaultNewerBlob = loaded.vaultNewerBlob === true;
 	subscribe((state) => {
-		if (initialized) saveToStorage(storage, state);
+		if (!initialized) return;
+		if (vaultNewerBlob) return;
+		saveToStorage(storage, state);
 	});
 	initialized = true;
 
@@ -191,11 +223,13 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 
 		/** Mutate the character in-flight. */
 		updateCharacter(updater: (char: GuildBookCharacterData) => GuildBookCharacterData) {
+			vaultNewerBlob = false;
 			update((s) => ({ ...s, character: updater(s.character) }));
 		},
 
 		/** Mark a step complete and advance. */
 		completeStep(stepIndex: number) {
+			vaultNewerBlob = false;
 			update((s) => {
 				const completed = s.completedSteps.includes(stepIndex)
 					? s.completedSteps
@@ -228,6 +262,7 @@ export function createWizardStore(storage: WizardStorage | null = defaultWizardS
 		},
 
 		reset() {
+			vaultNewerBlob = false;
 			update((s) => {
 				const state = createInitialState();
 				state.nonce = (s.nonce ?? 0) + 1;

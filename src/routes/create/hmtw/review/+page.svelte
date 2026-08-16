@@ -6,7 +6,7 @@
 	import { SUIT_IDS, SUIT_LABELS } from '$lib/types/common';
 	import type { PageData } from './$types';
 
-	const STEP = 7;
+	const STEP = 8;
 	let { data }: { data: PageData } = $props();
 
 	let char = $derived($wizard.character);
@@ -96,6 +96,11 @@
 {/if}
 {#if char.quest}<section><h2>Quest</h2><p>{char.quest}</p></section>{/if}
 {#if char.motifs.length}<section><h2>Motifs</h2><p>{char.motifs.join(' · ')}</p></section>{/if}
+{#if char.bonds.length}
+	<section><h2>Bonds</h2>
+		<ul>{#each char.bonds as b}<li>{b.targetName} — {b.text}</li>{/each}</ul>
+	</section>
+{/if}
 {#if char.equipment.length}
 	<section><h2>Gear</h2>
 		<ul class="inline">{#each char.equipment as e}<li>{itemName(e.itemId)}{e.quantity > 1 ? ` ×${e.quantity}` : ''}</li>{/each}</ul>

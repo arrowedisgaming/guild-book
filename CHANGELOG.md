@@ -8,11 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-08-16
+
 ### Added
 
 - Bonds step in the creation wizard (after Quest & Motifs): pick a book Bond
-  type and name the guild-mate you share it with. The eleven example Bonds
-  ship verbatim in content pack 4.3.0's new `bonds.json`.
+  type and name the guild-mate you share it with, with the book's verbatim
+  charge conditions shown under the selection. The eleven example Bonds ship
+  verbatim in content pack 4.3.0's new `bonds.json`.
+- The credits page links the official His Majesty the Worm dungeons site,
+  and the site footer credits Guild Book's contributors.
 
 ### Fixed
 
@@ -20,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   autofills the name field: the gate now validates the actual field contents
   at click time and explains itself with an inline message instead of a
   silently disabled button. Erasing the name still blocks continuing.
+- Page loads no longer crash with a 500 when the dev server cannot determine
+  a client address (e.g. Firefox speculative connections): the write rate
+  limiter now resolves the address lazily and only for the API writes it
+  actually buckets.
 
 ### Changed
 

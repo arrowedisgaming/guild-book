@@ -1,19 +1,35 @@
 <script lang="ts">
 	import type { GuildBookCharacterData } from '$lib/types/character';
-	import type { NamedEntry, AfflictionDefinition, ItemDefinition } from '$lib/types/content-pack';
+	import type {
+		NamedEntry,
+		AfflictionDefinition,
+		BondTypeDefinition,
+		ItemDefinition
+	} from '$lib/types/content-pack';
 	import { indexItems } from '$lib/engine/encumbrance';
 	import { woundOptions, applyWound, type WoundOption } from '$lib/engine/wounds';
+	import { bondChargeLines, findBondType, isCustomBondText } from '$lib/character/bonds';
 
 	interface Props {
 		char: GuildBookCharacterData;
 		conditions: NamedEntry[];
 		afflictions: AfflictionDefinition[];
+		bondTypes: BondTypeDefinition[];
 		items: ItemDefinition[];
 		resolveMax: number;
 		talentName: (id: string) => string;
 		onChange: () => void;
 	}
-	let { char = $bindable(), conditions, afflictions, items, resolveMax, talentName, onChange }: Props = $props();
+	let {
+		char = $bindable(),
+		conditions,
+		afflictions,
+		bondTypes,
+		items,
+		resolveMax,
+		talentName,
+		onChange
+	}: Props = $props();
 
 	const itemIndex = $derived(indexItems(items));
 	const afflictionsById = $derived(new Map(afflictions.map((a) => [a.id, a])));
@@ -21,6 +37,9 @@
 	let woundOpen = $state(false);
 	let addAfflictionId = $state('');
 	let newBondName = $state('');
+	// The row currently writing a bond of its own, so the free-text field stays
+	// open while it is still empty. Only one row is ever being typed into.
+	let customBondRow = $state<number | null>(null);
 
 	const choices = $derived(woundOptions(char, itemIndex));
 
@@ -79,12 +98,37 @@
 		newBondName = '';
 		onChange();
 	}
+	/** '' = unset, CUSTOM_BOND = the player's own words, else a pack type label. */
+	const CUSTOM_BOND = '__custom__';
+
+	function bondTypeValue(text: string, i: number): string {
+		if (customBondRow === i) return CUSTOM_BOND;
+		if (isCustomBondText(bondTypes, text)) return CUSTOM_BOND;
+		return findBondType(bondTypes, text)?.label ?? '';
+	}
+
+	function setBondType(i: number, value: string) {
+		if (value === CUSTOM_BOND) {
+			customBondRow = i;
+			// Leaving a pack type clears its label so the row starts blank; text
+			// the player already wrote is theirs and stays.
+			if (findBondType(bondTypes, char.bonds[i].text)) {
+				char.bonds[i] = { ...char.bonds[i], text: '' };
+			}
+		} else {
+			if (customBondRow === i) customBondRow = null;
+			char.bonds[i] = { ...char.bonds[i], text: value };
+		}
+		onChange();
+	}
+
 	function toggleBondCharge(i: number) {
 		char.bonds[i] = { ...char.bonds[i], charged: !char.bonds[i].charged };
 		onChange();
 	}
 	function removeBond(i: number) {
 		char.bonds = char.bonds.filter((_, idx) => idx !== i);
+		customBondRow = null; // the open row just shifted out from under the index
 		onChange();
 	}
 
@@ -159,6 +203,7 @@
 	<div class="sub">
 		<h3>Bonds</h3>
 		{#each char.bonds as b, i (i)}
+			{@const typeValue = bondTypeValue(b.text, i)}
 			<div class="bond">
 				<button
 					type="button"
@@ -169,9 +214,33 @@
 				>
 					{b.charged ? '●' : '○'}
 				</button>
-				<input class="bname" type="text" bind:value={b.targetName} oninput={onChange} />
-				<input class="btext" type="text" bind:value={b.text} oninput={onChange} placeholder="the bond between you" />
+				<input class="bname" type="text" bind:value={b.targetName} oninput={onChange} aria-label="Guild-mate's name" />
+				<select
+					class="btype"
+					aria-label="Bond type"
+					value={typeValue}
+					onchange={(e) => setBondType(i, e.currentTarget.value)}
+				>
+					<option value="">Bond type…</option>
+					{#each bondTypes as t (t.id)}
+						<option value={t.label}>{t.label}</option>
+					{/each}
+					<option value={CUSTOM_BOND}>Something else…</option>
+				</select>
+				{#if typeValue === CUSTOM_BOND}
+					<input
+						class="btext"
+						type="text"
+						bind:value={b.text}
+						oninput={onChange}
+						aria-label="Bond in your own words"
+						placeholder="the bond between you"
+					/>
+				{/if}
 				<button type="button" class="remove" onclick={() => removeBond(i)} aria-label="Remove bond">✕</button>
+				{#each bondChargeLines(bondTypes, b.text) as line (line)}
+					<span class="bcharge">{line}</span>
+				{/each}
 			</div>
 		{/each}
 		<div class="addrow">
@@ -363,7 +432,16 @@
 		flex: 1;
 		min-width: 10rem;
 	}
+	.btype {
+		min-width: 9rem;
+	}
+	.bcharge {
+		flex-basis: 100%;
+		font-size: 0.78rem;
+		color: var(--ink-soft);
+	}
 	.bond input,
+	.bond select,
 	.addrow input,
 	.addrow select {
 		padding: 0.35rem 0.5rem;

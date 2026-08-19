@@ -126,6 +126,7 @@
 		bind:char
 		conditions={data.content.conditions}
 		afflictions={data.content.afflictions}
+		bondTypes={data.content.bondTypes}
 		items={data.content.items}
 		resolveMax={data.content.resolveMax}
 		{talentName}

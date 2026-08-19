@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   under the picker), and accepts a hand-typed language for dialects and cants
   the book does not name. Duplicates are refused case-insensitively, so a
   hand-typed "vulgaris" and the pack's Vulgaris stay one entry.
+- How to charge each Bond, on the adventurer sheet. The sheet's Bonds rows swap
+  their free-text field for the same Bond-type picker the creation wizard uses,
+  and print the book's charge condition — both of them, for two-sided Bonds like
+  Mentor/Mentee — under the row. "Something else…" keeps the free-text field for
+  a Bond the book never named; bonds already carrying such text keep it and open
+  in that mode.
 
 ## [0.20.0] - 2026-08-16
 

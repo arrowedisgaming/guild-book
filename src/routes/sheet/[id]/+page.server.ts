@@ -12,7 +12,8 @@ import {
 	getItems,
 	getConditions,
 	getAfflictions,
-	getLanguages
+	getLanguages,
+	getBondTypes
 } from '$lib/server/content/loader';
 
 /** Owner-only adventurer sheet with editing, play tracking, and exports. */
@@ -47,6 +48,7 @@ export const load: PageServerLoad = async (event) => {
 			conditions: getConditions(),
 			afflictions: getAfflictions(),
 			languages: getLanguages(),
+			bondTypes: getBondTypes(),
 			encumbrance: pack.encumbrance,
 			motifCount: pack.creation.motifCount,
 			resolveMax: pack.creation.startingResolve

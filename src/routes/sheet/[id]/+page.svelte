@@ -6,6 +6,7 @@
 	import StatusPanel from '$lib/components/character/edit/StatusPanel.svelte';
 	import StoryEdit from '$lib/components/character/edit/StoryEdit.svelte';
 	import TalentsEdit from '$lib/components/character/edit/TalentsEdit.svelte';
+	import LanguagesEdit from '$lib/components/character/edit/LanguagesEdit.svelte';
 	import GearEdit from '$lib/components/character/edit/GearEdit.svelte';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
@@ -139,6 +140,10 @@
 		<section class="edit-section">
 			<h2>Talents</h2>
 			<TalentsEdit bind:char talents={data.content.talents} onChange={onEditChange} />
+		</section>
+		<section class="edit-section">
+			<h2>Languages</h2>
+			<LanguagesEdit bind:char languages={data.content.languages} onChange={onEditChange} />
 		</section>
 		<section class="edit-section">
 			<h2>Gear</h2>

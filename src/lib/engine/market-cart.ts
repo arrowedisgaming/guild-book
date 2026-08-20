@@ -92,6 +92,28 @@ export function tierPicks(
 	return picks;
 }
 
+/**
+ * Whether one more pick of `def` is allowed under the creation allowance.
+ * `cap` is the tier's allowance (null = unlimited, e.g. impoverished).
+ *
+ * A talent's required item is impoverished FOR YOU, so it never counts against
+ * its tier's allowance — but that buys the copy the talent needs, not an
+ * endless stack. One pick is still one pick, which is what stops a required
+ * LUXURIOUS item (the archwood wand, the alchemy kit, iron armour) from being
+ * stepped up without limit while the tier counter sits at 0.
+ */
+export function canPick(
+	cart: MarketCart,
+	items: readonly ItemDefinition[],
+	def: ItemDefinition,
+	cap: number | null,
+	exempt: ReadonlySet<string>
+): boolean {
+	if (cap === null) return true; // the tier is unlimited by the content pack
+	if (exempt.has(def.id)) return (cart.get(def.id) ?? 0) < stepSize(def);
+	return tierPicks(cart, items, def.tier, exempt) < cap;
+}
+
 /** One entry per taken item carrying the aggregate quantity — `slotsFor`
  * already does the stack math, so splitting into per-copy entries would only
  * lose information. Placement is left to `autoPlace`. Content-pack order. */

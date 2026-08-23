@@ -31,10 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   limit of its own, so the archwood wand, the alchemy kit and iron armour each
   had the one "+" on the market with no cap, and an adventurer could leave
   creation carrying seven wands while the luxurious counter still read 0 / 1.
-  The exemption now buys the copy the talent needs and no more: one pick, or
-  one full stack for a stackable. It still does not spend your luxurious
-  allowance, and the sheet's own gear editor is unchanged — gear found in play
-  was never meant to be capped.
+  For luxurious items the exemption now buys the copy the talent needs and no
+  more: one pick, or one full stack for a stackable. Common and impoverished
+  required items stay unlimited, exactly as the book says, the exemption still
+  does not spend your luxurious allowance, and the sheet's own gear editor is
+  unchanged — gear found in play was never meant to be capped.
 
 ## [0.20.0] - 2026-08-16
 

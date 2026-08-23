@@ -203,18 +203,25 @@ describe('canPick', () => {
 	 * without end while the luxurious counter sat at 0/1. The exemption buys
 	 * the copy the talent needs; the second pick is still a second pick.
 	 */
-	it('gives a talent-required item one pick, not an endless stack', () => {
+	it('gives a required luxurious item one pick, not an endless stack', () => {
 		const required = new Set(['archwood-wand']);
 		const wand = def('archwood-wand')!;
 		expect(canPick(new Map(), items, wand, LUX_CAP, required)).toBe(true);
 		expect(canPick(new Map([['archwood-wand', 1]]), items, wand, LUX_CAP, required)).toBe(false);
 	});
 
-	it('measures a required stackable by its stack, not by its units', () => {
-		const required = new Set(['lockpicks']);
-		const picks = def('lockpicks')!; // 6 per stack
-		expect(canPick(new Map([['lockpicks', 5]]), items, picks, 5, required)).toBe(true);
-		expect(canPick(new Map([['lockpicks', 6]]), items, picks, 5, required)).toBe(false);
+	/**
+	 * Outside the luxurious tier the book's rule holds verbatim: required items
+	 * "count as impoverished items for you… You can have as many as you want."
+	 * An alchemist stocks hermetic bottles (common) without limit, and the tier
+	 * grids hide required items, so this is the only stepper that can sell them.
+	 */
+	it('leaves a required common item unlimited, as the book says', () => {
+		const required = new Set(['hermetic-bottle', 'lockpicks']);
+		const bottle = def('hermetic-bottle')!;
+		const picks = def('lockpicks')!; // common, 6 per stack
+		expect(canPick(new Map([['hermetic-bottle', 7]]), items, bottle, 5, required)).toBe(true);
+		expect(canPick(new Map([['lockpicks', 12]]), items, picks, 5, required)).toBe(true);
 	});
 
 	it('keeps the required item OUT of the tier count, so the allowance is still yours', () => {

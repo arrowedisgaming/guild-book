@@ -107,7 +107,8 @@
 		return findBondType(bondTypes, text)?.label ?? '';
 	}
 
-	function setBondType(i: number, value: string) {
+	function setBondType(i: number, select: HTMLSelectElement) {
+		const value = select.value;
 		if (value === CUSTOM_BOND) {
 			customBondRow = i;
 			// Leaving a pack type clears its label so the row starts blank; text
@@ -117,8 +118,18 @@
 			}
 		} else {
 			if (customBondRow === i) customBondRow = null;
-			char.bonds[i] = { ...char.bonds[i], text: value };
+			// The placeholder never destroys the player's own words: a custom
+			// row stays custom, and only a pack label resets to blank. Picking
+			// a pack type always writes its label.
+			if (value !== '' || findBondType(bondTypes, char.bonds[i].text)) {
+				char.bonds[i] = { ...char.bonds[i], text: value };
+			}
 		}
+		// Reflect the accepted state back into the DOM. When a change is
+		// rejected (the placeholder on a custom row) the derived value does not
+		// change, so Svelte has nothing to re-render and the select would stay
+		// where the user left it.
+		select.value = bondTypeValue(char.bonds[i].text, i);
 		onChange();
 	}
 
@@ -128,7 +139,13 @@
 	}
 	function removeBond(i: number) {
 		char.bonds = char.bonds.filter((_, idx) => idx !== i);
-		customBondRow = null; // the open row just shifted out from under the index
+		// Keep the open custom row pointing at the same bond: rows above the
+		// removal shift down one, the removed row itself has no state to keep,
+		// and rows below it are untouched.
+		if (customBondRow !== null) {
+			if (customBondRow === i) customBondRow = null;
+			else if (customBondRow > i) customBondRow -= 1;
+		}
 		onChange();
 	}
 
@@ -219,7 +236,7 @@
 					class="btype"
 					aria-label="Bond type"
 					value={typeValue}
-					onchange={(e) => setBondType(i, e.currentTarget.value)}
+					onchange={(e) => setBondType(i, e.currentTarget)}
 				>
 					<option value="">Bond type…</option>
 					{#each bondTypes as t (t.id)}

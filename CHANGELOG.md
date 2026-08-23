@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and print the book's charge condition — both of them, for two-sided Bonds like
   Mentor/Mentee — under the row. "Something else…" keeps the free-text field for
   a Bond the book never named; bonds already carrying such text keep it and open
-  in that mode.
+  in that mode, and a stray landing on the "Bond type…" placeholder never clears
+  a bond written in the player's own words.
 
 ### Fixed
 

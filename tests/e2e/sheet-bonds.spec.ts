@@ -14,15 +14,21 @@ test('a bond on the sheet shows the book’s charge conditions', async ({ page }
 
 	await page.goto(`/sheet/${id}`);
 
-	// The status panel saves on a debounce; each step waits for its own PUT so
-	// the reloads below read what the server actually stored.
-	const saved = () =>
-		page.waitForResponse(
-			(res) =>
-				res.url().includes(`/api/characters/${id}`) &&
-				res.request().method() === 'PUT' &&
-				res.ok()
-		);
+	// The status panel saves on a debounce and resyncs `char` from the server
+	// after every PUT. Each wait is registered BEFORE the change that schedules
+	// its save (a listener added later can miss a fast PUT) and matches on the
+	// request payload, so an earlier field's save is never mistaken for the one
+	// under test. Each group awaits its save before the next change so the
+	// post-save resync has nothing of ours to clobber.
+	const savedWith = (match: (bond: { text: string }) => boolean) =>
+		page.waitForResponse((res) => {
+			if (!res.url().includes(`/api/characters/${id}`)) return false;
+			if (res.request().method() !== 'PUT' || !res.ok()) return false;
+			const body = res.request().postDataJSON() as {
+				character: { bonds: { text: string }[] };
+			};
+			return body.character.bonds.some(match);
+		});
 
 	await page.getByPlaceholder("Guild-mate's name").fill('Grendel');
 	await page.getByRole('button', { name: 'Add bond' }).click();
@@ -30,25 +36,35 @@ test('a bond on the sheet shows the book’s charge conditions', async ({ page }
 	const bondType = page.getByLabel('Bond type');
 	await expect(bondType).toHaveValue('');
 
+	let pending = savedWith((b) => b.text === 'Rival');
 	await bondType.selectOption('Rival');
 	await expect(page.getByText('Charge this Bond when you witness your rival succeed on a test of fate.')).toBeVisible();
+	await pending;
 
 	// A two-sided Bond quotes both halves, not just the first.
+	pending = savedWith((b) => b.text === 'Mentor/Mentee');
 	await bondType.selectOption('Mentor/Mentee');
 	await expect(page.getByText('Mentees charge this Bond when they ask the mentor for advice and it is given.')).toBeVisible();
 	await expect(page.getByText('Mentors charge this Bond when a mentee follows their advice.')).toBeVisible();
 
 	// The choice and its charge lines survive a reload.
-	await saved();
+	await pending;
 	await page.reload();
 	await expect(page.getByLabel('Bond type')).toHaveValue('Mentor/Mentee');
 	await expect(page.getByText('Mentors charge this Bond when a mentee follows their advice.')).toBeVisible();
 
 	// A bond in the player's own words keeps its text and offers no charge line.
+	pending = savedWith((b) => b.text === 'drinking buddies');
 	await page.getByLabel('Bond type').selectOption({ label: 'Something else…' });
 	await page.getByLabel('Bond in your own words').fill('drinking buddies');
-	await saved();
+	await pending;
 	await page.reload();
 	await expect(page.getByLabel('Bond in your own words')).toHaveValue('drinking buddies');
 	await expect(page.getByText(/charge this Bond/i)).toHaveCount(0);
+
+	// Landing on the placeholder never destroys the player's own words: the
+	// text stays, and the select snaps back to custom mode.
+	await page.getByLabel('Bond type').selectOption({ label: 'Bond type…' });
+	await expect(page.getByLabel('Bond in your own words')).toHaveValue('drinking buddies');
+	await expect(page.getByLabel('Bond type')).toHaveValue('__custom__');
 });

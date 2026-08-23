@@ -14,10 +14,17 @@
 	let { data }: { data: PageData } = $props();
 
 	// Local working copy, seeded once — the $effect below re-syncs it whenever
-	// the server copy changes (post-save invalidateAll, or a 409 refetch).
+	// the server copy changes (a 409 refetch, or an edit made elsewhere).
 	let char = $state<GuildBookCharacterData>(untrack(() => structuredClone(data.character)));
 	let serverVersion = $state(untrack(() => data.version));
 	$effect(() => {
+		// A successful save already advanced serverVersion before invalidateAll
+		// ran, so the reload that follows our own PUT arrives carrying the very
+		// version we just wrote. Re-seeding char from it would throw away any
+		// edit made during the save's round trip (the next debounced save would
+		// then persist the rolled-back copy) — only a genuinely newer server
+		// copy is worth taking.
+		if (data.version === untrack(() => serverVersion)) return;
 		char = structuredClone(data.character);
 		serverVersion = data.version;
 	});

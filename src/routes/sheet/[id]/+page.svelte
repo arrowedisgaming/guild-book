@@ -17,14 +17,21 @@
 	// the server copy changes (a 409 refetch, or an edit made elsewhere).
 	let char = $state<GuildBookCharacterData>(untrack(() => structuredClone(data.character)));
 	let serverVersion = $state(untrack(() => data.version));
+	let syncedId = $state(untrack(() => data.id));
 	$effect(() => {
 		// A successful save already advanced serverVersion before invalidateAll
 		// ran, so the reload that follows our own PUT arrives carrying the very
 		// version we just wrote. Re-seeding char from it would throw away any
 		// edit made during the save's round trip (the next debounced save would
 		// then persist the rolled-back copy) — only a genuinely newer server
-		// copy is worth taking.
-		if (data.version === untrack(() => serverVersion)) return;
+		// copy is worth taking. The id check is not optional: SvelteKit reuses
+		// this component when only the [id] param changes, and two characters
+		// can share a version number — without it, char would keep the previous
+		// adventurer and the next save would write them over the new one.
+		if (data.id === untrack(() => syncedId) && data.version === untrack(() => serverVersion)) {
+			return;
+		}
+		syncedId = data.id;
 		char = structuredClone(data.character);
 		serverVersion = data.version;
 	});
@@ -54,6 +61,10 @@
 			}
 			if (res.status === 409) {
 				saveError = 'This adventurer changed elsewhere — reloading the latest version.';
+				// Force the resync guard to take the refetched copy even when a
+				// concurrent save of ours already advanced serverVersion to the
+				// same number — a 409 always means our local copy is stale.
+				serverVersion = -1;
 				await invalidateAll();
 				return false;
 			}

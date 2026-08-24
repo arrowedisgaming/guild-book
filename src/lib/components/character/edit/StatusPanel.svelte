@@ -41,6 +41,16 @@
 	// open while it is still empty. Only one row is ever being typed into.
 	let customBondRow = $state<number | null>(null);
 
+	// When the working copy is replaced wholesale — Cancel, a 409 refetch, or
+	// navigating to another adventurer — the open row's index points at rows
+	// that no longer exist and must not force a restored bond into custom mode.
+	// Reading only the top-level reference means in-place edits (our own bond
+	// mutations) never reset it.
+	$effect(() => {
+		void char;
+		customBondRow = null;
+	});
+
 	const choices = $derived(woundOptions(char, itemIndex));
 
 	function toggleCondition(id: string) {

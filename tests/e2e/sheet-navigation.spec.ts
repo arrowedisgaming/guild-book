@@ -32,8 +32,26 @@ test('navigating between same-version sheets never crosses their data', async ({
 		a.setAttribute('data-testid', 'next-sheet');
 		document.querySelector('main')?.appendChild(a);
 	}, two.id);
-	await page.getByTestId('next-sheet').click();
+
+	// An edit whose debounce is still pending when the user navigates away is
+	// flushed to the adventurer being LEFT — it must neither be dropped nor
+	// fire later against the next adventurer's id.
+	const flushedToOne = page.waitForResponse((res) => {
+		if (!res.url().includes(`/api/characters/${one.id}`)) return false;
+		if (res.request().method() !== 'PUT' || !res.ok()) return false;
+		const body = res.request().postDataJSON() as {
+			character: { name: string; bonds: { targetName: string }[] };
+		};
+		return (
+			body.character.name === 'Navi One' &&
+			body.character.bonds.some((b) => b.targetName === 'Left Behind')
+		);
+	});
+	await page.getByPlaceholder("Guild-mate's name").fill('Left Behind');
+	await page.getByRole('button', { name: 'Add bond' }).click();
+	await page.getByTestId('next-sheet').click(); // well inside the 600ms debounce
 	await expect(page.getByRole('heading', { name: 'Navi Two' })).toBeVisible();
+	await flushedToOne;
 
 	// An edit on the second sheet must save the SECOND adventurer's data. With
 	// a stale working copy this PUT would carry 'Navi One' wholesale, so the
@@ -61,5 +79,5 @@ test('navigating between same-version sheets never crosses their data', async ({
 	await expect(page.getByLabel("Guild-mate's name")).toHaveValue('Grendel');
 	await page.goto(`/sheet/${one.id}`);
 	await expect(page.getByRole('heading', { name: 'Navi One' })).toBeVisible();
-	await expect(page.getByLabel("Guild-mate's name")).toHaveCount(0);
+	await expect(page.getByLabel("Guild-mate's name")).toHaveValue('Left Behind');
 });

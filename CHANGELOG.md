@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An edit made while the sheet's auto-save was still in flight could be
+  silently rolled back when that save landed, and a debounced auto-save still
+  pending when you left the page was dropped. The sheet now keeps in-flight
+  edits through its own save echo, flushes a pending save to the adventurer
+  being left before navigating (surviving reloads and tab closes), re-seeds
+  only from a genuinely newer server copy — keyed to the adventurer, so moving
+  between two sheets can never write one over the other — and always reloads
+  after an edit conflict.
 - A luxurious item required by one of your talents could be stacked without
   limit during creation. Required items are exempt from their tier's market
   allowance — they are impoverished *for you* — but the exemption carried no

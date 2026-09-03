@@ -5,6 +5,7 @@
 	import { ITEM_TIERS, type ItemTier } from '$lib/types/common';
 	import { autoPlace, loadSummary, indexItems } from '$lib/engine/encumbrance';
 	import {
+		canPick,
 		cartFromEntries,
 		cartToEntries,
 		stepCart,
@@ -68,11 +69,11 @@
 	function countInTier(tier: ItemTier): number {
 		return tierPicks(cart, data.items, tier, requiredItemIds);
 	}
-	/** True when one more pick of this item would break the tier allowance. */
-	function atCap(tier: ItemTier, itemId: string): boolean {
-		const cap = tierCaps[tier];
-		if (cap === null || requiredItemIds.has(itemId)) return false;
-		return countInTier(tier) >= cap;
+	/** True when one more pick of this item would break the creation allowance. */
+	function atCap(itemId: string): boolean {
+		const def = itemIndex.get(itemId);
+		if (!def) return false;
+		return !canPick(cart, data.items, def, tierCaps[def.tier], requiredItemIds);
 	}
 	// .pick button elements, keyed by item id — so removing the last unit can
 	// return focus to the card instead of dropping it to <body> when the .qty
@@ -172,7 +173,7 @@
 						<div class="qty">
 							<button type="button" onclick={() => step(item.id, -1)} aria-label={`Remove one ${item.name}`}>−</button>
 							<span class="qnum" aria-live="polite">{quantityLabel(item.id)}</span>
-							<button type="button" onclick={() => step(item.id, 1)} aria-label={`Add another ${item.name}`}>+</button>
+							<button type="button" disabled={atCap(item.id)} onclick={() => step(item.id, 1)} aria-label={`Add another ${item.name}`}>+</button>
 						</div>
 					{/if}
 				</div>
@@ -199,7 +200,7 @@
 		<div class="grid">
 			{#each itemsByTier(tier) as item (item.id)}
 				{@const taken = cart.has(item.id)}
-				{@const full = atCap(tier, item.id)}
+				{@const full = atCap(item.id)}
 				<div class="item" class:sel={taken} class:focused={detailItemId === item.id} class:disabled={full && !taken}>
 					<button
 						type="button"

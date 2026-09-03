@@ -8,6 +8,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-03
+
+### Added
+
+- Languages on the adventurer sheet: the Edit view gains a Languages section
+  that lists the tongues already known, offers a dropdown of the pack languages
+  the adventurer has *not* learned (with the language's opening description
+  under the picker), and accepts a hand-typed language for dialects and cants
+  the book does not name. Duplicates are refused case-insensitively, so a
+  hand-typed "vulgaris" and the pack's Vulgaris stay one entry.
+- How to charge each Bond, on the adventurer sheet. The sheet's Bonds rows swap
+  their free-text field for the same Bond-type picker the creation wizard uses,
+  and print the book's charge condition — both of them, for two-sided Bonds like
+  Mentor/Mentee — under the row. "Something else…" keeps the free-text field for
+  a Bond the book never named; bonds already carrying such text keep it and open
+  in that mode, and a stray landing on the "Bond type…" placeholder never clears
+  a bond written in the player's own words.
+
+### Fixed
+
+- An edit made while the sheet's auto-save was still in flight could be
+  silently rolled back when that save landed, and a debounced auto-save still
+  pending when you left the page was dropped. The sheet now keeps in-flight
+  edits through its own save echo, flushes a pending save to the adventurer
+  being left before navigating (surviving reloads and tab closes), re-seeds
+  only from a genuinely newer server copy — keyed to the adventurer, so moving
+  between two sheets can never write one over the other — and always reloads
+  after an edit conflict.
+- A luxurious item required by one of your talents could be stacked without
+  limit during creation. Required items are exempt from their tier's market
+  allowance — they are impoverished *for you* — but the exemption carried no
+  limit of its own, so the archwood wand, the alchemy kit and iron armour each
+  had the one "+" on the market with no cap, and an adventurer could leave
+  creation carrying seven wands while the luxurious counter still read 0 / 1.
+  For luxurious items the exemption now buys the copy the talent needs and no
+  more: one pick, or one full stack for a stackable. Common and impoverished
+  required items stay unlimited, exactly as the book says, the exemption still
+  does not spend your luxurious allowance, and the sheet's own gear editor is
+  unchanged — gear found in play was never meant to be capped.
+
 ## [0.20.0] - 2026-08-16
 
 ### Added

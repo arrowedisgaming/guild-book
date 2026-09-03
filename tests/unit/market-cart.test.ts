@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	stepSize,
+	canPick,
 	cartFromEntries,
 	stepCart,
 	tierPicks,
@@ -180,6 +181,54 @@ describe('tierPicks', () => {
 	it('exempts talent-required items entirely', () => {
 		const cart = new Map([['lockpicks', 18]]);
 		expect(tierPicks(cart, items, 'common', new Set(['lockpicks']))).toBe(0);
+	});
+});
+
+describe('canPick', () => {
+	const LUX_CAP = 1; // the shipped pack's luxurious allowance
+
+	it('allows the first pick in a tier and refuses the second', () => {
+		expect(canPick(new Map(), items, def('lantern')!, LUX_CAP, NONE)).toBe(true);
+		expect(canPick(new Map([['lantern', 1]]), items, def('spyglass')!, LUX_CAP, NONE)).toBe(false);
+	});
+
+	it('never limits a tier the pack leaves uncapped', () => {
+		expect(canPick(new Map([['rope', 9]]), items, def('rope')!, null, NONE)).toBe(true);
+	});
+
+	/**
+	 * The bug this rule exists for: a talent's required item is exempt from the
+	 * TIER allowance ("impoverished for you"), and the exemption used to carry
+	 * no limit of its own — so a required LUXURIOUS item could be stepped up
+	 * without end while the luxurious counter sat at 0/1. The exemption buys
+	 * the copy the talent needs; the second pick is still a second pick.
+	 */
+	it('gives a required luxurious item one pick, not an endless stack', () => {
+		const required = new Set(['archwood-wand']);
+		const wand = def('archwood-wand')!;
+		expect(canPick(new Map(), items, wand, LUX_CAP, required)).toBe(true);
+		expect(canPick(new Map([['archwood-wand', 1]]), items, wand, LUX_CAP, required)).toBe(false);
+	});
+
+	/**
+	 * Outside the luxurious tier the book's rule holds verbatim: required items
+	 * "count as impoverished items for you… You can have as many as you want."
+	 * An alchemist stocks hermetic bottles (common) without limit, and the tier
+	 * grids hide required items, so this is the only stepper that can sell them.
+	 */
+	it('leaves a required common item unlimited, as the book says', () => {
+		const required = new Set(['hermetic-bottle', 'lockpicks']);
+		const bottle = def('hermetic-bottle')!;
+		const picks = def('lockpicks')!; // common, 6 per stack
+		expect(canPick(new Map([['hermetic-bottle', 7]]), items, bottle, 5, required)).toBe(true);
+		expect(canPick(new Map([['lockpicks', 12]]), items, picks, 5, required)).toBe(true);
+	});
+
+	it('keeps the required item OUT of the tier count, so the allowance is still yours', () => {
+		const required = new Set(['archwood-wand']);
+		const cart = new Map([['archwood-wand', 1]]);
+		expect(tierPicks(cart, items, 'luxurious', required)).toBe(0);
+		expect(canPick(cart, items, def('lantern')!, LUX_CAP, required)).toBe(true);
 	});
 });
 

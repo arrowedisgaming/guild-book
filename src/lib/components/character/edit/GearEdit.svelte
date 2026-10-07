@@ -103,7 +103,7 @@
 				{#if destroyed}<span class="dead">Destroyed</span>{/if}
 			</span>
 			<select value={e.location} onchange={(ev) => setLocation(i, ev.currentTarget.value as CarryLocation)}>
-				{#each LOCATIONS as l (l.id)}
+				{#each LOCATIONS.filter(l => !e.spellComponent || l.id !== 'worn') as l (l.id)}
 					<option value={l.id}>{l.label}</option>
 				{/each}
 			</select>

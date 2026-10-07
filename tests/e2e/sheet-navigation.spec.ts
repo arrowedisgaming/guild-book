@@ -18,6 +18,11 @@ test('navigating between same-version sheets never crosses their data', async ({
 	await signInAs(page, 'Navigator');
 	const one = await createTestAdventurer(page, 'Navi One');
 	const two = await createTestAdventurer(page, 'Navi Two');
+	// Hold the destination load briefly so the flushed save can finish while navigation is pending.
+	await page.route(`**/sheet/${two.id}/__data.json*`, async route => {
+		await new Promise(resolve => setTimeout(resolve, 200));
+		await route.continue();
+	});
 	expect(one.version).toBe(two.version); // the premise the id guard exists for
 
 	await page.goto(`/sheet/${one.id}`);
@@ -80,4 +85,63 @@ test('navigating between same-version sheets never crosses their data', async ({
 	await page.goto(`/sheet/${one.id}`);
 	await expect(page.getByRole('heading', { name: 'Navi One' })).toBeVisible();
 	await expect(page.getByLabel("Guild-mate's name")).toHaveValue('Left Behind');
+});
+
+/**
+ * An XP action's own save (not a debounced status edit) already has a fetch
+ * in flight the moment its button is clicked. Navigating away mid-request
+ * must not lose it or let its response touch the adventurer navigated to.
+ */
+test('an in-flight XP save is not lost or misdirected by navigating away mid-request', async ({ page }) => {
+	await signInAs(page, 'Wanderer');
+	const one = await createTestAdventurer(page, 'Wanders One');
+	const two = await createTestAdventurer(page, 'Wanders Two');
+
+	// Hold the first adventurer's PUT open briefly so navigation can happen
+	// while the XP action's own request is still in flight.
+	await page.route(`**/api/characters/${one.id}`, async (route) => {
+		if (route.request().method() === 'PUT') await new Promise((resolve) => setTimeout(resolve, 300));
+		await route.continue();
+	});
+
+	await page.goto(`/sheet/${one.id}`);
+	await expect(page.getByRole('heading', { name: 'Wanders One' })).toBeVisible();
+
+	await page.evaluate((id) => {
+		const a = document.createElement('a');
+		a.href = `/sheet/${id}`;
+		a.textContent = 'next sheet';
+		a.setAttribute('data-testid', 'next-sheet');
+		document.querySelector('main')?.appendChild(a);
+	}, two.id);
+
+	const savedToOne = page.waitForResponse((res) => {
+		if (!res.url().includes(`/api/characters/${one.id}`)) return false;
+		if (res.request().method() !== 'PUT' || !res.ok()) return false;
+		const body = res.request().postDataJSON() as {
+			character: { name: string; xpLedger: { entries: { reason: string }[] } };
+		};
+		return (
+			body.character.name === 'Wanders One' &&
+			body.character.xpLedger.entries.some((e) => e.reason === 'Recorded mid-navigation')
+		);
+	});
+
+	const xp = page.getByRole('region', { name: 'Experience' });
+	await xp.locator('summary').first().click(); // the section is collapsed by default
+	await xp.getByLabel('XP source').selectOption('quest-accepted');
+	await xp.getByLabel('Reason').fill('Recorded mid-navigation');
+	await xp.getByRole('button', { name: 'Record XP' }).click();
+	await page.getByTestId('next-sheet').click(); // navigate away while the delayed PUT above is still in flight
+	await expect(page.getByRole('heading', { name: 'Wanders Two' })).toBeVisible();
+	await savedToOne;
+
+	// The award landed on the adventurer that recorded it, not the one
+	// navigated to, and survives a cold load.
+	await expect(page.getByRole('region', { name: 'Experience' }).getByText('Available XP: 0', { exact: true })).toBeVisible();
+	await page.goto(`/sheet/${one.id}`);
+	await expect(page.getByRole('heading', { name: 'Wanders One' })).toBeVisible();
+	const xpOne = page.getByRole('region', { name: 'Experience' });
+	await xpOne.locator('summary').first().click();
+	await expect(xpOne.getByText('Recorded mid-navigation', { exact: true })).toBeVisible();
 });

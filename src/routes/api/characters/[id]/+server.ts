@@ -4,10 +4,10 @@ import { getDb } from '$lib/server/db';
 import { characters } from '$lib/server/db/schema';
 import { ensureUser } from '$lib/server/auth';
 import { eq, and } from 'drizzle-orm';
-import type { GuildBookCharacterData } from '$lib/types/character';
+import { CHARACTER_SCHEMA_VERSION, type GuildBookCharacterData } from '$lib/types/character';
 import { updateCharacterSchema } from '$lib/schemas/character.schema';
 import { migrateCharacterData } from '$lib/engine/character-migration';
-import { validateFinalCharacter } from '$lib/server/validation/character';
+import { validateFinalCharacter, validateCharacterPlayState } from '$lib/server/validation/character';
 import { mutateCharacterMetadata, saveWholeCharacter } from '$lib/server/character/versioned-write';
 
 /** GET /api/characters/:id — full adventurer (migrated on read). */
@@ -43,6 +43,10 @@ export const PUT: RequestHandler = async (event) => {
 	} catch {
 		throw error(400, 'Request body is not valid JSON');
 	}
+	const supplied = (rawBody as { character?: { schemaVersion?: unknown } } | null)?.character;
+	if (supplied && supplied.schemaVersion !== CHARACTER_SCHEMA_VERSION) {
+		return json({ message: 'Character format has changed — reload the adventurer before saving.' }, { status: 409 });
+	}
 	const parsed = updateCharacterSchema.safeParse(rawBody);
 	if (!parsed.success) {
 		throw error(400, `Invalid character data: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
@@ -57,17 +61,21 @@ export const PUT: RequestHandler = async (event) => {
 	}
 
 	const existing = await db
-		.select({ id: characters.id, version: characters.version, updatedAt: characters.updatedAt })
+		.select({ id: characters.id, version: characters.version, updatedAt: characters.updatedAt, data: characters.data })
 		.from(characters)
 		.where(and(eq(characters.id, event.params.id), eq(characters.userId, userId)))
 		.get();
 
 	if (!existing) throw error(404, 'Adventurer not found');
 
+	// A stale write is a conflict, not a bad request: checked before the play
+	// state is replayed against the newer stored copy, which would otherwise
+	// report a 400 "history rewritten" the client can't recover from by retry.
+	// The atomic version claim below still catches races after this point.
 	let expectedVersion = parsed.data.expectedVersion;
 	if (
-		expectedVersion === undefined &&
-		existing.updatedAt.getTime() !== parsed.data.expectedUpdatedAt
+		(expectedVersion !== undefined && expectedVersion !== existing.version) ||
+		(expectedVersion === undefined && existing.updatedAt.getTime() !== parsed.data.expectedUpdatedAt)
 	) {
 		return json(
 			{
@@ -78,6 +86,9 @@ export const PUT: RequestHandler = async (event) => {
 		);
 	}
 	expectedVersion ??= existing.version;
+
+	const playCheck = validateCharacterPlayState(char, migrateCharacterData(JSON.parse(existing.data)));
+	if (!playCheck.valid) throw error(400, playCheck.errors.join('; '));
 
 	const result = await saveWholeCharacter(db, {
 		characterId: event.params.id,

@@ -33,7 +33,7 @@ function spareLocation(def: ItemDefinition | undefined): CarryLocation {
  */
 export function slotsFor(entry: EquipmentEntry, def: ItemDefinition | undefined): number {
 	const baseSlots = def?.slots ?? entry.packSpace ?? 1;
-	if (entry.location === 'worn') {
+	if (entry.location === 'worn' && !entry.spellComponent) {
 		// Worn armor bills its belt slots for the one suit actually worn, plus
 		// its base slots for each spare riding along on the same entry.
 		// Clothing and helms (no wornBeltSlots) stay free no matter the quantity.
@@ -75,6 +75,11 @@ export function loadSummary(
 
 	for (const entry of entries) {
 		const def = entry.itemId ? items.get(entry.itemId) : undefined;
+		if (entry.spellComponent && entry.location === 'worn') {
+			pack += slotsFor(entry, undefined);
+			violations.push({ entry, reason: 'Spell components must be carried in your pack, belt, or hand.' });
+			continue;
+		}
 		switch (entry.location) {
 			case 'hand':
 				hands += slotsFor(entry, def);

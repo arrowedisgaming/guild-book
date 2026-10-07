@@ -60,7 +60,7 @@ export function buildDocDefinition(view: CharacterView) {
 	if (view.talents.length) {
 		content.push(band('Talents'), {
 			ul: view.talents.map(
-				(t) => `${t.name} (${t.state}${t.wounded ? ' — WOUNDED' : ''})`
+				(t) => `${t.name} (${t.state}${t.state === 'in-training' ? ` · ${t.xp}/${view.masteryXp} XP` : ''}${t.wounded ? ' — WOUNDED' : ''})`
 			),
 			style: 'body'
 		});
@@ -70,6 +70,7 @@ export function buildDocDefinition(view: CharacterView) {
 			ul: view.equipment.map(
 				(e) =>
 					`${e.name}${e.quantity > 1 ? ` ×${e.quantity}` : ''} — ${e.location}` +
+					(e.spellComponent ? ` · ${e.spellComponent.spellName || 'Spell component'}${e.spellComponent.notes ? ` — ${e.spellComponent.notes}` : ''}` : '') +
 					(e.durability ? `, ${e.notchesTaken}/${e.durability} notches` : '') +
 					(e.destroyed ? ' (DESTROYED)' : '')
 			),
@@ -88,6 +89,7 @@ export function buildDocDefinition(view: CharacterView) {
 	}
 
 	const footerBits = [
+		`Available XP: ${view.experience}`,
 		`Resolve ${view.resolve.current}/${view.resolve.max}`,
 		`Lore bids ${view.lore}/4`,
 		view.languages.length ? `Languages: ${view.languages.join(', ')}` : '',

@@ -31,6 +31,28 @@ export interface GuildBookContentPack {
 	creation: CreationRules;
 	/** Carrying-capacity model (slots per location). */
 	encumbrance: EncumbranceConfig;
+	advancement: AdvancementConfig;
+	sorcery: SorceryConfig;
+}
+
+export interface AdvancementAward {
+	id: string;
+	label: string;
+	amount: number | null;
+	ruleEntryId: string;
+	reminder: string;
+}
+
+export interface AdvancementConfig {
+	masteryXp: number;
+	pathUseXp: number;
+	cityTrainingGoldPerXp: number;
+	awards: AdvancementAward[];
+}
+
+export interface SorceryConfig {
+	componentSlots: number;
+	componentDefaultTier: ItemTier;
 }
 
 /** Slot capacities for the three carrying locations. */

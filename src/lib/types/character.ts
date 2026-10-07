@@ -2,7 +2,7 @@ import type { SuitId, ItemTier, TalentState } from './common';
 import { SUIT_IDS } from './common';
 
 /** Schema version for character-data migration (migrate-on-read). */
-export const CHARACTER_SCHEMA_VERSION = 3;
+export const CHARACTER_SCHEMA_VERSION = 5;
 
 /** Canonical living/dead state stored in the character document. */
 export type CharacterLife =
@@ -44,6 +44,8 @@ export interface TalentAllocation {
 	wounded: boolean;
 	/** XP invested in an in-training talent (masters at 7). */
 	xp: number;
+	/** Remaining prepared uses; null means a migrated legacy count is unknown. */
+	preparedUses: number | null;
 }
 
 /** A bond with a named guild-mate. Charged bonds are the healing currency. */
@@ -72,6 +74,32 @@ export interface EquipmentEntry {
 	quantity: number;
 	/** Damage notches taken; at the item's durability the item is Destroyed. */
 	notchesTaken: number;
+	spellComponent?: { spellId: string | null; spellName: string; notes: string };
+}
+
+export interface XpTalentSnapshot {
+	xp: number;
+	state: TalentState;
+	preparedUses: number | null;
+}
+
+export interface XpEntry {
+	id: string;
+	at: string;
+	delta: number;
+	kind: 'award' | 'talent-use' | 'mentoring' | 'spend' | 'correction';
+	sourceId: string;
+	sourceLabel: string;
+	reason: string;
+	sessionLabel?: string;
+	talentId?: string;
+	talentBefore?: XpTalentSnapshot;
+	talentAfter?: XpTalentSnapshot;
+}
+
+export interface XpLedger {
+	openingBalance: number;
+	entries: XpEntry[];
 }
 
 /** A tracked affliction and its current stage (1 = mildest). */
@@ -131,6 +159,7 @@ export interface GuildBookCharacterData {
 	/** Remaining lore bids (refills to 4 at camp). */
 	lore: number;
 	experience: number;
+	xpLedger: XpLedger;
 
 	// Gear (Omphalic Market)
 	equipment: EquipmentEntry[];
@@ -172,6 +201,7 @@ export function createBlankCharacter(contentPackId = 'hmtw'): GuildBookCharacter
 		afflictions: [],
 		lore: 4,
 		experience: 0,
+		xpLedger: { openingBalance: 0, entries: [] },
 		equipment: [],
 		notes: '',
 		isDraft: true,

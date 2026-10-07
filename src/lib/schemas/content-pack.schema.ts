@@ -146,6 +146,28 @@ export const encumbranceConfigSchema = z.object({
 	packSlots: z.number()
 });
 
+export const advancementConfigSchema = z.object({
+	masteryXp: z.number().int().positive(),
+	pathUseXp: z.number().int().positive(),
+	cityTrainingGoldPerXp: z.number().int().positive(),
+	awards: z.array(z.object({
+		id: z.string().trim().min(1), label: z.string().trim().min(1),
+		amount: z.number().int().positive().nullable(), ruleEntryId: z.string().trim().min(1),
+		reminder: z.string().trim().min(1)
+	})).superRefine((awards, ctx) => {
+		const seen = new Set<string>();
+		awards.forEach((award, index) => {
+			if (seen.has(award.id)) ctx.addIssue({ code: 'custom', path: [index, 'id'], message: 'Award IDs must be unique' });
+			seen.add(award.id);
+		});
+	})
+});
+
+export const sorceryConfigSchema = z.object({
+	componentSlots: z.number().int().positive(),
+	componentDefaultTier: tierEnum
+});
+
 /** The manifest (index.json). */
 export const contentPackSchema = z.object({
 	id: z.string(),
@@ -160,7 +182,9 @@ export const contentPackSchema = z.object({
 	attributes: z.array(attributeDefinitionSchema),
 	tarot: tarotConfigSchema,
 	creation: creationRulesSchema,
-	encumbrance: encumbranceConfigSchema
+	encumbrance: encumbranceConfigSchema,
+	advancement: advancementConfigSchema,
+	sorcery: sorceryConfigSchema
 });
 
 // --- Collection files -------------------------------------------------------

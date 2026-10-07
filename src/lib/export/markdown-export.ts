@@ -39,7 +39,7 @@ export function exportToMarkdown(view: CharacterView): string {
 		.join(' · ');
 	if (ident) lines.push(`*${ident}*`, '');
 
-	lines.push('## Attributes', '');
+	lines.push(`Available XP: ${view.experience}`, '', '## Attributes', '');
 	for (const a of view.attributes) lines.push(`- **${a.name}:** ${a.value}`);
 	lines.push('');
 
@@ -51,7 +51,7 @@ export function exportToMarkdown(view: CharacterView): string {
 			'## Talents',
 			'',
 			...view.talents.map(
-				(t) => `- ${t.name} *(${t.state})*${t.wounded ? ' **WOUNDED**' : ''}`
+				(t) => `- ${t.name} *(${t.state})*${t.state === 'in-training' ? ` · ${t.xp}/${view.masteryXp} XP` : ''}${t.wounded ? ' **WOUNDED**' : ''}`
 			),
 			''
 		);
@@ -71,6 +71,7 @@ export function exportToMarkdown(view: CharacterView): string {
 			...view.equipment.map(
 				(e) =>
 					`- ${e.name}${e.quantity > 1 ? ` ×${e.quantity}` : ''} — ${e.location}` +
+					(e.spellComponent ? ` · ${e.spellComponent.spellName || 'Spell component'}${e.spellComponent.notes ? ` — ${e.spellComponent.notes}` : ''}` : '') +
 					(e.durability ? `, ${e.notchesTaken}/${e.durability} notches` : '') +
 					(e.destroyed ? ' **(destroyed)**' : '')
 			),

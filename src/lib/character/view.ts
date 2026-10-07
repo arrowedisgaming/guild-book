@@ -48,6 +48,8 @@ export function buildCharacterViewFromContent(
 
 	return {
 		name: char.name || 'Unnamed Adventurer',
+		experience: char.experience,
+		masteryXp: content.contentPack.advancement.masteryXp,
 		pronouns: char.pronouns,
 		appearance: char.appearance,
 		quest: char.quest,
@@ -79,6 +81,7 @@ export function buildCharacterViewFromContent(
 				slots: slotsFor(equipment, definition),
 				notchesTaken: equipment.notchesTaken,
 				durability,
+				...(equipment.spellComponent ? { spellComponent: { ...equipment.spellComponent } } : {}),
 				destroyed: durability !== null && equipment.notchesTaken >= durability
 			};
 		}),

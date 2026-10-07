@@ -143,6 +143,91 @@ describe('character update concurrency API', () => {
 			.get();
 		expect(JSON.parse(stored!.data).notes).toBe('winner');
 	});
+ it('rejects an obsolete schema before defaults can erase XP history', async () => {
+  const old = { ...createBlankCharacter(), schemaVersion: 3 };
+  const response = await PUT(updateEvent({ character: old, expectedVersion: 1 }));
+  expect(response.status).toBe(409);
+  expect(((await response.json()) as { message: string }).message).toMatch(/reload/i);
+ });
+ it('rejects a mismatched XP balance, even on a draft', async () => {
+  await expect(PUT(updateEvent({ character: { ...createBlankCharacter(), experience: 99 }, expectedVersion: 1 }))).rejects.toMatchObject({ status: 400 });
+ });
+ it('preserves anomalous legacy XP during unrelated edits', async () => {
+  const legacy = { ...createBlankCharacter(), schemaVersion: 3, experience: -2 };
+  await db.update(characters).set({ data: JSON.stringify(legacy) }).where(eq(characters.id, 'character-a'));
+  const { migrateCharacterData } = await import('$lib/engine/character-migration');
+  const updated = { ...migrateCharacterData(legacy), notes: 'Unrelated note' };
+  const response = await PUT(updateEvent({ character: updated, expectedVersion: 1 }));
+  expect(response.status).toBe(200);
+ });
+ it('rejects component slot tampering on draft saves', async () => {
+  const character = createBlankCharacter();
+  character.equipment.push({ itemId: null, customName: 'Ash', tier: 'impoverished', location: 'pack', packSpace: 0, quantity: 1, notchesTaken: 0, spellComponent: { spellId: null, spellName: '', notes: '' } });
+  await expect(PUT(updateEvent({ character, expectedVersion: 1 }))).rejects.toMatchObject({ status: 400 });
+ });
+
+ it('allows a documented repair while preserving another legacy talent anomaly', async () => {
+  const previous = createBlankCharacter();
+  previous.talents = ['acrobat', 'aegis'].map(talentId => ({ talentId, state: 'in-training', source: 'general', sourceLabel: 'Old sheet', at: '', wounded: false, xp: -1, preparedUses: null }));
+  await db.update(characters).set({ data: JSON.stringify(previous) }).where(eq(characters.id, 'character-a'));
+  const character = structuredClone(previous);
+  character.talents[0].xp = 0;
+  character.talents[0].preparedUses = 0;
+  character.xpLedger.entries.push({ id: 'repair', at: '2026-09-09T12:00:00Z', delta: 0, kind: 'correction', sourceId: 'correction', sourceLabel: 'Correction — Acrobat', reason: 'Repair old sheet', talentId: 'acrobat', talentBefore: { xp: -1, state: 'in-training', preparedUses: null }, talentAfter: { xp: 0, state: 'in-training', preparedUses: 0 } });
+  const response = await PUT(updateEvent({ character, expectedVersion: 1 }));
+  expect(response.status).toBe(200);
+ });
+ it('rejects newly introduced talent progress above the mastery threshold', async () => {
+  const character = createBlankCharacter();
+  character.talents.push({ talentId: 'acrobat', state: 'in-training', source: 'general', sourceLabel: 'Invalid', at: '', wounded: false, xp: 9, preparedUses: 0 });
+  await expect(PUT(updateEvent({ character, expectedVersion: 1 }))).rejects.toMatchObject({ status: 400 });
+ });
+
+ it('accepts an ordinary balanced XP award without requiring a correction', async () => {
+  const character = createBlankCharacter();
+  character.experience = 3;
+  character.xpLedger.entries.push({ id: 'award', at: '2026-09-09T12:00:00Z', delta: 3, kind: 'award', sourceId: 'quest-accepted', sourceLabel: 'Quest accepted', reason: 'Rescue the bellringer' });
+  const response = await PUT(updateEvent({ character, expectedVersion: 1 }));
+  expect(response.status).toBe(200);
+ });
+
+ it('answers a stale XP write with a recoverable 409, not a 400 history error', async () => {
+  // Another device recorded an award first; this client still holds version 1.
+  const newer = createBlankCharacter();
+  newer.experience = 3;
+  newer.xpLedger.entries.push({ id: 'elsewhere', at: '2026-09-09T12:00:00Z', delta: 3, kind: 'award', sourceId: 'quest-accepted', sourceLabel: 'Quest accepted', reason: 'Recorded on another device' });
+  await db.update(characters).set({ data: JSON.stringify(newer), version: 2 }).where(eq(characters.id, 'character-a'));
+  const stale = createBlankCharacter();
+  stale.experience = 1;
+  stale.xpLedger.entries.push({ id: 'here', at: '2026-09-09T12:01:00Z', delta: 1, kind: 'award', sourceId: 'contract-completed', sourceLabel: 'Contract completed', reason: 'Recorded here' });
+  const response = await PUT(updateEvent({ character: stale, expectedVersion: 1 }));
+  expect(response.status).toBe(409);
+ });
+
+ it('rejects a hand-crafted award that inflates the real preset amount', async () => {
+  const character = createBlankCharacter();
+  character.experience = 999;
+  character.xpLedger.entries.push({ id: 'forged', at: '2026-09-09T12:00:00Z', delta: 999, kind: 'award', sourceId: 'quest-accepted', sourceLabel: 'Quest accepted', reason: 'Rescue the bellringer' });
+  await expect(PUT(updateEvent({ character, expectedVersion: 1 }))).rejects.toMatchObject({ status: 400 });
+ });
+
+ it('accepts talent progress marked directly on the sheet', async () => {
+  const character = createBlankCharacter();
+  character.talents.push({ talentId: 'acrobat', state: 'mastered', source: 'general', sourceLabel: 'Marked on sheet', at: '', wounded: false, xp: 7, preparedUses: 0 });
+  const response = await PUT(updateEvent({ character, expectedVersion: 1 }));
+  expect(response.status).toBe(200);
+ });
+
+ it('rejects a real character-level XP action batch that rewrites earlier ledger history', async () => {
+  const withOneAward = createBlankCharacter();
+  withOneAward.experience = 3;
+  withOneAward.xpLedger.entries.push({ id: 'first', at: '2026-09-09T12:00:00Z', delta: 3, kind: 'award', sourceId: 'quest-accepted', sourceLabel: 'Quest accepted', reason: 'Rescue the bellringer' });
+  await db.update(characters).set({ data: JSON.stringify(withOneAward) }).where(eq(characters.id, 'character-a'));
+  const tampered = structuredClone(withOneAward);
+  tampered.xpLedger.entries[0] = { ...tampered.xpLedger.entries[0], reason: 'A different story entirely' };
+  await expect(PUT(updateEvent({ character: tampered, expectedVersion: 1 }))).rejects.toMatchObject({ status: 400 });
+ });
+
 });
 
 function updateEvent(body: unknown) {

@@ -7,6 +7,8 @@
  */
 export interface CharacterView {
 	name: string;
+	experience: number;
+	masteryXp: number;
 	pronouns: string;
 	appearance: string;
 	quest: string;
@@ -27,6 +29,7 @@ export interface CharacterView {
 		notchesTaken: number;
 		durability: number | null;
 		destroyed: boolean;
+		spellComponent?: { spellId: string | null; spellName: string; notes: string };
 	}[];
 	load: {
 		hands: { used: number; capacity: number; over: boolean };

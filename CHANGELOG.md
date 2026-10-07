@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-10-07
+
+### Added
+
+- Available XP and a source history on player-character sheets, in a collapsed
+  Experience section: quest, contract, carousing, and custom awards plus reasoned
+  spending and corrections. Talent progress is still marked with the +/− steppers
+  on the edit sheet, mastering at the content pack's threshold (seven invested
+  XP); existing XP and progress are preserved when opening older characters.
+- Custom spell components, optionally linked to a rulebook spell, can be recorded
+  as reusable inventory with carrying slots, descriptions, and acquisition notes.
+  XP and component details appear on shared sheets and PDF/Markdown exports;
+  XP history stays private to the owner.
+
+### Fixed
+
+- Serialize sheet saves and reconcile failed XP writes before permitting a retry,
+  preventing duplicate awards and protecting new character fields from old clients.
+
 ## [0.21.0] - 2026-09-03
 
 ### Added

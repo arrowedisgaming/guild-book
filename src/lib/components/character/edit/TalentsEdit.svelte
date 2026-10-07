@@ -7,14 +7,13 @@
 	interface Props {
 		char: GuildBookCharacterData;
 		talents: TalentDefinition[];
+		masteryXp: number;
 		onChange: () => void;
 	}
-	let { char = $bindable(), talents, onChange }: Props = $props();
+	let { char = $bindable(), talents, masteryXp, onChange }: Props = $props();
 
 	const byId = $derived(new Map(talents.map((t) => [t.id, t])));
 	let addId = $state('');
-
-	const XP_TO_MASTER = 7;
 
 	function name(id: string) {
 		return byId.get(id)?.name ?? id;
@@ -22,15 +21,20 @@
 
 	function cycleState(i: number) {
 		const t = char.talents[i];
-		char.talents[i] = { ...t, state: t.state === 'mastered' ? 'in-training' : 'mastered' };
+		if (t.state === 'mastered') {
+			// Back in training, invested XP has to sit below the mastery threshold.
+			char.talents[i] = { ...t, state: 'in-training', xp: Math.min(t.xp, masteryXp - 1) };
+		} else {
+			char.talents[i] = { ...t, state: 'mastered' };
+		}
 		onChange();
 	}
 
 	function stepXp(i: number, delta: number) {
 		const t = char.talents[i];
-		const xp = Math.max(0, t.xp + delta);
-		// Reaching 7 invested XP masters an in-training talent.
-		const state = xp >= XP_TO_MASTER && t.state === 'in-training' ? 'mastered' : t.state;
+		const xp = Math.max(0, Math.min(masteryXp, t.xp + delta));
+		// Reaching the threshold masters an in-training talent.
+		const state = xp >= masteryXp && t.state === 'in-training' ? 'mastered' : t.state;
 		char.talents[i] = { ...t, xp, state };
 		onChange();
 	}
@@ -59,7 +63,8 @@
 				sourceLabel: 'Added on sheet',
 				at: new Date().toISOString(),
 				wounded: false,
-				xp: 0
+				xp: 0,
+				preparedUses: 0
 			}
 		];
 		addId = '';
@@ -89,7 +94,7 @@
 				</button>
 				{#if t.state === 'in-training'}
 					<span class="xp">
-						XP {t.xp}/{XP_TO_MASTER}
+						XP {t.xp}/{masteryXp}
 						<button type="button" onclick={() => stepXp(i, -1)} aria-label="Remove XP">−</button>
 						<button type="button" onclick={() => stepXp(i, 1)} aria-label="Add XP">+</button>
 					</span>

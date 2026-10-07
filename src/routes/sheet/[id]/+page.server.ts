@@ -13,7 +13,9 @@ import {
 	getConditions,
 	getAfflictions,
 	getLanguages,
-	getBondTypes
+	getBondTypes,
+	getSpells,
+	getPaths
 } from '$lib/server/content/loader';
 
 /** Owner-only adventurer sheet with editing, play tracking, and exports. */
@@ -43,6 +45,10 @@ export const load: PageServerLoad = async (event) => {
 		isDraft: row.isDraft,
 		// Content the client-side editors need to render pickers and names.
 		content: {
+			advancement: pack.advancement,
+			sorcery: pack.sorcery,
+			spells: getSpells(),
+			paths: getPaths(),
 			talents: getTalents(),
 			items: getItems(),
 			conditions: getConditions(),

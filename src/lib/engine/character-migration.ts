@@ -14,7 +14,9 @@ import {
 	createBlankCharacter,
 	type GuildBookCharacterData,
 	type AttributeState,
-	type CharacterLife
+	type CharacterLife,
+	type XpEntry,
+	type XpLedger
 } from '$lib/types/character';
 import { SUIT_IDS } from '$lib/types/common';
 
@@ -23,6 +25,8 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 	if (!raw || typeof raw !== 'object') return base;
 
 	const stored = raw as Partial<GuildBookCharacterData> & Record<string, unknown>;
+	const storedVersion = typeof stored.schemaVersion === 'number' ? stored.schemaVersion : 0;
+	const legacyExperience = typeof stored.experience === 'number' ? stored.experience : 0;
 
 	// Merge each suit's attribute state over the base so all four suits exist.
 	const attributes = { ...base.attributes };
@@ -56,8 +60,13 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 		talents: (Array.isArray(stored.talents) ? stored.talents : base.talents).map((t) => ({
 			...t,
 			wounded: typeof t.wounded === 'boolean' ? t.wounded : false,
-			xp: typeof t.xp === 'number' ? t.xp : 0
+			xp: typeof t.xp === 'number' ? t.xp : 0,
+			preparedUses: storedVersion < 4 ? null : (typeof t.preparedUses === 'number' || t.preparedUses === null ? t.preparedUses : null)
 		})),
+		experience: legacyExperience,
+		xpLedger: storedVersion < 4
+			? { openingBalance: legacyExperience, entries: [] }
+			: normalizeXpLedger(stored.xpLedger, legacyExperience),
 		motifs: Array.isArray(stored.motifs) ? stored.motifs : base.motifs,
 		bonds: (Array.isArray(stored.bonds) ? stored.bonds : base.bonds).map((b) => ({
 			...b,
@@ -77,6 +86,36 @@ export function migrateCharacterData(raw: unknown): GuildBookCharacterData {
 		conditions: Array.isArray(stored.conditions) ? stored.conditions : base.conditions,
 		lore: typeof stored.lore === 'number' ? stored.lore : base.lore
 	};
+}
+
+/**
+ * Unlike every sibling field here, a v5+ document's xpLedger was passed
+ * through untouched (`stored.xpLedger ?? default`) — a present-but-malformed
+ * value (not `null`/`undefined`) skipped every check and reached downstream
+ * `.reduce`/`.some` calls unvalidated. Genuinely missing stays the same
+ * fallback; a garbled shape now falls back the same way instead of crashing,
+ * and each entry is checked structurally rather than trusted wholesale.
+ */
+function normalizeXpLedger(value: unknown, fallbackBalance: number): XpLedger {
+	if (!value || typeof value !== 'object') return { openingBalance: fallbackBalance, entries: [] };
+	const ledger = value as Record<string, unknown>;
+	const openingBalance = typeof ledger.openingBalance === 'number' ? ledger.openingBalance : fallbackBalance;
+	const entries = Array.isArray(ledger.entries) ? ledger.entries.filter(isPlausibleXpEntry) : [];
+	return { openingBalance, entries };
+}
+
+function isPlausibleXpEntry(value: unknown): value is XpEntry {
+	if (!value || typeof value !== 'object') return false;
+	const entry = value as Record<string, unknown>;
+	return (
+		typeof entry.id === 'string' &&
+		typeof entry.at === 'string' &&
+		typeof entry.delta === 'number' &&
+		typeof entry.kind === 'string' &&
+		typeof entry.sourceId === 'string' &&
+		typeof entry.sourceLabel === 'string' &&
+		typeof entry.reason === 'string'
+	);
 }
 
 function normalizeLife(value: unknown): CharacterLife {

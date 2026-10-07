@@ -6,8 +6,9 @@ import { ensureUser } from '$lib/server/auth';
 import { eq, and, desc } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { createCharacterSchema } from '$lib/schemas/character.schema';
-import { validateFinalCharacter } from '$lib/server/validation/character';
-import type { GuildBookCharacterData } from '$lib/types/character';
+import { validateFinalCharacter, validateCharacterPlayState } from '$lib/server/validation/character';
+import { CHARACTER_SCHEMA_VERSION, type GuildBookCharacterData } from '$lib/types/character';
+import { migrateCharacterData } from '$lib/engine/character-migration';
 import { createCharacterWithVersionClaim } from '$lib/server/character/versioned-write';
 
 /** GET /api/characters — list the signed-in user's adventurers. */
@@ -46,11 +47,21 @@ export const POST: RequestHandler = async (event) => {
 	} catch {
 		throw error(400, 'Request body is not valid JSON');
 	}
+	const supplied = (rawBody as { character?: { schemaVersion?: unknown } } | null)?.character;
+	const native = supplied?.schemaVersion === CHARACTER_SCHEMA_VERSION;
+	if (supplied && typeof supplied.schemaVersion === 'number' && Number.isInteger(supplied.schemaVersion) && supplied.schemaVersion < CHARACTER_SCHEMA_VERSION) {
+		rawBody = { character: migrateCharacterData(supplied) };
+	} else if (supplied && supplied.schemaVersion !== CHARACTER_SCHEMA_VERSION) {
+		throw error(400, 'Unsupported character format. Reload before saving.');
+	}
 	const parsed = createCharacterSchema.safeParse(rawBody);
 	if (!parsed.success) {
 		throw error(400, `Invalid character data: ${parsed.error.issues.map((i) => i.message).join(', ')}`);
 	}
 	const char = parsed.data.character as unknown as GuildBookCharacterData;
+
+	const playCheck = validateCharacterPlayState(char, undefined, { native });
+	if (!playCheck.valid) throw error(400, playCheck.errors.join('; '));
 
 	if (!char.isDraft) {
 		const ruleCheck = validateFinalCharacter(char);

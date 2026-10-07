@@ -7,6 +7,9 @@
 	import StoryEdit from '$lib/components/character/edit/StoryEdit.svelte';
 	import TalentsEdit from '$lib/components/character/edit/TalentsEdit.svelte';
 	import LanguagesEdit from '$lib/components/character/edit/LanguagesEdit.svelte';
+	import ExperiencePanel from '$lib/components/character/ExperiencePanel.svelte';
+	import SpellComponentsEdit from '$lib/components/character/edit/SpellComponentsEdit.svelte';
+	import { applyXpAction, type XpAction } from '$lib/engine/experience';
 	import GearEdit from '$lib/components/character/edit/GearEdit.svelte';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
@@ -44,6 +47,7 @@
 			return;
 		}
 		forceResync = false;
+		syncRequired = false;
 		syncedId = data.id;
 		char = structuredClone(data.character);
 		serverVersion = data.version;
@@ -60,7 +64,27 @@
 	const talentNames = $derived(new Map(data.content.talents.map((t) => [t.id, t.name])));
 	const talentName = (id: string) => talentNames.get(id) ?? id;
 
-	async function persist(opts: { keepalive?: boolean } = {}) {
+	// 'ok': saved. 'stale': saved (or superseded) for an adventurer we've left —
+	// nothing to react to. 'uncertain': 409 or network failure — the true
+	// state is unknown until reloaded. 'rejected': a clean 4xx — the server
+	// definitely never stored this, safe to just revert locally.
+	type SaveOutcome = 'ok' | 'stale' | 'uncertain' | 'rejected';
+
+	// Under the browsers' 64 KiB keepalive cap, with headroom for headers.
+	const KEEPALIVE_BODY_LIMIT = 60_000;
+
+	let saveChain: Promise<SaveOutcome> = Promise.resolve('ok');
+	const savedVersions = new Map<string, number>();
+	function persist(opts: { navigationFlush?: boolean } = {}): Promise<SaveOutcome> {
+		const id = data.id;
+		const snapshot = JSON.stringify(char);
+		const version = serverVersion;
+		const next = saveChain.then(() => persistSnapshot(id, snapshot, Math.max(savedVersions.get(id) ?? version, version), opts));
+		saveChain = next.catch(() => 'rejected' as const);
+		return next;
+	}
+
+	async function persistSnapshot(id: string, snapshot: string, expectedVersion: number, opts: { navigationFlush?: boolean } = {}): Promise<SaveOutcome> {
 		// Everything this request needs is captured NOW: a debounced save
 		// flushed on navigation, or a response landing after the component was
 		// reused for another adventurer, must neither address the wrong id nor
@@ -68,38 +92,52 @@
 		// forceResync here would discard the new adventurer's unsaved edits).
 		// Staleness is re-checked after every await — navigation can land
 		// between the response headers and the parsed body.
-		const id = data.id;
-		const body = JSON.stringify({ character: char, expectedVersion: serverVersion });
-		const stale = () => id !== data.id;
+		const body = JSON.stringify({ character: JSON.parse(snapshot), expectedVersion });
+		// A navigation flush must never invalidate the route being left: its save
+		// can finish before the destination data arrives and cancel that navigation.
+		const stale = () => id !== data.id || opts.navigationFlush === true;
 		savingCount += 1;
 		saveError = '';
 		try {
+			// Requested at the browser level (independent of whether THIS call is
+			// a navigation flush) — it's the only thing standing between an
+			// in-flight save, including a just-recorded XP action, and the browser
+			// silently dropping it on a reload or tab close. Browsers reject
+			// keepalive bodies over ~64 KiB outright, so a character whose XP
+			// history has grown past that saves as an ordinary request instead.
 			const res = await fetch(`/api/characters/${id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body,
-				keepalive: opts.keepalive ?? false
+				keepalive: new Blob([body]).size <= KEEPALIVE_BODY_LIMIT
 			});
 			if (res.ok) {
 				const resBody = (await res.json()) as { version: number };
-				if (stale()) return false; // never touch the next adventurer's sync state
+				savedVersions.set(id, resBody.version);
+				if (stale()) return 'stale'; // never touch the next adventurer's sync state
 				serverVersion = resBody.version;
 				await invalidateAll();
-				return true;
+				return 'ok';
 			}
 			if (res.status === 409) {
-				if (stale()) return false; // that adventurer's page will refetch on open
-				saveError = 'This adventurer changed elsewhere — reloading the latest version.';
+				if (stale()) return 'stale'; // that adventurer's page will refetch on open
+				savedVersions.delete(id);
+				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check XP history before recording the action again.';
 				forceResync = true;
 				await invalidateAll();
-				return false;
+				return 'uncertain';
 			}
 			const resBody = (await res.json().catch(() => ({}))) as { message?: string };
-			if (!stale()) saveError = resBody.message ?? 'Save failed.';
-			return false;
+			if (stale()) return 'stale';
+			saveError = resBody.message ?? 'Save failed.';
+			return 'rejected';
 		} catch {
-			if (!stale()) saveError = 'Network error — try again.';
-			return false;
+			if (stale()) return 'stale';
+			saveError = 'Save could not be confirmed. Reloading — check XP history before recording the action again.';
+			savedVersions.delete(id);
+			forceResync = true;
+			await invalidateAll().catch(() => {});
+			return 'uncertain';
 		} finally {
 			savingCount -= 1;
 		}
@@ -119,13 +157,15 @@
 	// save still addresses the character being left (persist captures the id
 	// and payload up front); left running, the timer would fire after the
 	// resync and PUT the NEXT adventurer's data — losing the edit entirely.
-	// keepalive lets the flush survive a full unload (reload, tab close),
-	// where an ordinary fetch is torn down with the page.
+	// navigationFlush keeps its response from touching this component's state
+	// once we've moved on — the browser-level keepalive that lets the fetch
+	// itself survive a full unload is requested for every save under the
+	// size cap, inside persistSnapshot.
 	beforeNavigate(() => {
 		if (!statusTimer) return;
 		clearTimeout(statusTimer);
 		statusTimer = null;
-		void persist({ keepalive: true });
+		void persist({ navigationFlush: true });
 	});
 
 	function onEditChange() {
@@ -133,7 +173,7 @@
 	}
 
 	async function saveEdits() {
-		if (await persist()) editMode = false;
+		if ((await persist()) === 'ok') editMode = false;
 	}
 
 	function cancelEdits() {
@@ -142,11 +182,76 @@
 		saveError = '';
 	}
 
+	let recordingXp = $state(false);
+	let syncRequired = $state(false);
+	async function reloadCharacter(): Promise<boolean> {
+		const id = data.id;
+		syncRequired = true;
+		try {
+			const response = await fetch(`/api/characters/${id}`);
+			if (!response.ok) return false;
+			const row = await response.json() as { data: GuildBookCharacterData; version: number };
+			if (id !== data.id) return false;
+			char = row.data;
+			serverVersion = row.version;
+			savedVersions.set(id, row.version);
+			forceResync = false;
+			// The read-only sheet, exports, and Cancel read page data, not char:
+			// refresh it too, or they keep showing the pre-recovery balance. The
+			// resync effect sees the version we just took and leaves char alone.
+			// A failure here falls to the catch: recovery isn't complete, so the
+			// sheet stays locked (syncRequired) rather than unlocking half-stale.
+			await invalidateAll();
+			if (id !== data.id) return false;
+			syncRequired = false;
+			return true;
+		} catch { return false; }
+	}
+	async function recordXp(action: XpAction, reason: string, sessionLabel?: string): Promise<boolean> {
+		if (recordingXp || saving || syncRequired) return false;
+		const id = data.id;
+		recordingXp = true;
+		try {
+			if (statusTimer) {
+				clearTimeout(statusTimer); statusTimer = null;
+				if ((await persist()) !== 'ok' || id !== data.id) return false;
+			}
+			await saveChain;
+			if (id !== data.id) return false;
+			const beforeAction = $state.snapshot(char);
+			const recordId = crypto.randomUUID();
+			const result = applyXpAction(beforeAction, action, {
+				id: recordId, at: new Date().toISOString(), reason, sessionLabel
+			}, data.content);
+			if (!result.ok) { saveError = result.error; return false; }
+			char = result.character;
+			saveError = '';
+			if (editMode) return true;
+			const outcome = await persist();
+			if (outcome === 'ok' || id !== data.id) return outcome === 'ok';
+			if (outcome === 'uncertain') {
+				// Genuinely don't know whether this landed — the authoritative
+				// document, not a guess, decides whether it needs recording again.
+				const reloaded = await reloadCharacter();
+				if (reloaded && char.xpLedger.entries.some((entry) => entry.id === recordId)) {
+					saveError = '';
+					return true;
+				}
+				return false;
+			}
+			// A clean rejection (e.g. a validation error) means the server never
+			// stored this — revert the optimistic change locally. No reload or
+			// lock is needed: nothing about the saved state is in question.
+			char = beforeAction;
+			return false;
+		} finally { recordingXp = false; }
+	}
+
 	/** Promote a draft to a finished adventurer (server validates completeness). */
 	async function saveAsFinal() {
 		char.isDraft = false;
-		const ok = await persist();
-		if (!ok) {
+		const outcome = await persist();
+		if (outcome !== 'ok') {
 			char.isDraft = true; // rejected (e.g. incomplete) — stay a draft locally
 			saveError = saveError.replace('Creation-rule violation: ', 'Still missing: ');
 		}
@@ -159,11 +264,11 @@
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		{#if !editMode}
-			<button type="button" class="edit-toggle" onclick={() => (editMode = true)}>Edit</button>
+			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={() => (editMode = true)}>Edit</button>
 		{:else}
 			<div class="edit-actions">
-				<button type="button" class="ghost" onclick={cancelEdits}>Cancel</button>
-				<button type="button" class="primary" disabled={saving} onclick={saveEdits}>
+				<button type="button" class="ghost" disabled={saving || recordingXp || syncRequired} onclick={cancelEdits}>Cancel</button>
+				<button type="button" class="primary" disabled={saving || recordingXp || syncRequired} onclick={saveEdits}>
 					{saving ? 'Saving…' : 'Save changes'}
 				</button>
 			</div>
@@ -175,13 +280,15 @@
 			<p class="draft-note">
 				This adventurer is a <strong>draft</strong> — finalize it to enable sharing.
 			</p>
-			<button type="button" class="finalize" disabled={saving} onclick={saveAsFinal}>
+			<button type="button" class="finalize" disabled={saving || recordingXp || syncRequired} onclick={saveAsFinal}>
 				{saving ? 'Saving…' : 'Save as final'}
 			</button>
 		</div>
 	{/if}
-	{#if saveError}<p class="error">{saveError}</p>{/if}
+	{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
+	{#if syncRequired}<p>Reload the saved adventurer before recording another change.</p><button type="button" onclick={() => reloadCharacter()}>Retry reload</button>{/if}
 
+	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
 	<StatusPanel
 		bind:char
 		conditions={data.content.conditions}
@@ -192,15 +299,18 @@
 		{talentName}
 		onChange={onStatusChange}
 	/>
+	</fieldset>
+	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
 
 	{#if editMode}
+		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
 		<section class="edit-section">
 			<h2>Story</h2>
 			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onEditChange} />
 		</section>
 		<section class="edit-section">
 			<h2>Talents</h2>
-			<TalentsEdit bind:char talents={data.content.talents} onChange={onEditChange} />
+			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onEditChange} />
 		</section>
 		<section class="edit-section">
 			<h2>Languages</h2>
@@ -214,7 +324,9 @@
 				encumbrance={data.content.encumbrance}
 				onChange={onEditChange}
 			/>
+			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onEditChange} />
 		</section>
+		</fieldset>
 	{:else}
 		<CharacterSheet view={data.view} />
 	{/if}
@@ -225,6 +337,7 @@
 </div>
 
 <style>
+	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
 	.sheet-page {
 		max-width: 48rem;
 		margin: 0 auto;

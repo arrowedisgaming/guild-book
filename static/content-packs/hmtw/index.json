@@ -1,7 +1,7 @@
 {
 	"id": "hmtw",
 	"name": "His Majesty the Worm",
-	"version": "4.3.0",
+	"version": "4.4.0",
 	"description": "Guild Book content pack for His Majesty the Worm: kith & kin, the four paths and their talents, the full Omphalic Market, conditions, afflictions, languages, and dungeon denizens. Game text reproduced verbatim from the core rulebook under the Adherent of the Worm open licence.",
 	"system": "hmtw",
 	"license": "Adherent of the Worm open licence (https://www.hismajestytheworm.games/open-license): \"the mechanics and game text of His Majesty the Worm may be reused freely.\" His Majesty the Worm is copyright Joshua McCrowell. Game text reproduced verbatim; no book artwork, logos, or trade dress reproduced.",
@@ -361,5 +361,72 @@
 		"beltSlots": 4,
 		"packSlots": 21
 	},
-	"contentDigest": "e43333d1b396f04377f9c13d6e6d0ee047656c20b0a9b40a7e324ecf80bd3232"
+	"advancement": {
+		"masteryXp": 7,
+		"pathUseXp": 1,
+		"cityTrainingGoldPerXp": 50,
+		"awards": [
+			{
+				"id": "quest-accepted",
+				"label": "Quest accepted",
+				"amount": 3,
+				"ruleEntryId": "adventurer-experience",
+				"reminder": "Award when the guild agrees to pursue a quest; the guild pursues one active quest at a time."
+			},
+			{
+				"id": "quest-completed",
+				"label": "Quest completed",
+				"amount": 3,
+				"ruleEntryId": "adventurer-experience",
+				"reminder": "Award when the guild completes its active quest."
+			},
+			{
+				"id": "contract-completed",
+				"label": "Contract completed",
+				"amount": 1,
+				"ruleEntryId": "adventurer-experience",
+				"reminder": "Award when the guild completes an employer's contract."
+			},
+			{
+				"id": "carouse-half",
+				"label": "Caroused with half the gold",
+				"amount": 1,
+				"ruleEntryId": "city-carouse",
+				"reminder": "This is an alternative to spending all the gold brought back; the GM draws for a hangover."
+			},
+			{
+				"id": "carouse-all",
+				"label": "Caroused with all the gold",
+				"amount": 2,
+				"ruleEntryId": "city-carouse",
+				"reminder": "This is an alternative to spending half the gold brought back; the GM draws for a hangover."
+			},
+			{
+				"id": "join-current-quest",
+				"label": "Joined the current quest",
+				"amount": 3,
+				"ruleEntryId": "adventurer-at-the-end-of-your-second-session",
+				"reminder": "Award at the end of this adventurer's second session when joining the guild and its current quest."
+			},
+			{
+				"id": "funeral",
+				"label": "Funeral recovery",
+				"amount": null,
+				"ruleEntryId": "city-phase-city-actions",
+				"reminder": "Enter the XP reclaimed for a successor; funeral expenses cost 100 gold per XP."
+			},
+			{
+				"id": "other",
+				"label": "Table award",
+				"amount": null,
+				"ruleEntryId": "adventurer-experience",
+				"reminder": "Record an XP award agreed by your table; this is not a separate rules entitlement."
+			}
+		]
+	},
+	"sorcery": {
+		"componentSlots": 1,
+		"componentDefaultTier": "impoverished"
+	},
+	"contentDigest": "96e404853dabe68d70fb945ee9ccf04b1d66cf6e6ec14c5aa719e846c3ae4171"
 }

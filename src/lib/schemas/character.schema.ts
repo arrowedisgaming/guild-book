@@ -26,7 +26,8 @@ const talentAllocationSchema = z.object({
 	sourceLabel: z.string(),
 	at: z.string(),
 	wounded: z.boolean(),
-	xp: z.number()
+	xp: z.number(),
+	preparedUses: z.number().nullable()
 });
 
 const bondSchema = z.object({
@@ -42,7 +43,26 @@ const equipmentEntrySchema = z.object({
 	packSpace: z.number(),
 	location: z.enum(['hand', 'belt', 'pack', 'worn']),
 	quantity: z.number(),
-	notchesTaken: z.number()
+	notchesTaken: z.number(),
+	spellComponent: z.object({ spellId: z.string().trim().min(1).nullable(), spellName: z.string().max(200), notes: z.string().max(4000) }).optional()
+}).superRefine((entry, context) => {
+	if (!entry.spellComponent) return;
+	if (entry.itemId !== null) context.addIssue({ code: 'custom', path: ['itemId'], message: 'Spell components must be custom equipment' });
+	if (!entry.customName?.trim() || entry.customName.length > 2000) context.addIssue({ code: 'custom', path: ['customName'], message: 'Component description must be 1–2000 characters' });
+	if (entry.location === 'worn') context.addIssue({ code: 'custom', path: ['location'], message: 'Spell components cannot be worn' });
+	if (!Number.isInteger(entry.quantity) || entry.quantity < 1) context.addIssue({ code: 'custom', path: ['quantity'], message: 'Component quantity must be a positive integer' });
+	if (entry.spellComponent.spellId !== null && !entry.spellComponent.spellName.trim()) context.addIssue({ code: 'custom', path: ['spellComponent', 'spellName'], message: 'Linked components require a spell name snapshot' });
+});
+
+const xpTalentSnapshotSchema = z.object({
+	xp: z.number(), state: z.enum(['mastered', 'in-training']), preparedUses: z.number().nullable()
+});
+const xpEntrySchema = z.object({
+	id: z.string(), at: z.string(), delta: z.number(),
+	kind: z.enum(['award', 'talent-use', 'mentoring', 'spend', 'correction']),
+	sourceId: z.string(), sourceLabel: z.string(), reason: z.string(),
+	sessionLabel: z.string().optional(), talentId: z.string().optional(),
+	talentBefore: xpTalentSnapshotSchema.optional(), talentAfter: xpTalentSnapshotSchema.optional()
 });
 
 const afflictionStateSchema = z.object({
@@ -91,6 +111,7 @@ export const characterDataSchema = z.object({
 	afflictions: z.array(afflictionStateSchema),
 	lore: z.number(),
 	experience: z.number(),
+	xpLedger: z.object({ openingBalance: z.number(), entries: z.array(xpEntrySchema) }),
 	equipment: z.array(equipmentEntrySchema),
 	notes: z.string(),
 	isDraft: z.boolean(),

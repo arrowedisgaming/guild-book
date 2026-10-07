@@ -33,7 +33,8 @@ export function buildStartingTalents(params: {
 		sourceLabel: kin.name,
 		at,
 		wounded: false,
-		xp: 0
+		xp: 0,
+		preparedUses: 0
 	};
 
 	const pathTalents: TalentAllocation[] = path.talentIds.map((talentId) => ({
@@ -43,7 +44,8 @@ export function buildStartingTalents(params: {
 		sourceLabel: path.name,
 		at,
 		wounded: false,
-		xp: 0
+		xp: 0,
+		preparedUses: 0
 	}));
 
 	return [kinTalent, ...pathTalents];

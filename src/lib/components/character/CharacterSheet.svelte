@@ -42,6 +42,7 @@
 		</section>
 	{/if}
 
+	<p>Available XP: {view.experience}</p>
 	{#if view.appearance}
 		<section><h2>Appearance</h2><p>{view.appearance}</p></section>
 	{/if}
@@ -64,8 +65,8 @@
 				{#each view.talents as t}
 					<li class:wounded={t.wounded}>
 						{t.name}
-						<span class="tag">{t.state}{t.state === 'in-training' && t.xp > 0 ? ` · ${t.xp}/7 xp` : ''}</span>
-						{#if t.wounded}<span class="tag hurt">wounded</span>{/if}
+						<span class="tag">{t.state}{t.state === 'in-training' ? ` · ${t.xp}/${view.masteryXp} XP` : ''}</span>
+												{#if t.wounded}<span class="tag hurt">wounded</span>{/if}
 					</li>
 				{/each}
 			</ul>
@@ -104,7 +105,7 @@
 						{#each gear as e}
 							<li class:destroyed={e.destroyed}>
 								{e.name}{e.quantity > 1 ? ` ×${e.quantity}` : ''}
-								<span class="tag">{e.tier}</span>
+								{#if e.spellComponent}<span class="tag">{e.spellComponent.spellName || 'Spell component'}</span>{#if e.spellComponent.notes}<p>{e.spellComponent.notes}</p>{/if}{:else}<span class="tag">{e.tier}</span>{/if}
 								{#if e.durability}
 									<span class="tag">{e.notchesTaken}/{e.durability} notches</span>
 								{/if}

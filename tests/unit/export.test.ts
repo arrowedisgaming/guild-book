@@ -5,6 +5,8 @@ import type { CharacterView } from '$lib/types/character-view';
 
 const view: CharacterView = {
 	name: 'Grimwald the Bold',
+	experience: 0,
+	masteryXp: 7,
 	pronouns: 'he/him',
 	appearance: 'Tall and weathered.',
 	quest: 'Recover the Well of Lethe.',
@@ -97,4 +99,16 @@ describe('PDF play-state additions', () => {
 		expect(flat).toContain('Lore bids 4/4');
 		expect(flat).toMatch(/hands 1\/2/);
 	});
+});
+
+describe('XP and spell component exports', () => {
+ it('includes available XP, talent progress and reusable component details', () => {
+  const expanded = { ...view, experience: 3, masteryXp: 7, talents: [view.talents[1]], equipment: [{ ...view.equipment[0], name: 'Chapel ash', spellComponent: { spellId: null, spellName: 'Chapel ward', notes: 'Gathered at midnight' } }] };
+  for (const text of [exportToMarkdown(expanded), JSON.stringify(buildDocDefinition(expanded))]) {
+   expect(text).toContain('Available XP: 3');
+   expect(text).toContain('3/7 XP');
+   expect(text).toContain('Chapel ward');
+   expect(text).toContain('Gathered at midnight');
+  }
+ });
 });

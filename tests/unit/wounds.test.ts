@@ -23,7 +23,8 @@ function adventurer(): GuildBookCharacterData {
 		sourceLabel: 'test',
 		at: '2026-07-02T00:00:00Z',
 		wounded: false,
-		xp: 0
+		xp: 0,
+		preparedUses: null
 	}));
 	c.equipment = [
 		{

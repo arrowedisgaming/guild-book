@@ -15,6 +15,7 @@ import {
 } from '$lib/server/content/loader';
 import { SUIT_IDS } from '$lib/types/common';
 import { RULES_SECTIONS } from '$lib/content/sections';
+import { contentPackSchema } from '$lib/schemas/content-pack.schema';
 
 describe('content pack — schema round-trip', () => {
 	it('validates the manifest and exposes the four suit-attributes', () => {
@@ -62,6 +63,39 @@ describe('content pack — creation rules', () => {
 		const { creation } = getContentPack();
 		expect([...creation.attributeSpread].sort((a, b) => b - a)).toEqual([4, 3, 2, 1]);
 		expect(creation.highestAttributeFromPath).toBe(true);
+	});
+});
+
+describe('content pack — advancement and sorcery config', () => {
+	const pack = getContentPack();
+
+	it('provides valid data-driven XP rules and unique award presets', () => {
+		expect(pack.advancement.masteryXp).toBe(7);
+		expect(pack.advancement.pathUseXp).toBe(1);
+		expect(pack.advancement.cityTrainingGoldPerXp).toBe(50);
+		expect(new Set(pack.advancement.awards.map((award) => award.id)).size).toBe(
+			pack.advancement.awards.length
+		);
+	});
+
+	it('rejects zero and fractional mastery thresholds and duplicate award ids', () => {
+		const zero = structuredClone(pack);
+		zero.advancement.masteryXp = 0;
+		expect(contentPackSchema.safeParse(zero).success).toBe(false);
+
+		const fractional = structuredClone(pack);
+		fractional.advancement.masteryXp = 6.5;
+		expect(contentPackSchema.safeParse(fractional).success).toBe(false);
+
+		const duplicate = structuredClone(pack);
+		duplicate.advancement.awards[1].id = duplicate.advancement.awards[0].id;
+		expect(contentPackSchema.safeParse(duplicate).success).toBe(false);
+	});
+
+	it('references shipped rules and configures one-slot impoverished components', () => {
+		const ruleIds = new Set(getRules().map((rule) => rule.id));
+		for (const award of pack.advancement.awards) expect(ruleIds.has(award.ruleEntryId)).toBe(true);
+		expect(pack.sorcery).toEqual({ componentSlots: 1, componentDefaultTier: 'impoverished' });
 	});
 });
 

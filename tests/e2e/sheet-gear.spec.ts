@@ -66,13 +66,15 @@ test('two quick changes both persist', async ({ page }) => {
 	await expect(group(page, 'Belt').getByRole('listitem').filter({ hasText: 'Rope' })).toBeVisible();
 });
 
-test('empty groups still render', async ({ page }) => {
+test('empty groups still render, and Gear appears once', async ({ page }) => {
 	const gear = await openSheet(page, 'Gear Empty', 'Bare Bram');
 	for (const label of ['In hand', 'Worn', 'Belt', 'Backpack']) {
 		await expect(gear.getByRole('heading', { name: label, exact: true })).toBeVisible();
 	}
 	await expect(group(page, 'In hand')).toHaveAccessibleName(/2 open/);
 	await expect(gear.getByText('empty', { exact: true })).toHaveCount(4);
+	await addItem(page, 'Rope');
+	await expect(page.getByRole('heading', { name: 'Gear', exact: true })).toHaveCount(1);
 });
 
 test('wound notches the item it names after a regroup', async ({ page }) => {
@@ -102,12 +104,6 @@ test('Edit-mode Cancel reverts gear', async ({ page }) => {
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await page.reload();
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
-});
-
-test('no Gear section duplicated', async ({ page }) => {
-	await openSheet(page, 'Gear Single', 'Una Once');
-	await addItem(page, 'Rope');
-	await expect(page.getByRole('heading', { name: 'Gear', exact: true })).toHaveCount(1);
 });
 
 test('narrow screen has no horizontal scroll', async ({ page }) => {
@@ -157,8 +153,9 @@ test('adds a custom item', async ({ page }) => {
 	await moved;
 });
 
-test('rejects bad custom item input', async ({ page }) => {
+test('rejects bad custom item input, then a zero-slot trinket takes no room', async ({ page }) => {
 	const gear = await openSheet(page, 'Gear Rejecter', 'Cass Badform');
+	const before = await backpackUsed(page);
 	const rows = gear.getByRole('listitem');
 	await gear.getByRole('button', { name: '+ Custom item' }).click();
 	await gear.getByRole('button', { name: 'Add custom item' }).click();
@@ -171,12 +168,6 @@ test('rejects bad custom item input', async ({ page }) => {
 	await expect(rows).toHaveCount(0);
 	await expect(gear.getByLabel('Item name')).toHaveValue('Odd thing');
 	await expect(gear.getByLabel('Slots', { exact: true })).toHaveValue('1.5');
-});
-
-test('a zero-slot trinket takes no room', async ({ page }) => {
-	const gear = await openSheet(page, 'Gear Trinket', 'Pip Tiny');
-	const before = await backpackUsed(page);
-	await gear.getByRole('button', { name: '+ Custom item' }).click();
 	await gear.getByLabel('Item name').fill('Lucky button');
 	await gear.getByLabel('Slots', { exact: true }).fill('0');
 	await gear.getByRole('button', { name: 'Add custom item' }).click();

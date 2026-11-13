@@ -92,7 +92,7 @@ test('/ focuses the panel search on wide screens and the header search just unde
 	}).toPass();
 });
 
-test('no panel below 84rem and no horizontal scroll', async ({ page }) => {
+test('no panel below 84rem, and at 84rem the sheet keeps its full 48rem beside it', async ({ page }) => {
 	await page.setViewportSize(NARROW);
 	await openSheet(page, 'Panel Narrow', 'Nim Narrowway');
 	await expect(page.getByRole('button', { name: 'Take a Wound…' })).toBeVisible();
@@ -107,20 +107,16 @@ test('no panel below 84rem and no horizontal scroll', async ({ page }) => {
 	// The sheet keeps main's 48rem cap. The root font size is 18px here, so the
 	// cap is 864px, not 768px.
 	expect(sheetWidth).toBeLessThanOrEqual(48 * rem);
-});
-
-test('at the breakpoint the sheet keeps its full 48rem beside the panel', async ({ page }) => {
 	await page.setViewportSize(BREAKPOINT);
-	await openSheet(page, 'Panel Edge', 'Eda Edgeworth');
 	await expect(panelOf(page)).toBeVisible();
-	const { scrollWidth, innerWidth, colWidth, rem } = await page.evaluate(() => ({
+	const { scrollWidth: edgeScroll, innerWidth: edgeInner, colWidth, rem: edgeRem } = await page.evaluate(() => ({
 		scrollWidth: document.documentElement.scrollWidth,
 		innerWidth: window.innerWidth,
 		colWidth: document.querySelector('.sheet-col')!.getBoundingClientRect().width,
 		rem: parseFloat(getComputedStyle(document.documentElement).fontSize)
 	}));
-	expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
-	expect(colWidth).toBeCloseTo(48 * rem, 0);
+	expect(edgeScroll).toBeLessThanOrEqual(edgeInner);
+	expect(colWidth).toBeCloseTo(48 * edgeRem, 0);
 });
 
 test('panel state survives an autosave and a resize', async ({ page }) => {

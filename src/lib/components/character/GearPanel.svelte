@@ -4,6 +4,7 @@
 	import type { ItemDefinition, EncumbranceConfig } from '$lib/types/content-pack';
 	import { indexItems, loadSummary, autoPlace, type LocationLoad } from '$lib/engine/encumbrance';
 	import { stepSize } from '$lib/engine/market-cart';
+	import CustomItemForm from './CustomItemForm.svelte';
 	import { durabilityOf, groupGear, slotMeter } from '$lib/engine/gear-view';
 
 	interface Props {
@@ -27,6 +28,7 @@
 	});
 
 	let addId = $state('');
+	let showCustom = $state(false);
 	let root: HTMLElement | undefined = $state();
 
 	const LOCATIONS: { id: CarryLocation; label: string }[] = [
@@ -87,6 +89,11 @@
 			}
 		];
 		addId = '';
+		onChange();
+	}
+	function addCustom(entry: EquipmentEntry) {
+		char.equipment = [...char.equipment, entry];
+		showCustom = false;
 		onChange();
 	}
 	function rearrange() {
@@ -178,7 +185,11 @@
 			{/each}
 		</select>
 		<button type="button" disabled={!addId} onclick={add}>Add</button>
+		<button type="button" class="custom-toggle" aria-expanded={showCustom} onclick={() => (showCustom = !showCustom)}>+ Custom item</button>
 	</div>
+	{#if showCustom}
+		<CustomItemForm onAdd={addCustom} onCancel={() => (showCustom = false)} />
+	{/if}
 </section>
 
 <style>
@@ -350,6 +361,7 @@
 	}
 	.add {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 		margin-top: 0.25rem;
 		min-width: 0;
@@ -366,6 +378,11 @@
 		color: var(--parchment);
 		font-family: var(--font-subhead);
 		cursor: pointer;
+	}
+	.add .custom-toggle {
+		border-color: color-mix(in oklab, var(--accent) 60%, transparent);
+		background: transparent;
+		color: var(--accent);
 	}
 	button:disabled,
 	select:disabled {

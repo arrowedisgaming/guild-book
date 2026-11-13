@@ -121,3 +121,65 @@ test('narrow screen has no horizontal scroll', async ({ page }) => {
 	await expect(backpack.locator('.slot').last()).toBeInViewport();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+const BACKPACK_USED = /^Backpack: (\d+) of/;
+async function backpackUsed(page: Page) {
+	const name = (await group(page, 'Backpack').getAttribute('aria-label')) ?? '';
+	return Number(BACKPACK_USED.exec(name)?.[1]);
+}
+
+test('adds a custom item', async ({ page }) => {
+	const gear = await openSheet(page, 'Gear Custom', 'Ines Curio');
+	const before = await backpackUsed(page);
+	await gear.getByRole('button', { name: '+ Custom item' }).click();
+	await gear.getByLabel('Item name').fill('Jade idol');
+	await gear.getByLabel('Slots', { exact: true }).fill('2');
+	await gear.getByLabel('Max notches (optional)').fill('3');
+	const saved = page.waitForResponse(
+		(r) => r.request().method() === 'PUT' && r.url().includes('/api/characters/') && r.ok() &&
+			(r.request().postData() ?? '').includes('Jade idol')
+	);
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	const row = group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Jade idol' });
+	await expect(row).toContainText('notches 0/3');
+	expect(await backpackUsed(page)).toBe(before + 2);
+	await saved;
+	await page.reload();
+	await expect(group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Jade idol' })).toBeVisible();
+	expect(await backpackUsed(page)).toBe(before + 2);
+	const moved = page.waitForResponse(
+		(r) => r.request().method() === 'PUT' && r.url().includes('/api/characters/') && r.ok() &&
+			(r.request().postData() ?? '').includes('"worn"')
+	);
+	await page.getByLabel('Location of Jade idol').selectOption('worn');
+	await expect(group(page, 'Worn').getByRole('listitem').filter({ hasText: 'Jade idol' })).toBeVisible();
+	expect(await backpackUsed(page)).toBe(before);
+	await moved;
+});
+
+test('rejects bad custom item input', async ({ page }) => {
+	const gear = await openSheet(page, 'Gear Rejecter', 'Cass Badform');
+	const rows = gear.getByRole('listitem');
+	await gear.getByRole('button', { name: '+ Custom item' }).click();
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	await expect(gear.getByRole('alert')).toHaveText('Give the item a name.');
+	await expect(rows).toHaveCount(0);
+	await gear.getByLabel('Item name').fill('Odd thing');
+	await gear.getByLabel('Slots', { exact: true }).fill('1.5');
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	await expect(gear.getByRole('alert')).toContainText('Slots');
+	await expect(rows).toHaveCount(0);
+	await expect(gear.getByLabel('Item name')).toHaveValue('Odd thing');
+	await expect(gear.getByLabel('Slots', { exact: true })).toHaveValue('1.5');
+});
+
+test('a zero-slot trinket takes no room', async ({ page }) => {
+	const gear = await openSheet(page, 'Gear Trinket', 'Pip Tiny');
+	const before = await backpackUsed(page);
+	await gear.getByRole('button', { name: '+ Custom item' }).click();
+	await gear.getByLabel('Item name').fill('Lucky button');
+	await gear.getByLabel('Slots', { exact: true }).fill('0');
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	await expect(group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Lucky button' })).toBeVisible();
+	expect(await backpackUsed(page)).toBe(before);
+});

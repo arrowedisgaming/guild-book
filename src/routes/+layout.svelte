@@ -17,7 +17,7 @@
 	);
 </script>
 
-<div class="site">
+<div class="site" class:wide={page.route.id === '/sheet/[id]'}>
 	<AlphaBanner feedbackUrl={data.feedbackUrl} />
 
 	<header class="site-header">
@@ -64,6 +64,12 @@
 		max-width: 72rem;
 		margin: 0 auto;
 		padding: 0 1.25rem;
+	}
+	/* The owner's sheet sets the rules panel beside itself on wide screens. */
+	@media (min-width: 80rem) {
+		.site.wide {
+			max-width: 104rem;
+		}
 	}
 	.site-header {
 		display: grid;

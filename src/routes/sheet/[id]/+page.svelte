@@ -11,6 +11,9 @@
 	import SpellComponentsEdit from '$lib/components/character/edit/SpellComponentsEdit.svelte';
 	import { applyXpAction, type XpAction } from '$lib/engine/experience';
 	import GearPanel from '$lib/components/character/GearPanel.svelte';
+	import RulesSidePanel from '$lib/components/rules/RulesSidePanel.svelte';
+	import { createRulesSidePanel } from '$lib/components/rules/rules-side-panel.svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
 
@@ -52,6 +55,14 @@
 		char = structuredClone(data.character);
 		serverVersion = data.version;
 	});
+
+	// Rules panel state lives here, not in the panel, so the query and open
+	// rule survive the panel unmounting when the window narrows. packVersion is
+	// fixed for the life of the page.
+	const rulesPanel = createRulesSidePanel(untrack(() => data.packVersion));
+	// False during SSR: the panel mounts after hydration. Its grid column is
+	// reserved by the CSS media query below, so the sheet does not move.
+	const wide = new MediaQuery('min-width: 80rem');
 
 	let editMode = $state(false);
 	// A count, not a boolean: overlapping saves (a flush for the adventurer
@@ -261,6 +272,7 @@
 <svelte:head><title>{data.view.name} — Guild Book</title></svelte:head>
 
 <div class="sheet-page">
+	<div class="sheet-col">
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		{#if !editMode}
@@ -331,6 +343,10 @@
 	<div class="actions-wrap">
 		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
 	</div>
+	</div>
+	{#if wide.current}
+		<RulesSidePanel panel={rulesPanel} />
+	{/if}
 </div>
 
 <style>
@@ -338,6 +354,22 @@
 	.sheet-page {
 		max-width: 48rem;
 		margin: 0 auto;
+	}
+	.sheet-col {
+		min-width: 0;
+	}
+	/* Wide screens: the sheet column and the rules panel side by side. The grid
+	 * is CSS-only (not gated on the MediaQuery) so the column is reserved
+	 * before hydration mounts the panel. */
+	@media (min-width: 80rem) {
+		.sheet-page {
+			max-width: none;
+			display: grid;
+			grid-template-columns: minmax(0, 48rem) minmax(22rem, 28rem);
+			gap: 2rem;
+			justify-content: center;
+			align-items: start;
+		}
 	}
 	.topbar {
 		display: flex;

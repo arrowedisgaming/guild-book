@@ -302,7 +302,7 @@
 	</fieldset>
 	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
 	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
-		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} />
+		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} disabled={saving || recordingXp || syncRequired} />
 	</fieldset>
 
 	{#if editMode}

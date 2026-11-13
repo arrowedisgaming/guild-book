@@ -183,3 +183,34 @@ test('a zero-slot trinket takes no room', async ({ page }) => {
 	await expect(group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Lucky button' })).toBeVisible();
 	expect(await backpackUsed(page)).toBe(before);
 });
+
+test('keyboard focus survives the autosave', async ({ page }) => {
+	await openSheet(page, 'Gear Focus', 'Fenn Keeper');
+	await addItem(page, 'Dagger');
+	const saved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
+	const select = page.getByLabel('Location of Dagger');
+	await select.selectOption('hand');
+	await expect(select).toBeFocused();
+	await saved;
+	await expect(select).toBeEnabled();
+	await expect(select).toBeFocused();
+});
+
+test('a change made after the first save has started also persists', async ({ page }) => {
+	await openSheet(page, 'Gear Twice', 'Odo Sequel');
+	await addItem(page, 'Dagger');
+	await addItem(page, 'Rope');
+	const first = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
+	await page.getByLabel('Location of Dagger').selectOption('hand');
+	await first;
+	const second = savedWhere(
+		page,
+		(eq) => at(eq, 'weapon-dagger')?.location === 'hand' && at(eq, 'rope')?.location === 'belt'
+	);
+	await expect(page.getByLabel('Location of Rope')).toBeEnabled();
+	await page.getByLabel('Location of Rope').selectOption('belt');
+	await second;
+	await page.reload();
+	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
+	await expect(group(page, 'Belt').getByRole('listitem').filter({ hasText: 'Rope' })).toBeVisible();
+});

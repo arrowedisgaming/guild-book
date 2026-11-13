@@ -12,8 +12,10 @@
 		items: ItemDefinition[];
 		encumbrance: EncumbranceConfig;
 		onChange: () => void;
+		/** True while the page has the panel's fieldset disabled (saving etc.). */
+		disabled?: boolean;
 	}
-	let { char = $bindable(), items, encumbrance, onChange }: Props = $props();
+	let { char = $bindable(), items, encumbrance, onChange, disabled = false }: Props = $props();
 
 	const itemIndex = $derived(indexItems(items));
 	const load = $derived(loadSummary(char.equipment, itemIndex, encumbrance));
@@ -44,6 +46,30 @@
 	function displayName(e: EquipmentEntry) {
 		return e.customName ?? defFor(e.itemId)?.name ?? 'Item';
 	}
+
+	// A disabled fieldset drops focus to <body>. Note which row control had focus
+	// as the panel is disabled, and put it back when the panel is enabled again.
+	let focusKey: { index: string; kind: string } | null = null;
+	$effect.pre(() => {
+		if (disabled) {
+			const active = document.activeElement;
+			focusKey =
+				active instanceof HTMLElement && root?.contains(active) && active.dataset.entryIndex
+					? { index: active.dataset.entryIndex, kind: active.dataset.ctl ?? '' }
+					: null;
+		}
+	});
+	$effect(() => {
+		if (disabled || !focusKey) return;
+		const key = focusKey;
+		focusKey = null;
+		// Never steal focus the user has moved elsewhere.
+		if (document.activeElement !== document.body) return;
+		const target = root?.querySelector(
+			`[data-entry-index="${key.index}"][data-ctl="${key.kind}"]`
+		);
+		if (target instanceof HTMLElement) target.focus();
+	});
 
 	async function setLocation(i: number, location: CarryLocation) {
 		char.equipment[i] = { ...char.equipment[i], location };
@@ -145,6 +171,7 @@
 							</span>
 							<select
 								data-entry-index={row.index}
+								data-ctl="location"
 								aria-label={`Location of ${name}`}
 								value={e.location}
 								onchange={(ev) => setLocation(row.index, ev.currentTarget.value as CarryLocation)}
@@ -155,17 +182,17 @@
 							</select>
 							<span class="ctrl">
 								qty {e.quantity}
-								<button type="button" onclick={() => stepQty(row.index, -1)} aria-label={`Remove one ${name}`}>−</button>
-								<button type="button" onclick={() => stepQty(row.index, 1)} aria-label={`Add one ${name}`}>+</button>
+								<button type="button" data-entry-index={row.index} data-ctl="qty-dec" onclick={() => stepQty(row.index, -1)} aria-label={`Remove one ${name}`}>−</button>
+								<button type="button" data-entry-index={row.index} data-ctl="qty-inc" onclick={() => stepQty(row.index, 1)} aria-label={`Add one ${name}`}>+</button>
 							</span>
 							{#if dur !== null}
 								<span class="ctrl">
 									notches {e.notchesTaken}/{dur}
-									<button type="button" onclick={() => stepNotch(row.index, -1)} aria-label={`Repair one notch on ${name}`}>−</button>
-									<button type="button" onclick={() => stepNotch(row.index, 1)} aria-label={`Notch ${name}`}>+</button>
+									<button type="button" data-entry-index={row.index} data-ctl="notch-dec" onclick={() => stepNotch(row.index, -1)} aria-label={`Repair one notch on ${name}`}>−</button>
+									<button type="button" data-entry-index={row.index} data-ctl="notch-inc" onclick={() => stepNotch(row.index, 1)} aria-label={`Notch ${name}`}>+</button>
 								</span>
 							{/if}
-							<button type="button" class="remove" onclick={() => remove(row.index)} aria-label={`Remove ${name}`}>✕</button>
+							<button type="button" class="remove" data-entry-index={row.index} data-ctl="remove" onclick={() => remove(row.index)} aria-label={`Remove ${name}`}>✕</button>
 						</li>
 					{/each}
 				</ul>

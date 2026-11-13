@@ -172,4 +172,17 @@ describe('createRulesSidePanel', () => {
 		expect(fetchRule).not.toHaveBeenCalled();
 		expect(p.view).toBe('search');
 	});
+
+	it('the default rule fetch URL-encodes the rule id and the pack version', async () => {
+		const fetchMock = vi.fn(async () => new Response(JSON.stringify({ rule: ruleOf('a b') }), { status: 200 }));
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const p = createRulesSidePanel('4.0.0+a&b', { getEngine: async () => engine });
+			await p.openRuleById('a b');
+			expect(fetchMock).toHaveBeenCalledWith('/api/rules/a%20b?v=4.0.0%2Ba%26b');
+			expect(p.ruleStatus).toBe('ready');
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
 });

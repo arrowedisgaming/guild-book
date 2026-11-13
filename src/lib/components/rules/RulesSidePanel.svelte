@@ -73,8 +73,16 @@
 			const url = new URL(anchor.href, window.location.href);
 			if (url.origin !== window.location.origin) return;
 			if (!/^\/rules\/[^/]+\/?$/.test(url.pathname) || url.hash.length < 2) return;
+			// A malformed % sequence cannot name a rule: leave the click to the
+			// browser's ordinary navigation rather than swallowing it.
+			let id: string;
+			try {
+				id = decodeURIComponent(url.hash.slice(1));
+			} catch {
+				return;
+			}
 			e.preventDefault();
-			void panel.openRuleById(decodeURIComponent(url.hash.slice(1)));
+			void panel.openRuleById(id);
 		};
 		el.addEventListener('click', onClick);
 		return () => el.removeEventListener('click', onClick);

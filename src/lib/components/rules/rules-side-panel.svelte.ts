@@ -23,7 +23,7 @@ export function createRulesSidePanel(
 	const fetchRule =
 		deps.fetchRule ??
 		(async (id: string): Promise<RuleEntry> => {
-			const res = await fetch(`/api/rules/${encodeURIComponent(id)}?v=${packVersion}`);
+			const res = await fetch(`/api/rules/${encodeURIComponent(id)}?v=${encodeURIComponent(packVersion)}`);
 			if (!res.ok) throw new Error(`rule ${id}: ${res.status}`);
 			const body = (await res.json()) as { rule: RuleEntry };
 			return body.rule;

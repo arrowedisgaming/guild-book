@@ -169,7 +169,7 @@
 							<span class="slot" class:filled={k < meter.filled}></span>
 						{/each}
 					</span>
-					<span class="meter" class:over={meter.over > 0}>{meter.status}</span>
+					<span class="meter" class:over={meter.over > 0} class:open={meter.over === 0 && meter.filled < gl.capacity}>{meter.status}</span>
 				{/if}
 			</div>
 			{#if group.rows.length === 0}
@@ -298,29 +298,36 @@
 	.boxes {
 		display: inline-flex;
 		flex-wrap: wrap;
-		gap: 3px;
+		gap: 4px;
 		min-width: 0;
 	}
 	.slot {
-		width: 0.7rem;
-		height: 0.7rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 45%, transparent);
-		border-radius: 2px;
+		box-sizing: border-box;
+		width: 1.15rem;
+		height: 1.15rem;
+		border: 2px solid var(--ink);
+		border-radius: 3px;
+		background: color-mix(in oklab, var(--parchment) 85%, white);
 	}
 	.slot.filled {
-		background: color-mix(in oklab, var(--ink) 70%, transparent);
-		border-color: transparent;
+		background: color-mix(in oklab, var(--ink) 35%, var(--parchment));
+		border-color: color-mix(in oklab, var(--ink) 35%, var(--parchment));
 	}
 	.boxes.over .slot.filled {
 		background: var(--accent);
+		border-color: var(--accent);
 	}
 	.meter {
-		font-size: 0.8rem;
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
+		font-weight: 600;
 		color: var(--ink-soft);
+	}
+	.meter.open {
+		color: var(--ink);
 	}
 	.meter.over {
 		color: var(--accent);
-		font-weight: 700;
 	}
 	.empty {
 		margin: 0;
@@ -414,7 +421,7 @@
 		min-width: 0;
 	}
 	.add select {
-		flex: 1;
+		flex: 1 1 14rem;
 		min-width: 0;
 	}
 	.add button {
@@ -430,6 +437,12 @@
 		border-color: color-mix(in oklab, var(--accent) 60%, transparent);
 		background: transparent;
 		color: var(--accent);
+	}
+	.add button:disabled:not(.custom-toggle) {
+		border-color: color-mix(in oklab, var(--ink) 30%, transparent);
+		background: color-mix(in oklab, var(--ink) 15%, var(--parchment));
+		color: var(--ink-soft);
+		opacity: 1;
 	}
 	button:disabled,
 	select:disabled {

@@ -6,8 +6,12 @@
 	interface Props {
 		onAdd: (entry: EquipmentEntry) => void;
 		onCancel: () => void;
+		/** Element id, so the toggle that opens the form can point at it. */
+		id?: string;
+		/** Only while the sheet is locked (recording XP, resync); never for a save. */
+		disabled?: boolean;
 	}
-	let { onAdd, onCancel }: Props = $props();
+	let { onAdd, onCancel, id, disabled = false }: Props = $props();
 
 	let name = $state('');
 	// Kept as strings so a fraction like "1.5" reaches the validator unchanged.
@@ -17,13 +21,17 @@
 	let notches = $state('');
 	let error = $state('');
 
+	// Number('') is 0, which would quietly pass as "0 slots". A blank field is
+	// not a number: NaN lets the validator's own message explain it.
+	const toNumber = (v: string) => (v.trim() === '' ? NaN : Number(v));
+
 	function submit(ev: SubmitEvent) {
 		ev.preventDefault();
 		try {
 			const entry = createCustomItem({
 				name,
-				slots: Number(slots),
-				quantity: Number(quantity),
+				slots: toNumber(slots),
+				quantity: toNumber(quantity),
 				tier,
 				maxNotches: notches.trim() === '' ? null : Number(notches)
 			});
@@ -35,23 +43,23 @@
 	}
 </script>
 
-<form class="custom-form" onsubmit={submit} novalidate>
+<form class="custom-form" {id} aria-label="Custom item" onsubmit={submit} novalidate>
 	<label>
 		<span>Item name</span>
-		<input type="text" bind:value={name} maxlength={CUSTOM_ITEM_LIMITS.nameMax} autocomplete="off" />
+		<input type="text" bind:value={name} maxlength={CUSTOM_ITEM_LIMITS.nameMax} autocomplete="off" {disabled} />
 	</label>
 	<div class="nums">
 		<label>
 			<span>Slots</span>
-			<input type="text" inputmode="numeric" bind:value={slots} />
+			<input type="text" inputmode="numeric" bind:value={slots} {disabled} />
 		</label>
 		<label>
 			<span>Quantity</span>
-			<input type="text" inputmode="numeric" bind:value={quantity} />
+			<input type="text" inputmode="numeric" bind:value={quantity} {disabled} />
 		</label>
 		<label>
 			<span>Tier</span>
-			<select bind:value={tier}>
+			<select bind:value={tier} {disabled}>
 				{#each ITEM_TIERS as t (t)}
 					<option value={t}>{t}</option>
 				{/each}
@@ -59,13 +67,13 @@
 		</label>
 		<label>
 			<span>Max notches (optional)</span>
-			<input type="text" inputmode="numeric" bind:value={notches} />
+			<input type="text" inputmode="numeric" bind:value={notches} {disabled} />
 		</label>
 	</div>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<div class="actions">
-		<button type="submit" class="primary">Add custom item</button>
-		<button type="button" onclick={onCancel}>Cancel</button>
+		<button type="submit" class="primary" {disabled}>Add custom item</button>
+		<button type="button" onclick={onCancel} {disabled}>Cancel</button>
 	</div>
 </form>
 

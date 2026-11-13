@@ -44,7 +44,7 @@
     {#if canonical && canonical.component !== entry.customName}<p class="hint">Book component: {canonical.component}</p>{/if}
     <p class="hint">Quantity and carrying location are tracked in Gear above.</p>
    </fieldset>
-  {:else if !entry.itemId && entry.customName}
+  {:else if !entry.itemId && entry.customName && entry.customNotches === undefined}
    <button type="button" onclick={() => convert(i)}>Track {entry.customName} as a spell component</button>
   {/if}
  {/each}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import type { GuildBookCharacterData, CarryLocation, EquipmentEntry } from '$lib/types/character';
 	import type { ItemDefinition, EncumbranceConfig } from '$lib/types/content-pack';
 	import { indexItems, loadSummary, autoPlace, type LocationLoad } from '$lib/engine/encumbrance';
@@ -12,10 +12,17 @@
 		items: ItemDefinition[];
 		encumbrance: EncumbranceConfig;
 		onChange: () => void;
-		/** True while the page has the panel's fieldset disabled (saving etc.). */
-		disabled?: boolean;
+		/** The sheet is locked (recording XP, or a resync is required): nothing here is usable. */
+		locked?: boolean;
+		/** A save is in flight: the item rows, market add and Auto-arrange wait for it. */
+		saving?: boolean;
 	}
-	let { char = $bindable(), items, encumbrance, onChange, disabled = false }: Props = $props();
+	let { char = $bindable(), items, encumbrance, onChange, locked = false, saving = false }: Props = $props();
+
+	// The custom-item form stays usable through a save, so typing in it is never
+	// cut off by the autosave of an earlier change: appending an entry while a
+	// save is in flight is safe (the page snapshots and chains its saves).
+	const busy = $derived(locked || saving);
 
 	const itemIndex = $derived(indexItems(items));
 	const load = $derived(loadSummary(char.equipment, itemIndex, encumbrance));
@@ -32,6 +39,9 @@
 	let addId = $state('');
 	let showCustom = $state(false);
 	let root: HTMLElement | undefined = $state();
+	let customToggle: HTMLButtonElement | undefined = $state();
+	const uid = $props.id();
+	const customFormId = `${uid}-custom-item`;
 
 	const LOCATIONS: { id: CarryLocation; label: string }[] = [
 		{ id: 'hand', label: 'Hand' },
@@ -47,41 +57,56 @@
 		return e.customName ?? defFor(e.itemId)?.name ?? 'Item';
 	}
 
-	// A disabled fieldset drops focus to <body>. Note which row control had focus
-	// as the panel is disabled, and put it back when the panel is enabled again.
-	// The index alone is not durable (removals shift it), so the key also holds
-	// the list length and the entry's identity; no match at restore time, no restore.
-	type FocusKey = { index: string; kind: string; length: number; entry: string };
+	// Disabling a focused control drops focus to <body>. Note what had focus as
+	// the panel's controls are disabled, and put it back when they are enabled
+	// again. A row control's index alone is not durable (removals shift it), so
+	// its key also holds the list length and the entry's identity; no match at
+	// restore time, no restore. Any other control (market select, Add,
+	// Auto-arrange, the custom form while locked) is remembered as the element
+	// itself and restored only if it is still in the document.
+	type FocusKey =
+		| { kind: 'row'; index: string; ctl: string; length: number; entry: string }
+		| { kind: 'element'; el: HTMLElement };
 	const fingerprint = (e: EquipmentEntry | undefined) =>
 		e ? JSON.stringify([e.itemId, e.customName, e.tier, e.packSpace, e.location]) : '';
 	let focusKey: FocusKey | null = null;
 	$effect.pre(() => {
-		if (disabled) {
+		if (!busy) return;
+		// Only the transition into busy matters; nothing read below may re-run this.
+		untrack(() => {
 			const active = document.activeElement;
-			focusKey =
-				active instanceof HTMLElement && root?.contains(active) && active.dataset.entryIndex
-					? {
-							index: active.dataset.entryIndex,
-							kind: active.dataset.ctl ?? '',
-							length: char.equipment.length,
-							entry: fingerprint(char.equipment[Number(active.dataset.entryIndex)])
-						}
-					: null;
-		}
+			if (!(active instanceof HTMLElement) || !root?.contains(active)) {
+				focusKey = null;
+			} else if (active.dataset.entryIndex) {
+				focusKey = {
+					kind: 'row',
+					index: active.dataset.entryIndex,
+					ctl: active.dataset.ctl ?? '',
+					length: char.equipment.length,
+					entry: fingerprint(char.equipment[Number(active.dataset.entryIndex)])
+				};
+			} else {
+				focusKey = { kind: 'element', el: active };
+			}
+		});
 	});
 	$effect(() => {
-		if (disabled || !focusKey) return;
+		if (busy || !focusKey) return;
 		const key = focusKey;
 		focusKey = null;
 		// Never steal focus the user has moved elsewhere.
 		if (document.activeElement !== document.body) return;
+		if (key.kind === 'element') {
+			if (key.el.isConnected) key.el.focus();
+			return;
+		}
 		if (
 			char.equipment.length !== key.length ||
 			fingerprint(char.equipment[Number(key.index)]) !== key.entry
 		)
 			return;
 		const target = root?.querySelector(
-			`[data-entry-index="${key.index}"][data-ctl="${key.kind}"]`
+			`[data-entry-index="${key.index}"][data-ctl="${key.ctl}"]`
 		);
 		if (target instanceof HTMLElement) target.focus();
 	});
@@ -137,10 +162,13 @@
 		addId = '';
 		onChange();
 	}
-	function addCustom(entry: EquipmentEntry) {
+	async function addCustom(entry: EquipmentEntry) {
 		char.equipment = [...char.equipment, entry];
 		showCustom = false;
 		onChange();
+		// The form (and the focused submit button) is gone; land on its toggle.
+		await tick();
+		customToggle?.focus();
 	}
 	function rearrange() {
 		char.equipment = autoPlace(char.equipment, itemIndex, encumbrance);
@@ -151,7 +179,7 @@
 <section class="gear-panel" aria-labelledby="gear-heading" bind:this={root}>
 	<div class="head">
 		<h2 id="gear-heading">Gear</h2>
-		<button type="button" class="auto" onclick={rearrange}>Auto-arrange</button>
+		<button type="button" class="auto" disabled={busy} onclick={rearrange}>Auto-arrange</button>
 	</div>
 	{#each load.violations as v}
 		<p class="violation">{v.reason}</p>
@@ -190,6 +218,7 @@
 								{#if destroyed}<span class="dead">Destroyed</span>{/if}
 							</span>
 							<select
+								disabled={busy}
 								data-entry-index={row.index}
 								data-ctl="location"
 								aria-label={`Location of ${name}`}
@@ -202,17 +231,17 @@
 							</select>
 							<span class="ctrl">
 								qty {e.quantity}
-								<button type="button" data-entry-index={row.index} data-ctl="qty-dec" onclick={() => stepQty(row.index, -1)} aria-label={`Remove one ${name}`}>−</button>
-								<button type="button" data-entry-index={row.index} data-ctl="qty-inc" onclick={() => stepQty(row.index, 1)} aria-label={`Add one ${name}`}>+</button>
+								<button type="button" disabled={busy} data-entry-index={row.index} data-ctl="qty-dec" onclick={() => stepQty(row.index, -1)} aria-label={`Remove one ${name}`}>−</button>
+								<button type="button" disabled={busy} data-entry-index={row.index} data-ctl="qty-inc" onclick={() => stepQty(row.index, 1)} aria-label={`Add one ${name}`}>+</button>
 							</span>
 							{#if dur !== null}
 								<span class="ctrl">
 									notches {e.notchesTaken}/{dur}
-									<button type="button" data-entry-index={row.index} data-ctl="notch-dec" onclick={() => stepNotch(row.index, -1)} aria-label={`Repair one notch on ${name}`}>−</button>
-									<button type="button" data-entry-index={row.index} data-ctl="notch-inc" onclick={() => stepNotch(row.index, 1)} aria-label={`Notch ${name}`}>+</button>
+									<button type="button" disabled={busy} data-entry-index={row.index} data-ctl="notch-dec" onclick={() => stepNotch(row.index, -1)} aria-label={`Repair one notch on ${name}`}>−</button>
+									<button type="button" disabled={busy} data-entry-index={row.index} data-ctl="notch-inc" onclick={() => stepNotch(row.index, 1)} aria-label={`Notch ${name}`}>+</button>
 								</span>
 							{/if}
-							<button type="button" class="remove" data-entry-index={row.index} data-ctl="remove" onclick={() => remove(row.index)} aria-label={`Remove ${name}`}>✕</button>
+							<button type="button" class="remove" disabled={busy} data-entry-index={row.index} data-ctl="remove" onclick={() => remove(row.index)} aria-label={`Remove ${name}`}>✕</button>
 						</li>
 					{/each}
 				</ul>
@@ -221,7 +250,7 @@
 	{/each}
 
 	<div class="add">
-		<select bind:value={addId} aria-label="Add an item from the market">
+		<select bind:value={addId} disabled={busy} aria-label="Add an item from the market">
 			<option value="">Add an item…</option>
 			{#each ['impoverished', 'common', 'luxurious'] as tier (tier)}
 				<optgroup label={tier}>
@@ -231,11 +260,19 @@
 				</optgroup>
 			{/each}
 		</select>
-		<button type="button" disabled={!addId} onclick={add}>Add</button>
-		<button type="button" class="custom-toggle" aria-expanded={showCustom} onclick={() => (showCustom = !showCustom)}>+ Custom item</button>
+		<button type="button" disabled={!addId || busy} onclick={add}>Add</button>
+		<button
+			type="button"
+			class="custom-toggle"
+			bind:this={customToggle}
+			disabled={locked}
+			aria-expanded={showCustom}
+			aria-controls={customFormId}
+			onclick={() => (showCustom = !showCustom)}>+ Custom item</button
+		>
 	</div>
 	{#if showCustom}
-		<CustomItemForm onAdd={addCustom} onCancel={() => (showCustom = false)} />
+		<CustomItemForm id={customFormId} disabled={locked} onAdd={addCustom} onCancel={() => (showCustom = false)} />
 	{/if}
 </section>
 

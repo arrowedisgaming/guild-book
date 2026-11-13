@@ -127,7 +127,11 @@ async function backpackUsed(page: Page) {
 test('adds a custom item', async ({ page }) => {
 	const gear = await openSheet(page, 'Gear Custom', 'Ines Curio');
 	const before = await backpackUsed(page);
-	await gear.getByRole('button', { name: '+ Custom item' }).click();
+	const toggle = gear.getByRole('button', { name: '+ Custom item' });
+	await toggle.click();
+	const form = gear.getByRole('form', { name: 'Custom item' });
+	await expect(form).toBeVisible();
+	await expect(toggle).toHaveAttribute('aria-controls', (await form.getAttribute('id')) ?? 'missing');
 	await gear.getByLabel('Item name').fill('Jade idol');
 	await gear.getByLabel('Slots', { exact: true }).fill('2');
 	await gear.getByLabel('Max notches (optional)').fill('3');
@@ -168,6 +172,16 @@ test('rejects bad custom item input, then a zero-slot trinket takes no room', as
 	await expect(rows).toHaveCount(0);
 	await expect(gear.getByLabel('Item name')).toHaveValue('Odd thing');
 	await expect(gear.getByLabel('Slots', { exact: true })).toHaveValue('1.5');
+	// A blank number is not zero.
+	await gear.getByLabel('Slots', { exact: true }).fill('');
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	await expect(gear.getByRole('alert')).toContainText('Slots');
+	await gear.getByLabel('Slots', { exact: true }).fill('1');
+	await gear.getByLabel('Quantity', { exact: true }).fill('  ');
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	await expect(gear.getByRole('alert')).toContainText('Quantity');
+	await expect(rows).toHaveCount(0);
+	await gear.getByLabel('Quantity', { exact: true }).fill('1');
 	await gear.getByLabel('Item name').fill('Lucky button');
 	await gear.getByLabel('Slots', { exact: true }).fill('0');
 	await gear.getByRole('button', { name: 'Add custom item' }).click();
@@ -175,8 +189,8 @@ test('rejects bad custom item input, then a zero-slot trinket takes no room', as
 	expect(await backpackUsed(page)).toBe(before);
 });
 
-test('keyboard focus survives the autosave', async ({ page }) => {
-	await openSheet(page, 'Gear Focus', 'Fenn Keeper');
+test('keyboard focus and custom-item typing survive the autosave', async ({ page }) => {
+	const gear = await openSheet(page, 'Gear Focus', 'Fenn Keeper');
 	await addItem(page, 'Dagger');
 	const saved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
 	const select = page.getByLabel('Location of Dagger');
@@ -185,6 +199,40 @@ test('keyboard focus survives the autosave', async ({ page }) => {
 	await saved;
 	await expect(select).toBeEnabled();
 	await expect(select).toBeFocused();
+
+	// A control that is not an item row (the market select) gets focus back too.
+	const marketSaved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'belt');
+	await select.selectOption('belt');
+	const market = gear.getByLabel('Add an item from the market');
+	await market.focus();
+	await marketSaved;
+	await expect(market).toBeEnabled();
+	await expect(market).toBeFocused();
+
+	// Typing in the custom-item form is not cut off by the autosave of an
+	// earlier change: the save lands mid-typing and every keystroke arrives.
+	const typed = 'Brass compass';
+	let savedMidTyping = false;
+	const moveSaved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'pack');
+	void moveSaved.then(() => (savedMidTyping = true));
+	await select.selectOption('pack');
+	const toggle = gear.getByRole('button', { name: '+ Custom item' });
+	await toggle.click();
+	const nameField = gear.getByLabel('Item name');
+	await nameField.pressSequentially(typed, { delay: 150 });
+	expect(savedMidTyping).toBe(true);
+	await expect(nameField).toHaveValue(typed);
+	await expect(nameField).toBeFocused();
+	const customSaved = page.waitForResponse(
+		(r) => r.request().method() === 'PUT' && r.url().includes('/api/characters/') && r.ok() &&
+			(r.request().postData() ?? '').includes(typed)
+	);
+	await gear.getByRole('button', { name: 'Add custom item' }).click();
+	// The form closes; focus lands on the toggle that opened it.
+	await expect(toggle).toBeFocused();
+	await customSaved;
+	await page.reload();
+	await expect(group(page, 'Backpack').getByRole('listitem').filter({ hasText: typed })).toBeVisible();
 });
 
 test('a change made after the first save has started also persists', async ({ page }) => {

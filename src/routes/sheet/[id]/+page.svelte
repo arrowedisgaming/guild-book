@@ -134,7 +134,7 @@
 			if (res.status === 409) {
 				if (stale()) return 'stale'; // that adventurer's page will refetch on open
 				savedVersions.delete(id);
-				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check XP history before recording the action again.';
+				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check that your last change was saved.';
 				forceResync = true;
 				await invalidateAll();
 				return 'uncertain';
@@ -145,7 +145,7 @@
 			return 'rejected';
 		} catch {
 			if (stale()) return 'stale';
-			saveError = 'Save could not be confirmed. Reloading — check XP history before recording the action again.';
+			saveError = 'Save could not be confirmed. Reloading the latest version — check that your last change was saved.';
 			savedVersions.delete(id);
 			forceResync = true;
 			await invalidateAll().catch(() => {});
@@ -314,9 +314,11 @@
 	/>
 	</fieldset>
 	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
-	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
-		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} disabled={saving || recordingXp || syncRequired} />
-	</fieldset>
+	<!-- Not a disabled fieldset: the panel locks its own controls, so its
+	     custom-item form keeps taking input while an earlier change saves. -->
+	<div class="gear-wrap">
+		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} locked={recordingXp || syncRequired} {saving} />
+	</div>
 
 	{#if editMode}
 		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
@@ -352,6 +354,8 @@
 
 <style>
 	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+	/* A block formatting context, as the fieldset it replaced was: margins don't collapse through it. */
+	.gear-wrap { display: flow-root; min-width: 0; }
 	.sheet-page {
 		max-width: 48rem;
 		margin: 0 auto;

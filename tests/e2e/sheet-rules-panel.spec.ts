@@ -3,6 +3,10 @@ import { signInAs, createTestAdventurer } from './fixtures/auth';
 
 const WIDE = { width: 1440, height: 900 };
 const NARROW = { width: 1024, height: 800 };
+/** 84rem at the 16px media-query rem: the first width that shows the panel. */
+const BREAKPOINT = { width: 1344, height: 900 };
+/** Just under the breakpoint: the sheet could not keep 48rem beside a panel. */
+const JUST_UNDER = { width: 1300, height: 900 };
 
 const panelOf = (page: Page) => page.getByRole('complementary', { name: 'Rules reference' });
 const panelSearch = (page: Page) =>
@@ -67,7 +71,7 @@ test('open in rules link goes to the rules page in a new tab', async ({ page }) 
 	await expect(link).toHaveAttribute('href', /^\/rules\//);
 });
 
-test('/ focuses the panel search on wide screens and the header search otherwise', async ({ page }) => {
+test('/ focuses the panel search on wide screens and the header search just under the breakpoint', async ({ page }) => {
 	await page.setViewportSize(WIDE);
 	await openSheet(page, 'Panel Slasher', 'Sly Slash');
 	await expect(panelOf(page)).toBeVisible();
@@ -78,7 +82,7 @@ test('/ focuses the panel search on wide screens and the header search otherwise
 		await expect(panelSearch(page)).toBeFocused({ timeout: 200 });
 	}).toPass();
 
-	await page.setViewportSize(NARROW);
+	await page.setViewportSize(JUST_UNDER);
 	await expect(panelOf(page)).toHaveCount(0);
 	const header = page.getByRole('combobox', { name: 'Search the rules', exact: true });
 	await expect(async () => {
@@ -103,6 +107,20 @@ test('no panel below 80rem and no horizontal scroll', async ({ page }) => {
 	// The sheet keeps main's 48rem cap. The root font size is 18px here, so the
 	// cap is 864px, not 768px.
 	expect(sheetWidth).toBeLessThanOrEqual(48 * rem);
+});
+
+test('at the breakpoint the sheet keeps its full 48rem beside the panel', async ({ page }) => {
+	await page.setViewportSize(BREAKPOINT);
+	await openSheet(page, 'Panel Edge', 'Eda Edgeworth');
+	await expect(panelOf(page)).toBeVisible();
+	const { scrollWidth, innerWidth, colWidth, rem } = await page.evaluate(() => ({
+		scrollWidth: document.documentElement.scrollWidth,
+		innerWidth: window.innerWidth,
+		colWidth: document.querySelector('.sheet-col')!.getBoundingClientRect().width,
+		rem: parseFloat(getComputedStyle(document.documentElement).fontSize)
+	}));
+	expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+	expect(colWidth).toBeCloseTo(48 * rem, 0);
 });
 
 test('panel state survives an autosave and a resize', async ({ page }) => {

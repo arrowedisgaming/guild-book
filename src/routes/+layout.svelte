@@ -65,8 +65,9 @@
 		margin: 0 auto;
 		padding: 0 1.25rem;
 	}
-	/* The owner's sheet sets the rules panel beside itself on wide screens. */
-	@media (min-width: 80rem) {
+	/* The owner's sheet sets the rules panel beside itself on wide screens.
+	 * 84rem = RULES_PANEL_MEDIA_QUERY ($lib/components/rules/rules-panel-layout). */
+	@media (min-width: 84rem) {
 		.site.wide {
 			max-width: 104rem;
 		}

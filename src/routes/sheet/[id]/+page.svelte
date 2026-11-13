@@ -13,6 +13,7 @@
 	import GearPanel from '$lib/components/character/GearPanel.svelte';
 	import RulesSidePanel from '$lib/components/rules/RulesSidePanel.svelte';
 	import { createRulesSidePanel } from '$lib/components/rules/rules-side-panel.svelte';
+	import { RULES_PANEL_MEDIA_QUERY } from '$lib/components/rules/rules-panel-layout';
 	import { MediaQuery } from 'svelte/reactivity';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
@@ -62,7 +63,7 @@
 	const rulesPanel = createRulesSidePanel(untrack(() => data.packVersion));
 	// False during SSR: the panel mounts after hydration. Its grid column is
 	// reserved by the CSS media query below, so the sheet does not move.
-	const wide = new MediaQuery('min-width: 80rem');
+	const wide = new MediaQuery(RULES_PANEL_MEDIA_QUERY);
 
 	let editMode = $state(false);
 	// A count, not a boolean: overlapping saves (a flush for the adventurer
@@ -360,12 +361,17 @@
 	}
 	/* Wide screens: the sheet column and the rules panel side by side. The grid
 	 * is CSS-only (not gated on the MediaQuery) so the column is reserved
-	 * before hydration mounts the panel. */
-	@media (min-width: 80rem) {
+	 * before hydration mounts the panel. 84rem = RULES_PANEL_MEDIA_QUERY
+	 * ($lib/components/rules/rules-panel-layout), the first width where the
+	 * sheet keeps its full 48rem. The sheet track's minimum is 48rem (so the
+	 * panel, not the sheet, gives up spare width), capped at what is left after
+	 * the panel's 22rem and the gap, so an unusual browser font size can never
+	 * push the page into horizontal scroll. */
+	@media (min-width: 84rem) {
 		.sheet-page {
 			max-width: none;
 			display: grid;
-			grid-template-columns: minmax(0, 48rem) minmax(22rem, 28rem);
+			grid-template-columns: minmax(min(48rem, 100% - 24rem), 48rem) minmax(22rem, 28rem);
 			gap: 2rem;
 			justify-content: center;
 			align-items: start;

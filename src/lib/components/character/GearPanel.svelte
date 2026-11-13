@@ -49,13 +49,23 @@
 
 	// A disabled fieldset drops focus to <body>. Note which row control had focus
 	// as the panel is disabled, and put it back when the panel is enabled again.
-	let focusKey: { index: string; kind: string } | null = null;
+	// The index alone is not durable (removals shift it), so the key also holds
+	// the list length and the entry's identity; no match at restore time, no restore.
+	type FocusKey = { index: string; kind: string; length: number; entry: string };
+	const fingerprint = (e: EquipmentEntry | undefined) =>
+		e ? JSON.stringify([e.itemId, e.customName, e.tier, e.packSpace, e.location]) : '';
+	let focusKey: FocusKey | null = null;
 	$effect.pre(() => {
 		if (disabled) {
 			const active = document.activeElement;
 			focusKey =
 				active instanceof HTMLElement && root?.contains(active) && active.dataset.entryIndex
-					? { index: active.dataset.entryIndex, kind: active.dataset.ctl ?? '' }
+					? {
+							index: active.dataset.entryIndex,
+							kind: active.dataset.ctl ?? '',
+							length: char.equipment.length,
+							entry: fingerprint(char.equipment[Number(active.dataset.entryIndex)])
+						}
 					: null;
 		}
 	});
@@ -65,6 +75,11 @@
 		focusKey = null;
 		// Never steal focus the user has moved elsewhere.
 		if (document.activeElement !== document.body) return;
+		if (
+			char.equipment.length !== key.length ||
+			fingerprint(char.equipment[Number(key.index)]) !== key.entry
+		)
+			return;
 		const target = root?.querySelector(
 			`[data-entry-index="${key.index}"][data-ctl="${key.kind}"]`
 		);
@@ -93,9 +108,14 @@
 		char.equipment[i] = { ...e, notchesTaken: Math.min(max, Math.max(0, e.notchesTaken + delta)) };
 		onChange();
 	}
-	function remove(i: number) {
+	async function remove(i: number) {
 		char.equipment = char.equipment.filter((_, idx) => idx !== i);
 		onChange();
+		// Rows are keyed by index, so the DOM node holding focus is reused for the
+		// next item. Park focus on a stable control instead of a different item's.
+		await tick();
+		const stable = root?.querySelector('.add select');
+		if (stable instanceof HTMLElement) stable.focus();
 	}
 	function add() {
 		const def = itemIndex.get(addId);

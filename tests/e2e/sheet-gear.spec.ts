@@ -214,3 +214,14 @@ test('a change made after the first save has started also persists', async ({ pa
 	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
 	await expect(group(page, 'Belt').getByRole('listitem').filter({ hasText: 'Rope' })).toBeVisible();
 });
+
+test('focus is not restored onto another item after Remove', async ({ page }) => {
+	await openSheet(page, 'Gear Remover', 'Ward Dropper');
+	await addItem(page, 'Dagger');
+	await addItem(page, 'Rope');
+	const saved = savedWhere(page, (eq) => eq.length === 1 && eq[0].itemId === 'rope');
+	await page.getByRole('button', { name: 'Remove Dagger', exact: true }).click();
+	await saved;
+	await expect(page.getByLabel('Location of Rope')).toBeEnabled();
+	await expect(page.getByRole('button', { name: 'Remove Rope', exact: true })).not.toBeFocused();
+});

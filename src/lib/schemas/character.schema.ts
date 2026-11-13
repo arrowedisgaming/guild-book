@@ -36,7 +36,7 @@ const bondSchema = z.object({
 	charged: z.boolean()
 });
 
-export const equipmentEntrySchema =z.object({
+export const equipmentEntrySchema = z.object({
 	itemId: z.string().nullable(),
 	customName: z.string().nullable(),
 	tier: z.enum(ITEM_TIERS),

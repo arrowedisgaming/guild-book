@@ -99,8 +99,8 @@ describe('loadSummary', () => {
 	});
 });
 
-describe('worn-entry spare billing (GearEdit path, no autoPlace)', () => {
-	// GearEdit lets a player raise a worn entry's quantity directly, with no
+describe('worn-entry spare billing (GearPanel path, no autoPlace)', () => {
+	// GearPanel lets a player raise a worn entry's quantity directly, with no
 	// autoPlace pass. loadSummary must split that entry's billing itself —
 	// one suit to the belt, the spares to wherever spareLocation says — so
 	// this path agrees with autoPlace's split rather than dumping both suits
@@ -129,13 +129,13 @@ describe('worn-entry spare billing (GearEdit path, no autoPlace)', () => {
 			items,
 			caps
 		);
-		const viaGearEdit = loadSummary(
+		const viaGearPanel = loadSummary(
 			[entry('armor-light', { location: 'worn', quantity: 2 })],
 			items,
 			caps
 		);
-		expect(viaGearEdit.belt.used).toBe(viaAutoPlace.belt.used);
-		expect(viaGearEdit.pack.used).toBe(viaAutoPlace.pack.used);
+		expect(viaGearPanel.belt.used).toBe(viaAutoPlace.belt.used);
+		expect(viaGearPanel.pack.used).toBe(viaAutoPlace.pack.used);
 	});
 });
 

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { CharacterView } from '$lib/types/character-view';
 
-	let { view }: { view: CharacterView } = $props();
+	// showGear: the owner's sheet page renders gear in its own editable panel.
+	let { view, showGear = true }: { view: CharacterView; showGear?: boolean } = $props();
 
 	const locations = [
 		{ id: 'hand', label: 'In hand' },
@@ -87,7 +88,7 @@
 		</section>
 	{/if}
 
-	{#if view.equipment.length}
+	{#if showGear && view.equipment.length}
 		<section>
 			<h2>
 				Gear

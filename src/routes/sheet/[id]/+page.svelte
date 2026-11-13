@@ -10,7 +10,7 @@
 	import ExperiencePanel from '$lib/components/character/ExperiencePanel.svelte';
 	import SpellComponentsEdit from '$lib/components/character/edit/SpellComponentsEdit.svelte';
 	import { applyXpAction, type XpAction } from '$lib/engine/experience';
-	import GearEdit from '$lib/components/character/edit/GearEdit.svelte';
+	import GearPanel from '$lib/components/character/GearPanel.svelte';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
 
@@ -301,6 +301,9 @@
 	/>
 	</fieldset>
 	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
+	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
+		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} />
+	</fieldset>
 
 	{#if editMode}
 		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
@@ -317,18 +320,12 @@
 			<LanguagesEdit bind:char languages={data.content.languages} onChange={onEditChange} />
 		</section>
 		<section class="edit-section">
-			<h2>Gear</h2>
-			<GearEdit
-				bind:char
-				items={data.content.items}
-				encumbrance={data.content.encumbrance}
-				onChange={onEditChange}
-			/>
+			<h2>Spell components</h2>
 			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onEditChange} />
 		</section>
 		</fieldset>
 	{:else}
-		<CharacterSheet view={data.view} />
+		<CharacterSheet view={data.view} showGear={false} />
 	{/if}
 
 	<div class="actions-wrap">

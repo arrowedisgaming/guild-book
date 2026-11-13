@@ -32,7 +32,6 @@
 </script>
 
 <section aria-label="Spell components">
- <h3>Spell components</h3>
  <p class="hint">Components are reusable: each takes {config.componentSlots} pack slot{config.componentSlots === 1 ? '' : 's'}. Casting does not consume them. Agree substitutions with your GM.</p>
  {#each char.equipment as entry, i (i)}
   {#if entry.spellComponent}

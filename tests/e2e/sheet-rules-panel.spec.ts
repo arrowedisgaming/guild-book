@@ -92,7 +92,7 @@ test('/ focuses the panel search on wide screens and the header search just unde
 	}).toPass();
 });
 
-test('no panel below 80rem and no horizontal scroll', async ({ page }) => {
+test('no panel below 84rem and no horizontal scroll', async ({ page }) => {
 	await page.setViewportSize(NARROW);
 	await openSheet(page, 'Panel Narrow', 'Nim Narrowway');
 	await expect(page.getByRole('button', { name: 'Take a Wound…' })).toBeVisible();

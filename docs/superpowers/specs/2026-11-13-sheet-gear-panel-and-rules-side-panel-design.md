@@ -165,13 +165,14 @@ BACKPACK  ■■■■■■■■■■■■□□□□□□□□□   9 op
 
 ### Layout
 
-- At viewport width ≥ 80rem, `/sheet/[id]` becomes two columns: the sheet
+- At viewport width ≥ 84rem (1344px), `/sheet/[id]` becomes two columns: the sheet
   column (48rem, unchanged content) and a rules panel (about 24–28rem). The
   site container widens on this route only to make room; header and footer
-  widen with it.
+  widen with it. (84rem rather than 80rem because the app's root font is 18px,
+  so 48rem sheet + panel + gutters need 1344px for the sheet to keep its full width.)
 - The panel is sticky under the header, as tall as the viewport allows, and
   scrolls internally. The sheet scrolls with the page as today.
-- Below 80rem the panel is not rendered at all and the page is exactly as
+- Below 84rem the panel is not rendered at all and the page is exactly as
   today.
 
 ### Behaviour

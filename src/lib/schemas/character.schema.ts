@@ -44,8 +44,10 @@ const equipmentEntrySchema = z.object({
 	location: z.enum(['hand', 'belt', 'pack', 'worn']),
 	quantity: z.number(),
 	notchesTaken: z.number(),
+	customNotches: z.number().int().min(1).max(20).optional(),
 	spellComponent: z.object({ spellId: z.string().trim().min(1).nullable(), spellName: z.string().max(200), notes: z.string().max(4000) }).optional()
 }).superRefine((entry, context) => {
+	if (entry.customNotches !== undefined && (entry.itemId !== null || entry.spellComponent)) context.addIssue({ code: 'custom', path: ['customNotches'], message: 'Only custom, non-component items can set durability' });
 	if (!entry.spellComponent) return;
 	if (entry.itemId !== null) context.addIssue({ code: 'custom', path: ['itemId'], message: 'Spell components must be custom equipment' });
 	if (!entry.customName?.trim() || entry.customName.length > 2000) context.addIssue({ code: 'custom', path: ['customName'], message: 'Component description must be 1–2000 characters' });

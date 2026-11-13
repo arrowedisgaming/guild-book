@@ -104,3 +104,22 @@ describe('spell component structural validation', () => {
 		expect(characterDataSchema.safeParse(c).success).toBe(false);
 	});
 });
+
+describe('customNotches validation', () => {
+	const base = { itemId: null, customName: 'Idol', tier: 'common', packSpace: 1, location: 'pack', quantity: 1, notchesTaken: 0 };
+	const parse = (overrides: Record<string, unknown>) => {
+		const c = createBlankCharacter();
+		c.equipment.push({ ...base, ...overrides } as never);
+		return characterDataSchema.safeParse(c).success;
+	};
+
+	it('accepts customNotches on a custom entry', () => expect(parse({ customNotches: 3 })).toBe(true));
+	it.each([0, 21, 1.5])('rejects customNotches of %s', (customNotches) =>
+		expect(parse({ customNotches })).toBe(false));
+	it('rejects customNotches on a catalogue entry', () =>
+		expect(parse({ itemId: 'helm', customName: null, customNotches: 2 })).toBe(false));
+	it('rejects customNotches on a spell component', () =>
+		expect(parse({ customNotches: 2, spellComponent: { spellId: null, spellName: '', notes: '' } })).toBe(false));
+	it('still accepts a legacy custom entry with a 500-char name and no customNotches', () =>
+		expect(parse({ customName: 'x'.repeat(500) })).toBe(true));
+});

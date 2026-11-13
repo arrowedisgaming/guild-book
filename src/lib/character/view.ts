@@ -4,6 +4,7 @@
  * round trip through an authenticated API.
  */
 
+import { durabilityOf } from '$lib/engine/gear-view';
 import { indexItems, loadSummary, slotsFor } from '$lib/engine/encumbrance';
 import type { GuildBookCharacterData } from '$lib/types/character';
 import type { CharacterView } from '$lib/types/character-view';
@@ -72,7 +73,7 @@ export function buildCharacterViewFromContent(
 		bonds: char.bonds,
 		equipment: char.equipment.map((equipment) => {
 			const definition = equipment.itemId ? items.get(equipment.itemId) : undefined;
-			const durability = definition?.notches ?? null;
+			const durability = durabilityOf(equipment, definition);
 			return {
 				name: equipment.customName ?? definition?.name ?? 'Item',
 				tier: equipment.tier,

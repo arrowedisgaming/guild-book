@@ -13,6 +13,7 @@
  let amount = $state(1);
  let reason = $state('');
  let session = $state('');
+ let open = $state(false);
  const preset = $derived(config.awards.find(a => a.id === source));
  const delta = $derived(mode === 'award' ? (preset?.amount ?? amount) : mode === 'spend' ? -amount : amount);
  async function submit() {
@@ -21,8 +22,8 @@
  }
 </script>
 <section aria-label="Experience" class="experience">
- <details>
- <summary><h2>Experience</h2><span class="balance">Available XP: {char.experience}</span></summary>
+ <details bind:open>
+ <summary class="toggle"><h2>Experience</h2><span class="balance">Available XP: {char.experience}</span><span class="cta">{open ? 'Hide' : 'Record XP & history'}<svg class="chevron" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></span></summary>
  <form onsubmit={event => { event.preventDefault(); void submit(); }}>
   <fieldset disabled={disabled}>
    <label>XP action<select bind:value={mode}><option value="award">Award XP</option><option value="spend">Spend XP</option><option value="correction">Correct balance</option></select></label>
@@ -51,8 +52,19 @@
  </details>
 </section>
 <style>
- .experience { margin: 1rem 0; padding: .6rem 1rem; border: 1px solid color-mix(in oklch, var(--ink) 20%, transparent); border-radius: 4px; }
+ .experience { margin: 1rem 0; padding: .6rem 1rem; border: 1px solid color-mix(in oklch, var(--ink) 20%, transparent); border-radius: 4px; transition: border-color .15s; }
+ .experience:has(> details > .toggle:hover) { border-color: var(--accent); }
  summary { display: flex; align-items: baseline; gap: 1rem; cursor: pointer; }
+ /* The whole header row is the toggle: it bleeds to the box edge so the hover tint fills it. */
+ .toggle { list-style: none; flex-wrap: wrap; row-gap: .3rem; margin: -.6rem -1rem; padding: .6rem 1rem; border-radius: 3px; transition: background-color .15s; }
+ .toggle::-webkit-details-marker { display: none; }
+ .toggle:hover { background: color-mix(in oklch, var(--accent) 7%, transparent); }
+ .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ details[open] > .toggle { margin-bottom: 0; }
+ .cta { margin-left: auto; display: inline-flex; align-items: center; gap: .35rem; font-family: var(--font-subhead); font-size: .85rem; color: var(--accent); }
+ .chevron { transition: transform .15s; }
+ details[open] > .toggle .chevron { transform: rotate(180deg); }
+ @media (prefers-reduced-motion: reduce) { .experience, .toggle, .chevron { transition: none; } }
  h2 { margin: 0; font-size: 1.2rem; } .balance { font-family: var(--font-heading); font-size: 1.05rem; }
  form { margin-top: .8rem; }
  fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: .6rem; min-width: 0; }
@@ -60,5 +72,5 @@
  input, select { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; padding: .5rem; color: var(--ink); background: var(--parchment); border: 1px solid color-mix(in oklch, var(--ink) 25%, transparent); border-radius: 3px; }
  button { justify-self: start; font: inherit; padding: .5rem .9rem; color: var(--parchment); background: var(--accent); border: 0; border-radius: 3px; cursor: pointer; } button:disabled { opacity: .5; }
  .hint, small { color: var(--ink-soft); font-size: .82rem; } .preview { margin: .2rem 0; }
- details { margin-top: 1rem; } summary { cursor: pointer; } li { margin: .7rem 0; overflow-wrap: anywhere; } li p { margin: .2rem 0; }
+ details { margin-top: 1rem; } .experience > details { margin-top: 0; } summary { cursor: pointer; } li { margin: .7rem 0; overflow-wrap: anywhere; } li p { margin: .2rem 0; }
 </style>

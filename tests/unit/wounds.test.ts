@@ -4,6 +4,7 @@ import {
 	applyWound,
 	healWoundedTalent,
 	canWoundTalent,
+	canReturnToTraining,
 	woundedTalentCount,
 	MAX_WOUNDED_TALENTS,
 	CONDITION_IDS
@@ -72,6 +73,29 @@ describe('woundOptions', () => {
 		expect(options.filter((o) => o.type === 'notch')).toHaveLength(1); // shield only
 	});
 
+	it('lists Mark options first, then Wound talents, then Notch gear', () => {
+		const { options } = woundOptions(adventurer(), items);
+		const types = options.map((o) => o.type);
+		const firstTalent = types.indexOf('wound-talent');
+		const firstNotch = types.indexOf('notch');
+		expect(types.lastIndexOf('condition')).toBeLessThan(firstTalent);
+		expect(types.lastIndexOf('wound-talent')).toBeLessThan(firstNotch);
+		expect(options.slice(0, 3).map((o) => o.label)).toEqual([
+			'Mark Staggered',
+			'Mark Injured',
+			"Mark Death's Door"
+		]);
+	});
+
+	it('only offers mastered talents for wounding', () => {
+		const c = adventurer();
+		c.talents[1].state = 'in-training'; // aegis
+		const offered = woundOptions(c, items)
+			.options.filter((o) => o.type === 'wound-talent')
+			.map((o) => (o.type === 'wound-talent' ? o.talentId : ''));
+		expect(offered).toEqual(['keen-senses', 'reaver']);
+	});
+
 	it('removes talent options entirely at the two-wounded cap', () => {
 		const c = adventurer();
 		c.talents[0].wounded = true;
@@ -107,6 +131,22 @@ describe('applyWound / healWoundedTalent', () => {
 		const after = applyWound(c, { type: 'wound-talent', talentId: 'reaver', label: '', detail: '' });
 		expect(woundedTalentCount(after)).toBe(MAX_WOUNDED_TALENTS);
 		expect(after.talents.find((t) => t.talentId === 'reaver')?.wounded).toBe(false);
+	});
+
+	it('refuses to wound a talent that is still in training', () => {
+		const c = adventurer();
+		c.talents[0].state = 'in-training';
+		const next = applyWound(c, { type: 'wound-talent', talentId: 'keen-senses', label: '', detail: '' });
+		expect(next.talents[0].wounded).toBe(false);
+	});
+
+	it('keeps a wounded talent mastered until it is healed', () => {
+		let c = adventurer();
+		expect(canReturnToTraining(c.talents[1])).toBe(true);
+		c = applyWound(c, { type: 'wound-talent', talentId: 'aegis', label: '', detail: '' });
+		expect(canReturnToTraining(c.talents[1])).toBe(false);
+		c = healWoundedTalent(c, 'aegis');
+		expect(canReturnToTraining(c.talents[1])).toBe(true);
 	});
 
 	it('marks conditions idempotently', () => {

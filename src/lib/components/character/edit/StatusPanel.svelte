@@ -17,7 +17,8 @@
 		bondTypes: BondTypeDefinition[];
 		items: ItemDefinition[];
 		resolveMax: number;
-		talentName: (id: string) => string;
+		/** The pack's name for a talent id, or undefined if the pack lacks it. */
+		talentName: (id: string) => string | undefined;
 		onChange: () => void;
 	}
 	let {
@@ -52,6 +53,29 @@
 	});
 
 	const choices = $derived(woundOptions(char, itemIndex));
+
+	/**
+	 * Splits an option into its action verb (shown in the accent colour) and
+	 * what it acts on. A talent the current pack doesn't know — one saved
+	 * under an older pack's ids — is named by where it came from, with its
+	 * stored id kept visible so two such talents can still be told apart.
+	 */
+	function woundText(opt: WoundOption): { verb: string; target: string; detail: string } {
+		if (opt.type === 'wound-talent') {
+			const known = talentName(opt.talentId);
+			if (known) return { verb: 'Wound', target: known, detail: 'Unusable until healed' };
+			const source = char.talents.find((t) => t.talentId === opt.talentId)?.sourceLabel;
+			return {
+				verb: 'Wound',
+				target: source ? `${source} talent` : 'unknown talent',
+				detail: `Unusable until healed · not in the current talent list (${opt.talentId})`
+			};
+		}
+		const space = opt.label.indexOf(' ');
+		return space < 0
+			? { verb: opt.label, target: '', detail: opt.detail }
+			: { verb: opt.label.slice(0, space), target: opt.label.slice(space + 1), detail: opt.detail };
+	}
 
 	function toggleCondition(id: string) {
 		char.conditions = char.conditions.includes(id)
@@ -217,11 +241,10 @@
 		<div class="wound-menu">
 			{#each choices.hints as h}<p class="hint">{h}</p>{/each}
 			{#each choices.options as opt, i (i)}
+				{@const text = woundText(opt)}
 				<button type="button" class="wound-opt" onclick={() => takeWound(opt)}>
-					<span class="wlabel">
-						{opt.type === 'wound-talent' ? `Wound ${talentName(opt.detail)}` : opt.label}
-					</span>
-					<span class="wdetail">{opt.type === 'wound-talent' ? 'Unusable until healed' : opt.detail}</span>
+					<span class="wlabel"><span class="wverb">{text.verb}</span> {text.target}</span>
+					<span class="wdetail">{text.detail}</span>
 				</button>
 			{/each}
 		</div>
@@ -420,6 +443,9 @@
 	.wlabel {
 		font-family: var(--font-heading);
 		font-size: 0.95rem;
+	}
+	.wverb {
+		color: var(--accent);
 	}
 	.wdetail {
 		font-size: 0.75rem;

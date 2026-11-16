@@ -1,7 +1,8 @@
 /**
- * Wound handling. Taking a Wound is a choice between notching protective gear,
- * wounding a trained talent (at most two may be wounded at once), or marking a
- * condition — Staggered, Injured, or Death's Door. While Injured, the rules say
+ * Wound handling. Taking a Wound is a choice between marking a condition —
+ * Staggered, Injured, or Death's Door — wounding a mastered talent (at most
+ * two may be wounded at once; a talent still in training can't be), or
+ * notching protective gear. While Injured, the rules say
  * the next wound must be Death's Door; per the app's "enforce caps, guide the
  * rest" policy we surface that as guidance rather than a hard block, but the
  * two-wounded-talents cap IS hard. Pure.
@@ -32,6 +33,20 @@ export function canWoundTalent(char: GuildBookCharacterData): boolean {
 	return woundedTalentCount(char) < MAX_WOUNDED_TALENTS;
 }
 
+/** Only a mastered talent can take a wound; one still in training cannot. */
+export function isWoundableTalent(talent: { state: string; wounded: boolean }): boolean {
+	return talent.state === 'mastered' && !talent.wounded;
+}
+
+/**
+ * A wounded talent stays mastered until healed — moving it back into
+ * training would leave an in-training talent wounded, which the rule above
+ * forbids.
+ */
+export function canReturnToTraining(talent: { state: string; wounded: boolean }): boolean {
+	return talent.state === 'mastered' && !talent.wounded;
+}
+
 export type WoundOption =
 	| { type: 'notch'; entryIndex: number; label: string; detail: string }
 	| { type: 'wound-talent'; talentId: string; label: string; detail: string }
@@ -58,30 +73,47 @@ function isNotchable(entry: EquipmentEntry, items: ItemIndex): boolean {
 }
 
 /**
- * The legal ways to absorb a Wound right now. Talent options vanish at the
- * two-wounded cap (hard rule); the Injured→Death's Door rule arrives as a hint.
+ * The legal ways to absorb a Wound right now, in menu order: conditions to
+ * mark, then mastered talents to wound, then gear to notch. Talent options
+ * vanish at the two-wounded cap (hard rule); the Injured→Death's Door rule
+ * arrives as a hint.
  */
 export function woundOptions(char: GuildBookCharacterData, items: ItemIndex): WoundChoices {
-	const options: WoundOption[] = [];
+	const marks: WoundOption[] = [];
+	const talentWounds: WoundOption[] = [];
+	const notches: WoundOption[] = [];
 	const hints: string[] = [];
 	const injured = hasCondition(char, CONDITION_IDS.injured);
 
-	char.equipment.forEach((entry, entryIndex) => {
-		if (!isNotchable(entry, items)) return;
-		const def = items.get(entry.itemId!)!;
-		const left = (def.notches ?? 0) - entry.notchesTaken;
-		options.push({
-			type: 'notch',
-			entryIndex,
-			label: `Notch ${def.name}`,
-			detail: `${left} notch${left === 1 ? '' : 'es'} remaining before it's Destroyed`
+	if (!hasCondition(char, CONDITION_IDS.staggered)) {
+		marks.push({
+			type: 'condition',
+			conditionId: CONDITION_IDS.staggered,
+			label: 'Mark Staggered',
+			detail: 'No immediate effect; clears at camp (unless Stressed).'
 		});
-	});
+	}
+	if (!injured) {
+		marks.push({
+			type: 'condition',
+			conditionId: CONDITION_IDS.injured,
+			label: 'Mark Injured',
+			detail: "Dangerous: while Injured, your next wound must be Death's Door."
+		});
+	}
+	if (!hasCondition(char, CONDITION_IDS.deathsDoor)) {
+		marks.push({
+			type: 'condition',
+			conditionId: CONDITION_IDS.deathsDoor,
+			label: "Mark Death's Door",
+			detail: 'Unconscious and helpless — one watch to be healed, or die.'
+		});
+	}
 
 	if (canWoundTalent(char)) {
 		for (const t of char.talents) {
-			if (t.wounded) continue;
-			options.push({
+			if (!isWoundableTalent(t)) continue;
+			talentWounds.push({
 				type: 'wound-talent',
 				talentId: t.talentId,
 				label: `Wound a talent`,
@@ -92,36 +124,23 @@ export function woundOptions(char: GuildBookCharacterData, items: ItemIndex): Wo
 		hints.push('Two talents are already wounded — the cap. Choose another way to take this wound.');
 	}
 
-	if (!hasCondition(char, CONDITION_IDS.staggered)) {
-		options.push({
-			type: 'condition',
-			conditionId: CONDITION_IDS.staggered,
-			label: 'Mark Staggered',
-			detail: 'No immediate effect; clears at camp (unless Stressed).'
+	char.equipment.forEach((entry, entryIndex) => {
+		if (!isNotchable(entry, items)) return;
+		const def = items.get(entry.itemId!)!;
+		const left = (def.notches ?? 0) - entry.notchesTaken;
+		notches.push({
+			type: 'notch',
+			entryIndex,
+			label: `Notch ${def.name}`,
+			detail: `${left} notch${left === 1 ? '' : 'es'} remaining before it's Destroyed`
 		});
-	}
-	if (!injured) {
-		options.push({
-			type: 'condition',
-			conditionId: CONDITION_IDS.injured,
-			label: 'Mark Injured',
-			detail: "Dangerous: while Injured, your next wound must be Death's Door."
-		});
-	}
-	if (!hasCondition(char, CONDITION_IDS.deathsDoor)) {
-		options.push({
-			type: 'condition',
-			conditionId: CONDITION_IDS.deathsDoor,
-			label: "Mark Death's Door",
-			detail: 'Unconscious and helpless — one watch to be healed, or die.'
-		});
-	}
+	});
 
 	if (injured) {
 		hints.push("You are Injured — by the rules this wound must be Death's Door.");
 	}
 
-	return { options, hints };
+	return { options: [...marks, ...talentWounds, ...notches], hints };
 }
 
 /** Apply a chosen wound option, returning a new character. */
@@ -143,7 +162,7 @@ export function applyWound(
 			return {
 				...char,
 				talents: char.talents.map((t) => {
-					if (done || t.talentId !== option.talentId || t.wounded) return t;
+					if (done || t.talentId !== option.talentId || !isWoundableTalent(t)) return t;
 					done = true;
 					return { ...t, wounded: true };
 				})

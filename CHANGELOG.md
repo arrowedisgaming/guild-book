@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-16
+
 ### Added
 
 - A gear panel on the adventurer sheet's play view, always open and saved
@@ -21,8 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Gear is no longer edited in Edit mode; manage it from the gear panel on the
-  play view.
+- Gear has moved out of the Edit form into the gear panel on the play view.
+  Changes there save automatically; while Edit mode is open they wait for
+  Save changes or Cancel along with the rest of the edit.
+- Hands, belt and backpack each show their open slots against the total (for
+  example "18/21 open").
+
+### Fixed
+
+- Inventory items from an older rulebook catalogue are named after their
+  stored id instead of all appearing as "Item".
 
 ## [0.22.0] - 2026-10-07
 

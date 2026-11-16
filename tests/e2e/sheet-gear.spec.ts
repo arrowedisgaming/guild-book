@@ -104,6 +104,17 @@ test('Edit-mode Cancel reverts gear', async ({ page }) => {
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await page.reload();
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
+
+	// A play-view change still inside its autosave debounce when Edit is
+	// clicked is saved first — an immediate Cancel must not take it with it.
+	const saved = savedWhere(page, (equipment) => at(equipment, 'rope') !== undefined);
+	await addItem(page, 'Rope');
+	await page.getByRole('button', { name: 'Edit', exact: true }).click();
+	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+	await saved;
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
+	await page.reload();
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
 });
 
 test('narrow screen has no horizontal scroll', async ({ page }) => {
@@ -215,12 +226,28 @@ test('keyboard focus and custom-item typing survive the autosave', async ({ page
 	let savedMidTyping = false;
 	const moveSaved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'pack');
 	void moveSaved.then(() => (savedMidTyping = true));
+	// Slow the save down so "a save is in flight" is a window we can observe.
+	await page.route('**/api/characters/*', async (route) => {
+		if (route.request().method() === 'PUT') await new Promise((done) => setTimeout(done, 800));
+		await route.continue();
+	});
 	await select.selectOption('pack');
 	const toggle = gear.getByRole('button', { name: '+ Custom item' });
 	await toggle.click();
 	const nameField = gear.getByLabel('Item name');
-	await nameField.pressSequentially(typed, { delay: 150 });
+	const addCustom = gear.getByRole('button', { name: 'Add custom item' });
+	await nameField.pressSequentially(typed.slice(0, 5), { delay: 150 });
+	// While that save is in flight the fields stay typable, but adding waits
+	// (button and Enter alike), so the item cannot be lost to a resync.
+	await expect(addCustom).toBeDisabled();
+	await expect(nameField).toBeEnabled();
+	await nameField.press('Enter');
+	await expect(nameField).toBeVisible();
+	await nameField.pressSequentially(typed.slice(5), { delay: 150 });
+	await moveSaved;
+	await page.unroute('**/api/characters/*');
 	expect(savedMidTyping).toBe(true);
+	await expect(addCustom).toBeEnabled();
 	await expect(nameField).toHaveValue(typed);
 	await expect(nameField).toBeFocused();
 	const customSaved = page.waitForResponse(

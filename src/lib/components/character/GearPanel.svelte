@@ -19,9 +19,10 @@
 	}
 	let { char = $bindable(), items, encumbrance, onChange, locked = false, saving = false }: Props = $props();
 
-	// The custom-item form stays usable through a save, so typing in it is never
-	// cut off by the autosave of an earlier change: appending an entry while a
-	// save is in flight is safe (the page snapshots and chains its saves).
+	// The custom-item form stays typable through a save, so typing in it is
+	// never cut off by the autosave of an earlier change. Only its submit waits
+	// for the save: an entry appended mid-save would be dropped if that save
+	// ended in a resync.
 	const busy = $derived(locked || saving);
 
 	const itemIndex = $derived(indexItems(items));
@@ -213,9 +214,10 @@
 						<li class="row" class:destroyed>
 							<span class="iname">
 								{name}{#if e.quantity > 1}&nbsp;×{e.quantity}{/if}
-								{#if e.spellComponent}<span class="tag">{e.spellComponent.spellName || 'Spell component'}</span>{/if}
+								{#if e.spellComponent}<span class="tag">{e.spellComponent.spellName || 'Spell component'}</span>{:else}<span class="tag">{e.tier}</span>{/if}
 								{#if e.location === 'worn' && def?.wornBeltSlots}<span class="sub">· {def.wornBeltSlots} belt slot{def.wornBeltSlots === 1 ? '' : 's'}</span>{/if}
 								{#if destroyed}<span class="dead">Destroyed</span>{/if}
+								{#if e.spellComponent?.notes}<span class="notes">{e.spellComponent.notes}</span>{/if}
 							</span>
 							<select
 								disabled={busy}
@@ -272,7 +274,7 @@
 		>
 	</div>
 	{#if showCustom}
-		<CustomItemForm id={customFormId} disabled={locked} onAdd={addCustom} onCancel={() => (showCustom = false)} />
+		<CustomItemForm id={customFormId} disabled={locked} submitDisabled={saving} onAdd={addCustom} onCancel={() => (showCustom = false)} />
 	{/if}
 </section>
 
@@ -406,6 +408,12 @@
 		font-family: var(--font-subhead);
 		font-size: 0.75rem;
 		color: var(--ink-soft);
+	}
+	.notes {
+		display: block;
+		font-size: 0.8rem;
+		color: var(--ink-soft);
+		overflow-wrap: anywhere;
 	}
 	.dead {
 		margin-left: 0.4rem;

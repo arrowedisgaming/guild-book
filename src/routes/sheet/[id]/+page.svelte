@@ -180,6 +180,23 @@
 		void persist({ navigationFlush: true });
 	});
 
+	/**
+	 * A debounced autosave must not straddle the start of an edit session:
+	 * left pending, it would later save Edit-mode changes that are meant to
+	 * wait for Save/Cancel — or, after a quick Cancel, save the reverted copy
+	 * and lose the change that scheduled it. Flush it first, and only open the
+	 * session once that change is safely stored.
+	 */
+	async function enterEdit() {
+		if (statusTimer) {
+			const id = data.id;
+			clearTimeout(statusTimer);
+			statusTimer = null;
+			if ((await persist()) !== 'ok' || id !== data.id) return;
+		}
+		editMode = true;
+	}
+
 	function onEditChange() {
 		// Edited fields wait for the explicit Save.
 	}
@@ -277,7 +294,7 @@
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		{#if !editMode}
-			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={() => (editMode = true)}>Edit</button>
+			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={enterEdit}>Edit</button>
 		{:else}
 			<div class="edit-actions">
 				<button type="button" class="ghost" disabled={saving || recordingXp || syncRequired} onclick={cancelEdits}>Cancel</button>

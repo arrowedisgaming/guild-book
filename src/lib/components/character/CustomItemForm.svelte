@@ -10,8 +10,11 @@
 		id?: string;
 		/** Only while the sheet is locked (recording XP, resync); never for a save. */
 		disabled?: boolean;
+		/** Typing stays possible, but adding waits: an item appended while a
+		 * save is in flight would be dropped if that save ends in a resync. */
+		submitDisabled?: boolean;
 	}
-	let { onAdd, onCancel, id, disabled = false }: Props = $props();
+	let { onAdd, onCancel, id, disabled = false, submitDisabled = false }: Props = $props();
 
 	let name = $state('');
 	// Kept as strings so a fraction like "1.5" reaches the validator unchanged.
@@ -27,6 +30,7 @@
 
 	function submit(ev: SubmitEvent) {
 		ev.preventDefault();
+		if (disabled || submitDisabled) return; // Enter while a save is in flight
 		try {
 			const entry = createCustomItem({
 				name,
@@ -72,7 +76,7 @@
 	</div>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<div class="actions">
-		<button type="submit" class="primary" {disabled}>Add custom item</button>
+		<button type="submit" class="primary" disabled={disabled || submitDisabled}>Add custom item</button>
 		<button type="button" onclick={onCancel} {disabled}>Cancel</button>
 	</div>
 </form>

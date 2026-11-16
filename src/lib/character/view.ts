@@ -4,7 +4,7 @@
  * round trip through an authenticated API.
  */
 
-import { durabilityOf } from '$lib/engine/gear-view';
+import { durabilityOf, fallbackItemName } from '$lib/engine/gear-view';
 import { indexItems, loadSummary, slotsFor } from '$lib/engine/encumbrance';
 import type { GuildBookCharacterData } from '$lib/types/character';
 import type { CharacterView } from '$lib/types/character-view';
@@ -75,7 +75,7 @@ export function buildCharacterViewFromContent(
 			const definition = equipment.itemId ? items.get(equipment.itemId) : undefined;
 			const durability = durabilityOf(equipment, definition);
 			return {
-				name: equipment.customName ?? definition?.name ?? 'Item',
+				name: equipment.customName ?? definition?.name ?? fallbackItemName(equipment.itemId),
 				tier: equipment.tier,
 				location: equipment.location,
 				quantity: equipment.quantity,

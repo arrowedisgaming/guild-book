@@ -154,3 +154,15 @@ describe('createCustomItem', () => {
 		expect(() => createCustomItem({ ...ok, ...patch })).toThrow(message)
 	);
 });
+
+describe('fallbackItemName', async () => {
+	const { fallbackItemName } = await import('$lib/engine/gear-view');
+	it('humanises an id from an older content pack', () => {
+		expect(fallbackItemName('item-healers-kit')).toBe('Healers kit');
+		expect(fallbackItemName('pole-10ft')).toBe('Pole 10ft');
+	});
+	it('falls back to "Item" with nothing to work from', () => {
+		expect(fallbackItemName(null)).toBe('Item');
+		expect(fallbackItemName('item-')).toBe('Item');
+	});
+});

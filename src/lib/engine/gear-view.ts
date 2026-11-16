@@ -104,3 +104,14 @@ export function createCustomItem(input: CustomItemInput): EquipmentEntry {
 		...(notches !== null ? { customNotches: notches } : {})
 	};
 }
+
+/**
+ * A readable name for an entry whose catalogue item no longer exists (ids
+ * from an older content pack, e.g. `item-healers-kit`): the id with any
+ * `item-` prefix dropped, dashes as spaces, first letter capitalised. Falls
+ * back to "Item" when there is nothing to work from.
+ */
+export function fallbackItemName(itemId: string | null): string {
+	const words = (itemId ?? '').replace(/^item-/, '').replace(/[-_]+/g, ' ').trim();
+	return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Item';
+}

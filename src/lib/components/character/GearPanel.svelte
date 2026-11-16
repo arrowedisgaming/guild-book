@@ -5,7 +5,7 @@
 	import { indexItems, loadSummary, autoPlace, type LocationLoad } from '$lib/engine/encumbrance';
 	import { stepSize } from '$lib/engine/market-cart';
 	import CustomItemForm from './CustomItemForm.svelte';
-	import { durabilityOf, groupGear, slotMeter } from '$lib/engine/gear-view';
+	import { durabilityOf, fallbackItemName, groupGear, slotMeter } from '$lib/engine/gear-view';
 
 	interface Props {
 		char: GuildBookCharacterData;
@@ -54,7 +54,7 @@
 		return itemId ? itemIndex.get(itemId) : undefined;
 	}
 	function displayName(e: EquipmentEntry) {
-		return e.customName ?? defFor(e.itemId)?.name ?? 'Item';
+		return e.customName ?? defFor(e.itemId)?.name ?? fallbackItemName(e.itemId);
 	}
 
 	// Disabling a focused control drops focus to <body>. Note what had focus as

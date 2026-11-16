@@ -92,7 +92,7 @@ describe('slotMeter', () => {
 			filled: 3,
 			open: 1,
 			over: 0,
-			status: '1 open',
+			status: '1/4 open',
 			text: 'Belt: 3 of 4 slots used, 1 open'
 		}));
 	it('full', () =>

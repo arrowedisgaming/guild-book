@@ -58,13 +58,15 @@ export function slotMeter(load: LocationLoad, label: string): SlotMeter {
 	const filled = Math.min(load.used, load.capacity);
 	const open = Math.max(0, load.capacity - load.used);
 	const over = Math.max(0, load.used - load.capacity);
-	const status = over > 0 ? `${over} over` : open > 0 ? `${open} open` : 'full';
+	const spoken = over > 0 ? `${over} over` : open > 0 ? `${open} open` : 'full';
+	// The visible label shows open slots against the total ("18/21 open").
+	const status = over > 0 || open === 0 ? spoken : `${open}/${load.capacity} open`;
 	return {
 		filled,
 		open,
 		over,
 		status,
-		text: `${label}: ${load.used} of ${load.capacity} slots used, ${status}`
+		text: `${label}: ${load.used} of ${load.capacity} slots used, ${spoken}`
 	};
 }
 

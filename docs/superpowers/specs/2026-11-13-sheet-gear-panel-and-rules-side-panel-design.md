@@ -120,7 +120,7 @@ BACKPACK  ■■■■■■■■■■■■□□□□□□□□□   9 op
 ### Open slots
 
 - In hand, Belt and Backpack each show one box per slot of capacity, filled for
-  used slots, outlined for open ones, followed by "N open" or "full".
+  used slots, outlined for open ones, followed by "N/total open" (for example "18/21 open") or "full".
 - Over capacity: all boxes filled, accent colour, text "N over".
 - Worn has no capacity. Worn armor shows "· N belt slots" on its row, and those
   slots are filled on the Belt's boxes (this is what `loadSummary` already

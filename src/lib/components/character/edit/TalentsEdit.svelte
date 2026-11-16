@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { TalentDefinition } from '$lib/types/content-pack';
-	import { canWoundTalent } from '$lib/engine/wounds';
+	import { canWoundTalent, isWoundableTalent, canReturnToTraining } from '$lib/engine/wounds';
 	import Prose from '$lib/components/ui/Prose.svelte';
 
 	interface Props {
@@ -22,6 +22,7 @@
 	function cycleState(i: number) {
 		const t = char.talents[i];
 		if (t.state === 'mastered') {
+			if (!canReturnToTraining(t)) return; // heal it first
 			// Back in training, invested XP has to sit below the mastery threshold.
 			char.talents[i] = { ...t, state: 'in-training', xp: Math.min(t.xp, masteryXp - 1) };
 		} else {
@@ -41,7 +42,9 @@
 
 	function toggleWounded(i: number) {
 		const t = char.talents[i];
-		if (!t.wounded && !canWoundTalent(char)) return; // hard cap: max 2 wounded
+		// Hard rules: max 2 wounded, and only a mastered talent can be wounded.
+		// Healing an already-wounded talent is always allowed.
+		if (!t.wounded && (!canWoundTalent(char) || !isWoundableTalent(t))) return;
 		char.talents[i] = { ...t, wounded: !t.wounded };
 		onChange();
 	}
@@ -73,21 +76,43 @@
 
 	const available = $derived(talents.filter((t) => !char.talents.some((c) => c.talentId === t.id)));
 	const capReached = $derived(!canWoundTalent(char));
+	// A disabled button can't take focus, so its reason must be visible text
+	// the button points at, not just a hover title.
+	const uid = $props.id();
+	const ruleId = `${uid}-wound-rule`;
+	const healFirstId = `${uid}-heal-first`;
+	const hasUnwoundable = $derived(char.talents.some((t) => !t.wounded && !isWoundableTalent(t)));
+	const hasWoundedMastered = $derived(char.talents.some((t) => t.state === 'mastered' && t.wounded));
 </script>
 
 <div class="talents-edit">
 	{#if capReached}
 		<p class="hint">Two talents are wounded — the cap. Heal one before wounding another.</p>
 	{/if}
+	{#if hasUnwoundable}
+		<p class="hint" id={ruleId}>Only mastered talents can be wounded.</p>
+	{/if}
+	{#if hasWoundedMastered}
+		<p class="hint" id={healFirstId}>Heal a wounded talent before moving it back into training.</p>
+	{/if}
 	{#each char.talents as t, i (t.talentId)}
 		<div class="row" class:is-wounded={t.wounded}>
 			<div class="head">
 				<span class="tname">{name(t.talentId)}</span>
-				<button type="button" class="chip" onclick={() => cycleState(i)}>{t.state}</button>
+				<button
+					type="button"
+					class="chip"
+					disabled={t.state === 'mastered' && !canReturnToTraining(t)}
+					aria-describedby={t.state === 'mastered' && !canReturnToTraining(t) ? healFirstId : undefined}
+					onclick={() => cycleState(i)}
+				>
+					{t.state}
+				</button>
 				<button
 					type="button"
 					class="chip wound"
-					disabled={!t.wounded && capReached}
+					disabled={!t.wounded && (capReached || !isWoundableTalent(t))}
+					aria-describedby={!t.wounded && !isWoundableTalent(t) ? ruleId : undefined}
 					onclick={() => toggleWounded(i)}
 				>
 					{t.wounded ? 'wounded — heal' : 'wound'}

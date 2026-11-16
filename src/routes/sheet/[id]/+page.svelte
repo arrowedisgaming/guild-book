@@ -74,7 +74,24 @@
 	let statusTimer: ReturnType<typeof setTimeout> | null = null;
 
 	const talentNames = $derived(new Map(data.content.talents.map((t) => [t.id, t.name])));
-	const talentName = (id: string) => talentNames.get(id) ?? id;
+	const talentName = (id: string) => talentNames.get(id);
+
+	// Jump links to each part of the page; edit mode swaps the read-only
+	// sheet for its editors, so the list follows it.
+	const sections = $derived([
+		{ id: 'sheet-status', label: 'Status' },
+		{ id: 'sheet-experience', label: 'Experience' },
+		{ id: 'sheet-gear', label: 'Gear' },
+		...(editMode
+			? [
+					{ id: 'sheet-story', label: 'Story' },
+					{ id: 'sheet-talents', label: 'Talents' },
+					{ id: 'sheet-languages', label: 'Languages' },
+					{ id: 'sheet-spells', label: 'Spell components' }
+				]
+			: [{ id: 'sheet-adventurer', label: 'Adventurer' }]),
+		{ id: 'sheet-actions', label: 'Export & share' }
+	]);
 
 	// 'ok': saved. 'stale': saved (or superseded) for an adventurer we've left —
 	// nothing to react to. 'uncertain': 409 or network failure — the true
@@ -317,10 +334,18 @@
 	{/if}
 	{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
 	{#if syncRequired}<p>Reload the saved adventurer before recording another change.</p><button type="button" onclick={() => reloadCharacter()}>Retry reload</button>{/if}
+	<nav class="sections" aria-label="Sections">
+		<span class="sections-label">Sections</span>
+		<ul>
+			{#each sections as s (s.id)}
+				<li><a href="#{s.id}">{s.label}</a></li>
+			{/each}
+		</ul>
+	</nav>
 	</div>
 	<div class="sheet-col">
 
-	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
+	<fieldset id="sheet-status" class="play-controls jump" disabled={saving || recordingXp || syncRequired}>
 	<StatusPanel
 		bind:char
 		conditions={data.content.conditions}
@@ -332,37 +357,37 @@
 		onChange={onStatusChange}
 	/>
 	</fieldset>
-	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
+	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its
 	     custom-item form keeps taking input while an earlier change saves. -->
-	<div class="gear-wrap">
+	<div id="sheet-gear" class="gear-wrap jump">
 		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} locked={recordingXp || syncRequired} {saving} />
 	</div>
 
 	{#if editMode}
 		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
-		<section class="edit-section">
+		<section id="sheet-story" class="edit-section jump">
 			<h2>Story</h2>
 			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onEditChange} />
 		</section>
-		<section class="edit-section">
+		<section id="sheet-talents" class="edit-section jump">
 			<h2>Talents</h2>
 			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onEditChange} />
 		</section>
-		<section class="edit-section">
+		<section id="sheet-languages" class="edit-section jump">
 			<h2>Languages</h2>
 			<LanguagesEdit bind:char languages={data.content.languages} onChange={onEditChange} />
 		</section>
-		<section class="edit-section">
+		<section id="sheet-spells" class="edit-section jump">
 			<h2>Spell components</h2>
 			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onEditChange} />
 		</section>
 		</fieldset>
 	{:else}
-		<CharacterSheet view={data.view} showGear={false} />
+		<div id="sheet-adventurer" class="jump"><CharacterSheet view={data.view} showGear={false} /></div>
 	{/if}
 
-	<div class="actions-wrap">
+	<div id="sheet-actions" class="actions-wrap jump">
 		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
 	</div>
 	</div>
@@ -373,6 +398,46 @@
 
 <style>
 	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+	/* A jumped-to section lands with breathing room above it. */
+	.jump { scroll-margin-top: 1rem; }
+	.sections {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.4rem 0.75rem;
+		margin: 0.9rem 0 0;
+	}
+	.sections-label {
+		font-family: var(--font-subhead);
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--ink-soft);
+	}
+	.sections ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.sections a {
+		display: inline-block;
+		padding: 0.2rem 0.7rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+		border-radius: 999px;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.sections a:hover,
+	.sections a:focus-visible {
+		border-color: var(--accent);
+		color: var(--accent);
+		background: color-mix(in oklab, var(--accent) 7%, transparent);
+	}
 	/* A block formatting context, as the fieldset it replaced was: margins don't collapse through it. */
 	.gear-wrap { display: flow-root; min-width: 0; }
 	.sheet-page {

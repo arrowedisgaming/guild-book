@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-16
+
+### Added
+
+- A row of section links at the top of the adventurer sheet, for jumping
+  straight to Status, Experience, Gear and the rest of the sheet.
+
+### Changed
+
+- The Experience box on the sheet now looks clickable: it highlights on
+  hover and shows a "Record XP & history" prompt with an arrow.
+- In the Take a Wound menu, the action words (Mark, Wound, Notch) are now
+  red so they read as actions, and the options are listed in that order:
+  conditions to mark first, then talents to wound, then gear to notch.
+- Only mastered talents can be wounded. Talents still in training no longer
+  appear in the Take a Wound menu, and their wound button in Edit mode is
+  disabled, with a note saying why. A talent that is already wounded can
+  still be healed, and has to be healed before it can be moved back into
+  training.
+
+### Fixed
+
+- The Take a Wound menu no longer uses a raw id such as `path-swords-1` as
+  the name of a talent saved under an older content pack. It names the
+  talent by its kin or path instead, with the old id kept in the small
+  print so similar talents can still be told apart.
+
 ## [0.23.0] - 2026-11-16
 
 ### Added

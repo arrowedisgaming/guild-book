@@ -32,7 +32,6 @@
 </script>
 
 <section aria-label="Spell components">
- <h3>Spell components</h3>
  <p class="hint">Components are reusable: each takes {config.componentSlots} pack slot{config.componentSlots === 1 ? '' : 's'}. Casting does not consume them. Agree substitutions with your GM.</p>
  {#each char.equipment as entry, i (i)}
   {#if entry.spellComponent}
@@ -45,7 +44,7 @@
     {#if canonical && canonical.component !== entry.customName}<p class="hint">Book component: {canonical.component}</p>{/if}
     <p class="hint">Quantity and carrying location are tracked in Gear above.</p>
    </fieldset>
-  {:else if !entry.itemId && entry.customName}
+  {:else if !entry.itemId && entry.customName && entry.customNotches === undefined}
    <button type="button" onclick={() => convert(i)}>Track {entry.customName} as a spell component</button>
   {/if}
  {/each}

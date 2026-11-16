@@ -10,7 +10,11 @@
 	import ExperiencePanel from '$lib/components/character/ExperiencePanel.svelte';
 	import SpellComponentsEdit from '$lib/components/character/edit/SpellComponentsEdit.svelte';
 	import { applyXpAction, type XpAction } from '$lib/engine/experience';
-	import GearEdit from '$lib/components/character/edit/GearEdit.svelte';
+	import GearPanel from '$lib/components/character/GearPanel.svelte';
+	import RulesSidePanel from '$lib/components/rules/RulesSidePanel.svelte';
+	import { createRulesSidePanel } from '$lib/components/rules/rules-side-panel.svelte';
+	import { RULES_PANEL_MEDIA_QUERY } from '$lib/components/rules/rules-panel-layout';
+	import { MediaQuery } from 'svelte/reactivity';
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { PageData } from './$types';
 
@@ -52,6 +56,14 @@
 		char = structuredClone(data.character);
 		serverVersion = data.version;
 	});
+
+	// Rules panel state lives here, not in the panel, so the query and open
+	// rule survive the panel unmounting when the window narrows. packVersion is
+	// fixed for the life of the page.
+	const rulesPanel = createRulesSidePanel(untrack(() => data.packVersion));
+	// False during SSR: the panel mounts after hydration. Its grid column is
+	// reserved by the CSS media query below, so the sheet does not move.
+	const wide = new MediaQuery(RULES_PANEL_MEDIA_QUERY);
 
 	let editMode = $state(false);
 	// A count, not a boolean: overlapping saves (a flush for the adventurer
@@ -122,7 +134,7 @@
 			if (res.status === 409) {
 				if (stale()) return 'stale'; // that adventurer's page will refetch on open
 				savedVersions.delete(id);
-				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check XP history before recording the action again.';
+				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check that your last change was saved.';
 				forceResync = true;
 				await invalidateAll();
 				return 'uncertain';
@@ -133,7 +145,7 @@
 			return 'rejected';
 		} catch {
 			if (stale()) return 'stale';
-			saveError = 'Save could not be confirmed. Reloading — check XP history before recording the action again.';
+			saveError = 'Save could not be confirmed. Reloading the latest version — check that your last change was saved.';
 			savedVersions.delete(id);
 			forceResync = true;
 			await invalidateAll().catch(() => {});
@@ -167,6 +179,23 @@
 		statusTimer = null;
 		void persist({ navigationFlush: true });
 	});
+
+	/**
+	 * A debounced autosave must not straddle the start of an edit session:
+	 * left pending, it would later save Edit-mode changes that are meant to
+	 * wait for Save/Cancel — or, after a quick Cancel, save the reverted copy
+	 * and lose the change that scheduled it. Flush it first, and only open the
+	 * session once that change is safely stored.
+	 */
+	async function enterEdit() {
+		if (statusTimer) {
+			const id = data.id;
+			clearTimeout(statusTimer);
+			statusTimer = null;
+			if ((await persist()) !== 'ok' || id !== data.id) return;
+		}
+		editMode = true;
+	}
 
 	function onEditChange() {
 		// Edited fields wait for the explicit Save.
@@ -261,10 +290,11 @@
 <svelte:head><title>{data.view.name} — Guild Book</title></svelte:head>
 
 <div class="sheet-page">
+	<div class="sheet-head">
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		{#if !editMode}
-			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={() => (editMode = true)}>Edit</button>
+			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={enterEdit}>Edit</button>
 		{:else}
 			<div class="edit-actions">
 				<button type="button" class="ghost" disabled={saving || recordingXp || syncRequired} onclick={cancelEdits}>Cancel</button>
@@ -287,6 +317,8 @@
 	{/if}
 	{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
 	{#if syncRequired}<p>Reload the saved adventurer before recording another change.</p><button type="button" onclick={() => reloadCharacter()}>Retry reload</button>{/if}
+	</div>
+	<div class="sheet-col">
 
 	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
 	<StatusPanel
@@ -301,6 +333,11 @@
 	/>
 	</fieldset>
 	<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
+	<!-- Not a disabled fieldset: the panel locks its own controls, so its
+	     custom-item form keeps taking input while an earlier change saves. -->
+	<div class="gear-wrap">
+		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} locked={recordingXp || syncRequired} {saving} />
+	</div>
 
 	{#if editMode}
 		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
@@ -317,30 +354,64 @@
 			<LanguagesEdit bind:char languages={data.content.languages} onChange={onEditChange} />
 		</section>
 		<section class="edit-section">
-			<h2>Gear</h2>
-			<GearEdit
-				bind:char
-				items={data.content.items}
-				encumbrance={data.content.encumbrance}
-				onChange={onEditChange}
-			/>
+			<h2>Spell components</h2>
 			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onEditChange} />
 		</section>
 		</fieldset>
 	{:else}
-		<CharacterSheet view={data.view} />
+		<CharacterSheet view={data.view} showGear={false} />
 	{/if}
 
 	<div class="actions-wrap">
 		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
 	</div>
+	</div>
+	{#if wide.current}
+		<RulesSidePanel panel={rulesPanel} />
+	{/if}
 </div>
 
 <style>
 	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+	/* A block formatting context, as the fieldset it replaced was: margins don't collapse through it. */
+	.gear-wrap { display: flow-root; min-width: 0; }
 	.sheet-page {
 		max-width: 48rem;
 		margin: 0 auto;
+	}
+	.sheet-head,
+	.sheet-col {
+		min-width: 0;
+	}
+	/* Wide screens: the sheet column and the rules panel side by side. The grid
+	 * is CSS-only (not gated on the MediaQuery) so the column is reserved
+	 * before hydration mounts the panel. 84rem = RULES_PANEL_MEDIA_QUERY
+	 * ($lib/components/rules/rules-panel-layout), the first width where the
+	 * sheet keeps its full 48rem. The sheet track's minimum is 48rem (so the
+	 * panel, not the sheet, gives up spare width), capped at what is left after
+	 * the panel's 22rem and the gap, so an unusual browser font size can never
+	 * push the page into horizontal scroll. */
+	@media (min-width: 84rem) {
+		.sheet-page {
+			max-width: none;
+			display: grid;
+			grid-template-columns: minmax(min(48rem, 100% - 24rem), 48rem) minmax(22rem, 28rem);
+			column-gap: 2rem;
+			justify-content: center;
+			align-items: start;
+		}
+		/* The breadcrumb / Edit row gets its own grid row so the rules panel
+		 * starts level with the first sheet box, not with that row. */
+		.sheet-head,
+		.sheet-col {
+			grid-column: 1;
+		}
+		.sheet-page > :global(.rules-panel) {
+			grid-column: 2;
+			grid-row: 2;
+			/* Matches the Status panel's own top margin. */
+			margin-top: 1.25rem;
+		}
 	}
 	.topbar {
 		display: flex;

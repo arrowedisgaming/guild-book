@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-16
+
+### Added
+
+- A gear panel on the adventurer sheet's play view, always open and saved
+  automatically as you go. Items are grouped by where they are carried, with
+  boxes for the open slots, so it is clear at a glance what is carried and
+  what room is left.
+- Custom inventory items with an optional durability, for gear the rulebook
+  does not name.
+- A rules reference panel beside the sheet on wide screens (1344px and up):
+  search the rules and read a rule in full without leaving the character.
+
+### Changed
+
+- Gear has moved out of the Edit form into the gear panel on the play view.
+  Changes there save automatically; while Edit mode is open they wait for
+  Save changes or Cancel along with the rest of the edit.
+- Hands, belt and backpack each show their open slots against the total (for
+  example "18/21 open").
+
+### Fixed
+
+- Inventory items from an older rulebook catalogue are named after their
+  stored id instead of all appearing as "Item".
+
 ## [0.22.0] - 2026-10-07
 
 ### Added

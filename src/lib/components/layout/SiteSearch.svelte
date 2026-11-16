@@ -4,6 +4,7 @@
 	import { hitHref } from '$lib/search/rules-search';
 	import { buildSnippet } from '$lib/search/snippets';
 	import { sectionLabel } from '$lib/content/sections';
+	import { slashTarget } from '$lib/search/slash-target.svelte';
 
 	let { packVersion }: { packVersion: string } = $props();
 
@@ -22,7 +23,8 @@
 		if (target && (/^(input|textarea|select)$/i.test(target.tagName) || target.isContentEditable)) return;
 		if (target?.closest('[role="dialog"]')) return;
 		e.preventDefault();
-		input?.focus();
+		if (slashTarget.focus) slashTarget.focus();
+		else input?.focus();
 	}
 
 	function onPointerDownOutside(e: PointerEvent) {

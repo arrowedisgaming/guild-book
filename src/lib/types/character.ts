@@ -74,6 +74,8 @@ export interface EquipmentEntry {
 	quantity: number;
 	/** Damage notches taken; at the item's durability the item is Destroyed. */
 	notchesTaken: number;
+	/** Durability of a custom (non-catalogue) item. */
+	customNotches?: number;
 	spellComponent?: { spellId: string | null; spellName: string; notes: string };
 }
 

@@ -36,6 +36,13 @@ test('wide screen shows the panel and reads a rule in place', async ({ page }) =
 	const panel = panelOf(page);
 	await expect(panel).toBeVisible();
 	await expect(panel.getByText('Search the rules without leaving your sheet.')).toBeVisible();
+	// The panel starts level with the first sheet box (Status), below the
+	// breadcrumb / Edit row — not level with that row.
+	const tops = await page.evaluate(() => ({
+		panel: document.querySelector('.rules-panel')!.getBoundingClientRect().top,
+		status: document.querySelector('section.status')!.getBoundingClientRect().top
+	}));
+	expect(Math.abs(tops.panel - tops.status)).toBeLessThanOrEqual(1);
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
 	const title = await openFirstResult(page, 'wound');

@@ -273,7 +273,7 @@
 <svelte:head><title>{data.view.name} — Guild Book</title></svelte:head>
 
 <div class="sheet-page">
-	<div class="sheet-col">
+	<div class="sheet-head">
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		{#if !editMode}
@@ -300,6 +300,8 @@
 	{/if}
 	{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
 	{#if syncRequired}<p>Reload the saved adventurer before recording another change.</p><button type="button" onclick={() => reloadCharacter()}>Retry reload</button>{/if}
+	</div>
+	<div class="sheet-col">
 
 	<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
 	<StatusPanel
@@ -360,6 +362,7 @@
 		max-width: 48rem;
 		margin: 0 auto;
 	}
+	.sheet-head,
 	.sheet-col {
 		min-width: 0;
 	}
@@ -376,9 +379,21 @@
 			max-width: none;
 			display: grid;
 			grid-template-columns: minmax(min(48rem, 100% - 24rem), 48rem) minmax(22rem, 28rem);
-			gap: 2rem;
+			column-gap: 2rem;
 			justify-content: center;
 			align-items: start;
+		}
+		/* The breadcrumb / Edit row gets its own grid row so the rules panel
+		 * starts level with the first sheet box, not with that row. */
+		.sheet-head,
+		.sheet-col {
+			grid-column: 1;
+		}
+		.sheet-page > :global(.rules-panel) {
+			grid-column: 2;
+			grid-row: 2;
+			/* Matches the Status panel's own top margin. */
+			margin-top: 1.25rem;
 		}
 	}
 	.topbar {

@@ -1,10 +1,11 @@
 import type { AuthConfig } from '@auth/core';
-import type { DiscordProfile } from '@auth/core/providers/discord';
+import Discord, { type DiscordProfile } from '@auth/core/providers/discord';
 import type { GoogleProfile } from '@auth/core/providers/google';
 import { eq } from 'drizzle-orm';
 import type { AppDb } from './db';
 import { users } from './db/schema';
 import { activityPatch, type ActivityState } from './admin/activity';
+import { discardOAuthTokens } from './auth-adapter';
 
 export const AUTH_SESSION_VERSION = 2;
 
@@ -140,4 +141,22 @@ export function discordUserProfile(profile: DiscordProfile) {
 		email: verifiedProviderEmail('discord', profile),
 		image
 	};
+}
+
+/**
+ * The production Discord provider, built here rather than inline in `auth.ts`
+ * so the exact configuration that ships is the one the tests drive.
+ */
+export function discordProvider(credentials: { clientId: string; clientSecret: string }) {
+	return Discord({
+		clientId: credentials.clientId,
+		clientSecret: credentials.clientSecret,
+		// Discord returns `iss=https://discord.com` on the callback (RFC 9207).
+		// Auth.js checks it against this value; left unset it expects its own
+		// placeholder and rejects every Discord sign-in.
+		issuer: 'https://discord.com',
+		client: { token_endpoint_auth_method: 'client_secret_post' },
+		profile: discordUserProfile,
+		account: discardOAuthTokens
+	});
 }

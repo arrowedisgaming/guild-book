@@ -1,14 +1,13 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { SvelteKitAuth } from '@auth/sveltekit';
 import Google from '@auth/sveltekit/providers/google';
-import Discord from '@auth/sveltekit/providers/discord';
 import Credentials from '@auth/sveltekit/providers/credentials';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { getDb } from './db';
 import { users } from './db/schema';
 import { createAuthAdapter, discardOAuthTokens } from './auth-adapter';
-import { createAuthCallbacks, discordUserProfile, googleUserProfile } from './auth-policy';
+import { createAuthCallbacks, discordProvider, googleUserProfile } from './auth-policy';
 
 type EnvPlatform = {
 	env?: Record<string, string | D1Database | undefined>;
@@ -61,13 +60,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth(async (event) => {
 
 	if (discordId && discordSecret) {
 		providers.push(
-			Discord({
-				clientId: discordId,
-				clientSecret: discordSecret,
-				client: { token_endpoint_auth_method: 'client_secret_post' },
-				profile: discordUserProfile,
-				account: discardOAuthTokens
-			})
+discordProvider({ clientId: discordId, clientSecret: discordSecret })
 		);
 	}
 

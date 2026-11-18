@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-11-18
+
+### Fixed
+
+- Signing in with Discord works again. Discord began sending an extra value
+  when returning people to Guild Book, which the site wrongly rejected.
+- A sign-in that fails no longer shows a server error. For example, signing in
+  with Discord when the same email is already registered through Google now
+  returns to the sign-in page with an explanation.
+
 ## [0.24.0] - 2026-11-16
 
 ### Added

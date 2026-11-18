@@ -9,6 +9,7 @@ import {
 } from '$lib/server/rate-limit/campaign';
 import { formatServerTiming, runWithRequestTiming } from '$lib/server/observability/request-timing';
 import { installCampaignMetricSink } from '$lib/server/observability/metric-sink';
+import { withMutableHeaders } from '$lib/server/mutable-response';
 
 // Optional dev-only auto-login bypass. The implementation file is gitignored
 // (see src/lib/server/dev-auto-login.example.ts). When absent — production,
@@ -70,8 +71,11 @@ const appHandle: Handle = async ({ event, resolve }) => {
 	// top of the function so the two cheap synchronous guards above, which issue
 	// no I/O, are not counted as server time.
 	const startedAt = Date.now();
+	// Auth.js returns `Response.redirect(...)` for a failed sign-in, whose
+	// headers are immutable; writing the headers below to it threw and turned
+	// every sign-in error into a 500 instead of the /login error message.
 	const { response, timing } = await runWithRequestTiming(async (scope) => ({
-		response: await resolve(event),
+		response: withMutableHeaders(await resolve(event)),
 		timing: scope
 	}));
 	const serverMs = Date.now() - startedAt;

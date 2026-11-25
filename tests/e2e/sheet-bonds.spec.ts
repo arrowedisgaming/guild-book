@@ -86,3 +86,22 @@ test('Resolve is set by tapping its pips and announces its count', async ({ page
 	await page.reload();
 	await expect(page.getByRole('group', { name: `Resolve, 1 of ${max}` })).toBeVisible();
 });
+
+test('the tarot drawings can be switched off and stay off', async ({ page }) => {
+	await signInAs(page, 'Plain Sheet');
+	const { id } = await createTestAdventurer(page, 'Ilse Unadorned');
+	await page.goto(`/sheet/${id}`);
+	const drawings = page.locator('svg.flourish');
+	// One beside each of the four attributes, one perched on each of four sections.
+	await expect(drawings).toHaveCount(8);
+	// Decoration only: nothing for a screen reader, nothing to click.
+	await expect(drawings.first()).toHaveAttribute('aria-hidden', 'true');
+	const toggle = page.getByRole('button', { name: /^Tarot drawings/ });
+	await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+	await toggle.click();
+	await expect(drawings).toHaveCount(0);
+	await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+	await page.reload();
+	await expect(page.getByRole('heading', { name: 'Ilse Unadorned' })).toBeVisible();
+	await expect(drawings).toHaveCount(0);
+});

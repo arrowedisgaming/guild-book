@@ -1,10 +1,15 @@
 <script lang="ts">
 	import type { CharacterView } from '$lib/types/character-view';
+	import SuitFlourish from '$lib/components/decoration/SuitFlourish.svelte';
 
 	// name and pronouns come from the live working copy so the heading follows
 	// the Story fields as they are typed; kin, path and attributes are fixed at
 	// creation and come from the server's view.
-	let { name, pronouns, view }: { name: string; pronouns: string; view: CharacterView } = $props();
+	let { name, pronouns, view, flourishes = false }: { name: string; pronouns: string; view: CharacterView; flourishes?: boolean } = $props();
+
+	// The four attributes are the four suits; each can wear its emblem.
+	const SUITS = ['wands', 'cups', 'swords', 'pentacles'] as const;
+	const suitOf = (id: string) => SUITS.find((s) => s === id.toLowerCase());
 
 	const kin = $derived(view.kin ? `${view.kin}${view.kith ? ` (${view.kith})` : ''}` : '');
 </script>
@@ -22,9 +27,11 @@
 	</div>
 	<dl class="attributes">
 		{#each view.attributes as attr (attr.id)}
-			<div class="attr">
+			{@const suit = flourishes ? suitOf(attr.id) : undefined}
+			<div class="attr" class:emblemed={!!suit}>
 				<dt>{attr.name}</dt>
 				<dd>{attr.value}</dd>
+				{#if suit}<span class="emblem"><SuitFlourish {suit} /></span>{/if}
 			</div>
 		{/each}
 	</dl>
@@ -70,6 +77,28 @@
 		align-items: center;
 		padding: 0.1rem 0.9rem;
 	}
+	.attr.emblemed {
+		display: grid;
+		grid-template-columns: auto auto;
+		grid-template-rows: auto auto;
+		column-gap: 0.4rem;
+		justify-content: center;
+		justify-items: center;
+	}
+	.emblem {
+		grid-column: 1;
+		grid-row: 1 / 3;
+		align-self: center;
+		height: 2.6rem;
+	}
+	.emblemed dd {
+		grid-column: 2;
+		grid-row: 1;
+	}
+	.emblemed dt {
+		grid-column: 2;
+		grid-row: 2;
+	}
 	.attr + .attr {
 		border-inline-start: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 	}
@@ -105,6 +134,14 @@
 		}
 		dt {
 			font-size: 0.75rem;
+		}
+		/* One line per suit on a phone: emblem, value, name. */
+		.attr.emblemed {
+			display: flex;
+		}
+		.emblem {
+			height: 1.7rem;
+			align-self: center;
 		}
 		dd {
 			font-size: 1.3rem;

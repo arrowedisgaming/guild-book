@@ -2,6 +2,8 @@
 	import { untrack } from 'svelte';
 	import { beforeNavigate, invalidateAll } from '$app/navigation';
 	import SheetHeader from '$lib/components/character/SheetHeader.svelte';
+	import SuitFlourish from '$lib/components/decoration/SuitFlourish.svelte';
+	import { flourishes } from '$lib/stores/flourishes';
 	import SheetActions from '$lib/components/character/SheetActions.svelte';
 	import StatusPanel from '$lib/components/character/edit/StatusPanel.svelte';
 	import StoryEdit from '$lib/components/character/edit/StoryEdit.svelte';
@@ -344,7 +346,7 @@
 	<!-- Inside the tall column, not the short head above it: a sticky box only
 	     travels as far as its parent does. -->
 	<div class="sheet-sticky" bind:offsetHeight={stickyHeight}>
-		<SheetHeader name={char.name} pronouns={char.pronouns} view={data.view} />
+		<SheetHeader name={char.name} pronouns={char.pronouns} view={data.view} flourishes={$flourishes} />
 		<nav class="sections" aria-label="Sections">
 			<ul>
 				{#each sections as s (s.id)}
@@ -354,7 +356,8 @@
 		</nav>
 	</div>
 
-	<fieldset id="sheet-status" class="play-controls jump" disabled={recordingXp || syncRequired}>
+	<fieldset id="sheet-status" class="play-controls jump perch boxed" disabled={recordingXp || syncRequired}>
+	{#if $flourishes}<span class="perched"><SuitFlourish suit="swords" scene /></span>{/if}
 	<StatusPanel
 		bind:char
 		conditions={data.content.conditions}
@@ -367,7 +370,8 @@
 	/>
 	</fieldset>
 	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
-		<section id="sheet-talents" class="edit-section jump">
+		<section id="sheet-talents" class="edit-section jump perch">
+			{#if $flourishes}<span class="perched"><SuitFlourish suit="wands" scene /></span>{/if}
 			<h2>Talents</h2>
 			<TalentsEdit
 				bind:char
@@ -382,13 +386,15 @@
 	</fieldset>
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its
 	     custom-item form keeps taking input while an earlier change saves. -->
-	<div id="sheet-gear" class="gear-wrap jump">
+	<div id="sheet-gear" class="gear-wrap jump perch boxed aside">
+		{#if $flourishes}<span class="perched"><SuitFlourish suit="pentacles" scene /></span>{/if}
 		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onSheetChange} locked={recordingXp || syncRequired} {saving} />
 	</div>
 	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
 
 	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
-		<section id="sheet-story" class="edit-section jump">
+		<section id="sheet-story" class="edit-section jump perch" class:roomy={$flourishes}>
+			{#if $flourishes}<span class="perched"><SuitFlourish suit="cups" scene /></span>{/if}
 			<h2>Story</h2>
 			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onSheetChange} />
 		</section>
@@ -404,6 +410,11 @@
 
 	<div id="sheet-actions" class="actions-wrap jump">
 		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
+		<!-- Decoration is a preference, kept on this device; it sits with the
+		     sheet's other housekeeping, out of the way of play. -->
+		<button type="button" class="flourish-toggle" aria-pressed={$flourishes} onclick={() => flourishes.update((on) => !on)}>
+			Tarot drawings: {$flourishes ? 'on' : 'off'}
+		</button>
 	</div>
 	</div>
 	{#if wide.current}
@@ -541,12 +552,70 @@
 	}
 	.save-state {
 		margin: 0 0 0 auto;
+		order: 0;
 		font-family: var(--font-subhead);
 		font-size: 0.9rem;
 		color: var(--ink-soft);
 	}
 	.save-state.failed {
 		color: var(--danger);
+	}
+	.flourish-toggle {
+		margin-top: 0.75rem;
+		padding: 0.45rem 0.9rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 3px;
+		background: transparent;
+		color: var(--ink-soft);
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
+		cursor: pointer;
+	}
+	.flourish-toggle[aria-pressed='true'] {
+		color: var(--ink);
+	}
+	/* A suit drawing perched on a section's top edge, as if on the frame. It
+	 * sits at the right of the heading row, where nothing else lives. */
+	.perch {
+		position: relative;
+	}
+	.perched {
+		position: absolute;
+		/* Less than the gap above the section, so it never tucks under the
+		 * pinned header or the box before it. */
+		top: -1rem;
+		right: 1.25rem;
+		height: 6rem;
+		pointer-events: none;
+	}
+	/* These wrappers hold a panel with its own 1.25rem top margin. */
+	.perch.boxed > .perched {
+		top: 0.25rem;
+	}
+	/* Gear's heading row ends in Auto-arrange; stand to its left. */
+	.perch.aside > .perched {
+		right: 9rem;
+	}
+	/* Story's first fields span the full width, so its heading row makes room. */
+	.perch.roomy > h2 {
+		min-height: 4rem;
+	}
+	@media (max-width: 30rem) {
+		.perched {
+			height: 3.6rem;
+			right: 0.75rem;
+		}
+		.perch.aside > .perched {
+			right: 8.5rem;
+		}
+		.perch.roomy > h2 {
+			min-height: 3rem;
+		}
+	}
+	@media (pointer: coarse) {
+		.flourish-toggle {
+			min-height: 44px;
+		}
 	}
 	.save-dock button {
 		min-height: 2.75rem;

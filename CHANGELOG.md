@@ -53,6 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tarot drawings on the adventurer's sheet: hand-sketched suit emblems after
+  the four Aces. Each attribute wears its suit beside its score, and a sword,
+  a budding wand, a pentacle and a chalice perch on the Status, Talents, Gear
+  and Story sections, moving slowly (leaves fall, a fish looks out of the cup,
+  the coin turns). A "Tarot drawings" switch beside Export turns them off on
+  that device, and they hold still when the system asks for reduced motion.
+
 - Awarding XP is one tap: each award with a set amount is its own button in
   the Experience panel. A reason is optional for awards and defaults to the
   award's name; spending and corrections still ask for one.

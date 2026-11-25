@@ -24,12 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Cancel" buttons are gone, and the top of the sheet shows "Saving…" and
   "Saved".
 - The form for adding a spell component stays folded away until you open it.
+- The Experience panel opens on the award buttons. Spending, custom amounts,
+  corrections, the list of what earns XP and the history each fold away.
+- Changing a talent's progress by hand moved under "Adjust without spending
+  XP" in the talent's row.
 - "Save as final" on a draft is now "Finalize", and the share panel uses the
   same word.
 - Status controls stay usable while an earlier change saves, so quick taps
   are no longer dropped.
 
 ### Added
+
+- Awarding XP is one tap: each award with a set amount is its own button in
+  the Experience panel. A reason is optional for awards and defaults to the
+  award's name; spending and corrections still ask for one.
+- A talent in training on your own path has a "Use for 1 XP" button that
+  spends the XP, advances the talent and writes the history entry together.
+- A talent from another path shows its prepared uses, with buttons to use one
+  or to train with a mentor.
+- Talents shows how much XP you have to spend.
 
 - "Undo last change" appears for a few seconds after a change to a sheet,
   including removing an item, a bond or a talent. Recorded XP is not undone

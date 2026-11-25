@@ -369,7 +369,15 @@
 	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
 		<section id="sheet-talents" class="edit-section jump">
 			<h2>Talents</h2>
-			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onSheetChange} />
+			<TalentsEdit
+				bind:char
+				talents={data.content.talents}
+				masteryXp={data.content.advancement.masteryXp}
+				pathUseXp={data.content.advancement.pathUseXp}
+				paths={data.content.paths}
+				onChange={onSheetChange}
+				onXpAction={recordXp}
+			/>
 		</section>
 	</fieldset>
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its

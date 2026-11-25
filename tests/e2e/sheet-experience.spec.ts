@@ -4,6 +4,10 @@ import { signInAs, createTestAdventurer } from './fixtures/auth';
 
 // The Experience section is collapsed by default; only its summary (heading
 // and available XP) is visible until it is opened.
+// A fixed-amount award is one button; the reason is optional.
+const award = (xp: Locator) => xp.getByRole('button', { name: /^Quest accepted/ });
+const openHistory = (xp: Locator) => xp.getByText(/^XP history/).click();
+
 async function openExperience(page: Page): Promise<Locator> {
  const xp = page.getByRole('region', { name: 'Experience' });
  await xp.locator('summary').first().click();
@@ -17,15 +21,35 @@ test('XP awards explain the balance and survive reload', async ({ page }) => {
  let xp = page.getByRole('region', { name: 'Experience' });
  await expect(xp.getByText('Available XP: 0', { exact: true })).toBeVisible();
  xp = await openExperience(page);
- await xp.getByLabel('XP source').selectOption('quest-accepted');
  await xp.getByLabel('Reason').fill('Rescue the bellringer');
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
+ await openHistory(xp);
  await expect(xp.getByText('Rescue the bellringer', { exact: true })).toBeVisible();
  await page.reload();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
  await openExperience(page);
+ await openHistory(xp);
  await expect(xp.getByText('Rescue the bellringer', { exact: true })).toBeVisible();
+});
+
+test('an award is one tap, and a reason is optional', async ({ page }) => {
+ await signInAs(page, 'Quick XP');
+ const { id } = await createTestAdventurer(page, 'Hasty Recorder');
+ await page.goto(`/sheet/${id}`);
+ const xp = await openExperience(page);
+ await xp.getByRole('button', { name: /^Contract completed/ }).click();
+ await expect(xp.getByText('Available XP: 1', { exact: true })).toBeVisible();
+ await openHistory(xp);
+ await expect(xp.getByText('+1 XP, Contract completed', { exact: true })).toBeVisible();
+ // Spending still has to say what it was for.
+ await xp.getByText('Spend XP, a custom award or a correction').click();
+ await expect(xp.getByRole('button', { name: 'Record XP' })).toBeDisabled();
+ await xp.getByLabel('Reason').fill('Bribed the gatekeeper');
+ await xp.getByRole('button', { name: 'Record XP' }).click();
+ await expect(xp.getByText('Available XP: 0', { exact: true })).toBeVisible();
+ await page.reload();
+ await expect(xp.getByText('Available XP: 0', { exact: true })).toBeVisible();
 });
 
 test('the seventh invested XP masters a talent and saves itself', async ({ page }) => {
@@ -41,8 +65,9 @@ test('the seventh invested XP masters a talent and saves itself', async ({ page 
  await page.goto(`/sheet/${id}`);
  const acrobat = page.locator('.talents-edit .row', { hasText: 'Acrobat' });
  // Closed, the row already says where the talent stands; its controls open with it.
- await expect(acrobat.locator('summary')).toContainText('In training, 6 of 7 XP');
- await acrobat.locator('summary').click();
+ await expect(acrobat.locator('summary').first()).toContainText('In training, 6 of 7 XP');
+ await acrobat.locator('summary').first().click();
+ await acrobat.getByText('Adjust without spending XP').click();
  await expect(acrobat.locator('.xp')).toContainText('XP 6/7');
  await acrobat.getByRole('button', { name: 'Add XP' }).click();
  await expect(acrobat.getByRole('button', { name: 'mastered' })).toBeVisible();
@@ -51,7 +76,35 @@ test('the seventh invested XP masters a talent and saves itself', async ({ page 
  await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
  await expect(page.locator('.save-state')).toHaveText('Saved');
  await page.reload();
- await expect(acrobat.locator('summary')).toContainText('Mastered');
+ await expect(acrobat.locator('summary').first()).toContainText('Mastered');
+});
+
+test('using a talent in training spends XP and writes the history in one step', async ({ page }) => {
+ await signInAs(page, 'Talent User');
+ const { id } = await createTestAdventurer(page, 'Nimble Student');
+ await page.goto(`/sheet/${id}`);
+ const talents = page.locator('.talents-edit');
+ await talents.locator('.add select').selectOption({ label: 'Acrobat (path)' }).catch(async () => {
+  // The option label carries the talent's source; match on the name alone.
+  const value = await talents.locator('.add option', { hasText: /^Acrobat/ }).getAttribute('value');
+  await talents.locator('.add select').selectOption(value!);
+ });
+ await talents.getByRole('button', { name: 'Add', exact: true }).click();
+ const acrobat = talents.locator('.row', { hasText: 'Acrobat' });
+ await acrobat.locator('summary').first().click();
+ // Nothing to spend yet.
+ await expect(acrobat.getByRole('button', { name: 'Use for 1 XP' })).toBeDisabled();
+ const xp = await openExperience(page);
+ await award(xp).click();
+ await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
+ await acrobat.getByRole('button', { name: 'Use for 1 XP' }).click();
+ await expect(acrobat.locator('summary').first()).toContainText('In training, 1 of 7 XP');
+ await expect(xp.getByText('Available XP: 2', { exact: true })).toBeVisible();
+ await openHistory(xp);
+ await expect(xp.getByText('-1 XP, Acrobat', { exact: true })).toBeVisible();
+ await page.reload();
+ await expect(acrobat.locator('summary').first()).toContainText('In training, 1 of 7 XP');
+ await expect(xp.getByText('Available XP: 2', { exact: true })).toBeVisible();
 });
 
 test('retrying a rejected award does not record it twice', async ({ page }) => {
@@ -64,11 +117,11 @@ test('retrying a rejected award does not record it twice', async ({ page }) => {
   if (route.request().method() === 'PUT') { await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Temporary rejection' }) }); }
   else await route.continue();
  });
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(page.getByRole('alert')).toContainText('Temporary rejection');
  await expect(xp.getByText('Available XP: 0', { exact: true })).toBeVisible();
  await page.unroute(`**/api/characters/${id}`);
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
  await page.reload();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
@@ -82,13 +135,13 @@ test('an unconfirmed save blocks new awards until the character reloads', async 
  const xp = await openExperience(page);
  await xp.getByLabel('Reason').fill('Rescue the bellringer');
  await page.route(`**/api/characters/${id}`, route => route.abort());
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(page.getByRole('button', { name: 'Retry reload' })).toBeVisible();
- await expect(xp.getByRole('button', { name: 'Record XP' })).toBeDisabled();
+ await expect(award(xp)).toBeDisabled();
  await page.unroute(`**/api/characters/${id}`);
  await page.getByRole('button', { name: 'Retry reload' }).click();
  await expect(xp.getByText('Available XP: 0', { exact: true })).toBeVisible();
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
 });
 
@@ -100,7 +153,7 @@ test('a pending status edit and an XP award both survive', async ({ page }) => {
  await xp.getByLabel('Reason').fill('Accepted the bell quest');
  await page.getByPlaceholder("Guild-mate's name").fill('Grendel');
  await page.getByRole('button', { name: 'Add bond' }).click();
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
  await page.reload();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
@@ -117,10 +170,9 @@ test('a committed award with a lost response is recognized by its entry ID', asy
   if (route.request().method() === 'PUT') { await route.fetch(); await route.abort(); }
   else await route.continue();
  });
- await xp.getByRole('button', { name: 'Record XP' }).click();
+ await award(xp).click();
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
  await expect(xp.getByLabel('Reason')).toHaveValue('');
- await expect(xp.getByRole('button', { name: 'Record XP' })).toBeDisabled();
  await page.reload();
  await expect(xp.getByText('Rescue the bellringer', { exact: true })).toHaveCount(1);
 });
@@ -139,10 +191,9 @@ test('finalizing a draft is blocked while an XP action is being recorded', async
   await route.continue();
  });
  const xp = await openExperience(page);
- await xp.getByLabel('XP source').selectOption('quest-accepted');
  await xp.getByLabel('Reason').fill('Recorded before finalizing');
  const finalizeButton = page.getByRole('button', { name: 'Finalize', exact: true });
- const recording = xp.getByRole('button', { name: 'Record XP' }).click();
+ const recording = award(xp).click();
  await expect(finalizeButton).toBeDisabled();
  await expect(page.locator('.save-state')).toHaveText('Saving…');
  releasePut();

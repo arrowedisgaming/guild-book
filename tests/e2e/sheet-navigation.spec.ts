@@ -129,9 +129,8 @@ test('an in-flight XP save is not lost or misdirected by navigating away mid-req
 
 	const xp = page.getByRole('region', { name: 'Experience' });
 	await xp.locator('summary').first().click(); // the section is collapsed by default
-	await xp.getByLabel('XP source').selectOption('quest-accepted');
 	await xp.getByLabel('Reason').fill('Recorded mid-navigation');
-	await xp.getByRole('button', { name: 'Record XP' }).click();
+	await xp.getByRole('button', { name: /^Quest accepted/ }).click();
 	await page.getByTestId('next-sheet').click(); // navigate away while the delayed PUT above is still in flight
 	await expect(page.getByRole('heading', { name: 'Wanders Two' })).toBeVisible();
 	await savedToOne;
@@ -143,5 +142,6 @@ test('an in-flight XP save is not lost or misdirected by navigating away mid-req
 	await expect(page.getByRole('heading', { name: 'Wanders One' })).toBeVisible();
 	const xpOne = page.getByRole('region', { name: 'Experience' });
 	await xpOne.locator('summary').first().click();
+	await xpOne.getByText(/^XP history/).click(); // history is folded away by default
 	await expect(xpOne.getByText('Recorded mid-navigation', { exact: true })).toBeVisible();
 });

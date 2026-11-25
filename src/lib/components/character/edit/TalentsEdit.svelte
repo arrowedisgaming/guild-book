@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GuildBookCharacterData } from '$lib/types/character';
-	import type { TalentDefinition } from '$lib/types/content-pack';
+	import type { TalentDefinition, PathDefinition } from '$lib/types/content-pack';
+	import { isOwnPathTalent, type XpAction } from '$lib/engine/experience';
 	import { canWoundTalent, isWoundableTalent, canReturnToTraining } from '$lib/engine/wounds';
 	import Prose from '$lib/components/ui/Prose.svelte';
 
@@ -8,9 +9,35 @@
 		char: GuildBookCharacterData;
 		talents: TalentDefinition[];
 		masteryXp: number;
+		/** XP one use of an own-path talent costs. */
+		pathUseXp: number;
+		paths: PathDefinition[];
 		onChange: () => void;
+		/** Records a change in the XP history; resolves true once it is saved. */
+		onXpAction: (action: XpAction, reason: string) => Promise<boolean>;
 	}
-	let { char = $bindable(), talents, masteryXp, onChange }: Props = $props();
+	let { char = $bindable(), talents, masteryXp, pathUseXp, paths, onChange, onXpAction }: Props = $props();
+
+	/** How a talent in training advances, which depends on whose path it is on. */
+	function training(talentId: string): 'own-path' | 'other-path' | 'free' {
+		if (isOwnPathTalent(char.pathId, talentId, paths)) return 'own-path';
+		return paths.some((p) => p.talentIds.includes(talentId)) ? 'other-path' : 'free';
+	}
+
+	// Mentoring is filled in on one row at a time.
+	let mentorFor = $state<string | null>(null);
+	let mentorName = $state('');
+	let mentorAmount = $state(1);
+	let mentorPhase = $state<'camp' | 'city'>('camp');
+	async function train(talentId: string, talentLabel: string) {
+		const mentor = mentorName.trim();
+		if (!mentor) return;
+		const ok = await onXpAction(
+			{ kind: 'mentoring', talentId, amount: mentorAmount, mentor, phase: mentorPhase },
+			`Trained ${talentLabel} with ${mentor}`
+		);
+		if (ok) { mentorFor = null; mentorName = ''; mentorAmount = 1; }
+	}
 
 	const byId = $derived(new Map(talents.map((t) => [t.id, t])));
 	let addId = $state('');
@@ -86,6 +113,7 @@
 </script>
 
 <div class="talents-edit">
+	<p class="balance">{char.experience} XP to spend</p>
 	{#if capReached}
 		<p class="hint">Two talents are wounded — the cap. Heal one before wounding another.</p>
 	{/if}
@@ -128,15 +156,59 @@
 				>
 					{t.wounded ? 'wounded — heal' : 'wound'}
 				</button>
-				{#if t.state === 'in-training'}
-					<span class="xp">
-						XP {t.xp}/{masteryXp}
-						<button type="button" onclick={() => stepXp(i, -1)} aria-label="Remove XP">−</button>
-						<button type="button" onclick={() => stepXp(i, 1)} aria-label="Add XP">+</button>
-					</span>
-				{/if}
 				<button type="button" class="remove" onclick={() => remove(i)} aria-label={`Remove ${tname}`}>Remove</button>
 			</div>
+			{#if t.state === 'in-training'}
+				{@const how = training(t.talentId)}
+				<div class="advance">
+					{#if how === 'own-path'}
+						<button
+							type="button"
+							class="spend"
+							disabled={t.wounded || char.experience < pathUseXp}
+							onclick={() => onXpAction({ kind: 'talent-use', talentId: t.talentId }, `Used ${tname}`)}
+						>
+							Use for {pathUseXp} XP
+						</button>
+						{#if char.experience < pathUseXp}<span class="hint quiet">No XP to spend.</span>{/if}
+					{:else if how === 'other-path'}
+						<span class="prepared">Prepared uses: {t.preparedUses ?? 'not set'}</span>
+						<button
+							type="button"
+							class="spend"
+							disabled={t.wounded || !t.preparedUses}
+							onclick={() => onXpAction({ kind: 'prepared-use', talentId: t.talentId }, `Used ${tname}`)}
+						>
+							Use one
+						</button>
+						<button
+							type="button"
+							class="spend"
+							aria-expanded={mentorFor === t.talentId}
+							disabled={t.wounded}
+							onclick={() => (mentorFor = mentorFor === t.talentId ? null : t.talentId)}
+						>
+							Train with a mentor
+						</button>
+						{#if mentorFor === t.talentId}
+							<form class="mentor" onsubmit={(e) => { e.preventDefault(); void train(t.talentId, tname); }}>
+								<label>Mentor<input required maxlength="200" bind:value={mentorName} /></label>
+								<label>XP to spend<input type="number" required min="1" max={Math.min(masteryXp - t.xp, Math.max(char.experience, 1))} step="1" bind:value={mentorAmount} /></label>
+								<label>Where<select bind:value={mentorPhase}><option value="camp">At camp</option><option value="city">In the city</option></select></label>
+								<button type="submit" class="spend" disabled={!mentorName.trim() || char.experience < mentorAmount}>Train</button>
+							</form>
+						{/if}
+					{/if}
+					<details class="adjust">
+						<summary>Adjust without spending XP</summary>
+						<span class="xp">
+							XP {t.xp}/{masteryXp}
+							<button type="button" onclick={() => stepXp(i, -1)} aria-label="Remove XP">−</button>
+							<button type="button" onclick={() => stepXp(i, 1)} aria-label="Add XP">+</button>
+						</span>
+					</details>
+				</div>
+			{/if}
 		</details>
 	{/each}
 
@@ -242,6 +314,88 @@
 	.chip:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
+	}
+	.balance {
+		margin: 0;
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+		font-variant-numeric: lining-nums;
+	}
+	.advance {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.75rem;
+		margin-top: 0.6rem;
+		padding-top: 0.6rem;
+		border-top: 1px solid color-mix(in oklab, var(--ink) 14%, transparent);
+	}
+	.spend {
+		min-height: 2.75rem;
+		padding: 0.4rem 0.9rem;
+		border: 1px solid var(--accent);
+		border-radius: 3px;
+		background: var(--accent);
+		color: var(--parchment);
+		font-family: var(--font-subhead);
+		font-size: 0.95rem;
+		cursor: pointer;
+	}
+	.spend[aria-expanded] {
+		background: transparent;
+		color: var(--accent);
+	}
+	.spend:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.prepared,
+	.quiet {
+		font-size: 0.85rem;
+		color: var(--ink-soft);
+	}
+	.mentor {
+		flex: 1 0 100%;
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+		align-items: end;
+		gap: 0.5rem;
+	}
+	.mentor label {
+		display: grid;
+		gap: 0.2rem;
+		font-size: 0.85rem;
+	}
+	.mentor input,
+	.mentor select {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
+		padding: 0.45rem 0.5rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 3px;
+		background: var(--parchment);
+		color: var(--ink);
+		font: inherit;
+	}
+	@media (max-width: 34rem) {
+		.mentor {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		}
+	}
+	.adjust {
+		margin-left: auto;
+		font-size: 0.85rem;
+		color: var(--ink-soft);
+	}
+	.adjust summary {
+		display: block;
+		min-height: 0;
+		text-decoration: underline;
+	}
+	.adjust .xp {
+		margin-top: 0.4rem;
 	}
 	.xp {
 		display: inline-flex;

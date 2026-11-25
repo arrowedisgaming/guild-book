@@ -84,7 +84,7 @@ test('signed-in adventurer completes, resumes, reviews, and saves the full wizar
 	await page.getByRole('link', { name: 'Mara of the Lantern' }).click();
 	await expect(page).toHaveURL(/\/sheet\/[^/]+$/);
 	await expect(page.getByRole('listitem').filter({ hasText: 'Rope ×2' })).toBeVisible();
-	await expect(page.getByText('Grendel')).toBeVisible();
+	await expect(page.getByLabel("Guild-mate's name")).toHaveValue('Grendel');
 });
 
 test('wizard assigns unique attributes and exposes standard theme controls', async ({ page }) => {

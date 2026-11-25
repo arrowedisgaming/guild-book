@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Cancel" buttons are gone, and the top of the sheet shows "Saving…" and
   "Saved".
 - The form for adding a spell component stays folded away until you open it.
+- Gear is a compact list: each item is one line, in two columns where there
+  is room. Durability is a row of boxes you tap to notch or repair. Open an
+  item to move it, change a single item's quantity or remove it; stacks keep
+  their − and + on the line.
 - The Experience panel opens on the award buttons. Spending, custom amounts,
   corrections, the list of what earns XP and the history each fold away.
 - Changing a talent's progress by hand moved under "Adjust without spending

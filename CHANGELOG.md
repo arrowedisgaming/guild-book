@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Everything on an adventurer's sheet now saves as you change it. The "Save
+  changes" and "Cancel" buttons are gone, and the sheet shows "Saving…" and
+  "Saved" beside the "Edit details" button.
+- "Save as final" on a draft is now "Finalize", and the share panel uses the
+  same word.
+- Status controls stay usable while an earlier change saves, so quick taps
+  are no longer dropped.
+
+### Added
+
+- "Undo last change" appears for a few seconds after a change to a sheet,
+  including removing an item, a bond or a talent. Recorded XP is not undone
+  this way; use "Correct balance".
+
+### Fixed
+
+- A wound, Resolve spend or gear change made while editing details is no
+  longer lost.
+- A failed save is now reported wherever you are on the sheet, not only at
+  the top of the page.
+- The Name and Pronouns fields no longer push the sheet wider than a phone
+  screen.
+
 ## [0.24.1] - 2026-11-18
 
 ### Fixed

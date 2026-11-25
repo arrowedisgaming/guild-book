@@ -34,14 +34,13 @@ const group = (page: Page, prefix: string) =>
 		.getByRole('region', { name: 'Gear', exact: true })
 		.getByRole('region', { name: new RegExp(`^${prefix}`) });
 
-test('moves gear without Edit mode and persists', async ({ page }) => {
+test('moves gear in place and persists', async ({ page }) => {
 	await openSheet(page, 'Gear Mover', 'Hilde Quickhand');
 	await addItem(page, 'Dagger');
 	const saved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
 	await page.getByLabel('Location of Dagger').selectOption('hand');
 	// Focus follows the row into its new group.
 	await expect(page.getByLabel('Location of Dagger')).toBeFocused();
-	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
 	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
 	await expect(group(page, 'In hand')).toHaveAccessibleName(/1 open/);
 	await saved;
@@ -96,25 +95,35 @@ test('wound notches the item it names after a regroup', async ({ page }) => {
 	await expect(backpack.getByText('Destroyed')).toHaveCount(0);
 });
 
-test('Edit-mode Cancel reverts gear', async ({ page }) => {
+test('Undo takes back the last gear change, and only that one', async ({ page }) => {
 	const gear = await openSheet(page, 'Gear Canceller', 'Wren Secondthought');
-	await page.getByRole('button', { name: 'Edit', exact: true }).click();
-	await addItem(page, 'Torch');
-	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
-	await page.reload();
-	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
-
-	// A play-view change still inside its autosave debounce when Edit is
-	// clicked is saved first — an immediate Cancel must not take it with it.
-	const saved = savedWhere(page, (equipment) => at(equipment, 'rope') !== undefined);
+	// The first change saves and stays.
+	const ropeSaved = savedWhere(page, (equipment) => at(equipment, 'rope') !== undefined);
 	await addItem(page, 'Rope');
-	await page.getByRole('button', { name: 'Edit', exact: true }).click();
-	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-	await saved;
+	await ropeSaved;
+
+	// The second is undone, whether or not its own save has landed yet.
+	await addItem(page, 'Torch');
+	const undone = savedWhere(page, (equipment) => at(equipment, 'torch') === undefined && at(equipment, 'rope') !== undefined);
+	await page.getByRole('button', { name: 'Undo last change', exact: true }).click();
+	await undone;
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
+	await expect(page.getByRole('button', { name: 'Undo last change', exact: true })).toHaveCount(0);
 	await page.reload();
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
+});
+
+test('details edited in place save without a Save button', async ({ page }) => {
+	await openSheet(page, 'Gear Scribe', 'Odo Inkfinger');
+	await page.getByRole('button', { name: 'Edit details', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toHaveCount(0);
+	await page.getByRole('textbox', { name: 'Quest' }).fill('Map the drowned stair');
+	await expect(page.locator('.save-state')).toHaveText('Saved');
+	await page.reload();
+	await expect(page.getByText('Map the drowned stair')).toBeVisible();
 });
 
 test('narrow screen has no horizontal scroll', async ({ page }) => {

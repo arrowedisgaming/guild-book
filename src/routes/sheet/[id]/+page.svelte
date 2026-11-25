@@ -55,6 +55,9 @@
 		syncedId = data.id;
 		char = structuredClone(data.character);
 		serverVersion = data.version;
+		// The server copy replaced the working copy: nothing local is left to undo.
+		baseline = JSON.stringify(data.character);
+		clearUndo();
 	});
 
 	// Rules panel state lives here, not in the panel, so the query and open
@@ -65,13 +68,50 @@
 	// reserved by the CSS media query below, so the sheet does not move.
 	const wide = new MediaQuery(RULES_PANEL_MEDIA_QUERY);
 
-	let editMode = $state(false);
+	// Only a view switch: which half of the sheet is on screen. Every change
+	// saves itself either way, so there is nothing to commit or discard.
+	let detailsOpen = $state(false);
 	// A count, not a boolean: overlapping saves (a flush for the adventurer
 	// being left plus a fresh save here) must not clear each other's flag.
 	let savingCount = $state(0);
 	const saving = $derived(savingCount > 0);
 	let saveError = $state('');
 	let statusTimer: ReturnType<typeof setTimeout> | null = null;
+	// A change is waiting out its debounce. statusTimer itself is not reactive.
+	let dirty = $state(false);
+	let savedOnce = $state(false);
+	const saveBusy = $derived(dirty || saving);
+	const saveStateText = $derived(
+		saveBusy ? 'Saving…' : saveError ? 'Not saved' : savedOnce ? 'Saved' : 'Changes save as you make them'
+	);
+
+	// One step of undo. `baseline` is the working copy as of the last save that
+	// was sent (or the last server copy taken); a new burst of changes offers
+	// it back until the next burst, an XP record, or the offer times out.
+	const UNDO_OFFER_MS = 12_000;
+	let baseline = untrack(() => JSON.stringify(data.character));
+	let undoSnapshot = $state<string | null>(null);
+	let undoTimer: ReturnType<typeof setTimeout> | null = null;
+	function clearUndo() {
+		if (undoTimer) clearTimeout(undoTimer);
+		undoTimer = null;
+		undoSnapshot = null;
+	}
+	function offerUndo(snapshot: string) {
+		clearUndo();
+		undoSnapshot = snapshot;
+		undoTimer = setTimeout(clearUndo, UNDO_OFFER_MS);
+	}
+	function undoLastChange() {
+		if (!undoSnapshot || recordingXp || syncRequired) return;
+		const snapshot = undoSnapshot;
+		clearUndo();
+		if (statusTimer) clearTimeout(statusTimer);
+		statusTimer = null;
+		dirty = false;
+		char = JSON.parse(snapshot) as GuildBookCharacterData;
+		void persist();
+	}
 
 	const talentNames = $derived(new Map(data.content.talents.map((t) => [t.id, t.name])));
 	const talentName = (id: string) => talentNames.get(id);
@@ -82,7 +122,7 @@
 		{ id: 'sheet-status', label: 'Status' },
 		{ id: 'sheet-experience', label: 'Experience' },
 		{ id: 'sheet-gear', label: 'Gear' },
-		...(editMode
+		...(detailsOpen
 			? [
 					{ id: 'sheet-story', label: 'Story' },
 					{ id: 'sheet-talents', label: 'Talents' },
@@ -108,6 +148,7 @@
 		const id = data.id;
 		const snapshot = JSON.stringify(char);
 		const version = serverVersion;
+		baseline = snapshot;
 		const next = saveChain.then(() => persistSnapshot(id, snapshot, Math.max(savedVersions.get(id) ?? version, version), opts));
 		saveChain = next.catch(() => 'rejected' as const);
 		return next;
@@ -145,6 +186,7 @@
 				savedVersions.set(id, resBody.version);
 				if (stale()) return 'stale'; // never touch the next adventurer's sync state
 				serverVersion = resBody.version;
+				savedOnce = true;
 				await invalidateAll();
 				return 'ok';
 			}
@@ -172,12 +214,15 @@
 		}
 	}
 
-	/** Status-panel changes save automatically (debounced) outside edit mode. */
-	function onStatusChange() {
-		if (editMode) return; // participates in the edit session instead
+	/** Every change on the sheet saves itself, debounced so a burst is one save. */
+	function onSheetChange() {
 		if (statusTimer) clearTimeout(statusTimer);
+		// The first change of a burst: what the sheet held before it is the undo.
+		else offerUndo(baseline);
+		dirty = true;
 		statusTimer = setTimeout(() => {
 			statusTimer = null; // an expired handle is not a pending save
+			dirty = false;
 			void persist();
 		}, 600);
 	}
@@ -191,42 +236,13 @@
 	// itself survive a full unload is requested for every save under the
 	// size cap, inside persistSnapshot.
 	beforeNavigate(() => {
+		clearUndo();
 		if (!statusTimer) return;
 		clearTimeout(statusTimer);
 		statusTimer = null;
+		dirty = false;
 		void persist({ navigationFlush: true });
 	});
-
-	/**
-	 * A debounced autosave must not straddle the start of an edit session:
-	 * left pending, it would later save Edit-mode changes that are meant to
-	 * wait for Save/Cancel — or, after a quick Cancel, save the reverted copy
-	 * and lose the change that scheduled it. Flush it first, and only open the
-	 * session once that change is safely stored.
-	 */
-	async function enterEdit() {
-		if (statusTimer) {
-			const id = data.id;
-			clearTimeout(statusTimer);
-			statusTimer = null;
-			if ((await persist()) !== 'ok' || id !== data.id) return;
-		}
-		editMode = true;
-	}
-
-	function onEditChange() {
-		// Edited fields wait for the explicit Save.
-	}
-
-	async function saveEdits() {
-		if ((await persist()) === 'ok') editMode = false;
-	}
-
-	function cancelEdits() {
-		char = structuredClone(data.character);
-		editMode = false;
-		saveError = '';
-	}
 
 	let recordingXp = $state(false);
 	let syncRequired = $state(false);
@@ -240,6 +256,8 @@
 			if (id !== data.id) return false;
 			char = row.data;
 			serverVersion = row.version;
+			baseline = JSON.stringify(row.data);
+			clearUndo();
 			savedVersions.set(id, row.version);
 			forceResync = false;
 			// The read-only sheet, exports, and Cancel read page data, not char:
@@ -259,9 +277,12 @@
 		recordingXp = true;
 		try {
 			if (statusTimer) {
-				clearTimeout(statusTimer); statusTimer = null;
+				clearTimeout(statusTimer); statusTimer = null; dirty = false;
 				if ((await persist()) !== 'ok' || id !== data.id) return false;
 			}
+			// The ledger only moves forward: an earlier change can no longer be
+			// taken back by restoring a copy from before this record.
+			clearUndo();
 			await saveChain;
 			if (id !== data.id) return false;
 			const beforeAction = $state.snapshot(char);
@@ -272,7 +293,6 @@
 			if (!result.ok) { saveError = result.error; return false; }
 			char = result.character;
 			saveError = '';
-			if (editMode) return true;
 			const outcome = await persist();
 			if (outcome === 'ok' || id !== data.id) return outcome === 'ok';
 			if (outcome === 'uncertain') {
@@ -294,7 +314,10 @@
 	}
 
 	/** Promote a draft to a finished adventurer (server validates completeness). */
-	async function saveAsFinal() {
+	async function finalize() {
+		if (statusTimer) clearTimeout(statusTimer);
+		statusTimer = null;
+		dirty = false;
 		char.isDraft = false;
 		const outcome = await persist();
 		if (outcome !== 'ok') {
@@ -310,30 +333,20 @@
 	<div class="sheet-head">
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
-		{#if !editMode}
-			<button type="button" class="edit-toggle" disabled={saving || recordingXp || syncRequired} onclick={enterEdit}>Edit</button>
-		{:else}
-			<div class="edit-actions">
-				<button type="button" class="ghost" disabled={saving || recordingXp || syncRequired} onclick={cancelEdits}>Cancel</button>
-				<button type="button" class="primary" disabled={saving || recordingXp || syncRequired} onclick={saveEdits}>
-					{saving ? 'Saving…' : 'Save changes'}
-				</button>
-			</div>
-		{/if}
+		<p class="save-state" class:failed={!!saveError && !saveBusy} role="status">{saveStateText}</p>
+		<button type="button" class="details-toggle" aria-pressed={detailsOpen} onclick={() => (detailsOpen = !detailsOpen)}>
+			{detailsOpen ? 'Done' : 'Edit details'}
+		</button>
 	</div>
 
 	{#if data.isDraft}
 		<div class="draft-bar">
 			<p class="draft-note">
-				This adventurer is a <strong>draft</strong> — finalize it to enable sharing.
+				This adventurer is a <strong>draft</strong>. Finalize it to enable sharing.
 			</p>
-			<button type="button" class="finalize" disabled={saving || recordingXp || syncRequired} onclick={saveAsFinal}>
-				{saving ? 'Saving…' : 'Save as final'}
-			</button>
+			<button type="button" class="finalize" disabled={saving || recordingXp || syncRequired} onclick={finalize}>Finalize</button>
 		</div>
 	{/if}
-	{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
-	{#if syncRequired}<p>Reload the saved adventurer before recording another change.</p><button type="button" onclick={() => reloadCharacter()}>Retry reload</button>{/if}
 	<nav class="sections" aria-label="Sections">
 		<span class="sections-label">Sections</span>
 		<ul>
@@ -345,7 +358,7 @@
 	</div>
 	<div class="sheet-col">
 
-	<fieldset id="sheet-status" class="play-controls jump" disabled={saving || recordingXp || syncRequired}>
+	<fieldset id="sheet-status" class="play-controls jump" disabled={recordingXp || syncRequired}>
 	<StatusPanel
 		bind:char
 		conditions={data.content.conditions}
@@ -354,33 +367,33 @@
 		items={data.content.items}
 		resolveMax={data.content.resolveMax}
 		{talentName}
-		onChange={onStatusChange}
+		onChange={onSheetChange}
 	/>
 	</fieldset>
 	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its
 	     custom-item form keeps taking input while an earlier change saves. -->
 	<div id="sheet-gear" class="gear-wrap jump">
-		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onStatusChange} locked={recordingXp || syncRequired} {saving} />
+		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onSheetChange} locked={recordingXp || syncRequired} {saving} />
 	</div>
 
-	{#if editMode}
-		<fieldset class="play-controls" disabled={saving || recordingXp || syncRequired}>
+	{#if detailsOpen}
+		<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
 		<section id="sheet-story" class="edit-section jump">
 			<h2>Story</h2>
-			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onEditChange} />
+			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onSheetChange} />
 		</section>
 		<section id="sheet-talents" class="edit-section jump">
 			<h2>Talents</h2>
-			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onEditChange} />
+			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onSheetChange} />
 		</section>
 		<section id="sheet-languages" class="edit-section jump">
 			<h2>Languages</h2>
-			<LanguagesEdit bind:char languages={data.content.languages} onChange={onEditChange} />
+			<LanguagesEdit bind:char languages={data.content.languages} onChange={onSheetChange} />
 		</section>
 		<section id="sheet-spells" class="edit-section jump">
 			<h2>Spell components</h2>
-			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onEditChange} />
+			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onSheetChange} />
 		</section>
 		</fieldset>
 	{:else}
@@ -395,6 +408,20 @@
 		<RulesSidePanel panel={rulesPanel} />
 	{/if}
 </div>
+
+<!-- Fixed to the viewport: a failed save or an undo offer has to be seen from
+     wherever on the sheet the change was made. -->
+{#if saveError || syncRequired || undoSnapshot}
+	<div class="save-dock">
+		{#if saveError}<p class="error" role="alert">{saveError}</p>{/if}
+		{#if syncRequired}
+			<p>Reload the saved adventurer before recording another change.</p>
+			<button type="button" onclick={() => reloadCharacter()}>Retry reload</button>
+		{:else if undoSnapshot}
+			<button type="button" disabled={recordingXp} onclick={undoLastChange}>Undo last change</button>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
@@ -480,9 +507,10 @@
 	}
 	.topbar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.5rem 1rem;
 	}
 	.crumb {
 		font-family: var(--font-subhead);
@@ -493,31 +521,53 @@
 		color: var(--ink-soft);
 		text-decoration: none;
 	}
-	.edit-toggle,
-	.edit-actions .primary,
-	.edit-actions .ghost {
+	.save-state {
+		margin: 0 0 0 auto;
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
+		color: var(--ink-soft);
+	}
+	.save-state.failed {
+		color: var(--accent);
+	}
+	.details-toggle,
+	.save-dock button {
+		min-height: 2.75rem;
 		padding: 0.45rem 1.1rem;
+		border: 1px solid var(--accent);
 		border-radius: 3px;
+		background: transparent;
+		color: var(--accent);
 		font-family: var(--font-subhead);
 		font-size: 0.95rem;
 		cursor: pointer;
-		border: 1px solid var(--accent);
 	}
-	.edit-toggle,
-	.edit-actions .primary {
+	.details-toggle[aria-pressed='true'] {
 		background: var(--accent);
 		color: var(--parchment);
 	}
-	.edit-actions .ghost {
-		background: transparent;
-		color: var(--accent);
-	}
-	.edit-actions {
-		display: flex;
-		gap: 0.5rem;
-	}
-	.edit-actions .primary:disabled {
+	.save-dock button:disabled {
 		opacity: 0.55;
+	}
+	.save-dock {
+		position: fixed;
+		right: 1rem;
+		bottom: 1rem;
+		z-index: 20;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem 1rem;
+		max-width: min(30rem, calc(100% - 2rem));
+		padding: 0.6rem 0.75rem 0.6rem 1rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+		border-radius: 4px;
+		background: var(--parchment);
+		box-shadow: 0 6px 18px -6px color-mix(in oklab, var(--ink) 45%, transparent);
+	}
+	.save-dock p {
+		margin: 0;
+		font-size: 0.9rem;
 	}
 	.draft-bar {
 		display: flex;
@@ -549,9 +599,8 @@
 	.finalize:disabled {
 		opacity: 0.55;
 	}
-	.error {
+	.save-dock .error {
 		color: var(--accent);
-		font-size: 0.9rem;
 	}
 	.edit-section {
 		margin: 1.25rem 0;

@@ -6,15 +6,15 @@ import { signInAs, createTestAdventurer } from './fixtures/auth';
  *
  * What only a browser proves: the dropdown is filled from the content pack and
  * shrinks as tongues are learned, a hand-typed language survives the round trip
- * alongside a picked one, and both land on the rendered sheet after the save —
- * the sheet's edit session persists through a real PUT, not local state.
+ * alongside a picked one, and both land on the rendered sheet once the change
+ * has saved itself — through a real PUT, not local state.
  */
 test('a saved adventurer can learn a pack language and a custom one', async ({ page }) => {
 	await signInAs(page, 'Linguist');
 	const { id } = await createTestAdventurer(page, 'Sela of the Docks');
 
 	await page.goto(`/sheet/${id}`);
-	await page.getByRole('button', { name: 'Edit' }).click();
+	await page.getByRole('button', { name: 'Edit details' }).click();
 
 	const picker = page.getByLabel('Language', { exact: true });
 	await expect(picker.locator('option', { hasText: 'Vulgaris' })).toHaveCount(1);
@@ -28,10 +28,11 @@ test('a saved adventurer can learn a pack language and a custom one', async ({ p
 	await page.getByRole('textbox', { name: 'Custom language' }).fill('Dockhand Whistle-Cant');
 	await page.getByRole('button', { name: 'Add custom language' }).click();
 
-	await page.getByRole('button', { name: 'Save changes' }).click();
+	// Nothing to press: the additions save themselves.
+	await expect(page.locator('.save-state')).toHaveText('Saved');
+	await page.getByRole('button', { name: 'Done' }).click();
 
 	// Back on the read-only sheet, both languages are rendered from the server.
-	await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
 	await expect(page.getByText('Languages: Vulgaris, Dockhand Whistle-Cant')).toBeVisible();
 
 	// And they are still there on a cold load.

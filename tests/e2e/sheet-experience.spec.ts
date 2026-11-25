@@ -28,7 +28,7 @@ test('XP awards explain the balance and survive reload', async ({ page }) => {
  await expect(xp.getByText('Rescue the bellringer', { exact: true })).toBeVisible();
 });
 
-test('the seventh invested XP masters a talent on the edit sheet', async ({ page }) => {
+test('the seventh invested XP masters a talent and saves itself', async ({ page }) => {
  await signInAs(page, 'Training');
  const { id } = await createTestAdventurer(page, 'Patient Acrobat');
  // Talent progress is marked directly on the sheet, so seeding it is one save.
@@ -39,16 +39,17 @@ test('the seventh invested XP masters a talent on the edit sheet', async ({ page
   if (!response.ok) throw new Error(await response.text());
  }, id);
  await page.goto(`/sheet/${id}`);
- await page.getByRole('button', { name: 'Edit' }).click();
+ await page.getByRole('button', { name: 'Edit details' }).click();
  const acrobat = page.locator('.talents-edit .row', { hasText: 'Acrobat' });
  await expect(acrobat.locator('.xp')).toContainText('XP 6/7');
  await acrobat.getByRole('button', { name: 'Add XP' }).click();
  await expect(acrobat.getByRole('button', { name: 'mastered' })).toBeVisible();
  await expect(acrobat.getByRole('button', { name: 'Add XP' })).toHaveCount(0);
- await page.getByRole('button', { name: 'Save changes' }).click();
- await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
+ // No Save button: the change stores itself and the sheet says so.
+ await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+ await expect(page.locator('.save-state')).toHaveText('Saved');
  await page.reload();
- await page.getByRole('button', { name: 'Edit' }).click();
+ await page.getByRole('button', { name: 'Edit details' }).click();
  await expect(acrobat.getByRole('button', { name: 'mastered' })).toBeVisible();
 });
 
@@ -139,15 +140,13 @@ test('finalizing a draft is blocked while an XP action is being recorded', async
  const xp = await openExperience(page);
  await xp.getByLabel('XP source').selectOption('quest-accepted');
  await xp.getByLabel('Reason').fill('Recorded before finalizing');
- // The button's own label switches to "Saving…" once the fieldset locks it
- // (matching "Save changes" elsewhere on this page), so it's found by class.
- const finalizeButton = page.locator('button.finalize');
+ const finalizeButton = page.getByRole('button', { name: 'Finalize', exact: true });
  const recording = xp.getByRole('button', { name: 'Record XP' }).click();
  await expect(finalizeButton).toBeDisabled();
- await expect(finalizeButton).toHaveText('Saving…');
+ await expect(page.locator('.save-state')).toHaveText('Saving…');
  releasePut();
  await recording;
  await expect(xp.getByText('Available XP: 3', { exact: true })).toBeVisible();
  await expect(finalizeButton).toBeEnabled();
- await expect(finalizeButton).toHaveText('Save as final');
+ await expect(page.locator('.save-state')).toHaveText('Saved');
 });

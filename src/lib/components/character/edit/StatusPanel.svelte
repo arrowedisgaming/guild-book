@@ -93,15 +93,19 @@
 		onChange();
 	}
 
-	function stepResolve(delta: number) {
-		const current = Math.min(char.resolve.max, Math.max(0, char.resolve.current + delta));
+	const LORE_MAX = 4;
+	/** Tapping an empty pip fills up to it; tapping a filled one empties from it. */
+	const tapped = (current: number, pip: number) => (pip < current ? pip : pip + 1);
+	function tapResolve(pip: number) {
+		const current = Math.min(char.resolve.max, Math.max(0, tapped(char.resolve.current, pip)));
 		char.resolve = { ...char.resolve, current };
 		onChange();
 	}
-	function stepLore(delta: number) {
-		char.lore = Math.min(4, Math.max(0, char.lore + delta));
+	function tapLore(pip: number) {
+		char.lore = Math.min(LORE_MAX, Math.max(0, tapped(char.lore, pip)));
 		onChange();
 	}
+	const activeConditions = $derived(conditions.filter((c) => char.conditions.includes(c.id) && c.description));
 
 	function addAffliction() {
 		if (!addAfflictionId) return;
@@ -196,27 +200,43 @@
 	<h2>Status</h2>
 
 	<div class="track">
-		<span class="lbl">Resolve</span>
-		<span class="pips">
-			{#each Array.from({ length: char.resolve.max }) as _, i}
-				<span class="pip" class:on={i < char.resolve.current}></span>
-			{/each}
-		</span>
-		<button type="button" onclick={() => stepResolve(-1)} aria-label="Spend resolve">−</button>
-		<button type="button" onclick={() => stepResolve(1)} aria-label="Recover resolve">+</button>
-		<span class="lbl second">Lore bids</span>
-		<span class="pips">
-			{#each Array.from({ length: 4 }) as _, i}
-				<span class="pip" class:on={i < char.lore}></span>
-			{/each}
-		</span>
-		<button type="button" onclick={() => stepLore(-1)} aria-label="Spend lore bid">−</button>
-		<button type="button" onclick={() => stepLore(1)} aria-label="Recover lore bid">+</button>
+		<div class="meter" role="group" aria-label={`Resolve, ${char.resolve.current} of ${char.resolve.max}`}>
+			<span class="lbl">Resolve</span>
+			<span class="pips">
+				{#each { length: char.resolve.max }, i (i)}
+					<button
+						type="button"
+						class="pip"
+						class:on={i < char.resolve.current}
+						aria-pressed={i < char.resolve.current}
+						aria-label={i < char.resolve.current ? `Spend Resolve down to ${i}` : `Recover Resolve up to ${i + 1}`}
+						onclick={() => tapResolve(i)}
+					></button>
+				{/each}
+			</span>
+			<span class="count" aria-hidden="true">{char.resolve.current} of {char.resolve.max}</span>
+		</div>
+		<div class="meter" role="group" aria-label={`Lore bids, ${char.lore} of ${LORE_MAX}`}>
+			<span class="lbl">Lore bids</span>
+			<span class="pips">
+				{#each { length: LORE_MAX }, i (i)}
+					<button
+						type="button"
+						class="pip"
+						class:on={i < char.lore}
+						aria-pressed={i < char.lore}
+						aria-label={i < char.lore ? `Spend lore bids down to ${i}` : `Recover lore bids up to ${i + 1}`}
+						onclick={() => tapLore(i)}
+					></button>
+				{/each}
+			</span>
+			<span class="count" aria-hidden="true">{char.lore} of {LORE_MAX}</span>
+		</div>
 	</div>
 
 	<div class="conditions">
 		{#each conditions as c (c.id)}
-			<label class="cond" class:on={char.conditions.includes(c.id)} title={c.description}>
+			<label class="cond" class:on={char.conditions.includes(c.id)}>
 				<input
 					type="checkbox"
 					checked={char.conditions.includes(c.id)}
@@ -230,6 +250,10 @@
 		</button>
 	</div>
 
+	<!-- Visible text, not a hover title: a phone has no hover. -->
+	{#each activeConditions as c (c.id)}
+		<p class="cond-note"><strong>{c.name}.</strong> {c.description}</p>
+	{/each}
 	{#if char.conditions.includes('stressed')}
 		<p class="hint">Stressed blocks all other recovery — clear it first at camp.</p>
 	{/if}
@@ -260,9 +284,11 @@
 					class="charge"
 					class:on={b.charged}
 					onclick={() => toggleBondCharge(i)}
-					title={b.charged ? 'Charged — burn at camp to heal' : 'Uncharged'}
+					aria-pressed={b.charged}
+					aria-label={`Bond with ${b.targetName || 'guild-mate'} charged`}
+					title={b.charged ? 'Charged: burn at camp to heal' : 'Not charged'}
 				>
-					{b.charged ? '●' : '○'}
+					<span class="dot"></span>
 				</button>
 				<input class="bname" type="text" bind:value={b.targetName} oninput={onChange} aria-label="Guild-mate's name" />
 				<select
@@ -287,7 +313,7 @@
 						placeholder="the bond between you"
 					/>
 				{/if}
-				<button type="button" class="remove" onclick={() => removeBond(i)} aria-label="Remove bond">✕</button>
+				<button type="button" class="remove" onclick={() => removeBond(i)} aria-label={`Remove bond with ${b.targetName || 'guild-mate'}`}>Remove</button>
 				{#each bondChargeLines(bondTypes, b.text) as line (line)}
 					<span class="bcharge">{line}</span>
 				{/each}
@@ -306,11 +332,11 @@
 				<span class="aname">{afflictionName(a)}</span>
 				<span class="ctrl">
 					stage {a.stage}
-					<button type="button" onclick={() => stepAffliction(i, -1)} aria-label="Cure a stage">−</button>
-					<button type="button" onclick={() => stepAffliction(i, 1)} aria-label="Worsen a stage">+</button>
+					<button type="button" onclick={() => stepAffliction(i, -1)} aria-label={`Cure a stage of ${afflictionName(a)}`}>−</button>
+					<button type="button" onclick={() => stepAffliction(i, 1)} aria-label={`Worsen ${afflictionName(a)} a stage`}>+</button>
 				</span>
 				<span class="aeffect">{stageEffect(a)}</span>
-				<button type="button" class="remove" onclick={() => removeAffliction(i)} aria-label="Remove affliction">✕</button>
+				<button type="button" class="remove" onclick={() => removeAffliction(i)} aria-label={`Remove ${afflictionName(a)}`}>Remove</button>
 			</div>
 		{/each}
 		<div class="addrow">
@@ -344,39 +370,66 @@
 	.track {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.4rem;
+		gap: 0.3rem 1.75rem;
 		margin-bottom: 0.6rem;
 	}
+	/* Label, pips and count stay together when the row wraps. */
+	.meter {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
 	.lbl {
+		min-width: 4.25rem;
+		font-family: var(--font-subhead);
+		font-size: 0.9rem;
+	}
+	.count {
 		font-family: var(--font-subhead);
 		font-size: 0.85rem;
-	}
-	.lbl.second {
-		margin-left: 1rem;
+		color: var(--ink-soft);
 	}
 	.pips {
 		display: inline-flex;
-		gap: 0.25rem;
 	}
+	/* The button is the hit area; the circle is drawn inside it. */
 	.pip {
-		width: 0.8rem;
-		height: 0.8rem;
-		border-radius: 999px;
-		border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
 	}
-	.pip.on {
+	.pip::before {
+		content: '';
+		width: 1.15rem;
+		height: 1.15rem;
+		border-radius: 999px;
+		border: 2px solid color-mix(in oklab, var(--ink) 55%, transparent);
+	}
+	.pip.on::before {
 		background: var(--accent);
 		border-color: var(--accent);
 	}
-	.track button,
+	.pip:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: -2px;
+	}
 	.ctrl button {
-		width: 1.5rem;
-		height: 1.5rem;
+		width: 2rem;
+		height: 2rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 		border-radius: 3px;
 		background: var(--parchment);
+		color: var(--ink);
 		cursor: pointer;
+	}
+	.cond-note {
+		margin: 0.5rem 0 0;
+		font-size: 0.85rem;
 	}
 	.conditions {
 		display: flex;
@@ -466,17 +519,27 @@
 		font-size: 0.88rem;
 	}
 	.charge {
-		width: 1.6rem;
-		height: 1.6rem;
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
 		border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
 		border-radius: 999px;
 		background: transparent;
-		color: var(--accent);
 		cursor: pointer;
-		font-size: 0.9rem;
+	}
+	.dot {
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 999px;
+		border: 2px solid var(--accent);
 	}
 	.charge.on {
 		background: color-mix(in oklab, var(--accent) 14%, var(--parchment));
+	}
+	.charge.on .dot {
+		background: var(--accent);
 	}
 	.bname {
 		width: 9rem;
@@ -521,10 +584,36 @@
 	}
 	.remove {
 		margin-left: auto;
+		padding: 0.25rem 0.5rem;
 		border: none;
 		background: none;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
 		color: var(--ink-soft);
+		text-decoration: underline;
 		cursor: pointer;
+	}
+	/* Fingers need 44px; a mouse keeps the denser sheet. */
+	@media (pointer: coarse) {
+		.pip,
+		.charge {
+			width: 44px;
+			height: 44px;
+		}
+		.ctrl button {
+			width: 44px;
+			height: 44px;
+		}
+		.cond,
+		.wound-btn,
+		.remove,
+		.addrow button,
+		.bond input,
+		.bond select,
+		.addrow input,
+		.addrow select {
+			min-height: 44px;
+		}
 	}
 	.addrow {
 		display: flex;

@@ -75,4 +75,8 @@
  button { justify-self: start; padding: .5rem .8rem; font: inherit; color: var(--parchment); background: var(--accent); border: 0; border-radius: 3px; cursor: pointer; }
  button:disabled { opacity: .5; cursor: default; }
  .hint { font-size: .85rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+ @media (pointer: coarse) {
+  summary { display: flex; align-items: center; min-height: 44px; }
+  input, select, button { min-height: 44px; }
+ }
 </style>

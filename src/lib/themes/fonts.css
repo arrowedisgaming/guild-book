@@ -68,3 +68,17 @@
 	font-weight: 400;
 	font-display: swap;
 }
+
+/*
+ * Digits only, drawn from Caslon Antique. IM Fell English and HamletOrNot ship
+ * old-style figures alone, in which 0 reads as "o" and 1 as "I"; that suits
+ * prose and fails on a sheet of quantities. Put this face first in a stack and
+ * the numbers come from Caslon while every letter stays with the face behind.
+ */
+@font-face {
+	font-family: 'Guild Numerals';
+	src: url('/fonts/caslon-antique.woff2') format('woff2');
+	font-weight: 400 700;
+	font-display: swap;
+	unicode-range: U+30-39;
+}

@@ -203,8 +203,8 @@
 						<summary>Adjust without spending XP</summary>
 						<span class="xp">
 							XP {t.xp}/{masteryXp}
-							<button type="button" onclick={() => stepXp(i, -1)} aria-label="Remove XP">−</button>
-							<button type="button" onclick={() => stepXp(i, 1)} aria-label="Add XP">+</button>
+							<button type="button" onclick={() => stepXp(i, -1)} aria-label={`Remove XP from ${tname}`}>−</button>
+							<button type="button" onclick={() => stepXp(i, 1)} aria-label={`Add XP to ${tname}`}>+</button>
 						</span>
 					</details>
 				</div>
@@ -454,5 +454,23 @@
 	.add button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+	@media (pointer: coarse) {
+		summary,
+		.chip,
+		.remove,
+		.add select,
+		.add button {
+			min-height: 44px;
+		}
+		.adjust summary {
+			display: flex;
+			align-items: center;
+			min-height: 44px;
+		}
+		.xp button {
+			width: 44px;
+			height: 44px;
+		}
 	}
 </style>

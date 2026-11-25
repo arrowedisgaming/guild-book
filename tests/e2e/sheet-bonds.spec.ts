@@ -68,3 +68,21 @@ test('a bond on the sheet shows the book’s charge conditions', async ({ page }
 	await expect(page.getByLabel('Bond in your own words')).toHaveValue('drinking buddies');
 	await expect(page.getByLabel('Bond type')).toHaveValue('__custom__');
 });
+
+test('Resolve is set by tapping its pips and announces its count', async ({ page }) => {
+	await signInAs(page, 'Pip Tapper');
+	const { id } = await createTestAdventurer(page, 'Marta Steadyhand');
+	await page.goto(`/sheet/${id}`);
+	const resolve = page.getByRole('group', { name: /^Resolve, \d+ of \d+$/ });
+	const [, current, max] = /(\d+) of (\d+)/.exec((await resolve.getAttribute('aria-label')) ?? '')!.map(Number);
+	const pips = resolve.getByRole('button');
+	await expect(pips).toHaveCount(max);
+	// Whatever it starts at, tapping the first pip twice leaves exactly one filled.
+	if (current > 0) await pips.first().click();
+	await expect(resolve).toHaveAccessibleName(`Resolve, 0 of ${max}`);
+	await pips.first().click();
+	await expect(resolve).toHaveAccessibleName(`Resolve, 1 of ${max}`);
+	await expect(page.locator('.save-state')).toHaveText('Saved');
+	await page.reload();
+	await expect(page.getByRole('group', { name: `Resolve, 1 of ${max}` })).toBeVisible();
+});

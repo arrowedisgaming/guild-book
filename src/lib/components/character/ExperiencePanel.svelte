@@ -161,4 +161,8 @@
 	li { margin: 0.7rem 0; overflow-wrap: anywhere; }
 	li p { margin: 0.2rem 0; }
 	@media (max-width: 30rem) { .notes { grid-template-columns: minmax(0, 1fr); } }
+	@media (pointer: coarse) {
+		.sub > summary { display: flex; align-items: center; min-height: 44px; }
+		input, select, .award, button[type='submit'] { min-height: 44px; }
+	}
 </style>

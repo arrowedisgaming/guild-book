@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is room. Durability is a row of boxes you tap to notch or repair. Open an
   item to move it, change a single item's quantity or remove it; stacks keep
   their − and + on the line.
+- Resolve and Lore bids are set by tapping their pips, and each shows its
+  count beside them. The − and + buttons are gone.
+- Numbers on the sheet use clear lining figures, so 0 and 1 no longer read as
+  "o" and "I".
+- On a touch screen every control on the sheet is at least 44px tall.
+- Removing a bond, an affliction, a talent or an item is a "Remove" link
+  instead of a small ✕.
 - The Experience panel opens on the award buttons. Spending, custom amounts,
   corrections, the list of what earns XP and the history each fold away.
 - Changing a talent's progress by hand moved under "Adjust without spending
@@ -53,6 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   this way; use "Correct balance".
 
 ### Fixed
+
+- The text of an active condition is shown under the conditions, instead of
+  only in a hover tooltip that phones never show.
+- Screen readers now announce the Resolve and Lore bid counts, whether each
+  bond is charged, and which item, talent or affliction a button acts on.
+- Placeholder text in form fields is dark enough to read.
+- "Lore bids" no longer separates from its pips on a narrow screen.
 
 - A wound, Resolve spend or gear change made while editing details is no
   longer lost.

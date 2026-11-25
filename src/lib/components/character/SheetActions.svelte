@@ -57,4 +57,9 @@
 		border-radius: 4px;
 		max-width: 30rem;
 	}
+	@media (pointer: coarse) {
+		button {
+			min-height: 44px;
+		}
+	}
 </style>

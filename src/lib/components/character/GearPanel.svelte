@@ -529,19 +529,29 @@
 	.notches {
 		display: inline-flex;
 		flex-wrap: wrap;
-		gap: 4px;
 	}
+	/* The button is the hit area; the box is drawn inside it, so a finger gets
+	 * 44px without the box itself growing. */
 	.notch {
-		box-sizing: border-box;
-		width: 1.6rem;
-		height: 1.6rem;
+		display: grid;
+		place-items: center;
+		width: 1.9rem;
+		height: 1.9rem;
 		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+	}
+	.notch::before {
+		content: '';
+		box-sizing: border-box;
+		width: 1.5rem;
+		height: 1.5rem;
 		border: 2px solid var(--ink);
 		border-radius: 3px;
 		background: color-mix(in oklab, var(--parchment) 85%, white);
-		cursor: pointer;
 	}
-	.notch.marked {
+	.notch.marked::before {
 		background:
 			linear-gradient(to top right, transparent 43%, var(--accent) 43% 57%, transparent 57%),
 			linear-gradient(to top left, transparent 43%, var(--accent) 43% 57%, transparent 57%),
@@ -639,5 +649,21 @@
 	select:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+	/* Fingers need 44px; a mouse keeps the denser list. */
+	@media (pointer: coarse) {
+		.ctrl button,
+		.notch {
+			width: 44px;
+			height: 44px;
+		}
+		.iname,
+		.line,
+		select,
+		.remove,
+		.auto,
+		.add button {
+			min-height: 44px;
+		}
 	}
 </style>

@@ -477,6 +477,17 @@
 	.sheet-page {
 		max-width: 48rem;
 		margin: 0 auto;
+		/* A sheet is read as numbers: lining digits throughout. */
+		--font-body: var(--font-body-figures);
+		--font-heading: var(--font-heading-figures);
+		font-family: var(--font-body);
+	}
+	@media (pointer: coarse) {
+		.sections a {
+			display: inline-flex;
+			align-items: center;
+			min-height: 44px;
+		}
 	}
 	.sheet-head,
 	.sheet-col {

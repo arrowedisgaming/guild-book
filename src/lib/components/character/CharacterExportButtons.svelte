@@ -48,4 +48,9 @@
 		opacity: 0.55;
 		cursor: default;
 	}
+	@media (pointer: coarse) {
+		button {
+			min-height: 44px;
+		}
+	}
 </style>

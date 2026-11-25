@@ -10,14 +10,16 @@
 </script>
 
 <header class="sheet-header">
-	<h1>{name.trim() || 'Unnamed adventurer'}</h1>
-	{#if pronouns || kin || view.path}
-		<p class="sub">
-			{#if pronouns}<span>{pronouns}</span>{/if}
-			{#if kin}<span>{kin}</span>{/if}
-			{#if view.path}<span>{view.path}</span>{/if}
-		</p>
-	{/if}
+	<div class="who">
+		<h1>{name.trim() || 'Unnamed adventurer'}</h1>
+		{#if pronouns || kin || view.path}
+			<p class="sub">
+				{#if pronouns}<span>{pronouns}</span>{/if}
+				{#if kin}<span>{kin}</span>{/if}
+				{#if view.path}<span>{view.path}</span>{/if}
+			</p>
+		{/if}
+	</div>
 	<dl class="attributes">
 		{#each view.attributes as attr (attr.id)}
 			<div class="attr">
@@ -29,59 +31,83 @@
 </header>
 
 <style>
+	/* Compact on purpose: this header stays pinned while the sheet scrolls. */
 	.sheet-header {
-		margin: 1rem 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.4rem 1.5rem;
+	}
+	.who {
+		min-width: 0;
 	}
 	h1 {
 		margin: 0;
-		font-size: 2.2rem;
+		font-size: 1.8rem;
 		line-height: 1.1;
 		overflow-wrap: anywhere;
-		text-wrap: balance;
 	}
 	.sub {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.2rem 1rem;
-		margin: 0.35rem 0 0;
+		gap: 0 0.9rem;
+		margin: 0.2rem 0 0;
 		color: var(--ink-soft);
 		font-family: var(--font-subhead);
+		font-size: 0.9rem;
 	}
-	/* One ruled band, as on a printed sheet: the four suits share a row and are
-	 * divided by rules, not boxed one by one. */
+	/* One ruled row, as on a printed sheet: the four suits are divided by
+	 * rules, not boxed one by one. */
 	.attributes {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		margin: 0.9rem 0 0;
-		border-block: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+		grid-template-columns: repeat(4, minmax(0, auto));
+		margin: 0;
 	}
 	.attr {
 		display: flex;
 		flex-direction: column-reverse;
 		align-items: center;
-		gap: 0.15rem;
-		padding: 0.6rem 0.25rem;
+		padding: 0.1rem 0.9rem;
 	}
 	.attr + .attr {
-		border-inline-start: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+		border-inline-start: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 	}
 	dt {
 		font-family: var(--font-subhead);
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		color: var(--ink-soft);
 	}
 	dd {
 		margin: 0;
 		font-family: var(--font-heading);
-		font-size: 2.2rem;
+		font-size: 1.7rem;
 		line-height: 1;
 	}
-	@media (max-width: 30rem) {
+	@media (max-width: 40rem) {
 		h1 {
-			font-size: 1.75rem;
+			font-size: 1.35rem;
+		}
+		.sub {
+			font-size: 0.8rem;
+		}
+		/* Full width, value beside its name, so the row is one line tall. */
+		.attributes {
+			flex: 1 0 100%;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+		.attr {
+			flex-direction: row-reverse;
+			justify-content: center;
+			align-items: baseline;
+			gap: 0.3rem;
+			padding: 0.1rem 0.2rem;
+		}
+		dt {
+			font-size: 0.75rem;
 		}
 		dd {
-			font-size: 1.8rem;
+			font-size: 1.3rem;
 		}
 	}
 </style>

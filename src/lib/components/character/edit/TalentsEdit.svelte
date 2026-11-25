@@ -280,6 +280,7 @@
 	}
 	.add select {
 		flex: 1;
+		min-width: 0;
 		padding: 0.45rem 0.6rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 		border-radius: 3px;

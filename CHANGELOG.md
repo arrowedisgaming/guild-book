@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An adventurer's sheet is now one page with no Edit mode. It opens with the
   name, kin, path and the four attributes, then Status, Talents, Gear,
   Experience, Story, Languages and Spell components, all editable in place.
+- The name, kin, path, attributes and section links stay pinned to the top
+  of the sheet as you scroll. The section links sit on one row that scrolls
+  sideways.
 - Each talent is a single line showing its state and progress; open it to
   read what it does and to change it.
 - The sheet no longer repeats Resolve, Lore bids, bonds, talents and

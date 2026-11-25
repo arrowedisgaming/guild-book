@@ -77,6 +77,9 @@
 	// A change is waiting out its debounce. statusTimer itself is not reactive.
 	let dirty = $state(false);
 	let savedOnce = $state(false);
+	// The pinned header's height: jump links land below it, and the rules
+	// panel starts below it, level with the first sheet box.
+	let stickyHeight = $state(0);
 	const saveBusy = $derived(dirty || saving);
 	const saveStateText = $derived(
 		saveBusy ? 'Saving…' : saveError ? 'Not saved' : savedOnce ? 'Saved' : 'Changes save as you make them'
@@ -321,7 +324,7 @@
 
 <svelte:head><title>{data.view.name} — Guild Book</title></svelte:head>
 
-<div class="sheet-page">
+<div class="sheet-page" style:--sticky-h="{stickyHeight}px">
 	<div class="sheet-head">
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
@@ -336,17 +339,20 @@
 			<button type="button" class="finalize" disabled={saving || recordingXp || syncRequired} onclick={finalize}>Finalize</button>
 		</div>
 	{/if}
-	<SheetHeader name={char.name} pronouns={char.pronouns} view={data.view} />
-	<nav class="sections" aria-label="Sections">
-		<span class="sections-label">Sections</span>
-		<ul>
-			{#each sections as s (s.id)}
-				<li><a href="#{s.id}">{s.label}</a></li>
-			{/each}
-		</ul>
-	</nav>
 	</div>
 	<div class="sheet-col">
+	<!-- Inside the tall column, not the short head above it: a sticky box only
+	     travels as far as its parent does. -->
+	<div class="sheet-sticky" bind:offsetHeight={stickyHeight}>
+		<SheetHeader name={char.name} pronouns={char.pronouns} view={data.view} />
+		<nav class="sections" aria-label="Sections">
+			<ul>
+				{#each sections as s (s.id)}
+					<li><a href="#{s.id}">{s.label}</a></li>
+				{/each}
+			</ul>
+		</nav>
+	</div>
 
 	<fieldset id="sheet-status" class="play-controls jump" disabled={recordingXp || syncRequired}>
 	<StatusPanel
@@ -414,28 +420,33 @@
 <style>
 	.play-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
 	/* A jumped-to section lands with breathing room above it. */
-	.jump { scroll-margin-top: 1rem; }
+	.jump { scroll-margin-top: calc(var(--sticky-h, 0px) + 1rem); }
+	.sheet-sticky {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		padding: 0.6rem 0 0.5rem;
+		background: var(--parchment);
+		border-bottom: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+	}
 	.sections {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: 0.4rem 0.75rem;
-		margin: 0.9rem 0 0;
+		margin: 0.5rem 0 0;
 	}
-	.sections-label {
-		font-family: var(--font-subhead);
-		font-size: 0.8rem;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--ink-soft);
-	}
+	/* One row that scrolls sideways, so the pinned header keeps its height. */
 	.sections ul {
 		display: flex;
-		flex-wrap: wrap;
 		gap: 0.4rem;
 		margin: 0;
-		padding: 0;
+		padding: 2px;
 		list-style: none;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	.sections ul::-webkit-scrollbar {
+		display: none;
+	}
+	.sections li {
+		flex: none;
 	}
 	.sections a {
 		display: inline-block;
@@ -489,8 +500,8 @@
 		.sheet-page > :global(.rules-panel) {
 			grid-column: 2;
 			grid-row: 2;
-			/* Matches the Status panel's own top margin. */
-			margin-top: 1.25rem;
+			/* Below the pinned header, then the Status panel's own top margin. */
+			margin-top: calc(var(--sticky-h, 0px) + 1.25rem);
 		}
 	}
 	.topbar {

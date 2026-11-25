@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Guild Book's colours now follow the book: black ink on a warm white page,
+  with grey for bands and borders. The beige ground and oxblood accent are
+  gone, in the light and the dark theme.
+- Red now means harm and nothing else: wounds, destroyed gear, over-capacity
+  loads, warnings, failed tests of fate and errors. Buttons, links and filled
+  pips are ink.
+
 - An adventurer's sheet is now one page with no Edit mode. It opens with the
   name, kin, path and the four attributes, then Status, Talents, Gear,
   Experience, Story, Languages and Spell components, all editable in place.

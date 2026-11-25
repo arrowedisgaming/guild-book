@@ -546,7 +546,7 @@
 		color: var(--ink-soft);
 	}
 	.save-state.failed {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.save-dock button {
 		min-height: 2.75rem;
@@ -613,7 +613,7 @@
 		opacity: 0.55;
 	}
 	.save-dock .error {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.edit-section {
 		margin: 1.25rem 0;

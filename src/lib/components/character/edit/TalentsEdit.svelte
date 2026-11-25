@@ -232,7 +232,7 @@
 	.hint {
 		margin: 0;
 		font-size: 0.85rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.row {
 		padding: 0.55rem 0.7rem;
@@ -240,8 +240,8 @@
 		border-radius: 4px;
 	}
 	.row.is-wounded {
-		border-color: var(--accent);
-		background: color-mix(in oklab, var(--accent) 6%, var(--parchment));
+		border-color: var(--danger);
+		background: color-mix(in oklab, var(--danger) 6%, var(--parchment));
 	}
 	summary {
 		display: flex;
@@ -280,7 +280,7 @@
 	.twound {
 		font-family: var(--font-subhead);
 		font-size: 0.85rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.controls {
 		display: flex;
@@ -308,8 +308,8 @@
 		color: var(--ink-soft);
 	}
 	.chip.wound {
-		border-color: color-mix(in oklab, var(--accent) 55%, transparent);
-		color: var(--accent);
+		border-color: color-mix(in oklab, var(--danger) 55%, transparent);
+		color: var(--danger);
 	}
 	.chip:disabled {
 		opacity: 0.4;

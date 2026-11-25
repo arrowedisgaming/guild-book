@@ -377,7 +377,7 @@
 	.violation {
 		margin: 0;
 		font-size: 0.8rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.group {
 		display: flex;
@@ -418,8 +418,8 @@
 		border-color: color-mix(in oklab, var(--ink) 35%, var(--parchment));
 	}
 	.boxes.over .slot.filled {
-		background: var(--accent);
-		border-color: var(--accent);
+		background: var(--danger);
+		border-color: var(--danger);
 	}
 	.meter {
 		font-family: var(--font-subhead);
@@ -431,7 +431,7 @@
 		color: var(--ink);
 	}
 	.meter.over {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.empty {
 		margin: 0;
@@ -523,7 +523,7 @@
 	.dead {
 		font-family: var(--font-subhead);
 		font-size: 0.8rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	/* Durability as boxes to mark off, the way a paper sheet tracks it. */
 	.notches {
@@ -553,10 +553,10 @@
 	}
 	.notch.marked::before {
 		background:
-			linear-gradient(to top right, transparent 43%, var(--accent) 43% 57%, transparent 57%),
-			linear-gradient(to top left, transparent 43%, var(--accent) 43% 57%, transparent 57%),
-			color-mix(in oklab, var(--accent) 10%, var(--parchment));
-		border-color: var(--accent);
+			linear-gradient(to top right, transparent 43%, var(--danger) 43% 57%, transparent 57%),
+			linear-gradient(to top left, transparent 43%, var(--danger) 43% 57%, transparent 57%),
+			color-mix(in oklab, var(--danger) 10%, var(--parchment));
+		border-color: var(--danger);
 	}
 	.detail {
 		display: flex;

@@ -112,7 +112,7 @@
 		color: var(--ink-soft);
 	}
 	.error {
-		color: var(--accent);
+		color: var(--danger);
 		font-size: 0.85rem;
 	}
 </style>

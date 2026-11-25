@@ -99,9 +99,9 @@
 	.auth-error {
 		margin: 0 0 1rem;
 		padding: 0.65rem 0.75rem;
-		border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
+		border: 1px solid color-mix(in oklab, var(--danger) 55%, transparent);
 		border-radius: 4px;
-		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+		background: color-mix(in oklab, var(--danger) 8%, var(--parchment));
 		font-size: 0.85rem;
 		text-align: left;
 	}

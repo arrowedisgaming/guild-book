@@ -298,10 +298,10 @@
 		background: color-mix(in oklab, #3d6141 8%, var(--parchment));
 	}
 	.outcome-failure {
-		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+		background: color-mix(in oklab, var(--danger) 8%, var(--parchment));
 	}
 	.outcome-great-failure {
-		background: color-mix(in oklab, var(--accent) 18%, var(--parchment));
+		background: color-mix(in oklab, var(--danger) 18%, var(--parchment));
 	}
 	.hint {
 		color: var(--ink-soft);

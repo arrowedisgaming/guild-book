@@ -130,7 +130,7 @@
 		color: var(--ink-soft);
 	}
 	.warn {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	h2 {
 		font-size: 1rem;

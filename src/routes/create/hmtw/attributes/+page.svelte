@@ -127,7 +127,7 @@
 		color: var(--ink-soft);
 	}
 	.warn {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.assignment-board {
 		display: flex;

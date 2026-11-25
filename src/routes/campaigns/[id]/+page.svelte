@@ -235,7 +235,7 @@
 		background: color-mix(in oklab, var(--accent) 7%, transparent);
 	}
 	.error {
-		border-color: var(--danger, var(--accent));
+		border-color: var(--danger);
 	}
 	.invite {
 		margin-bottom: 1rem;
@@ -333,7 +333,7 @@
 		text-align: right;
 	}
 	.danger-action button {
-		border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+		border-color: color-mix(in oklab, var(--danger) 45%, transparent);
 	}
 	@media (max-width: 44rem) {
 		.grid {

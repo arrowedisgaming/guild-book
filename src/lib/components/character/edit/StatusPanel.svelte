@@ -448,17 +448,17 @@
 		cursor: pointer;
 	}
 	.cond.on {
-		border-color: var(--accent);
-		background: color-mix(in oklab, var(--accent) 12%, var(--parchment));
-		color: var(--accent);
+		border-color: var(--danger);
+		background: color-mix(in oklab, var(--danger) 12%, var(--parchment));
+		color: var(--danger);
 		font-weight: 600;
 	}
 	.wound-btn {
 		margin-left: auto;
 		padding: 0.35rem 0.85rem;
-		border: 1px solid var(--accent);
+		border: 1px solid var(--danger);
 		border-radius: 3px;
-		background: var(--accent);
+		background: var(--danger);
 		color: var(--parchment);
 		font-family: var(--font-subhead);
 		font-size: 0.9rem;
@@ -467,7 +467,7 @@
 	.hint {
 		margin: 0.5rem 0 0;
 		font-size: 0.82rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.wound-menu {
 		display: flex;
@@ -498,7 +498,7 @@
 		font-size: 0.95rem;
 	}
 	.wverb {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.wdetail {
 		font-size: 0.75rem;

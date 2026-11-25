@@ -595,6 +595,8 @@
 	/* Gear's heading row ends in Auto-arrange; stand to its left. */
 	.perch.aside > .perched {
 		right: 9rem;
+		/* Shorter: it must end above the first carrying-place band. */
+		height: 4.2rem;
 	}
 	/* Story's first fields span the full width, so its heading row makes room. */
 	.perch.roomy > h2 {

@@ -5,6 +5,8 @@
 	import { indexItems, loadSummary, autoPlace, type LocationLoad } from '$lib/engine/encumbrance';
 	import { stepSize } from '$lib/engine/market-cart';
 	import CustomItemForm from './CustomItemForm.svelte';
+	import FuzzyPicker from '$lib/components/ui/FuzzyPicker.svelte';
+	import { Backpack, Hand, Shirt } from '@lucide/svelte';
 	import { durabilityOf, fallbackItemName, groupGear, slotMeter } from '$lib/engine/gear-view';
 
 	interface Props {
@@ -37,7 +39,8 @@
 		pack: load.pack
 	});
 
-	let addId = $state('');
+	// The market list for the type-to-filter box; the tier is searchable too.
+	const marketOptions = $derived(items.map((it) => ({ id: it.id, label: it.name, detail: it.tier })));
 	let showCustom = $state(false);
 	let root: HTMLElement | undefined = $state();
 	let customToggle: HTMLButtonElement | undefined = $state();
@@ -162,11 +165,11 @@
 		// Rows are keyed by index, so the DOM node holding focus is reused for the
 		// next item. Park focus on a stable control instead of a different item's.
 		await tick();
-		const stable = root?.querySelector('.add select');
+		const stable = root?.querySelector('.add input');
 		if (stable instanceof HTMLElement) stable.focus();
 	}
-	function add() {
-		const def = itemIndex.get(addId);
+	function add(itemId: string) {
+		const def = itemIndex.get(itemId);
 		if (!def) return;
 		char.equipment = [
 			...char.equipment,
@@ -182,7 +185,6 @@
 				notchesTaken: 0
 			}
 		];
-		addId = '';
 		onChange();
 	}
 	async function addCustom(entry: EquipmentEntry) {
@@ -221,6 +223,22 @@
 		{@const meter = gl ? slotMeter(gl, group.label) : undefined}
 		<section class="group" aria-label={meter?.text ?? 'Worn'}>
 			<div class="ghead">
+				<span class="gicon" aria-hidden="true">
+					{#if group.id === 'hand'}
+						<Hand size={20} strokeWidth={1.6} />
+					{:else if group.id === 'worn'}
+						<Shirt size={20} strokeWidth={1.6} />
+					{:else if group.id === 'belt'}
+						<!-- A strap and its buckle; drawn to match the set's stroke. -->
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M2 9.5h6M16 9.5h6M2 14.5h6M16 14.5h6" />
+							<rect x="8" y="7" width="8" height="10" rx="1.2" />
+							<path d="M12 12h5.5" />
+						</svg>
+					{:else}
+						<Backpack size={20} strokeWidth={1.6} />
+					{/if}
+				</span>
 				<h3>{group.label}</h3>
 				{#if gl && meter}
 					<span class="boxes" class:over={meter.over > 0} aria-hidden="true">
@@ -317,17 +335,13 @@
 	{/each}
 
 	<div class="add">
-		<select bind:value={addId} disabled={busy} aria-label="Add an item from the market">
-			<option value="">Add an item…</option>
-			{#each ['impoverished', 'common', 'luxurious'] as tier (tier)}
-				<optgroup label={tier}>
-					{#each items.filter((it) => it.tier === tier) as it (it.id)}
-						<option value={it.id}>{it.name}</option>
-					{/each}
-				</optgroup>
-			{/each}
-		</select>
-		<button type="button" disabled={!addId || busy} onclick={add}>Add</button>
+		<FuzzyPicker
+			options={marketOptions}
+			label="Add an item from the market"
+			placeholder="Add an item: type to search"
+			disabled={busy}
+			onPick={add}
+		/>
 		<button
 			type="button"
 			class="custom-toggle"
@@ -385,19 +399,27 @@
 		gap: 0.35rem;
 		min-width: 0;
 	}
+	/* Each carrying place opens with a grey band, as the book's tables do, so
+	 * the four are told apart at a glance. */
 	.ghead {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.3rem 0.75rem;
+		gap: 0.3rem 0.6rem;
+		margin-top: 0.5rem;
+		padding: 0.35rem 0.6rem;
+		border-top: 2px solid var(--ink);
+		background: color-mix(in oklab, var(--ink) 9%, var(--parchment));
 		font-family: var(--font-subhead);
+	}
+	.gicon {
+		display: inline-flex;
+		color: var(--ink);
 	}
 	h3 {
 		margin: 0;
 		min-width: 5.5rem;
-		font-size: 0.8rem;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		font-size: 1rem;
 	}
 	.boxes {
 		display: inline-flex;
@@ -619,10 +641,6 @@
 		flex-wrap: wrap;
 		gap: 0.5rem;
 		margin-top: 0.25rem;
-		min-width: 0;
-	}
-	.add select {
-		flex: 1 1 14rem;
 		min-width: 0;
 	}
 	.add button {

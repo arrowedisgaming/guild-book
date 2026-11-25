@@ -23,7 +23,8 @@ test('book components can be customized and undone on a narrow screen', async ({
  await page.goto(`/sheet/${id}`);
  const components = page.getByRole('region', { name: 'Spell components' });
  await components.getByText('Add a spell component', { exact: true }).click();
- await components.getByLabel('Spell', { exact: true }).selectOption('brainfever');
+ await components.getByLabel('Spell', { exact: true }).first().fill('brainf');
+ await components.getByRole('option', { name: /^Brainfever/ }).click();
  await expect(components.getByLabel('Component description', { exact: true })).toHaveValue(/marjoram/);
  await components.getByLabel('Component description', { exact: true }).fill('Ash and powdered thyme in a linen pouch');
  await components.getByRole('button', { name: 'Add spell component', exact: true }).click();
@@ -34,7 +35,8 @@ test('book components can be customized and undone on a narrow screen', async ({
  await page.reload();
  await expect(page.getByText('Ash and powdered thyme in a linen pouch')).toHaveCount(0);
  await components.getByText('Add a spell component', { exact: true }).click();
- await components.getByLabel('Spell', { exact: true }).selectOption('brainfever');
+ await components.getByLabel('Spell', { exact: true }).first().fill('brainf');
+ await components.getByRole('option', { name: /^Brainfever/ }).click();
  await components.getByRole('button', { name: 'Add spell component', exact: true }).click();
  await expect(page.locator('.save-state')).toHaveText('Saved');
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

@@ -84,12 +84,10 @@ test('using a talent in training spends XP and writes the history in one step', 
  const { id } = await createTestAdventurer(page, 'Nimble Student');
  await page.goto(`/sheet/${id}`);
  const talents = page.locator('.talents-edit');
- await talents.locator('.add select').selectOption({ label: 'Acrobat (path)' }).catch(async () => {
-  // The option label carries the talent's source; match on the name alone.
-  const value = await talents.locator('.add option', { hasText: /^Acrobat/ }).getAttribute('value');
-  await talents.locator('.add select').selectOption(value!);
- });
- await talents.getByRole('button', { name: 'Add', exact: true }).click();
+ // Fuzzy: a few letters are enough to find it.
+ await talents.getByLabel('Add a talent').fill('acrob');
+ await expect(talents.getByRole('option').first()).toContainText('Acrobat');
+ await talents.getByLabel('Add a talent').press('Enter');
  const acrobat = talents.locator('.row', { hasText: 'Acrobat' });
  await acrobat.locator('summary').first().click();
  // Nothing to spend yet.

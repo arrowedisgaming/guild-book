@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a touch screen every control on the sheet is at least 44px tall.
 - Removing a bond, an affliction, a talent or an item is a "Remove" link
   instead of a small ✕.
+- Spell components are listed the way Gear is: one line each with the spell
+  beside it, opening to its description, spell name and notes.
+- In hand, Worn, Belt and Backpack each open with a grey band, a heavier rule
+  and an icon, so the four are easy to tell apart.
+- A bond's charge is a labelled toggle: a solid "Charged" mark with rays, or a
+  pale dashed "Uncharged" one.
+- The Resolve and Lore bids labels are larger and sit next to their pips.
 - The Experience panel opens on the award buttons. Spending, custom amounts,
   corrections, the list of what earns XP and the history each fold away.
 - Changing a talent's progress by hand moved under "Adjust without spending
@@ -52,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are no longer dropped.
 
 ### Added
+
+- Type-to-filter boxes replace the long dropdowns for adding gear, adding a
+  talent and choosing a spell. Type a few letters, in order, and the list
+  narrows to the closest matches ("shl" finds Shield, Light); Enter takes the
+  top one. Picking an item or a talent adds it straight away.
 
 - Tarot drawings on the adventurer's sheet: hand-sketched suit emblems after
   the four Aces. Each attribute wears its suit beside its score, and a sword,

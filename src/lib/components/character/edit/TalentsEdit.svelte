@@ -4,6 +4,7 @@
 	import { isOwnPathTalent, type XpAction } from '$lib/engine/experience';
 	import { canWoundTalent, isWoundableTalent, canReturnToTraining } from '$lib/engine/wounds';
 	import Prose from '$lib/components/ui/Prose.svelte';
+	import FuzzyPicker from '$lib/components/ui/FuzzyPicker.svelte';
 
 	interface Props {
 		char: GuildBookCharacterData;
@@ -40,7 +41,6 @@
 	}
 
 	const byId = $derived(new Map(talents.map((t) => [t.id, t])));
-	let addId = $state('');
 
 	function name(id: string) {
 		return byId.get(id)?.name ?? id;
@@ -81,7 +81,7 @@
 		onChange();
 	}
 
-	function add() {
+	function add(addId: string) {
 		if (!addId || char.talents.some((t) => t.talentId === addId)) return;
 		const def = byId.get(addId);
 		char.talents = [
@@ -97,11 +97,11 @@
 				preparedUses: 0
 			}
 		];
-		addId = '';
 		onChange();
 	}
 
 	const available = $derived(talents.filter((t) => !char.talents.some((c) => c.talentId === t.id)));
+	const talentOptions = $derived(available.map((t) => ({ id: t.id, label: t.name, detail: t.source })));
 	const capReached = $derived(!canWoundTalent(char));
 	// A disabled button can't take focus, so its reason must be visible text
 	// the button points at, not just a hover title.
@@ -213,13 +213,7 @@
 	{/each}
 
 	<div class="add">
-		<select bind:value={addId}>
-			<option value="">Add a talent…</option>
-			{#each available as t (t.id)}
-				<option value={t.id}>{t.name} ({t.source})</option>
-			{/each}
-		</select>
-		<button type="button" disabled={!addId} onclick={add}>Add</button>
+		<FuzzyPicker options={talentOptions} label="Add a talent" placeholder="Add a talent: type to search" onPick={add} />
 	</div>
 </div>
 
@@ -432,35 +426,10 @@
 		gap: 0.5rem;
 		margin-top: 0.25rem;
 	}
-	.add select {
-		flex: 1;
-		min-width: 0;
-		padding: 0.45rem 0.6rem;
-		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
-		border-radius: 3px;
-		background: var(--parchment);
-		font: inherit;
-		font-size: 0.9rem;
-	}
-	.add button {
-		padding: 0.45rem 1rem;
-		border: 1px solid var(--accent);
-		border-radius: 3px;
-		background: var(--accent);
-		color: var(--parchment);
-		font-family: var(--font-subhead);
-		cursor: pointer;
-	}
-	.add button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
 	@media (pointer: coarse) {
 		summary,
 		.chip,
-		.remove,
-		.add select,
-		.add button {
+		.remove {
 			min-height: 44px;
 		}
 		.adjust summary {

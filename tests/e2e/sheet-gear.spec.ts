@@ -40,8 +40,11 @@ async function locationOf(page: Page, name: string) {
 
 async function addItem(page: Page, name: string) {
 	const gear = page.getByRole('region', { name: 'Gear', exact: true });
-	await gear.getByLabel('Add an item from the market').selectOption({ label: name });
-	await gear.getByRole('button', { name: 'Add', exact: true }).click();
+	// Type the name into the filter box; Enter takes the best match.
+	const market = gear.getByLabel('Add an item from the market');
+	await market.fill(name);
+	await expect(gear.getByRole('option').first()).toContainText(name);
+	await market.press('Enter');
 	await expect(gear.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
 }
 

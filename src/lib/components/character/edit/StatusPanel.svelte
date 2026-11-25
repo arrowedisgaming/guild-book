@@ -286,9 +286,19 @@
 					onclick={() => toggleBondCharge(i)}
 					aria-pressed={b.charged}
 					aria-label={`Bond with ${b.targetName || 'guild-mate'} charged`}
-					title={b.charged ? 'Charged: burn at camp to heal' : 'Not charged'}
+					title={b.charged ? 'Charged: burn at camp to heal' : 'Tap when this bond charges'}
 				>
-					<span class="dot"></span>
+					<!-- A lit mark with rays when charged, a faint empty ring when not;
+					     the word says it too, so it never rests on shape alone. -->
+					<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+						{#if b.charged}
+							<circle cx="12" cy="12" r="4.5" fill="currentColor" />
+							<path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+						{:else}
+							<circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.2 2.6" />
+						{/if}
+					</svg>
+					<span>{b.charged ? 'Charged' : 'Uncharged'}</span>
 				</button>
 				<input class="bname" type="text" bind:value={b.targetName} oninput={onChange} aria-label="Guild-mate's name" />
 				<select
@@ -377,12 +387,17 @@
 	.meter {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.35rem;
+	}
+	/* Stacked on a phone: the labels share a width so the pips line up. */
+	@media (max-width: 30rem) {
+		.meter .lbl {
+			min-width: 5.5rem;
+		}
 	}
 	.lbl {
-		min-width: 4.25rem;
-		font-family: var(--font-subhead);
-		font-size: 0.9rem;
+		font-family: var(--font-heading);
+		font-size: 1.1rem;
 	}
 	.count {
 		font-family: var(--font-subhead);
@@ -518,28 +533,26 @@
 		margin-bottom: 0.35rem;
 		font-size: 0.88rem;
 	}
+	/* Charged is a solid ink pill; uncharged is a pale dashed outline. */
 	.charge {
-		display: grid;
-		place-items: center;
-		width: 2rem;
-		height: 2rem;
-		padding: 0;
-		border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 7.2rem;
+		min-height: 2rem;
+		padding: 0.2rem 0.7rem 0.2rem 0.5rem;
+		border: 1px dashed color-mix(in oklab, var(--ink) 40%, transparent);
 		border-radius: 999px;
 		background: transparent;
+		color: var(--ink-soft);
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
 		cursor: pointer;
 	}
-	.dot {
-		width: 0.7rem;
-		height: 0.7rem;
-		border-radius: 999px;
-		border: 2px solid var(--accent);
-	}
 	.charge.on {
-		background: color-mix(in oklab, var(--accent) 14%, var(--parchment));
-	}
-	.charge.on .dot {
+		border: 1px solid var(--accent);
 		background: var(--accent);
+		color: var(--parchment);
 	}
 	.bname {
 		width: 9rem;
@@ -595,10 +608,12 @@
 	}
 	/* Fingers need 44px; a mouse keeps the denser sheet. */
 	@media (pointer: coarse) {
-		.pip,
-		.charge {
+		.pip {
 			width: 44px;
 			height: 44px;
+		}
+		.charge {
+			min-height: 44px;
 		}
 		.ctrl button {
 			width: 44px;

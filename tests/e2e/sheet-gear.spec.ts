@@ -117,13 +117,13 @@ test('Undo takes back the last gear change, and only that one', async ({ page })
 
 test('details edited in place save without a Save button', async ({ page }) => {
 	await openSheet(page, 'Gear Scribe', 'Odo Inkfinger');
-	await page.getByRole('button', { name: 'Edit details', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toHaveCount(0);
 	await page.getByRole('textbox', { name: 'Quest' }).fill('Map the drowned stair');
 	await expect(page.locator('.save-state')).toHaveText('Saved');
 	await page.reload();
-	await expect(page.getByText('Map the drowned stair')).toBeVisible();
+	await expect(page.getByRole('textbox', { name: 'Quest' })).toHaveValue('Map the drowned stair');
 });
 
 test('narrow screen has no horizontal scroll', async ({ page }) => {

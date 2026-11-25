@@ -14,8 +14,6 @@ test('a saved adventurer can learn a pack language and a custom one', async ({ p
 	const { id } = await createTestAdventurer(page, 'Sela of the Docks');
 
 	await page.goto(`/sheet/${id}`);
-	await page.getByRole('button', { name: 'Edit details' }).click();
-
 	const picker = page.getByLabel('Language', { exact: true });
 	await expect(picker.locator('option', { hasText: 'Vulgaris' })).toHaveCount(1);
 
@@ -30,12 +28,10 @@ test('a saved adventurer can learn a pack language and a custom one', async ({ p
 
 	// Nothing to press: the additions save themselves.
 	await expect(page.locator('.save-state')).toHaveText('Saved');
-	await page.getByRole('button', { name: 'Done' }).click();
+	const known = page.locator('.languages-edit .known li');
+	await expect(known).toHaveText([/Vulgaris/, /Dockhand Whistle-Cant/]);
 
-	// Back on the read-only sheet, both languages are rendered from the server.
-	await expect(page.getByText('Languages: Vulgaris, Dockhand Whistle-Cant')).toBeVisible();
-
-	// And they are still there on a cold load.
+	// And they are still there on a cold load, from the server.
 	await page.reload();
-	await expect(page.getByText('Languages: Vulgaris, Dockhand Whistle-Cant')).toBeVisible();
+	await expect(known).toHaveText([/Vulgaris/, /Dockhand Whistle-Cant/]);
 });

@@ -39,8 +39,10 @@ test('the seventh invested XP masters a talent and saves itself', async ({ page 
   if (!response.ok) throw new Error(await response.text());
  }, id);
  await page.goto(`/sheet/${id}`);
- await page.getByRole('button', { name: 'Edit details' }).click();
  const acrobat = page.locator('.talents-edit .row', { hasText: 'Acrobat' });
+ // Closed, the row already says where the talent stands; its controls open with it.
+ await expect(acrobat.locator('summary')).toContainText('In training, 6 of 7 XP');
+ await acrobat.locator('summary').click();
  await expect(acrobat.locator('.xp')).toContainText('XP 6/7');
  await acrobat.getByRole('button', { name: 'Add XP' }).click();
  await expect(acrobat.getByRole('button', { name: 'mastered' })).toBeVisible();
@@ -49,8 +51,7 @@ test('the seventh invested XP masters a talent and saves itself', async ({ page 
  await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
  await expect(page.locator('.save-state')).toHaveText('Saved');
  await page.reload();
- await page.getByRole('button', { name: 'Edit details' }).click();
- await expect(acrobat.getByRole('button', { name: 'mastered' })).toBeVisible();
+ await expect(acrobat.locator('summary')).toContainText('Mastered');
 });
 
 test('retrying a rejected award does not record it twice', async ({ page }) => {

@@ -48,6 +48,8 @@
    <button type="button" onclick={() => convert(i)}>Track {entry.customName} as a spell component</button>
   {/if}
  {/each}
+ <details class="new">
+ <summary>Add a spell component</summary>
  <form onsubmit={(event) => { event.preventDefault(); add(); }}>
   <label>Spell<select aria-label="Spell" value={spellId} onchange={e => choose(e.currentTarget.value)}>
    <option value="">Custom spell or unlinked component</option>
@@ -59,10 +61,12 @@
   <label>Acquisition notes<textarea maxlength="4000" bind:value={notes}></textarea></label>
   <button type="submit" disabled={!description.trim()}>Add spell component</button>
  </form>
+ </details>
  {#if error}<p role="alert">{error}</p>{/if}
 </section>
 <style>
- section { margin-top: 1.25rem; }
+ section { margin-top: 0; }
+ summary { cursor: pointer; font-family: var(--font-subhead); color: var(--accent); }
  form, fieldset { display: grid; gap: .6rem; margin: .75rem 0; }
  fieldset { border: 1px solid color-mix(in oklch, var(--ink) 25%, transparent); min-width: 0; }
  label { display: grid; gap: .25rem; font-size: .9rem; }

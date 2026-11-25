@@ -96,9 +96,20 @@
 		<p class="hint" id={healFirstId}>Heal a wounded talent before moving it back into training.</p>
 	{/if}
 	{#each char.talents as t, i (t.talentId)}
-		<div class="row" class:is-wounded={t.wounded}>
-			<div class="head">
-				<span class="tname">{name(t.talentId)}</span>
+		{@const tname = name(t.talentId)}
+		<!-- Closed, a row reads like a line on a paper sheet; opened, it shows
+		     what the talent does and the controls that change it. -->
+		<details class="row" class:is-wounded={t.wounded}>
+			<summary>
+				<span class="tname">{tname}</span>
+				<span class="tstate">
+					{t.state === 'mastered' ? 'Mastered' : `In training, ${t.xp} of ${masteryXp} XP`}
+				</span>
+				{#if t.wounded}<span class="twound">Wounded</span>{/if}
+				<svg class="chevron" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</summary>
+			<Prose class="tdesc" text={byId.get(t.talentId)?.description ?? ''} />
+			<div class="controls">
 				<button
 					type="button"
 					class="chip"
@@ -124,10 +135,9 @@
 						<button type="button" onclick={() => stepXp(i, 1)} aria-label="Add XP">+</button>
 					</span>
 				{/if}
-				<button type="button" class="remove" onclick={() => remove(i)} aria-label="Remove talent">✕</button>
+				<button type="button" class="remove" onclick={() => remove(i)} aria-label={`Remove ${tname}`}>Remove</button>
 			</div>
-			<Prose class="tdesc" text={byId.get(t.talentId)?.description ?? ''} />
-		</div>
+		</details>
 	{/each}
 
 	<div class="add">
@@ -161,11 +171,51 @@
 		border-color: var(--accent);
 		background: color-mix(in oklab, var(--accent) 6%, var(--parchment));
 	}
-	.head {
+	summary {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.15rem 0.75rem;
+		min-height: 1.75rem;
+		cursor: pointer;
+	}
+	summary::-webkit-details-marker {
+		display: none;
+	}
+	.chevron {
+		align-self: center;
+		margin-left: auto;
+		color: var(--ink-soft);
+		transition: transform 0.15s;
+	}
+	details[open] > summary .chevron {
+		transform: rotate(180deg);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.chevron {
+			transition: none;
+		}
+	}
+	summary:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
+	}
+	.tstate {
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		color: var(--ink-soft);
+	}
+	.twound {
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		color: var(--accent);
+	}
+	.controls {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.5rem;
+		margin-top: 0.6rem;
 	}
 	.tname {
 		font-family: var(--font-heading);
@@ -210,15 +260,18 @@
 	}
 	.remove {
 		margin-left: auto;
+		padding: 0.25rem 0.6rem;
 		border: none;
 		background: none;
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
 		color: var(--ink-soft);
+		text-decoration: underline;
 		cursor: pointer;
 	}
 	.row :global(.tdesc) {
-		margin: 0.25rem 0 0;
-		font-size: 0.8rem;
-		color: var(--ink-soft);
+		margin: 0.5rem 0 0;
+		font-size: 0.9rem;
 	}
 	.add {
 		display: flex;

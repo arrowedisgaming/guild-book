@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { beforeNavigate, invalidateAll } from '$app/navigation';
-	import CharacterSheet from '$lib/components/character/CharacterSheet.svelte';
+	import SheetHeader from '$lib/components/character/SheetHeader.svelte';
 	import SheetActions from '$lib/components/character/SheetActions.svelte';
 	import StatusPanel from '$lib/components/character/edit/StatusPanel.svelte';
 	import StoryEdit from '$lib/components/character/edit/StoryEdit.svelte';
@@ -68,9 +68,6 @@
 	// reserved by the CSS media query below, so the sheet does not move.
 	const wide = new MediaQuery(RULES_PANEL_MEDIA_QUERY);
 
-	// Only a view switch: which half of the sheet is on screen. Every change
-	// saves itself either way, so there is nothing to commit or discard.
-	let detailsOpen = $state(false);
 	// A count, not a boolean: overlapping saves (a flush for the adventurer
 	// being left plus a fresh save here) must not clear each other's flag.
 	let savingCount = $state(0);
@@ -116,22 +113,17 @@
 	const talentNames = $derived(new Map(data.content.talents.map((t) => [t.id, t.name])));
 	const talentName = (id: string) => talentNames.get(id);
 
-	// Jump links to each part of the page; edit mode swaps the read-only
-	// sheet for its editors, so the list follows it.
-	const sections = $derived([
+	// Jump links to each part of the sheet, in reading order.
+	const sections = [
 		{ id: 'sheet-status', label: 'Status' },
-		{ id: 'sheet-experience', label: 'Experience' },
+		{ id: 'sheet-talents', label: 'Talents' },
 		{ id: 'sheet-gear', label: 'Gear' },
-		...(detailsOpen
-			? [
-					{ id: 'sheet-story', label: 'Story' },
-					{ id: 'sheet-talents', label: 'Talents' },
-					{ id: 'sheet-languages', label: 'Languages' },
-					{ id: 'sheet-spells', label: 'Spell components' }
-				]
-			: [{ id: 'sheet-adventurer', label: 'Adventurer' }]),
+		{ id: 'sheet-experience', label: 'Experience' },
+		{ id: 'sheet-story', label: 'Story' },
+		{ id: 'sheet-languages', label: 'Languages' },
+		{ id: 'sheet-spells', label: 'Spell components' },
 		{ id: 'sheet-actions', label: 'Export & share' }
-	]);
+	];
 
 	// 'ok': saved. 'stale': saved (or superseded) for an adventurer we've left —
 	// nothing to react to. 'uncertain': 409 or network failure — the true
@@ -334,9 +326,6 @@
 	<div class="topbar">
 		<p class="crumb"><a href="/characters">← My Adventurers</a></p>
 		<p class="save-state" class:failed={!!saveError && !saveBusy} role="status">{saveStateText}</p>
-		<button type="button" class="details-toggle" aria-pressed={detailsOpen} onclick={() => (detailsOpen = !detailsOpen)}>
-			{detailsOpen ? 'Done' : 'Edit details'}
-		</button>
 	</div>
 
 	{#if data.isDraft}
@@ -347,6 +336,7 @@
 			<button type="button" class="finalize" disabled={saving || recordingXp || syncRequired} onclick={finalize}>Finalize</button>
 		</div>
 	{/if}
+	<SheetHeader name={char.name} pronouns={char.pronouns} view={data.view} />
 	<nav class="sections" aria-label="Sections">
 		<span class="sections-label">Sections</span>
 		<ul>
@@ -370,22 +360,23 @@
 		onChange={onSheetChange}
 	/>
 	</fieldset>
-	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
+	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
+		<section id="sheet-talents" class="edit-section jump">
+			<h2>Talents</h2>
+			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onSheetChange} />
+		</section>
+	</fieldset>
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its
 	     custom-item form keeps taking input while an earlier change saves. -->
 	<div id="sheet-gear" class="gear-wrap jump">
 		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onSheetChange} locked={recordingXp || syncRequired} {saving} />
 	</div>
+	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
 
-	{#if detailsOpen}
-		<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
+	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
 		<section id="sheet-story" class="edit-section jump">
 			<h2>Story</h2>
 			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onSheetChange} />
-		</section>
-		<section id="sheet-talents" class="edit-section jump">
-			<h2>Talents</h2>
-			<TalentsEdit bind:char talents={data.content.talents} masteryXp={data.content.advancement.masteryXp} onChange={onSheetChange} />
 		</section>
 		<section id="sheet-languages" class="edit-section jump">
 			<h2>Languages</h2>
@@ -395,10 +386,7 @@
 			<h2>Spell components</h2>
 			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onSheetChange} />
 		</section>
-		</fieldset>
-	{:else}
-		<div id="sheet-adventurer" class="jump"><CharacterSheet view={data.view} showGear={false} /></div>
-	{/if}
+	</fieldset>
 
 	<div id="sheet-actions" class="actions-wrap jump">
 		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
@@ -530,7 +518,6 @@
 	.save-state.failed {
 		color: var(--accent);
 	}
-	.details-toggle,
 	.save-dock button {
 		min-height: 2.75rem;
 		padding: 0.45rem 1.1rem;
@@ -541,10 +528,6 @@
 		font-family: var(--font-subhead);
 		font-size: 0.95rem;
 		cursor: pointer;
-	}
-	.details-toggle[aria-pressed='true'] {
-		background: var(--accent);
-		color: var(--parchment);
 	}
 	.save-dock button:disabled {
 		opacity: 0.55;

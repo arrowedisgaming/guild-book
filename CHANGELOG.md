@@ -10,9 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Everything on an adventurer's sheet now saves as you change it. The "Save
-  changes" and "Cancel" buttons are gone, and the sheet shows "Saving…" and
-  "Saved" beside the "Edit details" button.
+- An adventurer's sheet is now one page with no Edit mode. It opens with the
+  name, kin, path and the four attributes, then Status, Talents, Gear,
+  Experience, Story, Languages and Spell components, all editable in place.
+- Each talent is a single line showing its state and progress; open it to
+  read what it does and to change it.
+- The sheet no longer repeats Resolve, Lore bids, bonds, talents and
+  available XP in a second read-only block.
+- Everything on the sheet saves as you change it. The "Save changes" and
+  "Cancel" buttons are gone, and the top of the sheet shows "Saving…" and
+  "Saved".
+- The form for adding a spell component stays folded away until you open it.
 - "Save as final" on a draft is now "Finalize", and the share panel uses the
   same word.
 - Status controls stay usable while an earlier change saves, so quick taps

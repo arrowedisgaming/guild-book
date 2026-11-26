@@ -6,6 +6,7 @@
 
 import { durabilityOf, fallbackItemName } from '$lib/engine/gear-view';
 import { indexItems, loadSummary, slotsFor } from '$lib/engine/encumbrance';
+import { sortTalents } from '$lib/engine/talent-order';
 import type { GuildBookCharacterData } from '$lib/types/character';
 import type { CharacterView } from '$lib/types/character-view';
 import type {
@@ -63,7 +64,7 @@ export function buildCharacterViewFromContent(
 			name: attrNames.get(id) ?? id,
 			value: char.attributes[id]?.value ?? 0
 		})),
-		talents: char.talents.map((talent) => ({
+		talents: sortTalents(char.talents, (id) => talentsById.get(id)?.name ?? id).map((talent) => ({
 			name: talentsById.get(talent.talentId)?.name ?? talent.talentId,
 			state: talent.state,
 			wounded: talent.wounded,

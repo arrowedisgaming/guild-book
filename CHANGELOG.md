@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-25
+
 ### Changed
 
 - Guild Book's colours now follow the book: black ink on a warm white page,
@@ -19,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An adventurer's sheet is now one page with no Edit mode. It opens with the
   name, kin, path and the four attributes, then Status, Talents, Gear,
-  Experience, Story, Languages and Spell components, all editable in place.
+  Experience, Spell components, Story and Languages, all editable in place.
 - The name, kin, path, attributes and section links stay pinned to the top
   of the sheet as you scroll. The section links sit on one row that scrolls
   sideways.
@@ -84,6 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   spends the XP, advances the talent and writes the history entry together.
 - A talent from another path shows its prepared uses, with buttons to use one
   or to train with a mentor.
+- A talent from another path that was saved before prepared uses were tracked
+  asks for the number left once, so it can then be used and trained.
 - Talents shows how much XP you have to spend.
 
 - "Undo last change" appears for a few seconds after a change to a sheet,
@@ -101,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A wound, Resolve spend or gear change made while editing details is no
   longer lost.
+- A PDF or Markdown download made straight after an edit now includes that
+  edit. If the edit could not be saved, the download is held back and the
+  sheet says why.
 - A failed save is now reported wherever you are on the sheet, not only at
   the top of the page.
 - The Name and Pronouns fields no longer push the sheet wider than a phone

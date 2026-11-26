@@ -239,7 +239,6 @@
 					></button>
 				{/each}
 			</span>
-			<span class="count" aria-hidden="true">{char.resolve.current} of {char.resolve.max}</span>
 		</div>
 		<div class="meter" role="group" aria-label={`Lore bids, ${char.lore} of ${LORE_MAX}`}>
 			<span class="lbl">Lore bids</span>
@@ -255,7 +254,6 @@
 					></button>
 				{/each}
 			</span>
-			<span class="count" aria-hidden="true">{char.lore} of {LORE_MAX}</span>
 		</div>
 	</div>
 
@@ -459,14 +457,13 @@
 			min-width: 5.5rem;
 		}
 	}
+	/* line-height 1 and a small lift: the heading face's lowercase sits low in
+	 * its box, and the word has to share a centre line with the pips. */
 	.lbl {
 		font-family: var(--font-heading);
 		font-size: 1.1rem;
-	}
-	.count {
-		font-family: var(--font-subhead);
-		font-size: 0.85rem;
-		color: var(--ink-soft);
+		line-height: 1;
+		translate: 0 -0.08em;
 	}
 	.pips {
 		display: inline-flex;

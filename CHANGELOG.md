@@ -35,8 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is room. Durability is a row of boxes you tap to notch or repair. Open an
   item to move it, change a single item's quantity or remove it; stacks keep
   their − and + on the line.
-- Resolve and Lore bids are set by tapping their pips, and each shows its
-  count beside them. The − and + buttons are gone.
+- Resolve and Lore bids are set by tapping their pips. The − and + buttons
+  are gone; the pips are the count.
 - Numbers on the sheet use clear lining figures, so 0 and 1 no longer read as
   "o" and "I".
 - On a touch screen every control on the sheet is at least 44px tall.

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-26
+
+### Changed
+
+- Talents on an adventurer's sheet are now listed in a set order: mastered
+  talents first, led by the kin talent; then talents with XP invested in
+  training; then untrained talents. Each group is alphabetical. A talent
+  moves up as soon as it gains its first XP or is mastered, and the shared
+  sheet and the PDF and Markdown exports use the same order.
+
 ## [0.26.0] - 2026-11-26
 
 ### Changed

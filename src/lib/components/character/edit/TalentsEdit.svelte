@@ -2,6 +2,7 @@
 	import type { GuildBookCharacterData } from '$lib/types/character';
 	import type { TalentDefinition, PathDefinition } from '$lib/types/content-pack';
 	import { isOwnPathTalent, type XpAction } from '$lib/engine/experience';
+	import { sortTalents } from '$lib/engine/talent-order';
 	import { canWoundTalent, isWoundableTalent, canReturnToTraining } from '$lib/engine/wounds';
 	import Prose from '$lib/components/ui/Prose.svelte';
 	import FuzzyPicker from '$lib/components/ui/FuzzyPicker.svelte';
@@ -58,6 +59,10 @@
 	function name(id: string) {
 		return byId.get(id)?.name ?? id;
 	}
+
+	// Listed in sheet order; `i` stays each talent's place in `char.talents`,
+	// which is what the handlers below edit.
+	const ordered = $derived(sortTalents(char.talents.map((t, i) => ({ t, i, talentId: t.talentId, state: t.state, source: t.source, xp: t.xp })), name));
 
 	function cycleState(i: number) {
 		const t = char.talents[i];
@@ -136,7 +141,7 @@
 	{#if hasWoundedMastered}
 		<p class="hint" id={healFirstId}>Heal a wounded talent before moving it back into training.</p>
 	{/if}
-	{#each char.talents as t, i (t.talentId)}
+	{#each ordered as { t, i } (t.talentId)}
 		{@const tname = name(t.talentId)}
 		<!-- Closed, a row reads like a line on a paper sheet; opened, it shows
 		     what the talent does and the controls that change it. -->

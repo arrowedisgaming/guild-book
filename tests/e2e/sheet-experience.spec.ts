@@ -79,6 +79,34 @@ test('the seventh invested XP masters a talent and saves itself', async ({ page 
  await expect(acrobat.locator('summary').first()).toContainText('Mastered');
 });
 
+test('talents list mastered first, then trained, then untrained, and re-sort as they advance', async ({ page }) => {
+ await signInAs(page, 'Talent Order');
+ const { id } = await createTestAdventurer(page, 'Orderly Student');
+ await page.evaluate(async id => {
+  const row = (await (await fetch(`/api/characters/${id}`)).json()) as { data: GuildBookCharacterData; version: number };
+  const talent = (talentId: string, state: 'mastered' | 'in-training', xp: number) => ({ talentId, state, source: 'general' as const, sourceLabel: 'Test training', at: new Date().toISOString(), wounded: false, xp, preparedUses: 0 });
+  row.data.talents = [talent('reaver', 'in-training', 0), talent('acrobat', 'in-training', 6), talent('keen-senses', 'mastered', 0), talent('aegis', 'in-training', 0)];
+  const response = await fetch(`/api/characters/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ character: row.data, expectedVersion: row.version }) });
+  if (!response.ok) throw new Error(await response.text());
+ }, id);
+ await page.goto(`/sheet/${id}`);
+ const names = page.locator('.talents-edit .row .tname');
+ await expect(names).toHaveText(['Keen Senses', 'Acrobat', 'Aegis', 'Reaver']);
+ const row = (name: string) => page.locator('.talents-edit .row').filter({ has: page.locator('.tname', { hasText: name }) });
+ // The first XP moves Reaver above the untrained Aegis; its row stays open
+ // and the change lands on Reaver, not on whichever talent held that place.
+ await row('Reaver').locator('summary').first().click();
+ await row('Reaver').getByText('Adjust without spending XP').click();
+ await row('Reaver').getByRole('button', { name: 'Add XP' }).click();
+ await expect(names).toHaveText(['Keen Senses', 'Acrobat', 'Reaver', 'Aegis']);
+ await expect(row('Reaver').locator('summary').first()).toContainText('In training, 1 of 7 XP');
+ await expect(row('Reaver').getByRole('button', { name: 'Add XP' })).toBeVisible();
+ await expect(row('Aegis').locator('summary').first()).toContainText('In training, 0 of 7 XP');
+ await expect(page.locator('.save-state')).toHaveText('Saved');
+ await page.reload();
+ await expect(names).toHaveText(['Keen Senses', 'Acrobat', 'Reaver', 'Aegis']);
+});
+
 test('using a talent in training spends XP and writes the history in one step', async ({ page }) => {
  await signInAs(page, 'Talent User');
  const { id } = await createTestAdventurer(page, 'Nimble Student');

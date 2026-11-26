@@ -95,7 +95,7 @@ test('empty groups still render, and Gear appears once', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Gear', exact: true })).toHaveCount(1);
 });
 
-test('notch boxes mark and repair durability in place', async ({ page }) => {
+test('notches mark and repair durability in place', async ({ page }) => {
 	await openSheet(page, 'Gear Notcher', 'Brannoc Fray');
 	await addItem(page, 'Rope');
 	const rope = group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Rope' });

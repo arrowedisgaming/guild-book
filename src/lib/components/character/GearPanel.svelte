@@ -46,6 +46,11 @@
 	let customToggle: HTMLButtonElement | undefined = $state();
 	const uid = $props.id();
 	const customFormId = `${uid}-custom-item`;
+	/**
+	 * How a notch is drawn. 'pencil' is a graphite V scratched out in red once
+	 * taken; 'plain' is an ink V that fills red. Change this one value to switch.
+	 */
+	const NOTCH_STYLE = 'pencil' as 'pencil' | 'plain';
 
 	const LOCATIONS: { id: CarryLocation; label: string }[] = [
 		{ id: 'hand', label: 'Hand' },
@@ -131,7 +136,7 @@
 		char.equipment[i] = { ...e, quantity: Math.max(1, e.quantity + delta) };
 		onChange();
 	}
-	/** Tapping an empty box notches up to it; tapping a marked one repairs from it. */
+	/** Tapping an unmarked notch notches up to it; tapping a marked one repairs from it. */
 	function tapNotch(i: number, box: number) {
 		const e = char.equipment[i];
 		const max = durabilityOf(e, defFor(e.itemId)) ?? 99;
@@ -210,6 +215,18 @@
 {/snippet}
 
 <section class="gear-panel" aria-labelledby="gear-heading" bind:this={root}>
+	{#if NOTCH_STYLE === 'pencil'}
+		<!-- Graphite: a wobbling line broken up by the tooth of the paper. -->
+		<svg class="defs" aria-hidden="true">
+			<filter id={`${uid}-graphite`} x="-30%" y="-15%" width="160%" height="130%">
+				<feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="4" result="wob" />
+				<feDisplacementMap in="SourceGraphic" in2="wob" scale="1.5" xChannelSelector="R" yChannelSelector="G" result="line" />
+				<feTurbulence type="fractalNoise" baseFrequency="1.7" numOctaves="2" seed="9" result="grain" />
+				<feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.2 2.5" result="tooth" />
+				<feComposite in="line" in2="tooth" operator="in" />
+			</filter>
+		</svg>
+	{/if}
 	<div class="head">
 		<h2 id="gear-heading">Gear</h2>
 		<button type="button" class="auto" disabled={busy} onclick={rearrange}>Auto-arrange</button>
@@ -280,7 +297,7 @@
 									<svg class="chevron" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 								</button>
 								{#if dur !== null}
-									<span class="notches" role="group" aria-label={`Notches on ${name}`}>
+									<span class="notches" class:pencil={NOTCH_STYLE === 'pencil'} role="group" aria-label={`Notches on ${name}`}>
 										<span class="sr-only">notches {e.notchesTaken}/{dur}</span>
 										{#each { length: dur }, k (k)}
 											<button
@@ -293,7 +310,21 @@
 												data-entry-index={row.index}
 												data-ctl={`notch-${k}`}
 												onclick={() => tapNotch(row.index, k)}
-											></button>
+											>
+												{#if NOTCH_STYLE === 'pencil'}
+													<svg viewBox="0 0 24 24" filter={`url(#${uid}-graphite)`} aria-hidden="true">
+														<path class="lead" d="M5 4.6 C7.2 10, 9.8 15.6, 12.3 20.4" />
+														<path class="lead" d="M12 20.6 C13.8 15.2, 16.4 9.6, 19.4 3.8" />
+														<path class="lead faint" d="M5.9 5.4 C8 10.4, 10.4 15.4, 12.6 19.4 C14.6 14.6, 16.6 10, 18.6 5.6" />
+														<path class="scratch" d="M3.4 9 L20.6 5.4 L5.6 13.2 L19 10.4 L8.6 17.4" />
+													</svg>
+												{:else}
+													<svg viewBox="0 0 24 24" aria-hidden="true">
+														<path class="well" d="M6.5 6 L12 19.5 L17.5 6 Z" />
+														<path class="edge" d="M5.2 6 H6.5 L12 19.5 L17.5 6 H18.8" />
+													</svg>
+												{/if}
+											</button>
 										{/each}
 									</span>
 								{/if}
@@ -547,38 +578,90 @@
 		font-size: 0.8rem;
 		color: var(--danger);
 	}
-	/* Durability as boxes to mark off, the way a paper sheet tracks it. */
+	/* Durability as a row of V notches, so it never reads as the slot squares
+	 * above. Two drawings share the markup; NOTCH_STYLE picks one. */
+	.defs {
+		position: absolute;
+		width: 0;
+		height: 0;
+	}
 	.notches {
 		display: inline-flex;
 		flex-wrap: wrap;
 	}
-	/* The button is the hit area; the box is drawn inside it, so a finger gets
-	 * 44px without the box itself growing. */
+	/* The button is the hit area; the V is drawn inside it, so a finger gets
+	 * 44px without the mark itself growing. */
 	.notch {
 		display: grid;
 		place-items: center;
-		width: 1.9rem;
+		width: 1.7rem;
 		height: 1.9rem;
 		padding: 0;
 		border: none;
 		background: none;
 		cursor: pointer;
 	}
-	.notch::before {
-		content: '';
-		box-sizing: border-box;
+	.notch svg {
 		width: 1.5rem;
 		height: 1.5rem;
-		border: 2px solid var(--ink);
-		border-radius: 3px;
-		background: color-mix(in oklab, var(--parchment) 85%, white);
+		overflow: visible;
 	}
-	.notch.marked::before {
-		background:
-			linear-gradient(to top right, transparent 43%, var(--danger) 43% 57%, transparent 57%),
-			linear-gradient(to top left, transparent 43%, var(--danger) 43% 57%, transparent 57%),
-			color-mix(in oklab, var(--danger) 10%, var(--parchment));
-		border-color: var(--danger);
+	/* Plain: an ink V cut into a short edge; it fills red once taken. */
+	.well {
+		fill: color-mix(in oklab, var(--parchment) 85%, white);
+	}
+	.edge {
+		fill: none;
+		stroke: var(--ink);
+		stroke-width: 2;
+	}
+	.notch.marked .well {
+		fill: var(--danger);
+	}
+	.notch.marked .edge {
+		stroke: var(--danger);
+	}
+	.notch:hover:not(.marked):not(:disabled) .well {
+		fill: color-mix(in oklab, var(--ink) 14%, var(--parchment));
+	}
+	/* Pencil: a graphite V, gone over twice; taken, it fades under a red scratch. */
+	.lead {
+		fill: none;
+		stroke: color-mix(in oklab, var(--ink) 88%, var(--parchment));
+		stroke-width: 1.9;
+		stroke-linecap: round;
+	}
+	.lead.faint {
+		stroke-width: 1.1;
+		opacity: 0.8;
+	}
+	.scratch {
+		fill: none;
+		stroke: var(--danger);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		opacity: 0;
+	}
+	.notch.marked .scratch {
+		opacity: 1;
+	}
+	.notch.marked .lead {
+		opacity: 0.55;
+	}
+	.notch.marked .lead.faint {
+		opacity: 0.4;
+	}
+	.notch:hover:not(.marked):not(:disabled) .lead {
+		stroke: var(--ink);
+		stroke-width: 2.3;
+	}
+	/* No two hand-drawn marks sit quite alike. */
+	.notches.pencil .notch:nth-of-type(3n) svg {
+		transform: rotate(-4deg);
+	}
+	.notches.pencil .notch:nth-of-type(3n + 1) svg {
+		transform: rotate(3deg);
 	}
 	.detail {
 		display: flex;

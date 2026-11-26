@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a touch screen every control on the sheet is at least 44px tall.
 - Removing a bond, an affliction, a talent or an item is a "Remove" link
   instead of a small ✕.
+- Spell components now sit directly below Experience, above Story.
 - Spell components are listed the way Gear is: one line each with the spell
   beside it, opening to its description, spell name and notes.
 - In hand, Worn, Belt and Backpack each open with a grey band, a heavier rule
@@ -70,9 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   top one. Picking an item or a talent adds it straight away.
 
 - Tarot drawings on the adventurer's sheet: hand-sketched suit emblems after
-  the four Aces. Each attribute wears its suit beside its score, and a sword,
-  a budding wand, a pentacle and a chalice perch on the Status, Talents, Gear
-  and Story sections, moving slowly (leaves fall, a fish looks out of the cup,
+  the four Aces. Each attribute wears its suit beside its score, and the suit
+  of the adventurer's own path perches on Status and the other three on
+  Talents, Gear and Experience, moving slowly (leaves fall, a fish looks out of the cup,
   the coin turns). A "Tarot drawings" switch beside Export turns them off on
   that device, and they hold still when the system asks for reduced motion.
 

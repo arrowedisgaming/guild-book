@@ -79,6 +79,14 @@
 	// A change is waiting out its debounce. statusTimer itself is not reactive.
 	let dirty = $state(false);
 	let savedOnce = $state(false);
+	// The drawing perched on Status is the suit of the adventurer's own path;
+	// the other three take Talents, Gear and Experience, in a fixed order.
+	const SUITS = ['swords', 'wands', 'pentacles', 'cups'] as const;
+	const perchSuits = $derived.by(() => {
+		const own = SUITS.find((suit) => char.pathId?.includes(suit));
+		return own ? [own, ...SUITS.filter((suit) => suit !== own)] : [...SUITS];
+	});
+
 	// The pinned header's height: jump links land below it, and the rules
 	// panel starts below it, level with the first sheet box.
 	let stickyHeight = $state(0);
@@ -124,9 +132,9 @@
 		{ id: 'sheet-talents', label: 'Talents' },
 		{ id: 'sheet-gear', label: 'Gear' },
 		{ id: 'sheet-experience', label: 'Experience' },
+		{ id: 'sheet-spells', label: 'Spell components' },
 		{ id: 'sheet-story', label: 'Story' },
 		{ id: 'sheet-languages', label: 'Languages' },
-		{ id: 'sheet-spells', label: 'Spell components' },
 		{ id: 'sheet-actions', label: 'Export & share' }
 	];
 
@@ -357,7 +365,7 @@
 	</div>
 
 	<fieldset id="sheet-status" class="play-controls jump perch boxed" disabled={recordingXp || syncRequired}>
-	{#if $flourishes}<span class="perched"><SuitFlourish suit="swords" scene /></span>{/if}
+	{#if $flourishes}<span class="perched"><SuitFlourish suit={perchSuits[0]} scene /></span>{/if}
 	<StatusPanel
 		bind:char
 		conditions={data.content.conditions}
@@ -371,7 +379,7 @@
 	</fieldset>
 	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
 		<section id="sheet-talents" class="edit-section jump perch">
-			{#if $flourishes}<span class="perched"><SuitFlourish suit="wands" scene /></span>{/if}
+			{#if $flourishes}<span class="perched"><SuitFlourish suit={perchSuits[1]} scene /></span>{/if}
 			<h2>Talents</h2>
 			<TalentsEdit
 				bind:char
@@ -387,24 +395,26 @@
 	<!-- Not a disabled fieldset: the panel locks its own controls, so its
 	     custom-item form keeps taking input while an earlier change saves. -->
 	<div id="sheet-gear" class="gear-wrap jump perch boxed aside">
-		{#if $flourishes}<span class="perched"><SuitFlourish suit="pentacles" scene /></span>{/if}
+		{#if $flourishes}<span class="perched"><SuitFlourish suit={perchSuits[2]} scene /></span>{/if}
 		<GearPanel bind:char items={data.content.items} encumbrance={data.content.encumbrance} onChange={onSheetChange} locked={recordingXp || syncRequired} {saving} />
 	</div>
-	<div id="sheet-experience" class="jump"><ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} /></div>
+	<div id="sheet-experience" class="jump perch mid">
+		{#if $flourishes}<span class="perched"><SuitFlourish suit={perchSuits[3]} scene /></span>{/if}
+		<ExperiencePanel {char} config={data.content.advancement} disabled={saving || recordingXp || syncRequired} onAction={recordXp} />
+	</div>
 
 	<fieldset class="play-controls" disabled={recordingXp || syncRequired}>
-		<section id="sheet-story" class="edit-section jump perch" class:roomy={$flourishes}>
-			{#if $flourishes}<span class="perched"><SuitFlourish suit="cups" scene /></span>{/if}
+		<section id="sheet-spells" class="edit-section jump">
+			<h2>Spell components</h2>
+			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onSheetChange} />
+		</section>
+		<section id="sheet-story" class="edit-section jump">
 			<h2>Story</h2>
 			<StoryEdit bind:char motifCount={data.content.motifCount} onChange={onSheetChange} />
 		</section>
 		<section id="sheet-languages" class="edit-section jump">
 			<h2>Languages</h2>
 			<LanguagesEdit bind:char languages={data.content.languages} onChange={onSheetChange} />
-		</section>
-		<section id="sheet-spells" class="edit-section jump">
-			<h2>Spell components</h2>
-			<SpellComponentsEdit bind:char spells={data.content.spells} config={data.content.sorcery} onChange={onSheetChange} />
 		</section>
 	</fieldset>
 
@@ -598,9 +608,12 @@
 		/* Shorter: it must end above the first carrying-place band. */
 		height: 4.2rem;
 	}
-	/* Story's first fields span the full width, so its heading row makes room. */
-	.perch.roomy > h2 {
-		min-height: 4rem;
+	/* Experience is one short row ending in its toggle: stand in the gap
+	 * before the toggle, and stay within the row's height. */
+	.perch.mid > .perched {
+		top: -1.9rem;
+		right: 13rem;
+		height: 4.2rem;
 	}
 	@media (max-width: 30rem) {
 		.perched {
@@ -610,8 +623,13 @@
 		.perch.aside > .perched {
 			right: 8.5rem;
 		}
-		.perch.roomy > h2 {
-			min-height: 3rem;
+		/* On a phone the toggle wraps to a second line, leaving the first
+		 * line's right end free. */
+		.perch.mid > .perched {
+			/* Mostly in the gap above the box, clear of the XP figure. */
+			top: -2.3rem;
+			right: 0.75rem;
+			height: 3.2rem;
 		}
 	}
 	@media (pointer: coarse) {

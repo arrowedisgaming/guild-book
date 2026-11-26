@@ -121,7 +121,7 @@
 	.error {
 		margin: 0;
 		font-size: 0.85rem;
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.actions {
 		display: flex;

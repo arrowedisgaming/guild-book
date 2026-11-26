@@ -91,7 +91,7 @@
 	}
 	.name-error {
 		margin: 1rem 0 -1rem;
-		color: var(--accent);
+		color: var(--danger);
 		font-size: 0.9rem;
 	}
 </style>

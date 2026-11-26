@@ -45,7 +45,8 @@
 	}
 	.two {
 		display: grid;
-		grid-template-columns: 2fr 1fr;
+		/* minmax(0, …): an input's intrinsic width must not widen its track. */
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 		gap: 0.75rem;
 	}
 	label,
@@ -61,6 +62,9 @@
 	}
 	input,
 	textarea {
+		box-sizing: border-box;
+		width: 100%;
+		min-width: 0;
 		padding: 0.5rem 0.65rem;
 		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
 		border-radius: 3px;

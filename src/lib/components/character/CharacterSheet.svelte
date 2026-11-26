@@ -182,9 +182,9 @@
 		border-radius: 999px;
 		font-size: 0.8rem;
 		font-family: var(--font-subhead);
-		border: 1px solid var(--accent);
-		color: var(--accent);
-		background: color-mix(in oklab, var(--accent) 8%, var(--parchment));
+		border: 1px solid var(--danger);
+		color: var(--danger);
+		background: color-mix(in oklab, var(--danger) 8%, var(--parchment));
 	}
 	.badge.aff {
 		border-style: dashed;
@@ -235,7 +235,7 @@
 	}
 	li.wounded {
 		text-decoration: line-through;
-		text-decoration-color: var(--accent);
+		text-decoration-color: var(--danger);
 	}
 	li.destroyed {
 		opacity: 0.6;
@@ -248,7 +248,7 @@
 		margin-left: 0.3rem;
 	}
 	.tag.hurt {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.charge {
 		color: var(--accent);

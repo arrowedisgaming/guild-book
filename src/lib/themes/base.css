@@ -13,6 +13,10 @@
 	--font-quote: 'Dark Roast', 'IM Fell English', cursive;
 	--font-sidebar: 'Goudy Old Style', Georgia, serif;
 	--font-sidebar-heading: 'Kelmscott', 'HamletOrNot', serif;
+	/* For surfaces that are read as numbers (the character sheet): the same
+	 * faces with lining digits in front. See 'Guild Numerals' in fonts.css. */
+	--font-body-figures: 'Guild Numerals', 'IM Fell English', Georgia, 'Times New Roman', serif;
+	--font-heading-figures: 'Guild Numerals', 'HamletOrNot', 'Bilbo Display', Georgia, serif;
 }
 
 html {
@@ -110,4 +114,10 @@ button {
 :focus-visible {
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
+}
+
+/* The browser default placeholder grey is about 3:1 on parchment. */
+::placeholder {
+	color: var(--ink-soft);
+	opacity: 1;
 }

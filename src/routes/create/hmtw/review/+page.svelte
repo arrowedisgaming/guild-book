@@ -198,7 +198,7 @@
 		font-size: 0.9rem;
 	}
 	.error {
-		color: var(--accent);
+		color: var(--danger);
 	}
 	.exports {
 		padding: 1rem;

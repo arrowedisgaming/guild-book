@@ -79,6 +79,6 @@
 		cursor: pointer;
 	}
 	.error {
-		color: var(--danger, var(--accent));
+		color: var(--danger);
 	}
 </style>

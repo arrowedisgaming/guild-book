@@ -321,7 +321,7 @@ function findTalent(character: GuildBookCharacterData, talentId: string, content
 	if (!content.talents.some((talent) => talent.id === talentId)) return 'Unknown talent.';
 	return character.talents.find((talent) => talent.talentId === talentId) ?? 'Character does not have that talent.';
 }
-function isOwnPathTalent(pathId: string | null, talentId: string, paths: PathDefinition[]): boolean { return paths.find((path) => path.id === pathId)?.talentIds.includes(talentId) ?? false; }
+export function isOwnPathTalent(pathId: string | null, talentId: string, paths: PathDefinition[]): boolean { return paths.find((path) => path.id === pathId)?.talentIds.includes(talentId) ?? false; }
 function talentName(id: string, content: ExperienceContent): string { return content.talents.find((talent) => talent.id === id)?.name ?? id; }
 function snapshot(talent: TalentAllocation): XpTalentSnapshot { return { xp: talent.xp, state: talent.state, preparedUses: talent.preparedUses }; }
 function isValidTalentRepair(talent: NonNullable<Extract<XpAction, { kind: 'correction' }>['talent']>, masteryXp: number): boolean {

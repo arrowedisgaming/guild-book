@@ -242,7 +242,7 @@
 		color: var(--ink-soft);
 	}
 	.warn {
-		color: var(--accent);
+		color: var(--danger);
 		font-size: 0.9rem;
 	}
 	.meters {
@@ -281,10 +281,10 @@
 		transition: width 0.2s ease;
 	}
 	.meter.over .mfill {
-		background: color-mix(in oklab, var(--accent) 70%, black);
+		background: color-mix(in oklab, var(--danger) 70%, black);
 	}
 	.meter.over .mcount {
-		color: var(--accent);
+		color: var(--danger);
 		font-weight: 700;
 	}
 	.mcount {

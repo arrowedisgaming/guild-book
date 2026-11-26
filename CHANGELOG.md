@@ -8,6 +8,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-25
+
+### Changed
+
+- Guild Book's colours now follow the book: black ink on a warm white page,
+  with grey for bands and borders. The beige ground and oxblood accent are
+  gone, in the light and the dark theme.
+- Red now means harm and nothing else: wounds, destroyed gear, over-capacity
+  loads, warnings, failed tests of fate and errors. Buttons, links and filled
+  pips are ink.
+
+- An adventurer's sheet is now one page with no Edit mode. It opens with the
+  name, kin, path and the four attributes, then Status, Talents, Gear,
+  Experience, Spell components, Story and Languages, all editable in place.
+- The name, kin, path, attributes and section links stay pinned to the top
+  of the sheet as you scroll. The section links sit on one row that scrolls
+  sideways.
+- Each talent is a single line showing its state and progress; open it to
+  read what it does and to change it.
+- The sheet no longer repeats Resolve, Lore bids, bonds, talents and
+  available XP in a second read-only block.
+- Everything on the sheet saves as you change it. The "Save changes" and
+  "Cancel" buttons are gone, and the top of the sheet shows "Saving…" and
+  "Saved".
+- The form for adding a spell component stays folded away until you open it.
+- Gear is a compact list: each item is one line, in two columns where there
+  is room. Durability is a row of boxes you tap to notch or repair. Open an
+  item to move it, change a single item's quantity or remove it; stacks keep
+  their − and + on the line.
+- Resolve and Lore bids are set by tapping their pips. The − and + buttons
+  are gone; the pips are the count.
+- Numbers on the sheet use clear lining figures, so 0 and 1 no longer read as
+  "o" and "I".
+- On a touch screen every control on the sheet is at least 44px tall.
+- Removing a bond, an affliction, a talent or an item is a "Remove" link
+  instead of a small ✕.
+- Spell components now sit directly below Experience, above Story.
+- Spell components are listed the way Gear is: one line each with the spell
+  beside it, opening to its description, spell name and notes.
+- In hand, Worn, Belt and Backpack each open with a grey band, a heavier rule
+  and an icon, so the four are easy to tell apart.
+- A bond's charge is a labelled toggle: a solid "Charged" mark with rays, or a
+  pale dashed "Uncharged" one.
+- The Resolve and Lore bids labels are larger and sit next to their pips.
+- Adding a bond and adding an affliction each wait behind a button, the way
+  the wound choices do, so Status is shorter at rest.
+- The Status section has the same plain frame as the rest of the sheet. Its
+  grey background was left over from the old two-part layout.
+- The Experience panel opens on the award buttons. Spending, custom amounts,
+  corrections, the list of what earns XP and the history each fold away.
+- Changing a talent's progress by hand moved under "Adjust without spending
+  XP" in the talent's row.
+- "Save as final" on a draft is now "Finalize", and the share panel uses the
+  same word.
+- Status controls stay usable while an earlier change saves, so quick taps
+  are no longer dropped.
+
+### Added
+
+- Type-to-filter boxes replace the long dropdowns for adding gear, adding a
+  talent and choosing a spell. Type a few letters, in order, and the list
+  narrows to the closest matches ("shl" finds Shield, Light); Enter takes the
+  top one. Picking an item or a talent adds it straight away.
+
+- Tarot drawings on the adventurer's sheet: hand-sketched suit emblems after
+  the four Aces. Each attribute wears its suit beside its score, and the suit
+  of the adventurer's own path perches on Status and the other three on
+  Talents, Gear and Experience, moving slowly (leaves fall, a fish looks out of the cup,
+  the coin turns). A "Tarot drawings" switch beside Export turns them off on
+  that device, and they hold still when the system asks for reduced motion.
+
+- Awarding XP is one tap: each award with a set amount is its own button in
+  the Experience panel. A reason is optional for awards and defaults to the
+  award's name; spending and corrections still ask for one.
+- A talent in training on your own path has a "Use for 1 XP" button that
+  spends the XP, advances the talent and writes the history entry together.
+- A talent from another path shows its prepared uses, with buttons to use one
+  or to train with a mentor.
+- A talent from another path that was saved before prepared uses were tracked
+  asks for the number left once, so it can then be used and trained.
+- Talents shows how much XP you have to spend.
+
+- "Undo last change" appears for a few seconds after a change to a sheet,
+  including removing an item, a bond or a talent. Recorded XP is not undone
+  this way; use "Correct balance".
+
+### Fixed
+
+- The text of an active condition is shown under the conditions, instead of
+  only in a hover tooltip that phones never show.
+- Screen readers now announce the Resolve and Lore bid counts, whether each
+  bond is charged, and which item, talent or affliction a button acts on.
+- Placeholder text in form fields is dark enough to read.
+- "Lore bids" no longer separates from its pips on a narrow screen.
+
+- A wound, Resolve spend or gear change made while editing details is no
+  longer lost.
+- A PDF or Markdown download made straight after an edit now includes that
+  edit. If the edit could not be saved, the download is held back and the
+  sheet says why.
+- A failed save is now reported wherever you are on the sheet, not only at
+  the top of the page.
+- The Name and Pronouns fields no longer push the sheet wider than a phone
+  screen.
+
 ## [0.24.1] - 2026-11-18
 
 ### Fixed

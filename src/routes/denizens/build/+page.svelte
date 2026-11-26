@@ -1126,8 +1126,8 @@
 	}
 	.warning {
 		font-size: 0.9rem;
-		color: var(--accent);
-		border-left: 3px solid var(--accent);
+		color: var(--danger);
+		border-left: 3px solid var(--danger);
 		padding-left: 0.6rem;
 	}
 	.pick-card input {

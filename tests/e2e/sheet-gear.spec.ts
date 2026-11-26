@@ -22,10 +22,29 @@ async function openSheet(page: Page, role: string, name: string) {
 	return page.getByRole('region', { name: 'Gear', exact: true });
 }
 
+/** A row's less-used controls sit beneath it; open the row if it is closed. */
+async function openRow(page: Page, name: string) {
+	const toggle = page
+		.getByRole('region', { name: 'Gear', exact: true })
+		.getByRole('listitem')
+		.filter({ hasText: name })
+		.locator('button.iname');
+	if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+}
+
+/** The carry-location select of an item, with its row opened first. */
+async function locationOf(page: Page, name: string) {
+	await openRow(page, name);
+	return page.getByLabel(`Location of ${name}`);
+}
+
 async function addItem(page: Page, name: string) {
 	const gear = page.getByRole('region', { name: 'Gear', exact: true });
-	await gear.getByLabel('Add an item from the market').selectOption({ label: name });
-	await gear.getByRole('button', { name: 'Add', exact: true }).click();
+	// Type the name into the filter box; Enter takes the best match.
+	const market = gear.getByLabel('Add an item from the market');
+	await market.fill(name);
+	await expect(gear.getByRole('option').first()).toContainText(name);
+	await market.press('Enter');
 	await expect(gear.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
 }
 
@@ -34,14 +53,13 @@ const group = (page: Page, prefix: string) =>
 		.getByRole('region', { name: 'Gear', exact: true })
 		.getByRole('region', { name: new RegExp(`^${prefix}`) });
 
-test('moves gear without Edit mode and persists', async ({ page }) => {
+test('moves gear in place and persists', async ({ page }) => {
 	await openSheet(page, 'Gear Mover', 'Hilde Quickhand');
 	await addItem(page, 'Dagger');
 	const saved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
-	await page.getByLabel('Location of Dagger').selectOption('hand');
+	await (await locationOf(page, 'Dagger')).selectOption('hand');
 	// Focus follows the row into its new group.
-	await expect(page.getByLabel('Location of Dagger')).toBeFocused();
-	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+	await expect(await locationOf(page, 'Dagger')).toBeFocused();
 	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
 	await expect(group(page, 'In hand')).toHaveAccessibleName(/1 open/);
 	await saved;
@@ -58,8 +76,8 @@ test('two quick changes both persist', async ({ page }) => {
 		page,
 		(eq) => at(eq, 'weapon-dagger')?.location === 'hand' && at(eq, 'rope')?.location === 'belt'
 	);
-	await page.getByLabel('Location of Dagger').selectOption('hand');
-	await page.getByLabel('Location of Rope').selectOption('belt');
+	await (await locationOf(page, 'Dagger')).selectOption('hand');
+	await (await locationOf(page, 'Rope')).selectOption('belt');
 	await saved;
 	await page.reload();
 	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
@@ -77,12 +95,32 @@ test('empty groups still render, and Gear appears once', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Gear', exact: true })).toHaveCount(1);
 });
 
+test('notch boxes mark and repair durability in place', async ({ page }) => {
+	await openSheet(page, 'Gear Notcher', 'Brannoc Fray');
+	await addItem(page, 'Rope');
+	const rope = group(page, 'Backpack').getByRole('listitem').filter({ hasText: 'Rope' });
+	await expect(rope).toContainText('notches 0/2');
+	const marked = savedWhere(page, (eq) => at(eq, 'rope')?.notchesTaken === 2);
+	// Tapping the second box marks up to it.
+	await rope.getByRole('button', { name: 'Notch Rope', exact: true }).nth(1).click();
+	await expect(rope).toContainText('notches 2/2');
+	await expect(rope).toContainText('Destroyed');
+	await marked;
+	// Tapping a marked box repairs from it.
+	const repaired = savedWhere(page, (eq) => at(eq, 'rope')?.notchesTaken === 1);
+	await rope.getByRole('button', { name: 'Repair a notch on Rope', exact: true }).nth(1).click();
+	await expect(rope).toContainText('notches 1/2');
+	await repaired;
+	await page.reload();
+	await expect(rope).toContainText('notches 1/2');
+});
+
 test('wound notches the item it names after a regroup', async ({ page }) => {
 	await openSheet(page, 'Gear Wounded', 'Osk Shieldarm');
 	await addItem(page, 'Rope');
 	await addItem(page, 'Shield, Light');
 	await addItem(page, 'Helm');
-	await page.getByLabel('Location of Shield, Light').selectOption('hand');
+	await (await locationOf(page, 'Shield, Light')).selectOption('hand');
 	const shield = group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Shield, Light' });
 	await expect(shield).toBeVisible();
 	await page.getByRole('button', { name: 'Take a Wound…' }).click();
@@ -96,25 +134,35 @@ test('wound notches the item it names after a regroup', async ({ page }) => {
 	await expect(backpack.getByText('Destroyed')).toHaveCount(0);
 });
 
-test('Edit-mode Cancel reverts gear', async ({ page }) => {
+test('Undo takes back the last gear change, and only that one', async ({ page }) => {
 	const gear = await openSheet(page, 'Gear Canceller', 'Wren Secondthought');
-	await page.getByRole('button', { name: 'Edit', exact: true }).click();
-	await addItem(page, 'Torch');
-	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
-	await page.reload();
-	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
-
-	// A play-view change still inside its autosave debounce when Edit is
-	// clicked is saved first — an immediate Cancel must not take it with it.
-	const saved = savedWhere(page, (equipment) => at(equipment, 'rope') !== undefined);
+	// The first change saves and stays.
+	const ropeSaved = savedWhere(page, (equipment) => at(equipment, 'rope') !== undefined);
 	await addItem(page, 'Rope');
-	await page.getByRole('button', { name: 'Edit', exact: true }).click();
-	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-	await saved;
+	await ropeSaved;
+
+	// The second is undone, whether or not its own save has landed yet.
+	await addItem(page, 'Torch');
+	const undone = savedWhere(page, (equipment) => at(equipment, 'torch') === undefined && at(equipment, 'rope') !== undefined);
+	await page.getByRole('button', { name: 'Undo last change', exact: true }).click();
+	await undone;
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
+	await expect(page.getByRole('button', { name: 'Undo last change', exact: true })).toHaveCount(0);
 	await page.reload();
+	await expect(gear.getByRole('listitem').filter({ hasText: 'Torch' })).toHaveCount(0);
 	await expect(gear.getByRole('listitem').filter({ hasText: 'Rope' })).toHaveCount(1);
+});
+
+test('details edited in place save without a Save button', async ({ page }) => {
+	await openSheet(page, 'Gear Scribe', 'Odo Inkfinger');
+	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toHaveCount(0);
+	await page.getByRole('textbox', { name: 'Quest' }).fill('Map the drowned stair');
+	await expect(page.locator('.save-state')).toHaveText('Saved');
+	await page.reload();
+	await expect(page.getByRole('textbox', { name: 'Quest' })).toHaveValue('Map the drowned stair');
 });
 
 test('narrow screen has no horizontal scroll', async ({ page }) => {
@@ -162,7 +210,7 @@ test('adds a custom item', async ({ page }) => {
 		(r) => r.request().method() === 'PUT' && r.url().includes('/api/characters/') && r.ok() &&
 			(r.request().postData() ?? '').includes('"worn"')
 	);
-	await page.getByLabel('Location of Jade idol').selectOption('worn');
+	await (await locationOf(page, 'Jade idol')).selectOption('worn');
 	await expect(group(page, 'Worn').getByRole('listitem').filter({ hasText: 'Jade idol' })).toBeVisible();
 	expect(await backpackUsed(page)).toBe(before);
 	await moved;
@@ -204,7 +252,7 @@ test('keyboard focus and custom-item typing survive the autosave', async ({ page
 	const gear = await openSheet(page, 'Gear Focus', 'Fenn Keeper');
 	await addItem(page, 'Dagger');
 	const saved = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
-	const select = page.getByLabel('Location of Dagger');
+	const select = await locationOf(page, 'Dagger');
 	await select.selectOption('hand');
 	await expect(select).toBeFocused();
 	await saved;
@@ -267,14 +315,14 @@ test('a change made after the first save has started also persists', async ({ pa
 	await addItem(page, 'Dagger');
 	await addItem(page, 'Rope');
 	const first = savedWhere(page, (eq) => at(eq, 'weapon-dagger')?.location === 'hand');
-	await page.getByLabel('Location of Dagger').selectOption('hand');
+	await (await locationOf(page, 'Dagger')).selectOption('hand');
 	await first;
 	const second = savedWhere(
 		page,
 		(eq) => at(eq, 'weapon-dagger')?.location === 'hand' && at(eq, 'rope')?.location === 'belt'
 	);
-	await expect(page.getByLabel('Location of Rope')).toBeEnabled();
-	await page.getByLabel('Location of Rope').selectOption('belt');
+	await expect(await locationOf(page, 'Rope')).toBeEnabled();
+	await (await locationOf(page, 'Rope')).selectOption('belt');
 	await second;
 	await page.reload();
 	await expect(group(page, 'In hand').getByRole('listitem').filter({ hasText: 'Dagger' })).toBeVisible();
@@ -286,8 +334,11 @@ test('focus is not restored onto another item after Remove', async ({ page }) =>
 	await addItem(page, 'Dagger');
 	await addItem(page, 'Rope');
 	const saved = savedWhere(page, (eq) => eq.length === 1 && eq[0].itemId === 'rope');
+	await openRow(page, 'Dagger');
 	await page.getByRole('button', { name: 'Remove Dagger', exact: true }).click();
 	await saved;
-	await expect(page.getByLabel('Location of Rope')).toBeEnabled();
-	await expect(page.getByRole('button', { name: 'Remove Rope', exact: true })).not.toBeFocused();
+	// Focus parks on the market select, never inside the row that took the removed one's place.
+	const rope = page.getByRole('region', { name: 'Gear', exact: true }).getByRole('listitem').filter({ hasText: 'Rope' });
+	await expect(rope.locator('button.iname')).toBeEnabled();
+	await expect(rope.locator(':focus')).toHaveCount(0);
 });

@@ -202,4 +202,15 @@
 		font-size: 0.85rem;
 		color: var(--accent);
 	}
+	@media (pointer: coarse) {
+		.remove {
+			min-width: 44px;
+			min-height: 44px;
+		}
+		.add select,
+		.add input,
+		.add button {
+			min-height: 44px;
+		}
+	}
 </style>

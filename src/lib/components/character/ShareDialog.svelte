@@ -54,7 +54,7 @@
 
 <div class="share">
 	{#if isDraft}
-		<p class="note">Finish this adventurer (save as complete) to share a public link.</p>
+		<p class="note">Finalize this adventurer to share a public link.</p>
 	{:else if shareId && shareUrl}
 		<p class="lbl">Anyone with this link can view a read-only sheet:</p>
 		<div class="row">
@@ -112,7 +112,7 @@
 		color: var(--ink-soft);
 	}
 	.error {
-		color: var(--accent);
+		color: var(--danger);
 		font-size: 0.85rem;
 	}
 </style>

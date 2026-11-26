@@ -416,8 +416,8 @@
 	.frozen-banner {
 		margin: 0;
 		padding: 0.6rem 0.9rem;
-		border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent);
-		background: color-mix(in oklab, var(--accent) 12%, transparent);
+		border: 1px solid color-mix(in oklab, var(--danger) 55%, transparent);
+		background: color-mix(in oklab, var(--danger) 12%, transparent);
 		font-family: var(--font-subhead);
 		font-size: 0.9rem;
 	}

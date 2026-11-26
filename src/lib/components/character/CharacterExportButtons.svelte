@@ -3,19 +3,25 @@
 	import { exportToMarkdown } from '$lib/export/markdown-export';
 	import type { CharacterView } from '$lib/types/character-view';
 
-	let { getView }: { getView: () => CharacterView } = $props();
+	// beforeExport lets a page that saves as you type finish its pending save
+	// first, so the file matches what is on screen rather than the last copy
+	// the server sent. Resolving false means that save failed: nothing is
+	// exported, because the file would silently be the older copy.
+	let { getView, beforeExport }: { getView: () => CharacterView; beforeExport?: () => Promise<boolean> } = $props();
 	let pdfBusy = $state(false);
 
 	async function exportPdf() {
 		pdfBusy = true;
 		try {
+			if (beforeExport && !(await beforeExport())) return;
 			await downloadPDF(getView());
 		} finally {
 			pdfBusy = false;
 		}
 	}
 
-	function exportMarkdown() {
+	async function exportMarkdown() {
+		if (beforeExport && !(await beforeExport())) return;
 		const view = getView();
 		const blob = new Blob([exportToMarkdown(view)], { type: 'text/markdown' });
 		const url = URL.createObjectURL(blob);
@@ -47,5 +53,10 @@
 	button:disabled {
 		opacity: 0.55;
 		cursor: default;
+	}
+	@media (pointer: coarse) {
+		button {
+			min-height: 44px;
+		}
 	}
 </style>

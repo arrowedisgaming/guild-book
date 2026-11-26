@@ -290,12 +290,12 @@
 				>
 					<!-- A lit mark with rays when charged, a faint empty ring when not;
 					     the word says it too, so it never rests on shape alone. -->
-					<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
 						{#if b.charged}
 							<circle cx="12" cy="12" r="4.5" fill="currentColor" />
 							<path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
 						{:else}
-							<circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.2 2.6" />
+							<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 3.3" />
 						{/if}
 					</svg>
 					<span>{b.charged ? 'Charged' : 'Uncharged'}</span>
@@ -538,16 +538,25 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
-		min-width: 7.2rem;
-		min-height: 2rem;
-		padding: 0.2rem 0.7rem 0.2rem 0.5rem;
+		justify-content: center;
+		min-width: 8.5rem;
+		min-height: 2.4rem;
+		padding: 0.3rem 0.9rem;
 		border: 1px dashed color-mix(in oklab, var(--ink) 40%, transparent);
 		border-radius: 999px;
 		background: transparent;
 		color: var(--ink-soft);
 		font-family: var(--font-subhead);
-		font-size: 0.85rem;
+		font-size: 1.05rem;
+		line-height: 1;
 		cursor: pointer;
+	}
+	.charge svg {
+		flex: none;
+	}
+	/* Caslon Antique's letters sit high in their line box; settle them on the mark. */
+	.charge span {
+		translate: 0 0.06em;
 	}
 	.charge.on {
 		border: 1px solid var(--accent);

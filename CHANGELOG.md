@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-26
+
+### Changed
+
+- A notch on a piece of gear is now a pencilled V, scratched out in red once
+  it is taken, so durability no longer looks like the slot squares above it.
+  Tapping a notch still marks or repairs it.
+
 ## [0.25.0] - 2026-11-25
 
 ### Changed

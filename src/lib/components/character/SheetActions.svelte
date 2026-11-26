@@ -8,14 +8,16 @@
 		characterId: string;
 		shareId: string | null;
 		isDraft: boolean;
+		/** Awaited before an export, so pending edits are in the file; false cancels it. */
+		beforeExport?: () => Promise<boolean>;
 	}
-	let { view, characterId, shareId, isDraft }: Props = $props();
+	let { view, characterId, shareId, isDraft, beforeExport }: Props = $props();
 
 	let showShare = $state(false);
 </script>
 
 <div class="actions">
-	<CharacterExportButtons getView={() => view} />
+	<CharacterExportButtons getView={() => view} {beforeExport} />
 	<button
 		type="button"
 		class="share"

@@ -83,7 +83,9 @@
 	// the other three take Talents, Gear and Experience, in a fixed order.
 	const SUITS = ['swords', 'wands', 'pentacles', 'cups'] as const;
 	const perchSuits = $derived.by(() => {
-		const own = SUITS.find((suit) => char.pathId?.includes(suit));
+		// The pack says which suit a path is aligned to; never read it off the id.
+		const aligned = data.content.paths.find((path) => path.id === char.pathId)?.suit;
+		const own = SUITS.find((suit) => suit === aligned);
 		return own ? [own, ...SUITS.filter((suit) => suit !== own)] : [...SUITS];
 	});
 
@@ -147,6 +149,10 @@
 	// Under the browsers' 64 KiB keepalive cap, with headroom for headers.
 	const KEEPALIVE_BODY_LIMIT = 60_000;
 
+	// Whether the most recent save was refused as a version conflict (409). A
+	// conflict is uncertain about the document, but certain about our write:
+	// it was not stored.
+	let lastSaveConflicted = false;
 	let saveChain: Promise<SaveOutcome> = Promise.resolve('ok');
 	const savedVersions = new Map<string, number>();
 	function persist(opts: { navigationFlush?: boolean } = {}): Promise<SaveOutcome> {
@@ -173,6 +179,7 @@
 		const stale = () => id !== data.id || opts.navigationFlush === true;
 		savingCount += 1;
 		saveError = '';
+		lastSaveConflicted = false;
 		try {
 			// Requested at the browser level (independent of whether THIS call is
 			// a navigation flush) — it's the only thing standing between an
@@ -196,6 +203,7 @@
 				return 'ok';
 			}
 			if (res.status === 409) {
+				lastSaveConflicted = true;
 				if (stale()) return 'stale'; // that adventurer's page will refetch on open
 				savedVersions.delete(id);
 				saveError = 'This adventurer changed elsewhere — reloading the latest version. Check that your last change was saved.';
@@ -277,7 +285,9 @@
 		} catch { return false; }
 	}
 	async function recordXp(action: XpAction, reason: string, sessionLabel?: string): Promise<boolean> {
-		if (recordingXp || saving || syncRequired) return false;
+		// A save in flight is waited for below (saveChain), not refused: a tap on
+		// a talent's XP button during an autosave must still take effect.
+		if (recordingXp || syncRequired) return false;
 		const id = data.id;
 		recordingXp = true;
 		try {
@@ -298,13 +308,28 @@
 			if (!result.ok) { saveError = result.error; return false; }
 			char = result.character;
 			saveError = '';
+			// A prepared use writes no ledger entry, so it cannot be recognised
+			// by one afterwards; remember the count it should leave instead.
+			const preparedAfter =
+				action.kind === 'prepared-use'
+					? result.character.talents.find((t) => t.talentId === action.talentId)?.preparedUses
+					: undefined;
 			const outcome = await persist();
 			if (outcome === 'ok' || id !== data.id) return outcome === 'ok';
 			if (outcome === 'uncertain') {
 				// Genuinely don't know whether this landed — the authoritative
 				// document, not a guess, decides whether it needs recording again.
+				// Read before the reload issues requests of its own.
+				const conflicted = lastSaveConflicted;
 				const reloaded = await reloadCharacter();
-				if (reloaded && char.xpLedger.entries.some((entry) => entry.id === recordId)) {
+				// A prepared use leaves no entry to look for. A conflict means it
+				// was refused, whatever the count now reads (another tab may have
+				// spent the same use); otherwise the count is the only evidence.
+				const landed =
+					action.kind === 'prepared-use'
+						? !conflicted && char.talents.find((t) => t.talentId === action.talentId)?.preparedUses === preparedAfter
+						: char.xpLedger.entries.some((entry) => entry.id === recordId);
+				if (reloaded && landed) {
 					saveError = '';
 					return true;
 				}
@@ -314,8 +339,29 @@
 			// stored this — revert the optimistic change locally. No reload or
 			// lock is needed: nothing about the saved state is in question.
 			char = beforeAction;
+			// persist() took the rejected copy as the undo baseline; put the real
+			// one back, or the next Undo would restore the award the server refused.
+			baseline = JSON.stringify(beforeAction);
 			return false;
 		} finally { recordingXp = false; }
+	}
+
+	/**
+	 * Store anything still pending and wait for it, so page data is current.
+	 * False when the latest save did not succeed: the page data is then older
+	 * than the sheet on screen, and the save panel already says why.
+	 */
+	async function flushSaves(): Promise<boolean> {
+		if (statusTimer) {
+			clearTimeout(statusTimer);
+			statusTimer = null;
+			dirty = false;
+			void persist();
+		}
+		const outcome = await saveChain;
+		if (outcome === 'ok') return true;
+		if (!saveError) saveError = 'Not exported: the latest change has not been saved yet.';
+		return false;
 	}
 
 	/** Promote a draft to a finished adventurer (server validates completeness). */
@@ -323,10 +369,16 @@
 		if (statusTimer) clearTimeout(statusTimer);
 		statusTimer = null;
 		dirty = false;
+		// An undo offered before finalizing would restore a draft copy.
+		clearUndo();
 		char.isDraft = false;
 		const outcome = await persist();
-		if (outcome !== 'ok') {
+		// Only a clean rejection is known not to have been stored. After an
+		// uncertain save the reload decides; forcing draft here could undo a
+		// finalize that did land.
+		if (outcome === 'rejected') {
 			char.isDraft = true; // rejected (e.g. incomplete) — stay a draft locally
+			baseline = JSON.stringify(char);
 			saveError = saveError.replace('Creation-rule violation: ', 'Still missing: ');
 		}
 	}
@@ -419,7 +471,7 @@
 	</fieldset>
 
 	<div id="sheet-actions" class="actions-wrap jump">
-		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} />
+		<SheetActions view={data.view} characterId={data.id} shareId={data.shareId} isDraft={data.isDraft} beforeExport={flushSaves} />
 		<!-- Decoration is a preference, kept on this device; it sits with the
 		     sheet's other housekeeping, out of the way of play. -->
 		<button type="button" class="flourish-toggle" aria-pressed={$flourishes} onclick={() => flourishes.update((on) => !on)}>

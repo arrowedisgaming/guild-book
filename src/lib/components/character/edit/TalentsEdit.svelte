@@ -40,6 +40,19 @@
 		if (ok) { mentorFor = null; mentorName = ''; mentorAmount = 1; }
 	}
 
+	// Talents saved before prepared uses were tracked carry no count. Nothing
+	// that spends or adds uses can run until one is recorded, as a correction.
+	// One figure per talent: two such rows can be open at once.
+	let preparedSeeds = $state<Record<string, number>>({});
+	function setPreparedUses(talentId: string, talentLabel: string, xp: number) {
+		const preparedSeed = preparedSeeds[talentId] ?? 0;
+		if (!Number.isSafeInteger(preparedSeed) || preparedSeed < 0) return;
+		void onXpAction(
+			{ kind: 'correction', balanceDelta: 0, talent: { talentId, xp, state: 'in-training', preparedUses: preparedSeed } },
+			`Recorded prepared uses for ${talentLabel}`
+		);
+	}
+
 	const byId = $derived(new Map(talents.map((t) => [t.id, t])));
 
 	function name(id: string) {
@@ -171,8 +184,14 @@
 							Use for {pathUseXp} XP
 						</button>
 						{#if char.experience < pathUseXp}<span class="hint quiet">No XP to spend.</span>{/if}
+					{:else if how === 'other-path' && t.preparedUses === null}
+						<form class="seed" onsubmit={(e) => { e.preventDefault(); setPreparedUses(t.talentId, tname, t.xp); }}>
+							<label>Prepared uses left<input type="number" required min="0" step="1" value={preparedSeeds[t.talentId] ?? 0} oninput={(e) => (preparedSeeds[t.talentId] = e.currentTarget.valueAsNumber)} /></label>
+							<button type="submit" class="spend">Record</button>
+							<span class="hint quiet">Record how many are left before using or training this talent.</span>
+						</form>
 					{:else if how === 'other-path'}
-						<span class="prepared">Prepared uses: {t.preparedUses ?? 'not set'}</span>
+						<span class="prepared">Prepared uses: {t.preparedUses}</span>
 						<button
 							type="button"
 							class="spend"
@@ -348,6 +367,28 @@
 	.quiet {
 		font-size: 0.85rem;
 		color: var(--ink-soft);
+	}
+	.seed {
+		flex: 1 0 100%;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: end;
+		gap: 0.5rem 0.75rem;
+	}
+	.seed label {
+		display: grid;
+		gap: 0.2rem;
+		font-size: 0.85rem;
+	}
+	.seed input {
+		box-sizing: border-box;
+		width: 7rem;
+		padding: 0.45rem 0.5rem;
+		border: 1px solid color-mix(in oklab, var(--ink) 25%, transparent);
+		border-radius: 3px;
+		background: var(--parchment);
+		color: var(--ink);
+		font: inherit;
 	}
 	.mentor {
 		flex: 1 0 100%;

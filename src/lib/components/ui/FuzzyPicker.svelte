@@ -56,12 +56,19 @@
 	let list: HTMLUListElement | undefined = $state();
 
 	function pick(option: PickerOption) {
+		// The list can still be on screen when the box is disabled mid-use.
+		if (disabled) return;
 		if (isField) value = option.id;
 		typing = false;
 		query = '';
 		open = false;
+		// The list may be shorter next time (a picked entry can leave it).
+		active = 0;
 		onPick?.(option.id);
 	}
+	$effect(() => {
+		if (disabled) open = false;
+	});
 	function onInput(event: Event & { currentTarget: HTMLInputElement }) {
 		query = event.currentTarget.value;
 		typing = true;
@@ -126,7 +133,7 @@
 		value={shown}
 		oninput={onInput}
 		onkeydown={onKeydown}
-		onfocus={() => (open = true)}
+		onfocus={() => { open = true; active = 0; }}
 		onclick={() => (open = true)}
 		onblur={onBlur}
 	/>

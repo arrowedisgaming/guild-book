@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bond's charge is a labelled toggle: a solid "Charged" mark with rays, or a
   pale dashed "Uncharged" one.
 - The Resolve and Lore bids labels are larger and sit next to their pips.
+- Adding a bond and adding an affliction each wait behind a button, the way
+  the wound choices do, so Status is shorter at rest.
+- The Status section has the same plain frame as the rest of the sheet. Its
+  grey background was left over from the old two-part layout.
 - The Experience panel opens on the award buttons. Spending, custom amounts,
   corrections, the list of what earns XP and the history each fold away.
 - Changing a talent's progress by hand moved under "Adjust without spending

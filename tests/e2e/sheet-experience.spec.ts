@@ -149,6 +149,7 @@ test('a pending status edit and an XP award both survive', async ({ page }) => {
  await page.goto(`/sheet/${id}`);
  const xp = await openExperience(page);
  await xp.getByLabel('Reason').fill('Accepted the bell quest');
+ await page.getByRole('button', { name: 'Add a bond…' }).click();
  await page.getByPlaceholder("Guild-mate's name").fill('Grendel');
  await page.getByRole('button', { name: 'Add bond' }).click();
  await award(xp).click();

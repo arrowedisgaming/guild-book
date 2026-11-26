@@ -30,6 +30,7 @@ test('a bond on the sheet shows the book’s charge conditions', async ({ page }
 			return body.character.bonds.some(match);
 		});
 
+	await page.getByRole('button', { name: 'Add a bond…' }).click();
 	await page.getByPlaceholder("Guild-mate's name").fill('Grendel');
 	await page.getByRole('button', { name: 'Add bond' }).click();
 

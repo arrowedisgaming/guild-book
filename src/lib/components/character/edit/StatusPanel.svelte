@@ -6,6 +6,7 @@
 		BondTypeDefinition,
 		ItemDefinition
 	} from '$lib/types/content-pack';
+	import { tick } from 'svelte';
 	import { indexItems } from '$lib/engine/encumbrance';
 	import { woundOptions, applyWound, type WoundOption } from '$lib/engine/wounds';
 	import { bondChargeLines, findBondType, isCustomBondText } from '$lib/character/bonds';
@@ -36,6 +37,26 @@
 	const afflictionsById = $derived(new Map(afflictions.map((a) => [a.id, a])));
 
 	let woundOpen = $state(false);
+	// Adding a bond or an affliction is occasional, so each form waits behind
+	// its button, the way the wound choices do.
+	let bondFormOpen = $state(false);
+	let afflictionFormOpen = $state(false);
+	let bondToggle: HTMLButtonElement | undefined = $state();
+	let afflictionToggle: HTMLButtonElement | undefined = $state();
+	let bondNameInput: HTMLInputElement | undefined = $state();
+	let afflictionSelect: HTMLSelectElement | undefined = $state();
+	async function toggleBondForm() {
+		bondFormOpen = !bondFormOpen;
+		if (!bondFormOpen) return;
+		await tick();
+		bondNameInput?.focus();
+	}
+	async function toggleAfflictionForm() {
+		afflictionFormOpen = !afflictionFormOpen;
+		if (!afflictionFormOpen) return;
+		await tick();
+		afflictionSelect?.focus();
+	}
 	let addAfflictionId = $state('');
 	let newBondName = $state('');
 	// The row currently writing a bond of its own, so the free-text field stays
@@ -114,6 +135,8 @@
 			{ afflictionId: addAfflictionId, customName: null, stage: 1 }
 		];
 		addAfflictionId = '';
+		afflictionFormOpen = false;
+		afflictionToggle?.focus();
 		onChange();
 	}
 	function stepAffliction(i: number, delta: number) {
@@ -134,6 +157,8 @@
 		if (!targetName) return;
 		char.bonds = [...char.bonds, { targetName, text: '', charged: false }];
 		newBondName = '';
+		bondFormOpen = false;
+		bondToggle?.focus();
 		onChange();
 	}
 	/** '' = unset, CUSTOM_BOND = the player's own words, else a pack type label. */
@@ -275,7 +300,10 @@
 	{/if}
 
 	<div class="sub">
-		<h3>Bonds</h3>
+		<div class="subhead">
+			<h3>Bonds</h3>
+			<button type="button" class="reveal" bind:this={bondToggle} aria-expanded={bondFormOpen} onclick={toggleBondForm}>Add a bond…</button>
+		</div>
 		{#each char.bonds as b, i (i)}
 			{@const typeValue = bondTypeValue(b.text, i)}
 			<div class="bond">
@@ -329,14 +357,28 @@
 				{/each}
 			</div>
 		{/each}
-		<div class="addrow">
-			<input type="text" bind:value={newBondName} placeholder="Guild-mate's name" />
-			<button type="button" disabled={!newBondName.trim()} onclick={addBond}>Add bond</button>
-		</div>
+		{#if bondFormOpen}
+			<div class="addrow">
+				<input
+					type="text"
+					bind:this={bondNameInput}
+					bind:value={newBondName}
+					placeholder="Guild-mate's name"
+					onkeydown={(e) => {
+						if (e.key === 'Enter') { e.preventDefault(); addBond(); }
+						else if (e.key === 'Escape') { bondFormOpen = false; bondToggle?.focus(); }
+					}}
+				/>
+				<button type="button" disabled={!newBondName.trim()} onclick={addBond}>Add bond</button>
+			</div>
+		{/if}
 	</div>
 
 	<div class="sub">
-		<h3>Afflictions</h3>
+		<div class="subhead">
+			<h3>Afflictions</h3>
+			<button type="button" class="reveal" bind:this={afflictionToggle} aria-expanded={afflictionFormOpen} onclick={toggleAfflictionForm}>Add an affliction…</button>
+		</div>
 		{#each char.afflictions as a, i (i)}
 			<div class="affliction">
 				<span class="aname">{afflictionName(a)}</span>
@@ -349,15 +391,17 @@
 				<button type="button" class="remove" onclick={() => removeAffliction(i)} aria-label={`Remove ${afflictionName(a)}`}>Remove</button>
 			</div>
 		{/each}
-		<div class="addrow">
-			<select bind:value={addAfflictionId}>
-				<option value="">Add an affliction…</option>
-				{#each afflictions as a (a.id)}
-					<option value={a.id}>{a.name}</option>
-				{/each}
-			</select>
-			<button type="button" disabled={!addAfflictionId} onclick={addAffliction}>Add</button>
-		</div>
+		{#if afflictionFormOpen}
+			<div class="addrow">
+				<select bind:this={afflictionSelect} bind:value={addAfflictionId} aria-label="Affliction">
+					<option value="">Choose an affliction…</option>
+					{#each afflictions as a (a.id)}
+						<option value={a.id}>{a.name}</option>
+					{/each}
+				</select>
+				<button type="button" disabled={!addAfflictionId} onclick={addAffliction}>Add affliction</button>
+			</div>
+		{/if}
 	</div>
 </section>
 
@@ -365,17 +409,37 @@
 	.status {
 		margin: 1.25rem 0;
 		padding: 1rem 1.1rem;
-		border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+		/* The same frame as every other section of the sheet. */
+		border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
 		border-radius: 4px;
-		background: color-mix(in oklab, var(--surface) 70%, var(--parchment));
 	}
 	h2 {
 		margin: 0 0 0.6rem;
 		font-size: 1.05rem;
 	}
 	h3 {
-		margin: 0 0 0.4rem;
-		font-size: 0.9rem;
+		margin: 0;
+		font-size: 1rem;
+	}
+	.subhead {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.4rem;
+	}
+	.reveal {
+		padding: 0.3rem 0.8rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 60%, transparent);
+		border-radius: 3px;
+		background: transparent;
+		color: var(--accent);
+		font-family: var(--font-subhead);
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
+	.reveal[aria-expanded='true'] {
+		background: color-mix(in oklab, var(--accent) 10%, transparent);
 	}
 	.track {
 		display: flex;
@@ -629,6 +693,7 @@
 			height: 44px;
 		}
 		.cond,
+		.reveal,
 		.wound-btn,
 		.remove,
 		.addrow button,

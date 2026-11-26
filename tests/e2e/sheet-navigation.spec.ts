@@ -52,6 +52,7 @@ test('navigating between same-version sheets never crosses their data', async ({
 			body.character.bonds.some((b) => b.targetName === 'Left Behind')
 		);
 	});
+	await page.getByRole('button', { name: 'Add a bond…' }).click();
 	await page.getByPlaceholder("Guild-mate's name").fill('Left Behind');
 	await page.getByRole('button', { name: 'Add bond' }).click();
 	await page.getByTestId('next-sheet').click(); // well inside the 600ms debounce
@@ -72,6 +73,7 @@ test('navigating between same-version sheets never crosses their data', async ({
 			body.character.bonds.some((b) => b.targetName === 'Grendel')
 		);
 	});
+	await page.getByRole('button', { name: 'Add a bond…' }).click();
 	await page.getByPlaceholder("Guild-mate's name").fill('Grendel');
 	await page.getByRole('button', { name: 'Add bond' }).click();
 	await saved;
